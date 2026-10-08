@@ -5,7 +5,7 @@
    metode, lalu mengisi tabel tersebut. Alur:
      tempel / unggah -> pratinjau + pilih kolom -> "Terapkan ke tabel".
    Selain itu, menempel (Ctrl+V) langsung ke sel tabel dari Excel juga didukung.
-
+ 
    Menambah metode lain cukup menambah satu entri di CONFIGS di bawah.
    - File .csv/.tsv/.txt dibaca tanpa pustaka tambahan (bisa offline).
    - File .xlsx/.xls memakai SheetJS yang dimuat otomatis dari cdnjs saat
