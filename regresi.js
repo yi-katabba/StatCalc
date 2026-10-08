@@ -341,8 +341,8 @@
     renderSteps(res);
     renderEquation(res, data);
     renderChart(res, data);
-    $$('.tab-btn').forEach((b) => b.classList.remove('active'));
-    $$('.tab-panel').forEach((p) => p.classList.remove('active'));
+    $$('.tab-btn', $('#view-regresi')).forEach((b) => b.classList.remove('active'));
+    $$('.tab-panel', $('#view-regresi')).forEach((p) => p.classList.remove('active'));
     $('.tab-btn[data-tab="tab-table"]').classList.add('active');
     $('#tab-table').classList.add('active');
   }
@@ -946,10 +946,10 @@
     return canvas;
   }
 
-  $$('.tab-btn').forEach((btn) => {
+  $$('.tab-btn', $('#view-regresi')).forEach((btn) => {
     btn.addEventListener('click', () => {
-      $$('.tab-btn').forEach((b) => b.classList.remove('active'));
-      $$('.tab-panel').forEach((p) => p.classList.remove('active'));
+      $$('.tab-btn', $('#view-regresi')).forEach((b) => b.classList.remove('active'));
+      $$('.tab-panel', $('#view-regresi')).forEach((p) => p.classList.remove('active'));
       btn.classList.add('active');
       $('#' + btn.dataset.tab).classList.add('active');
     });
@@ -962,4 +962,8 @@
   function showError(node, msg) { node.textContent = msg; node.hidden = false; }
   function hideError(node) { node.hidden = true; node.textContent = ''; }
   function escapeHTML(str) { return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>'); }
+
+  /* Mesin regresi dibagikan agar metode lain (mis. Uji Stasioneritas / ADF, yang pada
+     dasarnya adalah regresi OLS) memakai perhitungan matriks & distribusi yang sama. */
+  window.StatCalcReg = { transpose, matMul, invertMatrix, tTwoTailedP, fUpperP, runRegression };
 })();
