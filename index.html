@@ -1568,6 +1568,99 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
   </div>
 </section>
 
+<!-- ===================== HALAMAN METODE: UJI STASIONERITAS (ADF) ===================== -->
+<section class="view" id="view-stasioner">
+  <div class="chapter-inner">
+
+    <div class="chapter-head">
+      <span class="eyebrow">Metode Statistik</span>
+      <h1>Uji Stasioneritas</h1>
+      <p class="lede">Uji akar unit Augmented Dickey-Fuller (ADF) untuk data deret waktu: pilih diferensiasi, model uji, dan lag, lalu lihat hipotesis, tabel regresi, nilai kritis, p-value, grafik, dan kesimpulan stasioner atau tidak.</p>
+    </div>
+
+    <section class="card step-card" id="st-setup-card">
+      <div class="step-tag">Langkah 1</div>
+      <h2>Pilih pengaturan uji</h2>
+      <p class="hint">Uji ADF berupa regresi &Delta;z[t] terhadap z[t&minus;1] (dan beberapa lag &Delta;z). Data dinyatakan stasioner bila H0 (ada akar unit) ditolak.</p>
+      <div class="control-row">
+        <label for="stDiff">Data yang diuji</label>
+        <select id="stDiff" class="select-input">
+          <option value="0">Level (data asli)</option>
+          <option value="1">Diferensiasi pertama (&Delta;Y)</option>
+          <option value="2">Diferensiasi kedua (&Delta;&sup2;Y)</option>
+        </select>
+      </div>
+      <div class="control-row">
+        <label for="stModel">Model uji</label>
+        <select id="stModel" class="select-input">
+          <option value="c">Dengan konstanta (intercept)</option>
+          <option value="ct">Dengan konstanta &amp; tren</option>
+          <option value="nc">Tanpa konstanta &amp; tren (none)</option>
+        </select>
+        <p class="field-note">Gunakan &ldquo;konstanta &amp; tren&rdquo; bila grafik data terlihat naik/turun mengikuti garis tren; &ldquo;konstanta&rdquo; bila data berfluktuasi di sekitar nilai rata-rata tertentu.</p>
+      </div>
+      <div class="control-row">
+        <label for="stLagMode">Jumlah lag</label>
+        <select id="stLagMode" class="select-input">
+          <option value="auto">Otomatis (kriteria AIC)</option>
+          <option value="manual">Manual</option>
+        </select>
+      </div>
+      <div class="control-row" id="stLagRow" hidden>
+        <label for="stLag">Lag (p)</label>
+        <input type="number" id="stLag" class="plain-input" min="0" max="12" step="1" value="1" inputmode="numeric">
+        <p class="field-note">Lag adalah banyaknya suku &Delta;z masa lalu yang ditambahkan agar galat tidak berautokorelasi. Bilangan bulat 0&ndash;12 (0 = uji Dickey-Fuller biasa).</p>
+      </div>
+      <div class="control-row">
+        <button type="button" class="btn-primary" id="stBuildTableBtn">Buat Tabel Input &rarr;</button>
+      </div>
+      <p class="error-msg" id="stSetupError" hidden></p>
+    </section>
+
+    <section class="card step-card" id="st-data-card" hidden>
+      <div class="step-tag">Langkah 2</div>
+      <h2>Masukkan data deret waktu</h2>
+      <p class="hint">Masukkan nilai secara berurutan dari periode paling lama ke paling baru. Minimal <strong><span id="stMinRowsHint">10</span> periode</strong> data diperlukan untuk pengaturan yang dipilih.</p>
+      <div class="table-scroll">
+        <table id="stDataTable" class="data-table">
+          <thead><tr><th>Periode</th><th>Nilai (Y)</th></tr></thead>
+          <tbody id="stDataTableBody"></tbody>
+        </table>
+      </div>
+      <div class="control-row">
+        <button type="button" class="btn-ghost" id="stAddRowBtn">+ Tambah baris</button>
+        <button type="button" class="btn-ghost" id="stRemoveRowBtn">&minus; Hapus baris terakhir</button>
+        <button type="button" class="btn-ghost" id="stFillSampleBtn">Isi contoh data</button>
+        <button type="button" class="btn-primary" id="stCalcBtn">Hitung Uji ADF &rarr;</button>
+      </div>
+      <p class="error-msg" id="stDataError" hidden></p>
+    </section>
+
+    <section class="card step-card" id="st-results-card" hidden>
+      <div class="step-tag">Langkah 3</div>
+      <h2>Hasil Uji</h2>
+      <nav class="tabs" id="stResultTabs">
+        <button type="button" class="tab-btn active" data-tab="st-tab-test">Hasil Uji ADF</button>
+        <button type="button" class="tab-btn" data-tab="st-tab-table">Tabel Data</button>
+        <button type="button" class="tab-btn" data-tab="st-tab-steps">Langkah Perhitungan</button>
+        <button type="button" class="tab-btn" data-tab="st-tab-chart">Grafik</button>
+      </nav>
+      <div class="tab-panel active" id="st-tab-test"><div id="stTestWrap" class="equation-wrap"></div></div>
+      <div class="tab-panel" id="st-tab-table"><div id="stTableWrap" class="table-scroll"></div></div>
+      <div class="tab-panel" id="st-tab-steps"><div id="stStepsWrap" class="steps-wrap"></div></div>
+      <div class="tab-panel" id="st-tab-chart"><div id="stChartWrap" class="chart-wrap"></div></div>
+    </section>
+
+    <section class="card step-card" id="st-conclusion-card" hidden>
+      <div class="step-tag">Langkah 4</div>
+      <h2>Kesimpulan</h2>
+      <p class="hint">Keputusan pada taraf signifikansi 5% (&alpha; = 0.05) dan saran langkah selanjutnya.</p>
+      <div id="stConclusionWrap" class="equation-wrap"></div>
+    </section>
+
+  </div>
+</section>
+
 <!-- ===================== PANEL PROFIL ===================== -->
 <div class="profile-overlay" id="profileOverlay"></div>
 <aside class="profile-panel" id="profilePanel">
@@ -1658,6 +1751,8 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
       icon: '<path d="M4 19 10 9l4 5 6-10"/><circle cx="10" cy="9" r="1.4" fill="currentColor" stroke="none"/><circle cx="14" cy="14" r="1.4" fill="currentColor" stroke="none"/>' },
     { id: 'anova',       title: 'ANOVA Lengkap',          subtitle: 'Satu Arah & Dua Arah', desc: 'Bandingkan rata-rata dari lebih dari dua kelompok data sekaligus, satu faktor maupun dua faktor sekaligus (dengan interaksi).', status: 'available', tone: 'plum',
       icon: '<path d="M4 20V10M10 20V4M16 20v7M4 20h16"/>' },
+    { id: 'stasioner',   title: 'Uji Stasioneritas',      subtitle: 'Augmented Dickey-Fuller (ADF)', desc: 'Uji akar unit untuk memastikan data deret waktu stasioner, lengkap dengan diferensiasi, pemilihan lag (AIC), nilai kritis, dan p-value MacKinnon.', status: 'available', tone: 'gold',
+      icon: '<path d="M3 12c2-6 4-6 6 0s4 6 6 0 4-6 6 0"/><path d="M3 20h18" stroke-dasharray="2 3"/>' },
     { id: 'uji-t',       title: 'Uji t',                  subtitle: 'Satu & Dua Sampel', desc: 'Bandingkan rata-rata satu kelompok terhadap nilai acuan, atau antar dua kelompok.', status: 'soon', tone: 'gold',
       icon: '<path d="M12 4v16M6 4h12M8 20h8"/>' },
     { id: 'chi-square',  title: 'Uji Chi-Square',         subtitle: null, desc: 'Uji independensi dan kesesuaian (goodness of fit) untuk data kategorik.', status: 'soon', tone: 'rust',
@@ -2103,6 +2198,9 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 
 <!-- ===================== METODE: ANOVA LENGKAP (logika di anova.js) ===================== -->
 <script src="anova.js"></script>
+
+<!-- ===================== METODE: UJI STASIONERITAS / ADF (logika di stasioner.js; butuh regresi.js) ===================== -->
+<script src="stasioner.js"></script>
 
 <!-- ===================== KUIS STATISTIKA (logika di kuis-logic.js) ===================== -->
 <script src="kuis-logic.js"></script>
