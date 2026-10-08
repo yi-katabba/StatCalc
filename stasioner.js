@@ -7,14 +7,93 @@
    H1: γ < 0 (tidak ada akar unit → data stasioner)
    Statistik uji (tau) = t-hitung γ; nilai kritis & p-value memakai
    pendekatan MacKinnon (bukan distribusi t biasa). Keputusan: tau < nilai kritis 5%.
-   Perhitungan matriks memakai mesin regresi dari regresi.js (window.StatCalcReg).
+   Perhitungan matriks memakai rutin OLS yang sama dengan regresi.js (disalin agar file ini mandiri).
    ========================================================================= */
 (function () {
   'use strict';
 
   const $ = (sel, ctx = document) => ctx.querySelector(sel);
   const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
-  const REG = window.StatCalcReg;
+  /* Mesin matriks & distribusi t (salinan dari regresi.js) — file ini mandiri,
+     tidak bergantung pada urutan/versi regresi.js. */
+  function logGamma(x) {
+    const g = 7;
+    const c = [0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313,
+      -176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+    if (x < 0.5) return Math.log(Math.PI / Math.sin(Math.PI * x)) - logGamma(1 - x);
+    x -= 1;
+    let a = c[0];
+    const t = x + g + 0.5;
+    for (let i = 1; i < g + 2; i++) a += c[i] / (x + i);
+    return 0.5 * Math.log(2 * Math.PI) + (x + 0.5) * Math.log(t) - t + Math.log(a);
+  }
+  function betacf(x, a, b) {
+    const MAXIT = 200, EPS = 3e-9, FPMIN = 1e-30;
+    const qab = a + b, qap = a + 1, qam = a - 1;
+    let c = 1, d = 1 - qab * x / qap;
+    if (Math.abs(d) < FPMIN) d = FPMIN;
+    d = 1 / d;
+    let h = d;
+    for (let m = 1; m <= MAXIT; m++) {
+      const m2 = 2 * m;
+      let aa = m * (b - m) * x / ((qam + m2) * (a + m2));
+      d = 1 + aa * d; if (Math.abs(d) < FPMIN) d = FPMIN;
+      c = 1 + aa / c; if (Math.abs(c) < FPMIN) c = FPMIN;
+      d = 1 / d; h *= d * c;
+      aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
+      d = 1 + aa * d; if (Math.abs(d) < FPMIN) d = FPMIN;
+      c = 1 + aa / c; if (Math.abs(c) < FPMIN) c = FPMIN;
+      d = 1 / d; const del = d * c; h *= del;
+      if (Math.abs(del - 1) < EPS) break;
+    }
+    return h;
+  }
+  function betai(x, a, b) {
+    if (x <= 0) return 0;
+    if (x >= 1) return 1;
+    const bt = Math.exp(logGamma(a + b) - logGamma(a) - logGamma(b) + a * Math.log(x) + b * Math.log(1 - x));
+    if (x < (a + 1) / (a + b + 2)) return bt * betacf(x, a, b) / a;
+    return 1 - bt * betacf(1 - x, b, a) / b;
+  }
+  /* p-value dua-arah untuk statistik uji t dengan derajat bebas df */
+  function tTwoTailedP(t, df) {
+    if (!Number.isFinite(t) || !Number.isFinite(df) || df <= 0) return NaN;
+    return betai(df / (df + t * t), df / 2, 0.5);
+  }
+  function transpose(M) {
+    const rows = M.length, cols = M[0].length;
+    const T = Array.from({ length: cols }, () => new Array(rows).fill(0));
+    for (let i = 0; i < rows; i++) for (let j = 0; j < cols; j++) T[j][i] = M[i][j];
+    return T;
+  }
+  function matMul(A, B) {
+    const r = A.length, c = B[0].length, inner = B.length;
+    const R = Array.from({ length: r }, () => new Array(c).fill(0));
+    for (let i = 0; i < r; i++) for (let j = 0; j < c; j++) { let s = 0; for (let m = 0; m < inner; m++) s += A[i][m] * B[m][j]; R[i][j] = s; }
+    return R;
+  }
+  function invertMatrix(M) {
+    const n = M.length;
+    const A = M.map((row, i) => [...row, ...Array.from({ length: n }, (_, j) => (i === j ? 1 : 0))]);
+    for (let col = 0; col < n; col++) {
+      let pivotRow = col;
+      for (let r = col + 1; r < n; r++) if (Math.abs(A[r][col]) > Math.abs(A[pivotRow][col])) pivotRow = r;
+      if (Math.abs(A[pivotRow][col]) < 1e-9) {
+        throw new Error('Matriks (X\u1D40X) bersifat singular \u2014 kemungkinan ada variabel X yang saling berkorelasi sempurna (multikolinearitas total) atau jumlah data terlalu sedikit.');
+      }
+      if (pivotRow !== col) [A[col], A[pivotRow]] = [A[pivotRow], A[col]];
+      const pivot = A[col][col];
+      for (let c = 0; c < 2 * n; c++) A[col][c] /= pivot;
+      for (let r = 0; r < n; r++) {
+        if (r === col) continue;
+        const factor = A[r][col];
+        if (factor === 0) continue;
+        for (let c = 0; c < 2 * n; c++) A[r][c] -= factor * A[col][c];
+      }
+    }
+    return A.map((row) => row.slice(n));
+  }
+  const REG = { transpose, matMul, invertMatrix, tTwoTailedP };
 
   const el = {
     view: $('#view-stasioner'),
@@ -28,7 +107,7 @@
     tableWrap: $('#stTableWrap'), testWrap: $('#stTestWrap'), stepsWrap: $('#stStepsWrap'), chartWrap: $('#stChartWrap'),
     conclusionCard: $('#st-conclusion-card'), conclusionWrap: $('#stConclusionWrap'),
   };
-  if (!el.view || !REG) return;
+  if (!el.view) { console.error('Uji Stasioneritas: elemen #view-stasioner tidak ditemukan di index.html.'); return; }
 
   const state = { d: 0, model: 'c', lagMode: 'auto', lag: 1, minRows: 10 };
 
