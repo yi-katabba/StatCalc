@@ -784,6 +784,138 @@ table.mini-table td.bad{ color:var(--bad); font-weight:700; }
   .menu-grid{ grid-template-columns:1fr; }
 }
 body.pre-auth .bottom-nav{ display:none; }
+
+/* =========================================================================
+   MOBILE-FIRST OVERRIDES
+   Aplikasi selalu tampil sebagai "layar ponsel" (lebar maks 480px) di tengah,
+   termasuk saat dibuka di PC. Semua elemen fixed (nav bawah, toast, profil)
+   ikut dibatasi lebar yang sama.
+   ========================================================================= */
+:root{ --shell:480px; --navh:64px; }
+html{ background:#0F1A24; }
+body{
+  width:100%; max-width:var(--shell); margin:0 auto;
+  min-height:100vh; min-height:100dvh;
+  background:var(--paper);
+  box-shadow:0 0 0 1px rgba(0,0,0,.2), 0 0 60px rgba(0,0,0,.45);
+  overflow-x:hidden;
+  user-select:none; -webkit-user-select:none;
+}
+input, textarea{ user-select:text; -webkit-user-select:text; }
+.sheet-bg{ left:50%; right:auto; width:min(100%,var(--shell)); transform:translateX(-50%); }
+
+/* Kerangka halaman: satu kolom, padding rapat */
+.cover, .toc-section, .menu-grid, .hub-grid, .home-cta-wrap, .cover-footer, .tentang-body{ max-width:100%; }
+.cover{ padding:calc(24px + var(--safe-t)) 16px 12px; }
+.cover h1{ font-size:clamp(28px,8.5vw,36px); }
+.cover .lede, .chapter-head .lede{ font-size:14.5px; text-align:left; }
+.chapter-inner{ max-width:100%; padding:14px 14px calc(40px + var(--navh) + var(--safe-b)); gap:16px; }
+.chapter-head h1{ font-size:clamp(24px,7.5vw,30px); }
+.toc-section{ padding:8px 16px; }
+.menu-grid{ padding:4px 14px 8px; gap:10px; }
+.hub-grid{ padding:6px 14px calc(40px + var(--navh) + var(--safe-b)); gap:10px; }
+.hub-card{ min-height:140px; padding:16px 14px; border-radius:14px; }
+.hub-card .hc-desc{ text-align:left; font-size:11.5px; }
+.menu-card{ border-radius:14px; }
+.menu-card .mc-desc{ text-align:left; }
+.cover-footer{ padding:0 16px calc(40px + var(--navh) + var(--safe-b)); }
+.tentang-body{ padding:8px 16px calc(40px + var(--navh) + var(--safe-b)); }
+
+/* Kartu & teks: rata kiri agar nyaman dibaca di layar sempit */
+.card{ padding:16px 14px 20px; border-radius:14px; }
+.card h2{ font-size:19px; }
+.hint, .petunjuk-item p, .interpretation p, .hyp-box .hyp-text,
+.test-conclusion, .test-note, .quiz-question, .quiz-opt .qo-text,
+.quiz-explain, .quiz-review-item .qr-q, .quiz-review-item .qr-ans,
+.quiz-review-item .qr-explain{ text-align:left; text-justify:auto; hyphens:none; }
+.hint{ font-size:13.5px; }
+
+/* Kontrol input: tombol & field penuh lebar, mudah disentuh */
+.control-row{ flex-direction:column; align-items:stretch; gap:10px; }
+.control-row label{ width:100%; }
+.control-row .stepper{ align-self:flex-start; }
+.btn-primary, .btn-ghost{ width:100%; min-height:48px; border-radius:12px; font-size:15px; }
+.select-input{ width:100%; min-width:0; height:48px; border-radius:12px; }
+.plain-input{ width:100%; height:48px; border-radius:12px; text-align:left; padding:0 14px; }
+.stepper{ height:48px; border-radius:12px; }
+.stepper button{ width:52px; font-size:22px; }
+.stepper input{ width:64px; }
+.field-note{ font-size:12px; }
+
+/* Tabel input: sel lebih besar */
+.table-scroll{ border-radius:10px; }
+table.data-table{ min-width:0; }
+table.data-table input[type="text"]{ min-height:48px; font-size:16px; padding:8px 6px; }
+table.data-table thead th{ padding:10px 6px; font-size:13px; }
+table.result-table{ font-size:12.5px; }
+
+/* Tab hasil: bisa digeser samping, lebih besar */
+.tabs{ margin-left:-2px; margin-right:-14px; padding-right:14px; }
+.tab-btn{ font-size:14px; margin-right:16px; padding:10px 2px; }
+
+/* Langkah perhitungan & statistik */
+.step-block{ padding:12px 12px 14px 46px; border-radius:10px; }
+.step-block::before{ left:11px; top:12px; }
+.stat-grid{ grid-template-columns:repeat(2,1fr); }
+.test-stat-row .stat-card{ min-width:calc(50% - 5px); }
+.equation-box{ padding:18px 14px; }
+.equation-box .eq{ font-size:17px; }
+.test-block{ padding:14px 12px 16px; }
+.chart-wrap canvas{ width:100% !important; height:auto !important; }
+
+/* Kuis */
+.quiz-question{ font-size:17px; }
+.quiz-opt{ padding:14px 12px; min-height:52px; border-radius:12px; }
+.quiz-nav-row{ position:sticky; bottom:calc(var(--navh) + var(--safe-b) + 8px); gap:8px; }
+.quiz-nav-row .btn-ghost, .quiz-nav-row .btn-primary{ flex:1; width:auto; }
+
+/* Kalkulator ilmiah: tombol besar seperti kalkulator ponsel */
+.calc-card{ padding:14px 10px 16px; }
+.calc-display{ padding:18px 14px 14px; border-radius:12px; }
+.calc-main{ font-size:34px; }
+.calc-grid{ gap:7px; }
+.calc-btn{ min-height:54px; font-size:16px; border-radius:14px; }
+.calc-btn.fn{ font-size:13px; }
+.calc-mode-btn{ min-height:36px; padding:6px 16px; }
+
+/* Login */
+#view-login{ padding:24px 18px calc(24px + var(--safe-b)); min-height:100dvh; }
+.login-box{ max-width:100%; padding:30px 20px 24px; border-radius:20px; }
+.login-field input, .btn-login{ min-height:50px; border-radius:12px; }
+
+/* Header langit */
+.sky-banner{ padding:calc(12px + var(--safe-t)) 16px 26px; border-radius:0 0 24px 24px; }
+.quote-card{ margin:14px 16px 0; }
+.sky-greet .g-name{ max-width:46vw; }
+
+/* Bar atas & navigasi bawah dibatasi selebar kerangka */
+.topbar{ padding:calc(10px + var(--safe-t)) 14px 10px 12px; min-height:calc(56px + var(--safe-t)); }
+.back-btn{ min-height:44px; }
+.bottom-nav{
+  left:50%; right:auto; width:100%; max-width:var(--shell); transform:translateX(-50%);
+  min-height:var(--navh); align-items:stretch;
+}
+.nav-item svg{ width:24px; height:24px; }
+.nav-item span{ font-size:11px; }
+.toast{ max-width:calc(min(100vw,var(--shell)) - 32px); }
+
+/* Panel profil: muncul sebagai kartu geser dari kanan, selebar kerangka bila di PC */
+.profile-panel{ width:min(320px,86vw); right:max(0px, calc(50vw - var(--shell)/2)); }
+.profile-panel{ visibility:hidden; transition:transform .28s cubic-bezier(.2,.8,.2,1), visibility 0s linear .28s; }
+.profile-panel.open{ visibility:visible; transition:transform .28s cubic-bezier(.2,.8,.2,1), visibility 0s; }
+.profile-overlay{ left:50%; right:auto; width:min(100%,var(--shell)); transform:translateX(-50%); }
+
+/* Layar sangat sempit */
+@media (max-width:380px){
+  .menu-grid, .hub-grid{ grid-template-columns:1fr; }
+  .hub-card{ min-height:0; }
+  .calc-btn{ min-height:48px; font-size:15px; }
+}
+/* Orientasi lanskap rendah: nav lebih ramping */
+@media (max-height:480px) and (orientation:landscape){
+  :root{ --navh:52px; }
+  .nav-item span{ display:none; }
+}
 </style>
 </head>
 <body class="pre-auth">
