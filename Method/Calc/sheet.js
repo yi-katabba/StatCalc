@@ -476,6 +476,36 @@
 
       <section class="card step-card">
         <div class="step-tag">Langkah 4</div>
+        <h2>Kirim data ke Stat atau Graph</h2>
+        <p class="hint">Data pada lembar kerja (termasuk kolom hasil rumus) dikirim ke metode yang dipilih, lalu Anda memilih kolom mana yang dipakai pada pratinjau pemetaan. Tombol kembali di atas akan membawa Anda kembali ke lembar kerja ini dengan data tetap utuh.</p>
+        <div class="sc-sel">
+          <div class="sc-field"><label for="scTarget">Kirim ke</label>
+            <select id="scTarget" class="select-input">
+              <optgroup label="Stat">
+                <option value="deskriptif">Statistika Deskriptif</option>
+                <option value="regresi">Regresi Linear</option>
+                <option value="smoothing">Metode Smoothing</option>
+                <option value="stasioner">Uji Stasioneritas (ADF)</option>
+              </optgroup>
+              <optgroup label="Graph">
+                <option value="histogram">Histogram</option>
+                <option value="boxplot">Boxplot</option>
+                <option value="scatter">Scatter Plot</option>
+                <option value="probplot">Probability Plot</option>
+                <option value="timeseries">Time Series Plot</option>
+                <option value="barchart">Bar Chart</option>
+                <option value="piechart">Pie Chart</option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+        <div class="sc-bar c2"><button type="button" class="btn-primary" id="scSend">Kirim &amp; buka &rarr;</button><span></span></div>
+        <p class="sc-note">ANOVA belum bisa menerima kiriman dari Calc karena bentuk tabelnya berbeda (per kelompok / dua faktor). Untuk ANOVA, salin kolom dari lembar ini lalu tempel ke tabel ANOVA.</p>
+        <p class="sc-msg err" id="scErr4" role="alert" hidden></p>
+      </section>
+
+      <section class="card step-card">
+        <div class="step-tag">Langkah 5</div>
         <h2>Ekspor ke Excel</h2>
         <p class="hint">File <strong>.xlsx</strong> menyimpan rumus sekaligus nilainya sehingga tetap bisa dihitung ulang di Excel. File <strong>.csv</strong> menyimpan nilai hasil hitung saja.</p>
         <div class="sc-sel"><div class="sc-field"><label for="scFname">Nama file</label><input id="scFname" class="plain-input" type="text" value="data-calc"></div></div>
@@ -931,6 +961,51 @@
     // hitung ulang cache setelah nilai berubah dibuat dari snapshot nilai lama:
     invalidate(); fullRender(true);
     flash('scOk2', n ? `${n} sel rumus diubah menjadi nilai tetap.` : 'Tidak ada sel berisi rumus.', 6000);
+  });
+
+
+  /* ------------------------ Kirim ke Stat / Graph ------------------------- */
+  const SEND = {
+    deskriptif: { title: 'Statistika Deskriptif', card: '#ds-data-card' },
+    regresi: { title: 'Regresi Linear', card: '#data-card', build: '#buildTableBtn', k: true },
+    smoothing: { title: 'Metode Smoothing', card: '#sm-data-card', build: '#smBuildTableBtn', onlyIfHidden: true },
+    stasioner: { title: 'Uji Stasioneritas', card: '#st-data-card', build: '#stBuildTableBtn', onlyIfHidden: true },
+    histogram: { title: 'Histogram', card: '#gr-histogram-data-card' },
+    boxplot: { title: 'Boxplot', card: '#gr-boxplot-wdata-card' },
+    scatter: { title: 'Scatter Plot', card: '#gr-scatter-data-card' },
+    probplot: { title: 'Probability Plot', card: '#gr-probplot-data-card' },
+    timeseries: { title: 'Time Series Plot', card: '#gr-timeseries-data-card' },
+    barchart: { title: 'Bar Chart', card: '#gr-barchart-data-card' },
+    piechart: { title: 'Pie Chart', card: '#gr-piechart-data-card' },
+  };
+  function exportRows() {
+    const b = usedBounds(), rows = [];
+    for (let r = 0; r < b.R; r++) {
+      const row = [];
+      for (let c = 0; c < b.C; c++) { const v = cellVal(r, c); row.push(isErr(v) ? '' : (typeof v === 'number' ? String(v) : display(v))); }
+      rows.push(row);
+    }
+    return { rows, C: b.C };
+  }
+  q('scSend').addEventListener('click', () => {
+    hide('scErr4');
+    const id = q('scTarget').value, t = SEND[id];
+    const { rows, C } = exportRows();
+    const first = S.header ? 1 : 0;
+    if (rows.length <= first) { flash('scErr4', 'Belum ada data pada lembar kerja. Isi atau impor data terlebih dahulu.', 6000); return; }
+    if (!window.StatCalc || !window.StatCalcImport || !window.StatCalcImport.has(t.card) && !t.build) { flash('scErr4', 'Halaman tujuan belum siap. Muat ulang halaman lalu coba lagi.', 6000); return; }
+    // jumlah kolom angka -> jumlah variabel X untuk regresi
+    let numCols = 0;
+    for (let c = 0; c < C; c++) { let n = 0, tot = 0; for (let r = first; r < rows.length; r++) { if (rows[r][c] !== '') { tot++; if (!Number.isNaN(parseNum(rows[r][c]))) n++; } } if (tot && n / tot >= 0.8) numCols++; }
+    window.StatCalc.goToMethod(id, t.title, 'metode-calc');
+    try {
+      if (t.k) { const k = Math.max(1, Math.min(6, numCols - 1)); $('#varCount').value = k; $(t.build).click(); }
+      else if (t.build && (!t.onlyIfHidden || $(t.card).hidden)) $(t.build).click();
+    } catch (e) { /* tabel tujuan tetap bisa dibuat manual */ }
+    setTimeout(() => {
+      const ok = window.StatCalcImport.send(t.card, rows, 'lembar kerja Calc', { hasHeader: S.header });
+      if (!ok) window.StatCalc.showToast('Tabel tujuan belum tersedia. Selesaikan Langkah 1 pada halaman ini.');
+    }, 120);
   });
 
   /* -------------------------------- Ekspor -------------------------------- */
