@@ -24,7 +24,7 @@
   /* ------------------------------ Model data ------------------------------ */
   const S = { R: 20, C: 6, cells: [], header: true };   // cells[r][c] = teks mentah ('' = kosong; '=...' = rumus)
   const sel = { r: 0, c: 0 };
-  let undoStack = [];
+  let undoStack = [], redoStack = [];
 
   function emptyCells(R, C) { return Array.from({ length: R }, () => new Array(C).fill('')); }
   S.cells = emptyCells(S.R, S.C);
@@ -41,7 +41,7 @@
   }
   function lastDataRow() { for (let r = S.R - 1; r >= 0; r--) for (let c = 0; c < S.C; c++) if (raw(r, c) !== '') return r; return -1; }
   function snapshot() { return JSON.stringify({ R: S.R, C: S.C, header: S.header, cells: S.cells }); }
-  function pushUndo() { undoStack.push(snapshot()); if (undoStack.length > UNDO_MAX) undoStack.shift(); updateUndoBtn(); }
+  function pushUndo() { undoStack.push(snapshot()); if (undoStack.length > UNDO_MAX) undoStack.shift(); redoStack = []; updateUndoBtn(); }
   function restore(js) { const o = JSON.parse(js); S.R = o.R; S.C = o.C; S.header = o.header; S.cells = o.cells; }
 
   const NUM_RE = /^[-+]?(\d+\.?\d*|\.\d+)(e[-+]?\d+)?$/i;
@@ -373,8 +373,87 @@
     #view-metode-calc .sc-note{ font-size:12.5px; color:var(--ink-soft); margin:10px 0 0; text-align:justify; text-justify:inter-word; hyphens:auto; }
     #view-metode-calc .sc-h4{ font-size:14.5px; margin:18px 0 4px; font-family:var(--font-body); }
     #view-metode-calc code{ font-family:var(--font-mono); font-size:12.5px; background:var(--paper-2); padding:1px 5px; border-radius:4px; }
+
+    /* ---------------------- Pita perintah (ribbon) ---------------------- */
+    #view-metode-calc .sc-main{ padding:0; overflow:hidden; }
+    #view-metode-calc .sc-tabs{ display:flex; gap:2px; padding:8px 10px 0; background:var(--paper-2); border-bottom:1px solid var(--rule-strong); overflow-x:auto; scrollbar-width:none; }
+    #view-metode-calc .sc-tabs::-webkit-scrollbar{ display:none; }
+    #view-metode-calc .sc-tab{ flex:1 1 0; max-width:150px; min-height:42px; padding:0 16px; border:1px solid transparent; border-bottom:none; border-radius:10px 10px 0 0; background:transparent; color:var(--ink-soft); font-family:var(--font-body); font-size:14px; font-weight:700; cursor:pointer; margin-bottom:-1px; }
+    #view-metode-calc .sc-tab:hover{ color:var(--ink); background:rgba(255,255,255,.55); }
+    #view-metode-calc .sc-tab[aria-selected="true"]{ background:#fff; color:var(--accent); border-color:var(--rule-strong); box-shadow:inset 0 3px 0 var(--accent-2); }
+    #view-metode-calc .sc-rpanel{ display:none; background:#fff; border-bottom:1px solid var(--rule); }
+    #view-metode-calc .sc-rpanel.on{ display:block; }
+    #view-metode-calc .sc-rbody{ display:flex; align-items:stretch; gap:0; padding:10px 8px 4px; overflow-x:auto; -webkit-overflow-scrolling:touch; overscroll-behavior-x:contain; }
+    #view-metode-calc .sc-grp{ flex:0 0 auto; display:flex; flex-direction:column; padding:0 12px; border-right:1px solid var(--rule); }
+    #view-metode-calc .sc-grp:last-child{ border-right:none; }
+    #view-metode-calc .sc-gbody{ flex:1; display:flex; align-items:center; gap:6px; }
+    #view-metode-calc .sc-glabel{ text-align:center; font-size:11px; font-weight:700; letter-spacing:.04em; color:var(--ink-faint); padding:6px 0 4px; }
+    #view-metode-calc .sc-rb{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; min-width:64px; min-height:64px; padding:8px 8px 6px; border:1px solid transparent; border-radius:12px; background:transparent; color:var(--ink); cursor:pointer; font-family:var(--font-body); transition:background .12s ease, border-color .12s ease, transform .08s ease; }
+    #view-metode-calc .sc-rb svg{ width:26px; height:26px; flex-shrink:0; color:var(--accent); }
+    #view-metode-calc .sc-rb span{ font-size:11.5px; font-weight:600; line-height:1.15; text-align:center; max-width:84px; }
+    #view-metode-calc .sc-rb:hover:not(:disabled){ background:var(--accent-soft); border-color:var(--rule-strong); }
+    #view-metode-calc .sc-rb:active:not(:disabled){ transform:scale(.95); }
+    #view-metode-calc .sc-rb:disabled{ opacity:.38; cursor:default; }
+    #view-metode-calc .sc-rb.pri{ background:var(--accent); color:#fff; }
+    #view-metode-calc .sc-rb.pri svg{ color:#fff; }
+    #view-metode-calc .sc-rb.pri:hover:not(:disabled){ background:var(--accent-hi); border-color:var(--accent-hi); }
+    #view-metode-calc .sc-rb.danger svg{ color:var(--bad); }
+    #view-metode-calc .sc-rb.sm{ min-height:0; flex-direction:row; gap:8px; padding:8px 12px; }
+    #view-metode-calc .sc-rb.sm svg{ width:20px; height:20px; }
+    #view-metode-calc .sc-rb.sm span{ max-width:none; font-size:13px; }
+    #view-metode-calc .sc-stack{ display:flex; flex-direction:column; gap:4px; }
+    #view-metode-calc .sc-fgrid{ display:grid; grid-template-columns:repeat(3,max-content); gap:8px 10px; align-items:end; }
+    #view-metode-calc .sc-fgrid.c2{ grid-template-columns:repeat(2,max-content); }
+    #view-metode-calc .sc-fld{ display:flex; flex-direction:column; gap:3px; min-width:0; }
+    #view-metode-calc .sc-fld > label{ font-size:11.5px; font-weight:600; color:var(--ink-soft); line-height:1.2; }
+    #view-metode-calc .sc-ribbon .select-input{ width:168px; min-width:0; height:40px; border-radius:10px; font-size:14px; padding:0 8px; }
+    #view-metode-calc .sc-ribbon #scOp{ width:220px; }
+    #view-metode-calc .sc-ribbon .plain-input{ width:112px; height:40px; border-radius:10px; font-size:15px; text-align:left; padding:0 10px; }
+    #view-metode-calc .sc-ribbon .plain-input.num{ width:78px; text-align:center; }
+    #view-metode-calc .sc-ribbon .plain-input.wide{ width:100%; min-width:230px; font-family:var(--font-mono); }
+    #view-metode-calc .sc-ribbon .plain-input.file{ width:150px; }
+    #view-metode-calc .sc-chk{ display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; padding:8px 10px; border:1px solid var(--rule); border-radius:12px; background:var(--paper-2); cursor:pointer; max-width:150px; line-height:1.2; }
+    #view-metode-calc .sc-chk input{ width:18px; height:18px; flex-shrink:0; accent-color:var(--accent); }
+    #view-metode-calc .sc-tip{ margin:0; padding:2px 16px 12px; font-size:12.5px; color:var(--ink-soft); text-align:left; hyphens:manual; }
+    #view-metode-calc .sc-body{ padding:12px 14px 16px; }
+    #view-metode-calc .sc-msgs{ padding:0 14px; }
+    #view-metode-calc .sc-msgs .sc-msg{ margin:10px 0 0; }
+    #view-metode-calc .sc-body .sc-fxrow{ margin-top:2px; }
+    #view-metode-calc .sc-body .sc-panel{ margin-top:0; }
+    #view-metode-calc .sc-body .sc-bar{ margin-top:10px; }
+    @media (min-width:700px){
+      #view-metode-calc .sc-rbody{ flex-wrap:wrap; row-gap:6px; overflow-x:visible; padding:12px 12px 6px; }
+      #view-metode-calc .sc-tab{ flex:0 0 auto; min-width:104px; }
+    }
+    @media (min-width:1024px){
+      #view-metode-calc .chapter-inner{ max-width:1400px; }
+      #view-metode-calc .sc-scroll{ height:clamp(340px,60vh,760px); }
+    }
   `;
   document.head.appendChild(style);
+
+
+  /* ------------------------- Ikon & tombol pita -------------------------- */
+  const ICO = {
+    paste: '<rect x="6" y="4.5" width="12" height="16.5" rx="2"/><path d="M9.5 4.5V3.5h5v1"/><path d="M9 11h6M9 15h4"/>',
+    upload: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M12 18v-6M9.5 14.5 12 12l2.5 2.5"/>',
+    newtable: '<rect x="3" y="4" width="14" height="14" rx="2"/><path d="M3 9.5h14M8.5 4v14"/><path d="M19 14.5v6M16 17.5h6"/>',
+    sample: '<path d="M9.5 3.5h5M10.5 3.5v5.5L5.2 18.2A2 2 0 0 0 7 21h10a2 2 0 0 0 1.8-2.8L13.5 9V3.5"/><path d="M7.7 15h8.6"/>',
+    xlsx: '<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5"/><path d="M4.5 19.5h15"/>',
+    csv: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M8.5 13h7M8.5 17h7"/>',
+    addrow: '<rect x="3.5" y="3.5" width="17" height="9" rx="1.8"/><path d="M3.5 8h17"/><path d="M12 15.5v5M9.5 18h5"/>',
+    delrow: '<rect x="3.5" y="3.5" width="17" height="9" rx="1.8"/><path d="M3.5 8h17"/><path d="M9.5 18h5"/>',
+    addcol: '<rect x="3.5" y="3.5" width="9" height="17" rx="1.8"/><path d="M8 3.5v17"/><path d="M15.5 12h5M18 9.5v5"/>',
+    delcol: '<rect x="3.5" y="3.5" width="9" height="17" rx="1.8"/><path d="M8 3.5v17"/><path d="M15.5 12h5"/>',
+    undo: '<path d="M9 6.5 4.5 11 9 15.5"/><path d="M5 11h9a4.5 4.5 0 0 1 0 9h-3.5"/>',
+    redo: '<path d="M15 6.5 19.5 11 15 15.5"/><path d="M19 11h-9a4.5 4.5 0 0 0 0 9h3.5"/>',
+    clear: '<path d="M4.5 7h15M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/><path d="M10 11v5.5M14 11v5.5"/>',
+    fx: '<text x="12" y="16.5" text-anchor="middle" font-size="13" font-style="italic" font-weight="700" font-family="Georgia,serif" fill="currentColor" stroke="none">fx</text><rect x="3" y="4" width="18" height="16" rx="2.5"/>',
+    toval: '<path d="M4.5 8h8M4.5 12h8M4.5 16h5"/><path d="M15 12h5.5M18 9.5l2.5 2.5-2.5 2.5"/>',
+    send: '<path d="M21 3 10.5 13.5"/><path d="M21 3l-6.5 18-3.5-7.5L3.5 10z"/>'
+  };
+  const svgI = (k) => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICO[k]}</svg>`;
+  const rb = (id, ico, label, tip, cls, dis) => `<button type="button" class="sc-rb ${cls || ''}" id="${id}" title="${tip || label}" aria-label="${tip || label}"${dis ? ' disabled' : ''}>${svgI(ico)}<span>${label}</span></button>`;
 
   /* --------------------------- Markup halaman ---------------------------- */
   const section = document.createElement('section');
@@ -385,135 +464,184 @@
       <div class="chapter-head">
         <span class="eyebrow">Metode &rsaquo; Calc</span>
         <h1>Lembar Kerja Calc</h1>
-        <p class="lede">Impor data dari Excel, ubah dan hitung seperti di Excel (ketik rumus atau pakai Rumus Kolom, misalnya mengubah satu kolom menjadi log dan menyimpannya di kolom lain), lalu ekspor kembali ke Excel.</p>
+        <p class="lede">Impor, ubah, hitung, dan ekspor data seperti di Excel. Semua perintah ada di pita tab di atas lembar kerja.</p>
       </div>
 
-      <section class="card step-card">
-        <div class="step-tag">Langkah 1</div>
-        <h2>Impor data</h2>
-        <p class="hint">Blok sel di Excel lalu tempel, atau unggah file <strong>.xlsx</strong> / <strong>.csv</strong>. Anda juga boleh langsung mengetik di lembar kerja pada Langkah 2.</p>
-        <div class="sc-bar c2">
-          <button type="button" class="btn-ghost" id="scPasteBtn">Tempel dari Excel</button>
-          <button type="button" class="btn-ghost" id="scFileBtn">Unggah file (.xlsx, .csv)</button>
-        </div>
-        <input type="file" id="scFile" hidden accept=".xlsx,.xls,.xlsm,.csv,.tsv,.txt,text/csv,text/plain">
-        <div class="sc-panel" id="scPastePanel" hidden>
-          <h4 class="sc-h4" style="margin-top:0">Tempel data dari Excel</h4>
-          <textarea id="scPasteArea" spellcheck="false" placeholder="Tempel data di sini (Ctrl+V)&hellip;" aria-label="Data tempelan"></textarea>
-          <div class="sc-bar c2">
-            <button type="button" class="btn-primary" id="scPasteRead">Baca Data</button>
-            <button type="button" class="btn-ghost" id="scPasteCancel">Batal</button>
+      <section class="card sc-main">
+        <div class="sc-ribbon">
+          <div class="sc-tabs" role="tablist" aria-label="Pita perintah">
+            <button type="button" class="sc-tab" role="tab" data-tab="file" aria-selected="true">File</button>
+            <button type="button" class="sc-tab" role="tab" data-tab="edit" aria-selected="false">Edit</button>
+            <button type="button" class="sc-tab" role="tab" data-tab="fungsi" aria-selected="false">Fungsi</button>
+            <button type="button" class="sc-tab" role="tab" data-tab="kirim" aria-selected="false">Kirim</button>
+          </div>
+
+          <!-- ============ TAB FILE ============ -->
+          <div class="sc-rpanel on" data-panel="file" role="tabpanel">
+            <div class="sc-rbody">
+              <div class="sc-grp">
+                <div class="sc-gbody">
+                  ${rb('scPasteBtn', 'paste', 'Tempel dari Excel', 'Tempel blok sel dari Excel')}
+                  ${rb('scFileBtn', 'upload', 'Unggah file', 'Unggah file .xlsx, .csv')}
+                </div>
+                <div class="sc-glabel">Impor</div>
+              </div>
+              <div class="sc-grp">
+                <div class="sc-gbody">
+                  <div class="sc-stack">
+                    <div class="sc-fld"><label for="scNewC">Kolom</label><input id="scNewC" class="plain-input num" type="number" min="1" max="52" value="3" inputmode="numeric"></div>
+                    <div class="sc-fld"><label for="scNewR">Baris data</label><input id="scNewR" class="plain-input num" type="number" min="1" max="5000" value="10" inputmode="numeric"></div>
+                  </div>
+                  ${rb('scNewBtn', 'newtable', 'Buat tabel baru', 'Buat tabel kosong sesuai ukuran')}
+                  ${rb('scSampleBtn', 'sample', 'Contoh data', 'Isi dengan contoh data')}
+                </div>
+                <div class="sc-glabel">Data baru</div>
+              </div>
+              <div class="sc-grp">
+                <div class="sc-gbody">
+                  <div class="sc-fld"><label for="scFname">Nama file</label><input id="scFname" class="plain-input file" type="text" value="data-calc"></div>
+                  ${rb('scXlsx', 'xlsx', '.xlsx', 'Unduh .xlsx (rumus & nilai tersimpan)')}
+                  ${rb('scCsv', 'csv', '.csv', 'Unduh .csv (nilai saja)')}
+                </div>
+                <div class="sc-glabel">Ekspor</div>
+              </div>
+            </div>
+            <p class="sc-tip">Tempel blok sel dari Excel, unggah .xlsx / .csv, atau buat tabel baru lalu isi langsung di lembar kerja.</p>
+            <input type="file" id="scFile" hidden accept=".xlsx,.xls,.xlsm,.csv,.tsv,.txt,text/csv,text/plain">
+          </div>
+
+          <!-- ============ TAB EDIT ============ -->
+          <div class="sc-rpanel" data-panel="edit" role="tabpanel">
+            <div class="sc-rbody">
+              <div class="sc-grp">
+                <div class="sc-gbody">
+                  ${rb('scUndo', 'undo', 'Urungkan', 'Urungkan perubahan terakhir', '', true)}
+                  ${rb('scRedo', 'redo', 'Ulangi', 'Ulangi perubahan yang diurungkan', '', true)}
+                </div>
+                <div class="sc-glabel">Riwayat</div>
+              </div>
+              <div class="sc-grp">
+                <div class="sc-gbody">
+                  ${rb('scAddRow', 'addrow', 'Tambah baris', 'Tambah satu baris di bawah')}
+                  ${rb('scDelRow', 'delrow', 'Hapus baris', 'Hapus baris terakhir')}
+                </div>
+                <div class="sc-glabel">Baris</div>
+              </div>
+              <div class="sc-grp">
+                <div class="sc-gbody">
+                  ${rb('scAddCol', 'addcol', 'Tambah kolom', 'Tambah satu kolom di kanan')}
+                  ${rb('scDelCol', 'delcol', 'Hapus kolom', 'Hapus kolom terakhir')}
+                </div>
+                <div class="sc-glabel">Kolom</div>
+              </div>
+              <div class="sc-grp">
+                <div class="sc-gbody">
+                  ${rb('scClear', 'clear', 'Kosongkan', 'Kosongkan seluruh sel', 'danger')}
+                  <label class="sc-chk"><input type="checkbox" id="scHeader" checked> Baris 1 judul kolom</label>
+                </div>
+                <div class="sc-glabel">Sel</div>
+              </div>
+            </div>
+            <p class="sc-tip">Ketuk sel untuk mengedit. Awali dengan = untuk rumus, mis. =LOG10(A2) atau =SUM(A2:A20). Enter turun, Tab ke kanan.</p>
+          </div>
+
+          <!-- ============ TAB FUNGSI ============ -->
+          <div class="sc-rpanel" data-panel="fungsi" role="tabpanel">
+            <div class="sc-rbody">
+              <div class="sc-grp">
+                <div class="sc-gbody">
+                  <div class="sc-fgrid">
+                    <div class="sc-fld"><label for="scSrc">Kolom sumber</label><select id="scSrc" class="select-input"></select></div>
+                    <div class="sc-fld"><label for="scOp">Operasi</label><select id="scOp" class="select-input"></select></div>
+                    <div class="sc-fld" id="scParWrap"><label for="scPar" id="scParLbl">Parameter</label><input id="scPar" class="plain-input" type="text" inputmode="decimal" value="2"></div>
+                    <div class="sc-fld"><label for="scDst">Simpan hasil di</label><select id="scDst" class="select-input"></select></div>
+                    <div class="sc-fld"><label for="scTitle">Judul kolom hasil</label><input id="scTitle" class="plain-input" type="text" placeholder="mis. log_Y"></div>
+                  </div>
+                  ${rb('scApply', 'fx', 'Terapkan', 'Terapkan operasi ke kolom tujuan', 'pri')}
+                </div>
+                <div class="sc-glabel">Rumus kolom</div>
+              </div>
+              <div class="sc-grp">
+                <div class="sc-gbody">
+                  <div class="sc-stack">
+                    <div class="sc-fld"><label for="scExpr">Rumus per baris</label><input id="scExpr" class="plain-input wide" type="text" spellcheck="false" autocomplete="off" placeholder="mis. LN(A)*2+B"></div>
+                    <div class="sc-fld"><label for="scDst2">Simpan hasil di</label><select id="scDst2" class="select-input"></select></div>
+                  </div>
+                  ${rb('scApply2', 'fx', 'Terapkan', 'Terapkan rumus bebas ke kolom tujuan', 'pri')}
+                </div>
+                <div class="sc-glabel">Rumus bebas</div>
+              </div>
+              <div class="sc-grp">
+                <div class="sc-gbody">
+                  ${rb('scToVal', 'toval', 'Rumus jadi nilai', 'Ubah semua rumus menjadi nilai tetap')}
+                </div>
+                <div class="sc-glabel">Konversi</div>
+              </div>
+            </div>
+            <p class="sc-tip">Hasil berupa rumus yang diisi ke bawah, jadi ikut berubah bila data sumber diedit. Rumus bebas: tulis huruf kolom saja, mis. LOG10(A), (A-B)^2, IF(A&gt;100,A,0).</p>
+          </div>
+
+          <!-- ============ TAB KIRIM ============ -->
+          <div class="sc-rpanel" data-panel="kirim" role="tabpanel">
+            <div class="sc-rbody">
+              <div class="sc-grp">
+                <div class="sc-gbody">
+                  <div class="sc-fld"><label for="scTarget">Kirim ke</label>
+                    <select id="scTarget" class="select-input" style="width:220px">
+                      <optgroup label="Stat">
+                        <option value="deskriptif">Statistika Deskriptif</option>
+                        <option value="regresi">Regresi Linear</option>
+                        <option value="smoothing">Metode Smoothing</option>
+                        <option value="stasioner">Uji Stasioneritas (ADF)</option>
+                      </optgroup>
+                      <optgroup label="Graph">
+                        <option value="histogram">Histogram</option>
+                        <option value="boxplot">Boxplot</option>
+                        <option value="scatter">Scatter Plot</option>
+                        <option value="probplot">Probability Plot</option>
+                        <option value="timeseries">Time Series Plot</option>
+                        <option value="barchart">Bar Chart</option>
+                        <option value="piechart">Pie Chart</option>
+                      </optgroup>
+                    </select>
+                  </div>
+                  ${rb('scSend', 'send', 'Kirim & buka', 'Kirim data lembar kerja ke metode terpilih', 'pri')}
+                </div>
+                <div class="sc-glabel">Stat / Graph</div>
+              </div>
+            </div>
+            <p class="sc-tip">Data (termasuk kolom hasil rumus) dikirim ke metode terpilih; tombol kembali membawa Anda ke lembar ini dengan data utuh. ANOVA belum menerima kiriman dari Calc: salin kolom lalu tempel ke tabel ANOVA.</p>
           </div>
         </div>
-        <h3 class="sc-h4">Atau buat data baru</h3>
-        <p class="hint" style="margin-top:0">Tentukan ukuran tabel, lalu isi sendiri di Langkah 2. Judul kolom ada di baris 1 dan bisa diganti. Kolom dan baris bisa ditambah kapan saja.</p>
-        <div class="sc-sel">
-          <div class="sc-field"><label for="scNewC">Jumlah kolom</label><input id="scNewC" class="plain-input" type="number" min="1" max="52" value="3" inputmode="numeric"></div>
-          <div class="sc-field"><label for="scNewR">Jumlah baris data</label><input id="scNewR" class="plain-input" type="number" min="1" max="5000" value="10" inputmode="numeric"></div>
-        </div>
-        <div class="sc-bar c2">
-          <button type="button" class="btn-primary" id="scNewBtn">Buat tabel baru</button>
-          <button type="button" class="btn-ghost" id="scSampleBtn">Isi contoh data</button>
-        </div>
-        <p class="sc-msg err" id="scErr" role="alert" hidden></p>
-        <p class="sc-msg ok" id="scOk" role="status" hidden></p>
-      </section>
 
-      <section class="card step-card">
-        <div class="step-tag">Langkah 2</div>
-        <h2>Lembar kerja</h2>
-        <p class="hint">Ketuk sel untuk mengedit. Awali dengan <code>=</code> untuk rumus, misalnya <code>=LOG10(A2)</code>, <code>=B2*2+C2</code>, atau <code>=SUM(A2:A20)</code>. Tekan Enter untuk turun, Tab untuk ke kanan. Anda juga bisa menempel (Ctrl+V) blok dari Excel langsung ke sel.</p>
-        <label class="sc-check"><input type="checkbox" id="scHeader" checked> Baris 1 adalah judul kolom</label>
-        <div class="sc-bar c4">
-          <button type="button" class="btn-ghost" id="scAddRow">+ Tambah baris</button>
-          <button type="button" class="btn-ghost" id="scDelRow">&minus; Hapus baris terakhir</button>
-          <button type="button" class="btn-ghost" id="scAddCol">+ Tambah kolom</button>
-          <button type="button" class="btn-ghost" id="scDelCol">&minus; Hapus kolom terakhir</button>
-        </div>
-        <div class="sc-bar c2">
-          <button type="button" class="btn-ghost" id="scUndo" disabled>&#8630; Urungkan</button>
-          <button type="button" class="btn-ghost" id="scClear">Kosongkan</button>
-        </div>
-        <div class="sc-fxrow">
-          <span class="sc-name" id="scName">A1</span>
-          <input type="text" class="sc-fx" id="scFx" spellcheck="false" autocomplete="off" aria-label="Isi sel / rumus" placeholder="Isi sel atau rumus">
-        </div>
-        <div class="sc-scroll" id="scScroll">
-          <div class="sc-head" id="scHead"></div>
-          <div class="sc-inner" id="scInner"><div class="sc-rows" id="scRows"></div></div>
-        </div>
-        <p class="sc-note" id="scInfo"></p>
-      </section>
-
-      <section class="card step-card">
-        <div class="step-tag">Langkah 3</div>
-        <h2>Rumus kolom &mdash; hitung &amp; simpan di kolom lain</h2>
-        <p class="hint">Pilih kolom sumber dan operasi, lalu tentukan kolom tujuan. Hasilnya berupa rumus Excel yang diisikan ke bawah (seperti fill down), sehingga ikut berubah bila data sumber diedit.</p>
-        <div class="sc-sel">
-          <div class="sc-field"><label for="scSrc">Kolom sumber</label><select id="scSrc" class="select-input"></select></div>
-          <div class="sc-field"><label for="scOp">Operasi</label><select id="scOp" class="select-input"></select></div>
-          <div class="sc-field" id="scParWrap"><label for="scPar" id="scParLbl">Parameter</label><input id="scPar" class="plain-input" type="text" inputmode="decimal" value="2"></div>
-        </div>
-        <div class="sc-sel" style="margin-top:12px">
-          <div class="sc-field"><label for="scDst">Simpan hasil di</label><select id="scDst" class="select-input"></select></div>
-          <div class="sc-field"><label for="scTitle">Judul kolom hasil</label><input id="scTitle" class="plain-input" type="text" placeholder="mis. log_Y"></div>
-        </div>
-        <div class="sc-bar c2">
-          <button type="button" class="btn-primary" id="scApply">Terapkan</button>
-          <button type="button" class="btn-ghost" id="scToVal">Ubah semua rumus jadi nilai</button>
+        <div class="sc-msgs">
+          <p class="sc-msg err" id="scErr" role="alert" hidden></p>
+          <p class="sc-msg ok" id="scOk" role="status" hidden></p>
+          <p class="sc-msg err" id="scErr2" role="alert" hidden></p>
+          <p class="sc-msg ok" id="scOk2" role="status" hidden></p>
+          <p class="sc-msg err" id="scErr3" role="alert" hidden></p>
+          <p class="sc-msg err" id="scErr4" role="alert" hidden></p>
         </div>
 
-        <h3 class="sc-h4">Rumus bebas</h3>
-        <p class="hint" style="margin-top:0">Tulis rumus memakai huruf kolom saja; huruf kolom otomatis dipasangkan dengan nomor baris. Contoh: <code>LOG10(A)</code>, <code>(A-B)^2</code>, <code>IF(A&gt;100,A,0)</code>, <code>B/SUM(B$2:B$100)</code>.</p>
-        <div class="sc-sel">
-          <div class="sc-field" style="flex:2 1 220px"><label for="scExpr">Rumus per baris</label><input id="scExpr" class="plain-input" type="text" spellcheck="false" autocomplete="off" placeholder="mis. LN(A)*2+B"></div>
-          <div class="sc-field"><label for="scDst2">Simpan hasil di</label><select id="scDst2" class="select-input"></select></div>
-        </div>
-        <div class="sc-bar c2"><button type="button" class="btn-primary" id="scApply2">Terapkan rumus bebas</button><span></span></div>
-        <p class="sc-msg err" id="scErr2" role="alert" hidden></p>
-        <p class="sc-msg ok" id="scOk2" role="status" hidden></p>
-      </section>
-
-      <section class="card step-card">
-        <div class="step-tag">Langkah 4</div>
-        <h2>Kirim data ke Stat atau Graph</h2>
-        <p class="hint">Data pada lembar kerja (termasuk kolom hasil rumus) dikirim ke metode yang dipilih, lalu Anda memilih kolom mana yang dipakai pada pratinjau pemetaan. Tombol kembali di atas akan membawa Anda kembali ke lembar kerja ini dengan data tetap utuh.</p>
-        <div class="sc-sel">
-          <div class="sc-field"><label for="scTarget">Kirim ke</label>
-            <select id="scTarget" class="select-input">
-              <optgroup label="Stat">
-                <option value="deskriptif">Statistika Deskriptif</option>
-                <option value="regresi">Regresi Linear</option>
-                <option value="smoothing">Metode Smoothing</option>
-                <option value="stasioner">Uji Stasioneritas (ADF)</option>
-              </optgroup>
-              <optgroup label="Graph">
-                <option value="histogram">Histogram</option>
-                <option value="boxplot">Boxplot</option>
-                <option value="scatter">Scatter Plot</option>
-                <option value="probplot">Probability Plot</option>
-                <option value="timeseries">Time Series Plot</option>
-                <option value="barchart">Bar Chart</option>
-                <option value="piechart">Pie Chart</option>
-              </optgroup>
-            </select>
+        <div class="sc-body">
+          <div class="sc-panel" id="scPastePanel" hidden>
+            <h4 class="sc-h4" style="margin-top:0">Tempel data dari Excel</h4>
+            <textarea id="scPasteArea" spellcheck="false" placeholder="Tempel data di sini (Ctrl+V)&hellip;" aria-label="Data tempelan"></textarea>
+            <div class="sc-bar c2">
+              <button type="button" class="btn-primary" id="scPasteRead">Baca Data</button>
+              <button type="button" class="btn-ghost" id="scPasteCancel">Batal</button>
+            </div>
           </div>
+          <div class="sc-fxrow">
+            <span class="sc-name" id="scName">A1</span>
+            <input type="text" class="sc-fx" id="scFx" spellcheck="false" autocomplete="off" aria-label="Isi sel / rumus" placeholder="Isi sel atau rumus">
+          </div>
+          <div class="sc-scroll" id="scScroll">
+            <div class="sc-head" id="scHead"></div>
+            <div class="sc-inner" id="scInner"><div class="sc-rows" id="scRows"></div></div>
+          </div>
+          <p class="sc-note" id="scInfo"></p>
         </div>
-        <div class="sc-bar c2"><button type="button" class="btn-primary" id="scSend">Kirim &amp; buka &rarr;</button><span></span></div>
-        <p class="sc-note">ANOVA belum bisa menerima kiriman dari Calc karena bentuk tabelnya berbeda (per kelompok / dua faktor). Untuk ANOVA, salin kolom dari lembar ini lalu tempel ke tabel ANOVA.</p>
-        <p class="sc-msg err" id="scErr4" role="alert" hidden></p>
-      </section>
-
-      <section class="card step-card">
-        <div class="step-tag">Langkah 5</div>
-        <h2>Ekspor ke Excel</h2>
-        <p class="hint">File <strong>.xlsx</strong> menyimpan rumus sekaligus nilainya sehingga tetap bisa dihitung ulang di Excel. File <strong>.csv</strong> menyimpan nilai hasil hitung saja.</p>
-        <div class="sc-sel"><div class="sc-field"><label for="scFname">Nama file</label><input id="scFname" class="plain-input" type="text" value="data-calc"></div></div>
-        <div class="sc-bar c2">
-          <button type="button" class="btn-primary" id="scXlsx">Unduh .xlsx</button>
-          <button type="button" class="btn-ghost" id="scCsv">Unduh .csv</button>
-        </div>
-        <p class="sc-msg err" id="scErr3" role="alert" hidden></p>
       </section>
     </div>`;
   document.body.insertBefore(section, $('#profileOverlay'));
@@ -522,7 +650,7 @@
   const elScroll = q('scScroll'), elHead = q('scHead'), elInner = q('scInner'), elRows = q('scRows');
   const elName = q('scName'), elFx = q('scFx'), elInfo = q('scInfo');
 
-  function flash(id, msg, ms) { const e = q(id); e.textContent = msg; e.hidden = false; clearTimeout(e._t); if (ms) e._t = setTimeout(() => { e.hidden = true; }, ms); }
+  function flash(id, msg, ms) { const e = q(id); $$('.sc-msg', section).forEach((m) => { if (m !== e) m.hidden = true; }); e.textContent = msg; e.hidden = false; clearTimeout(e._t); if (ms) e._t = setTimeout(() => { e.hidden = true; }, ms); }
   function hide(id) { q(id).hidden = true; }
 
   /* ----------------------------- Render grid ------------------------------ */
@@ -595,7 +723,7 @@
     const last = lastDataRow();
     elInfo.textContent = `${S.R} baris × ${S.C} kolom · data terisi sampai baris ${last + 1 > 0 ? last + 1 : 0}. Batas lembar: ${MAX_R} baris × ${MAX_C} kolom.`;
   }
-  function updateUndoBtn() { q('scUndo').disabled = undoStack.length === 0; }
+  function updateUndoBtn() { q('scUndo').disabled = undoStack.length === 0; q('scRedo').disabled = redoStack.length === 0; }
 
   /* ----------------------------- Seleksi sel ------------------------------ */
   function updateSelUI() {
@@ -704,6 +832,22 @@
     invalidate(); fullRender(true);
   }
 
+
+  /* ------------------------------ Tab pita -------------------------------- */
+  function showTab(name) {
+    $$('.sc-tab', section).forEach((b) => { const on = b.dataset.tab === name; b.setAttribute('aria-selected', on ? 'true' : 'false'); b.tabIndex = on ? 0 : -1; });
+    $$('.sc-rpanel', section).forEach((p) => p.classList.toggle('on', p.dataset.panel === name));
+    if (name === 'fungsi') updateSelects();
+  }
+  $$('.sc-tab', section).forEach((b, i, all) => {
+    b.addEventListener('click', () => showTab(b.dataset.tab));
+    b.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      const n = all[(i + (e.key === 'ArrowRight' ? 1 : all.length - 1)) % all.length];
+      n.focus(); showTab(n.dataset.tab);
+    });
+  });
+
   /* ------------------------ Baris / kolom / undo -------------------------- */
   function addRows(n) {
     if (S.R >= MAX_R) { flash('scErr', `Batas ${MAX_R} baris tercapai.`, 4000); return; }
@@ -722,10 +866,20 @@
     if (S.C <= 1) return;
     pushUndo(); S.cells.forEach((row) => row.pop()); S.C -= 1; sel.c = Math.min(sel.c, S.C - 1); invalidate(); fullRender(true);
   });
+  function applySnapshot(js) {
+    restore(js); invalidate(); q('scHeader').checked = S.header;
+    sel.r = Math.min(sel.r, S.R - 1); sel.c = Math.min(sel.c, S.C - 1);
+    updateUndoBtn(); fullRender(true);
+  }
   q('scUndo').addEventListener('click', () => {
     if (!undoStack.length) return;
-    restore(undoStack.pop()); invalidate(); q('scHeader').checked = S.header; sel.r = Math.min(sel.r, S.R - 1); sel.c = Math.min(sel.c, S.C - 1);
-    updateUndoBtn(); fullRender(true);
+    redoStack.push(snapshot());
+    applySnapshot(undoStack.pop());
+  });
+  q('scRedo').addEventListener('click', () => {
+    if (!redoStack.length) return;
+    undoStack.push(snapshot());
+    applySnapshot(redoStack.pop());
   });
   q('scClear').addEventListener('click', () => {
     pushUndo(); S.cells = emptyCells(S.R, S.C); invalidate(); fullRender(true);
@@ -742,7 +896,7 @@
     for (let c = 0; c < C; c++) S.cells[0][c] = 'Variabel ' + (c + 1);
     sel.r = 1; sel.c = 0; invalidate(); fullRender(false); elScroll.scrollTop = 0; elScroll.scrollLeft = 0;
     q('scFname').value = 'data-baru';
-    flash('scOk', `Tabel baru ${R} baris \u00D7 ${C} kolom dibuat. Ganti judul kolom di baris 1, lalu isi datanya di Langkah 2.`, 9000);
+    flash('scOk', `Tabel baru ${R} baris \u00D7 ${C} kolom dibuat. Ganti judul kolom di baris 1, lalu isi datanya.`, 9000);
     section.scrollIntoView && q('scScroll').scrollIntoView({ behavior: 'smooth', block: 'center' });
     setTimeout(() => goTo(0, 0), 400);
   });
@@ -752,7 +906,7 @@
     const rows = [['Periode', 'Y', 'X']];
     Y.forEach((y, i) => rows.push([String(i + 1), String(y), String(X[i])]));
     loadGrid(rows, true);
-    flash('scOk', 'Contoh data dimuat. Coba Langkah 3: pilih kolom B, operasi Log10, simpan di kolom D.', 7000);
+    flash('scOk', 'Contoh data dimuat. Coba tab Fungsi: pilih kolom B, operasi Log10, simpan di kolom D.', 7000);
   });
 
   /* -------------------------------- Impor --------------------------------- */
@@ -847,7 +1001,7 @@
     }
   });
 
-  /* --------------------------- Rumus kolom (Langkah 3) -------------------- */
+  /* --------------------------- Rumus kolom (tab Fungsi) -------------------- */
   const OPS = [
     { id: 'log10', label: 'Log basis 10  —  LOG10(x)', f: (s) => `LOG10(${s})` },
     { id: 'ln', label: 'Logaritma natural  —  LN(x)', f: (s) => `LN(${s})` },
@@ -877,7 +1031,7 @@
   opSel.innerHTML = OPS.map((o) => `<option value="${o.id}">${esc(o.label)}</option>`).join('');
   function syncOp() {
     const o = OPS.find((x) => x.id === opSel.value);
-    q('scParWrap').hidden = !o.par;
+    q('scParWrap').style.visibility = o.par ? 'visible' : 'hidden';
     if (o.par) { q('scParLbl').textContent = o.par; q('scPar').value = o.def; }
   }
   opSel.addEventListener('change', syncOp); syncOp();
