@@ -405,9 +405,9 @@
     #view-metode-calc .sc-tab[aria-selected="true"]{ background:#fff; color:var(--accent); border-color:var(--rule-strong); box-shadow:inset 0 3px 0 var(--accent-2); }
     #view-metode-calc .sc-ribbon{ display:grid; grid-template-columns:minmax(0,1fr); }
     #view-metode-calc .sc-tabs{ grid-row:1; grid-column:1; }
-    #view-metode-calc .sc-rpanel{ grid-row:2; grid-column:1; min-width:0; display:block; visibility:hidden; background:#fff; border-bottom:1px solid var(--rule); }
+    #view-metode-calc .sc-rpanel{ grid-row:2; grid-column:1; min-width:0; display:flex; flex-direction:column; visibility:hidden; background:#fff; border-bottom:1px solid var(--rule); }
     #view-metode-calc .sc-rpanel.on{ visibility:visible; }
-    #view-metode-calc .sc-rbody{ display:flex; flex-wrap:nowrap; align-items:stretch; gap:0; padding:10px 8px 4px; overflow-x:auto; scrollbar-width:thin; -webkit-overflow-scrolling:touch; overscroll-behavior-x:contain; }
+    #view-metode-calc .sc-rbody{ flex:1 1 auto; min-width:0; display:flex; flex-wrap:nowrap; align-items:stretch; gap:0; padding:10px 8px 4px; overflow-x:auto; scrollbar-width:thin; -webkit-overflow-scrolling:touch; overscroll-behavior-x:contain; }
     #view-metode-calc .sc-grp{ flex:0 0 auto; display:flex; flex-direction:column; padding:0 12px; border-right:1px solid var(--rule); }
     #view-metode-calc .sc-grp:last-child{ border-right:none; }
     #view-metode-calc .sc-gbody{ flex:1; display:flex; align-items:center; gap:6px; }
