@@ -1225,8 +1225,8 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
   .stat-grid{ grid-template-columns:repeat(auto-fit, minmax(190px,1fr)); }
   .test-block{ padding:20px 24px 22px; }
 
-  /* Kuis & petunjuk: kolom baca nyaman di tengah */
-  #view-kuis .chapter-inner, #view-petunjuk .chapter-inner{ max-width:880px; }
+  /* Petunjuk: kolom baca nyaman di tengah */
+  #view-petunjuk .chapter-inner{ max-width:880px; }
   .petunjuk-list{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
   .tentang-body{ max-width:880px; }
 
@@ -1319,10 +1319,10 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
       <div class="hc-title">Pilih Metode</div>
       <div class="hc-desc">Kalkulator regresi, korelasi, uji hipotesis, dan metode statistik lainnya.</div>
     </button>
-    <button type="button" class="hub-card" data-nav="kuis">
-      <span class="hc-icon tone-gold" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.2 9a2.8 2.8 0 1 1 3.9 2.6c-.8.4-1.1 1-1.1 1.9"/><circle cx="12" cy="16.6" r="0.9" fill="currentColor" stroke="none"/></svg></span>
-      <div class="hc-title">Kuis Statistika</div>
-      <div class="hc-desc">Uji pemahaman Anda dengan soal-soal pilihan ganda seputar statistika.</div>
+    <button type="button" class="hub-card" data-nav="matriks">
+      <span class="hc-icon tone-gold" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4H5v16h3"/><path d="M16 4h3v16h-3"/><circle cx="10" cy="9" r="1" fill="currentColor" stroke="none"/><circle cx="14" cy="9" r="1" fill="currentColor" stroke="none"/><circle cx="10" cy="15" r="1" fill="currentColor" stroke="none"/><circle cx="14" cy="15" r="1" fill="currentColor" stroke="none"/></svg></span>
+      <div class="hc-title">Kalkulator Matriks</div>
+      <div class="hc-desc">Jumlah, kali, determinan, invers, rank, nilai eigen, SPL, dan regresi OLS.</div>
     </button>
     <button type="button" class="hub-card" data-nav="kalkulator">
       <span class="hc-icon tone-green" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="2.5" width="15" height="19" rx="2"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="7.5" y1="12" x2="7.5" y2="12"/><line x1="12" y1="12" x2="12" y2="12"/><line x1="16.5" y1="12" x2="16.5" y2="12"/><line x1="7.5" y1="16" x2="7.5" y2="16"/><line x1="12" y1="16" x2="12" y2="16"/><line x1="16.5" y1="16" x2="16.5" y2="16"/></svg></span>
@@ -1447,7 +1447,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
       </div>
       <div class="petunjuk-item">
         <span class="petunjuk-num">2</span>
-        <div><h3>Kuis Statistika</h3><p>Buka menu <strong>Kuis Statistika</strong> untuk menguji pemahaman Anda. Jawab setiap soal pilihan ganda, lalu ketuk <em>Selesai</em> di akhir untuk melihat skor beserta pembahasan tiap soal.</p></div>
+        <div><h3>Kalkulator Matriks</h3><p>Buka menu <strong>Kalkulator Matriks</strong>, isi matriks A dan B (boleh tempel blok sel dari Excel), pilih operasi seperti determinan, invers, rank, nilai eigen, SPL, atau regresi OLS, lalu ketuk <em>Hitung</em>. Hasil bisa disalin ke Excel atau dijadikan matriks A/B untuk perhitungan berantai.</p></div>
       </div>
       <div class="petunjuk-item">
         <span class="petunjuk-num">3</span>
@@ -1461,49 +1461,8 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
   </div>
 </main>
 
-<!-- ===================== TAB: KUIS STATISTIKA ===================== -->
-<main class="view" id="view-kuis">
-  <div class="chapter-inner">
-    <div class="chapter-head">
-      <span class="eyebrow">Uji Pemahaman</span>
-      <h1>Kuis Statistika</h1>
-      <p class="lede">Jawab soal-soal pilihan ganda seputar statistika untuk mengasah pemahaman Anda.</p>
-    </div>
-
-    <section class="card step-card" id="quizIntroCard">
-      <h2>Siap memulai?</h2>
-      <p class="hint" id="quizIntroHint">Memuat soal&hellip;</p>
-      <button type="button" class="btn-primary" id="quizStartBtn">Mulai Kuis &rarr;</button>
-    </section>
-
-    <section class="card step-card" id="quizPlayCard" hidden>
-      <div class="quiz-progress-row">
-        <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="quizProgressFill"></div></div>
-        <span class="quiz-progress-label" id="quizProgressLabel">1 / 1</span>
-      </div>
-      <p class="quiz-question" id="quizQuestionText"></p>
-      <div class="quiz-options" id="quizOptions"></div>
-      <div class="quiz-explain" id="quizExplain"></div>
-      <div class="quiz-nav-row">
-        <button type="button" class="btn-ghost" id="quizPrevBtn">&larr; Sebelumnya</button>
-        <button type="button" class="btn-primary" id="quizNextBtn">Selanjutnya &rarr;</button>
-      </div>
-    </section>
-
-    <section class="card step-card" id="quizResultCard" hidden>
-      <h2>Hasil Kuis</h2>
-      <div class="quiz-score-ring">
-        <div class="quiz-score-num" id="quizScoreNum">0%</div>
-        <div class="quiz-score-label" id="quizScoreLabel">0 dari 0 soal benar</div>
-      </div>
-      <div class="control-row">
-        <button type="button" class="btn-primary" id="quizRetryBtn">Ulangi Kuis</button>
-        <button type="button" class="btn-ghost" id="quizReviewToggleBtn">Lihat Pembahasan</button>
-      </div>
-      <div id="quizReviewWrap" hidden></div>
-    </section>
-  </div>
-</main>
+<!-- ===================== TAB: KALKULATOR MATRIKS (dirender oleh matriks.js) ===================== -->
+<main class="view" id="view-matriks"></main>
 
 <!-- ===================== TAB: KALKULATOR ILMIAH ===================== -->
 <main class="view" id="view-kalkulator">
@@ -2021,7 +1980,6 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 
 
 
-<script src="kuis.js"></script>
 <script>
 /* =========================================================================
    1. ROUTING — TAB BERANDA/METODE/TENTANG + HALAMAN DETAIL METODE
@@ -2221,16 +2179,16 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
   const toast = $('#toast');
 
   // Tab utama yang punya tombol di bottom nav ("home"). Halaman lain
-  // (metode, kuis, kalkulator, petunjuk, tentang, & detail metode) diakses
+  // (metode, matriks, kalkulator, petunjuk, tentang, & detail metode) diakses
   // dari kartu-kartu di Beranda / panel Profil, dan selalu punya topbar
   // dengan tombol kembali ke `backTarget`.
   const TABS = {
     home: 'view-home', metode: 'view-metode', 'metode-calc': 'view-metode-calc', 'metode-stat': 'view-metode-stat', 'metode-graph': 'view-metode-graph', tentang: 'view-tentang',
-    kuis: 'view-kuis', kalkulator: 'view-kalkulator', petunjuk: 'view-petunjuk',
+    matriks: 'view-matriks', kalkulator: 'view-kalkulator', petunjuk: 'view-petunjuk',
   };
   const PAGE_TITLES = {
     metode: 'Pilih Metode', 'metode-calc': 'Metode Calc', 'metode-stat': 'Metode Stat', 'metode-graph': 'Metode Graph', tentang: 'Tentang StatCalc',
-    kuis: 'Kuis Statistika', kalkulator: 'Kalkulator Ilmiah', petunjuk: 'Petunjuk',
+    matriks: 'Kalkulator Matriks', kalkulator: 'Kalkulator Ilmiah', petunjuk: 'Petunjuk',
   };
   let backTarget = 'home';
 
@@ -2302,13 +2260,12 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
     navigate(card.dataset.cat, { backTo: 'metode' });
   });
 
-  /* ---- Kartu hub di Beranda (Pilih Metode / Kuis / Kalkulator / Petunjuk) ---- */
+  /* ---- Kartu hub di Beranda (Pilih Metode / Matriks / Kalkulator / Petunjuk) ---- */
   hubGrid.addEventListener('click', (e) => {
     const card = e.target.closest('.hub-card');
     if (!card) return;
     const target = card.dataset.nav;
     navigate(target, { backTo: 'home' });
-    if (target === 'kuis' && window.StatCalcQuiz) window.StatCalcQuiz.resetToIntro();
     if (target === 'kalkulator' && window.StatCalcCalc) window.StatCalcCalc.reset();
   });
 
@@ -2336,7 +2293,6 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
     btn.addEventListener('click', () => {
       if (btn.dataset.tab === 'profil') { openProfile(); return; }
       navigate(btn.dataset.tab, { backTo: 'home' });
-      if (btn.dataset.tab === 'kuis' && window.StatCalcQuiz) window.StatCalcQuiz.resetToIntro();
       if (btn.dataset.tab === 'kalkulator' && window.StatCalcCalc) window.StatCalcCalc.reset();
     });
   });
@@ -2618,8 +2574,8 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 <script src="Method/Shared/stat-charts.js"></script>
 <script src="Method/Shared/export-hasil.js"></script>
 
-<!-- ===================== KUIS STATISTIKA (logika di kuis-logic.js) ===================== -->
-<script src="kuis-logic.js"></script>
+<!-- ===================== KALKULATOR MATRIKS (logika di matriks.js) ===================== -->
+<script src="matriks.js"></script>
 
 <!-- ===================== KALKULATOR ILMIAH (logika di kalkulator.js) ===================== -->
 <script src="kalkulator.js"></script>
