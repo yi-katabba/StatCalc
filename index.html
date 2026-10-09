@@ -120,6 +120,16 @@ button:focus-visible, input:focus-visible, [tabindex]:focus-visible{
 .back-btn::before{ content:'\2039'; font-family:var(--font-display); font-size:20px; line-height:1; margin-right:-2px; }
 .back-btn:hover{ background:rgba(255,255,255,0.16); }
 .back-btn:active{ background:rgba(255,255,255,0.24); transform:scale(.97); }
+.side-toggle{
+  display:none; align-items:center; justify-content:center;
+  width:var(--tap); height:var(--tap); min-height:var(--tap); flex-shrink:0; padding:0;
+  background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.28);
+  color:#fff; border-radius:100px; cursor:pointer;
+  transition:background .12s ease, transform .08s ease;
+}
+.side-toggle svg{ width:22px; height:22px; }
+.side-toggle:hover{ background:rgba(255,255,255,0.16); }
+.side-toggle:active{ background:rgba(255,255,255,0.24); transform:scale(.97); }
 .topbar .page-title{
   font-family:var(--font-display); font-weight:700; font-size:16.5px;
   color:#fff;
@@ -1154,6 +1164,10 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
   :root{ --sidew:248px; --navh:0px; --content:1120px; }
 
   body:not(.pre-auth){ padding-left:var(--sidew); }
+  .side-toggle{ display:inline-flex; }
+  /* Sidebar disembunyikan lewat tombol di topbar: konten memakai lebar penuh */
+  body.side-off:not(.pre-auth){ padding-left:0; }
+  body.side-off .bottom-nav{ transform:translateX(-100%); visibility:hidden; box-shadow:none; }
   body:not(.pre-auth) .topbar{ padding-left:20px; padding-right:28px; }
   body:not(.pre-auth) .topbar .page-title{ font-size:18px; }
 
@@ -1239,6 +1253,9 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 
 <header class="topbar" id="topbar">
   <button type="button" class="back-btn" id="backBtn">Kembali</button>
+  <button type="button" class="side-toggle" id="sideToggle" aria-pressed="false" aria-label="Sembunyikan menu samping" title="Sembunyikan menu samping">
+    <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M9.5 4.5v15"/></svg>
+  </button>
   <span class="page-title" id="pageTitle"></span>
 </header>
 
@@ -2324,6 +2341,27 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
   }
 
   backBtn.addEventListener('click', () => navigate(backTarget));
+
+  /* ---- Sembunyikan / tampilkan sidebar (PC). Hanya berlaku di halaman yang punya topbar,
+         jadi di Beranda sidebar selalu tampil dan pengguna tidak kehilangan menu. ---- */
+  const sideToggle = $('#sideToggle');
+  const SIDE_KEY = 'statcalc.sideCollapsed';
+  let sideCollapsed = false;
+  try { sideCollapsed = localStorage.getItem(SIDE_KEY) === '1'; } catch (e) { /* abaikan */ }
+  function applySide() {
+    const off = sideCollapsed && topbar.classList.contains('visible');
+    document.body.classList.toggle('side-off', off);
+    sideToggle.setAttribute('aria-pressed', off ? 'true' : 'false');
+    const label = off ? 'Tampilkan menu samping' : 'Sembunyikan menu samping';
+    sideToggle.setAttribute('aria-label', label); sideToggle.title = label;
+  }
+  sideToggle.addEventListener('click', () => {
+    sideCollapsed = !sideCollapsed;
+    try { localStorage.setItem(SIDE_KEY, sideCollapsed ? '1' : '0'); } catch (e) { /* abaikan */ }
+    applySide();
+  });
+  new MutationObserver(applySide).observe(topbar, { attributes: true, attributeFilter: ['class'] });
+  applySide();
 
   let toastTimer = null;
   function showToast(msg) {
