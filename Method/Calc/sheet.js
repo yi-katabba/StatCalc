@@ -1402,7 +1402,11 @@
   opSel.innerHTML = OPS.map((o) => `<option value="${o.id}">${esc(o.label)}</option>`).join('');
   function syncOp() {
     const o = OPS.find((x) => x.id === opSel.value);
-    q('scParWrap').style.visibility = o.par ? 'visible' : 'hidden';
+    // Tanpa parameter: sembunyikan sel (display:none) dan pakai grid 2 kolom,
+    // supaya tidak ada kolom ketiga yang kosong memakan tempat.
+    const parWrap = q('scParWrap');
+    parWrap.style.display = o.par ? '' : 'none';
+    parWrap.parentElement.classList.toggle('c2', !o.par);
     if (o.par) { q('scParLbl').textContent = o.par; q('scPar').value = o.def; }
   }
   opSel.addEventListener('change', syncOp); syncOp();
