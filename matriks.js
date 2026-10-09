@@ -237,90 +237,365 @@
   const square = (m, name) => need(rows(m) === cols(m),
     `Matriks ${name} harus persegi (n×n), ukuran saat ini ${sz(m)}.`);
 
+  /* ---------- Pembantu penyusun langkah-langkah ---------- */
+  const isInt = (x) => Math.abs(x - Math.round(x)) < 1e-12;
+  const allInt = (...ms) => ms.every((m) => m.every((r) => r.every(isInt)));
+  /* Pecahan sederhana (penyebut ≤ 1000) bila cocok, selain itu desimal */
+  function frac(x) {
+    if (Math.abs(x) < 1e-10) return '0';
+    if (isInt(x)) return String(Math.round(x));
+    const a = Math.abs(x), sg = x < 0 ? '-' : '';
+    let h0 = 0, h1 = 1, k0 = 1, k1 = 0, b = a;
+    for (let i = 0; i < 24; i++) {
+      const ai = Math.floor(b), h2 = ai * h1 + h0, k2 = ai * k1 + k0;
+      h0 = h1; h1 = h2; k0 = k1; k1 = k2;
+      if (k1 > 1000) break;
+      if (Math.abs(a - h1 / k1) < 1e-9 * Math.max(1, a)) return sg + h1 + '/' + k1;
+      const f = b - ai; if (f < 1e-12) break; b = 1 / f;
+    }
+    return fmt(x);
+  }
+  const par = (s) => (/^-|\//.test(s) ? `(${s})` : s);                // bungkus negatif / pecahan
+  const tm = (x, F) => par(F(x));
+  const coef = (f, F) => { const s = F(f); return s === '1' ? '' : (s.includes('/') ? `(${s})` : s) + '·'; };
+  const mat = (m, F) => m.map((r) => r.map((x) => F(x)));
+  const S = (title, o) => Object.assign({ title }, o || {});
+  const SUP = ['', '', '²', '³'];
+  function polyStr(cs, F) {
+    const n = cs.length - 1; let s = '';
+    cs.forEach((c, i) => {
+      const k = n - i; if (Math.abs(c) < 1e-10) return;
+      const a = Math.abs(c);
+      const body = ((k === 0 || Math.abs(a - 1) > 1e-12) ? F(a) : '') + (k === 0 ? '' : k === 1 ? 'λ' : 'λ' + SUP[k]);
+      s += s ? (c < 0 ? ' − ' : ' + ') + body : (c < 0 ? '-' : '') + body;
+    });
+    return s + ' = 0';
+  }
+
+  /* Gauss-Jordan dengan catatan tiap langkah (pivot = baris pertama yang tak nol) */
+  function gjTrace(M, lim, F, sep) {
+    const m = clone(M), R = rows(m), C = cols(m), L = lim == null ? C : lim;
+    const scale = maxAbs(M) || 1, tol = 1e-10 * scale, blocks = [], pivots = [];
+    let r = 0;
+    for (let c = 0; c < L && r < R; c++) {
+      let p = -1;
+      for (let i = r; i < R; i++) if (Math.abs(m[i][c]) > tol) { p = i; break; }
+      if (p < 0) {
+        for (let i = r; i < R; i++) m[i][c] = 0;
+        blocks.push(S(`Kolom ${c + 1}`, { p: `Semua elemen kolom ${c + 1} dari baris ${r + 1} ke bawah bernilai 0, jadi tidak ada pivot di kolom ini. Lanjut ke kolom berikutnya.` }));
+        continue;
+      }
+      const ops = [];
+      if (p !== r) { [m[p], m[r]] = [m[r], m[p]]; ops.push(`R${r + 1} ↔ R${p + 1}   (tukar baris agar pivot tidak nol)`); }
+      const pv = m[r][c];
+      if (Math.abs(pv - 1) > 1e-12) { for (let j = 0; j < C; j++) m[r][j] /= pv; ops.push(`R${r + 1} ← R${r + 1} ÷ ${par(F(pv))}   (pivot menjadi 1)`); }
+      m[r][c] = 1;
+      for (let i = 0; i < R; i++) {
+        if (i === r) continue;
+        const f = m[i][c];
+        if (Math.abs(f) <= 1e-12 * scale) { m[i][c] = 0; continue; }
+        for (let j = 0; j < C; j++) m[i][j] -= f * m[r][j];
+        m[i][c] = 0;
+        ops.push(`R${i + 1} ← R${i + 1} ${f > 0 ? '−' : '+'} ${coef(Math.abs(f), F)}R${r + 1}`);
+      }
+      for (let i = 0; i < R; i++) for (let j = 0; j < C; j++) if (Math.abs(m[i][j]) < 1e-12 * scale) m[i][j] = 0;
+      blocks.push(S(`Pivot kolom ${c + 1} (baris ${r + 1})`, {
+        lines: ops.length ? ops : ['(tidak ada operasi diperlukan)'],
+        mats: [{ label: 'Matriks sekarang', cells: mat(m, F), sep }],
+      }));
+      pivots.push(c); r++;
+    }
+    return { blocks, m, pivots };
+  }
+
+  /* Eliminasi maju (tanpa normalisasi) untuk determinan */
+  function detElim(M, F) {
+    const m = clone(M), n = rows(m), tol = 1e-11 * (maxAbs(M) || 1), blocks = [];
+    let swaps = 0, singular = false;
+    for (let c = 0; c < n; c++) {
+      let p = -1;
+      for (let i = c; i < n; i++) if (Math.abs(m[i][c]) > tol) { p = i; break; }
+      if (p < 0) {
+        blocks.push(S(`Kolom ${c + 1}`, { p: `Semua elemen kolom ${c + 1} dari baris ${c + 1} ke bawah bernilai 0 → tidak ada pivot → det = 0.` }));
+        singular = true; break;
+      }
+      const ops = [];
+      if (p !== c) { [m[p], m[c]] = [m[c], m[p]]; swaps++; ops.push(`R${c + 1} ↔ R${p + 1}   (tukar baris → tanda determinan berganti)`); }
+      for (let i = c + 1; i < n; i++) {
+        const f = m[i][c] / m[c][c];
+        if (Math.abs(f) < 1e-12) { m[i][c] = 0; continue; }
+        for (let j = 0; j < n; j++) m[i][j] -= f * m[c][j];
+        m[i][c] = 0;
+        ops.push(`R${i + 1} ← R${i + 1} ${f > 0 ? '−' : '+'} ${coef(Math.abs(f), F)}R${c + 1}`);
+      }
+      if (c === n - 1) continue;   // kolom terakhir: tidak ada elemen di bawah pivot
+      blocks.push(S(`Nolkan elemen di bawah pivot kolom ${c + 1}`, {
+        lines: ops.length ? ops : ['(elemen di bawah pivot sudah 0 — tidak ada operasi)'],
+        mats: [{ label: 'Matriks sekarang', cells: mat(m, F) }],
+      }));
+    }
+    return { blocks, m, swaps, singular };
+  }
+
+  function stepsMul(L, R, nl, nr, F) {
+    const C = mulM(L, R), lines = [];
+    for (let i = 0; i < rows(L); i++) for (let j = 0; j < cols(R); j++) {
+      const terms = []; for (let k = 0; k < cols(L); k++) terms.push(`${tm(L[i][k], F)}·${tm(R[k][j], F)}`);
+      lines.push(`c${i + 1}${j + 1} = ${terms.join(' + ')} = ${F(C[i][j])}`);
+    }
+    return [
+      S('Periksa ukuran', { p: `${nl} berukuran ${sz(L)} dan ${nr} berukuran ${sz(R)}. Jumlah kolom ${nl} (${cols(L)}) sama dengan jumlah baris ${nr} (${rows(R)}), jadi keduanya dapat dikalikan. Hasilnya berukuran ${rows(L)}×${cols(R)}.` }),
+      S('Rumus perkalian', { p: `cij = ai1·b1j + ai2·b2j + … + ain·bnj — baris ke-i dari ${nl} dikalikan dengan kolom ke-j dari ${nr}, lalu dijumlahkan.` }),
+      S('Hitung setiap elemen', { lines }),
+      S('Susun hasil', { mats: [{ label: 'Hasil', cells: mat(C, F) }] }),
+    ];
+  }
+
+  function stepsDet(M, t, F) {
+    const n = rows(M), st = [];
+    if (n === 1) return [S('Matriks 1×1', { p: `det(${t}) = a₁₁ = ${F(M[0][0])}` })];
+    if (n === 2) {
+      const [[a, b], [c, d]] = M;
+      return [
+        S('Rumus determinan 2×2', { p: 'det = a·d − b·c  (diagonal utama dikurangi diagonal samping)' }),
+        S('Substitusi angka', { lines: [`det = (${F(a)})(${F(d)}) − (${F(b)})(${F(c)})`, `    = ${F(a * d)} − ${tm(b * c, F)}`, `    = ${F(a * d - b * c)}`] }),
+      ];
+    }
+    if (n === 3) {
+      const g = (i, j) => M[i][j], T = (i, j, k) => g(0, i) * g(1, j) * g(2, k);
+      const f3 = (i, j, k) => `${tm(g(0, i), F)}·${tm(g(1, j), F)}·${tm(g(2, k), F)}`;
+      const plus = [[0, 1, 2], [1, 2, 0], [2, 0, 1]], minus = [[2, 1, 0], [0, 2, 1], [1, 0, 2]];
+      const lines = [];
+      plus.forEach((p) => lines.push(`+ ${f3(...p)} = ${F(T(...p))}`));
+      minus.forEach((p) => lines.push(`− ${f3(...p)} = ${F(T(...p))}`));
+      const total = plus.reduce((s, p) => s + T(...p), 0) - minus.reduce((s, p) => s + T(...p), 0);
+      return [
+        S('Aturan Sarrus (3×3)', { p: 'Jumlahkan tiga hasil kali diagonal utama (searah ↘), lalu kurangi tiga hasil kali diagonal samping (searah ↙).' }),
+        S('Hitung keenam hasil kali', { lines }),
+        S('Jumlahkan', { lines: [`det = ${plus.map((p) => F(T(...p))).join(' + ')} − (${minus.map((p) => F(T(...p))).join(' + ')})`, `    = ${F(total)}`] }),
+      ];
+    }
+    const e = detElim(M, F);
+    st.push(S('Metode eliminasi baris', { p: 'Ubah matriks menjadi segitiga atas dengan operasi baris Rᵢ ← Rᵢ − f·Rₚ (baris pivot = Rₚ) (nilai determinan tidak berubah). Tiap penukaran baris membalik tanda. Determinan = tanda × hasil kali diagonal.' }));
+    e.blocks.forEach((b) => st.push(b));
+    if (e.singular) st.push(S('Kesimpulan', { p: 'Ada kolom tanpa pivot → determinan = 0 (matriks singular).' }));
+    else {
+      const diag = e.m.map((r, i) => r[i]);
+      const prod = diag.reduce((s, x) => s * x, 1) * (e.swaps % 2 ? -1 : 1);
+      st.push(S('Kalikan diagonal', { lines: [`det = (-1)^${e.swaps} × ${diag.map((x) => tm(x, F)).join(' × ')}`, `    = ${F(prod)}`] }));
+    }
+    return st;
+  }
+
+  function stepsInverse(M, t, F, inv) {
+    const n = rows(M), st = [];
+    const d = detM(M);
+    if (n === 1) return [S('Matriks 1×1', { lines: [`${t}⁻¹ = 1 / a₁₁ = 1 / ${F(M[0][0])} = ${F(inv[0][0])}`] })];
+    if (n === 2) {
+      const [[a, b], [c, dd]] = M;
+      return [
+        S('Hitung determinan', { lines: [`det = a·d − b·c = (${F(a)})(${F(dd)}) − (${F(b)})(${F(c)}) = ${F(d)}`], p: 'Determinan ≠ 0, jadi invers ada.' }),
+        S('Rumus invers 2×2', { p: `${t}⁻¹ = (1/det) × [[d, −b], [−c, a]]  (tukar a↔d, ubah tanda b dan c)`, mats: [{ label: 'Matriks tukar', cells: [[F(dd), F(-b)], [F(-c), F(a)]] }] }),
+        S('Kalikan dengan 1/det', { lines: [`${t}⁻¹ = (1/${par(F(d))}) × matriks di atas`], mats: [{ label: `${t}⁻¹`, cells: mat(inv, F) }] }),
+      ];
+    }
+    const aug = M.map((r, i) => r.concat(ident(n)[i]));
+    const g = gjTrace(aug, n, F, n);
+    st.push(S('Metode Gauss-Jordan', { p: `Susun matriks gabungan [${t} | I]. Lakukan operasi baris hingga bagian kiri menjadi matriks identitas I; bagian kanan otomatis menjadi ${t}⁻¹.`, mats: [{ label: `[${t} | I]`, cells: mat(aug, F), sep: n }] }));
+    g.blocks.forEach((b) => st.push(b));
+    st.push(S('Baca hasil', { p: `Bagian kiri sudah menjadi I, maka bagian kanan adalah ${t}⁻¹.`, mats: [{ label: `${t}⁻¹`, cells: mat(inv, F) }] }));
+    return st;
+  }
+
+  function stepsEig(M, t, vals, sym) {
+    const n = rows(M), F = allInt(M) ? frac : fmt, st = [];
+    let tr = 0; for (let i = 0; i < n; i++) tr += M[i][i];
+    const d = detM(M);
+    st.push(S('Persamaan karakteristik', { p: `Nilai eigen λ memenuhi det(${t} − λI) = 0.` }));
+    if (n === 1) {
+      st.push(S('Matriks 1×1', { lines: [`λ = a₁₁ = ${F(M[0][0])}`] }));
+    } else if (n === 2) {
+      const disc = tr * tr - 4 * d;
+      st.push(S('Bentuk 2×2', { lines: [
+        `tr(${t}) = ${F(M[0][0])} + ${F(M[1][1])} = ${F(tr)}`,
+        `det(${t}) = ${F(d)}`,
+        `Persamaan: ${polyStr([1, -tr, d], F)}`,
+      ] }));
+      st.push(S('Diskriminan', { lines: [`D = tr² − 4·det = ${F(tr * tr)} − 4(${F(d)}) = ${F(disc)}`],
+        p: disc >= 0 ? 'D ≥ 0 → kedua akar real.' : 'D < 0 → akar berupa pasangan bilangan kompleks.' }));
+      st.push(S('Akar-akar', { lines: ['λ = (tr ± √D) / 2', ...vals.map((z, i) => `λ${i + 1} = ${fmtC(z)}`)] }));
+    } else if (n === 3) {
+      const m12 = M[0][0] * M[1][1] - M[0][1] * M[1][0], m13 = M[0][0] * M[2][2] - M[0][2] * M[2][0], m23 = M[1][1] * M[2][2] - M[1][2] * M[2][1];
+      const c2 = m12 + m13 + m23;
+      st.push(S('Koefisien persamaan 3×3', { p: 'λ³ − c₁λ² + c₂λ − c₃ = 0, dengan c₁ = trace, c₂ = jumlah minor utama 2×2, c₃ = determinan.', lines: [
+        `c₁ = tr(${t}) = ${F(M[0][0])} + ${F(M[1][1])} + ${F(M[2][2])} = ${F(tr)}`,
+        `c₂ = (a₁₁a₂₂ − a₁₂a₂₁) + (a₁₁a₃₃ − a₁₃a₃₁) + (a₂₂a₃₃ − a₂₃a₃₂)`,
+        `   = ${F(m12)} + ${tm(m13, F)} + ${tm(m23, F)} = ${F(c2)}`,
+        `c₃ = det(${t}) = ${F(d)}`,
+        `Persamaan: ${polyStr([1, -tr, c2, -d], F)}`,
+      ] }));
+      st.push(S('Akar-akar persamaan', { p: 'Akar-akarnya dicari secara numerik; itulah nilai eigen.', lines: vals.map((z, i) => `λ${i + 1} = ${fmtC(z)}`) }));
+    } else {
+      st.push(S('Metode numerik', { p: sym
+        ? `Ukuran ${n}×${n} terlalu besar untuk diselesaikan dengan polinomial. Karena matriks simetris dipakai metode Jacobi: rotasi bidang diulang hingga elemen di luar diagonal ≈ 0; diagonal akhir adalah nilai eigen.`
+        : `Ukuran ${n}×${n} terlalu besar untuk diselesaikan dengan polinomial. Dipakai iterasi QR: Aₖ = QₖRₖ lalu Aₖ₊₁ = RₖQₖ, diulang hingga hampir segitiga; nilai eigen dibaca dari diagonal (blok 2×2 berarti pasangan kompleks).`,
+        lines: vals.map((z, i) => `λ${i + 1} = ${fmtC(z)}`) }));
+    }
+    if (sym) st.push(S('Vektor eigen', { p: `Untuk tiap λ, selesaikan (${t} − λI)v = 0 lalu normalkan v sehingga panjangnya 1. Hasilnya adalah kolom v₁, v₂, … pada tabel hasil.` }));
+    let sRe = 0, prod = { re: 1, im: 0 };
+    vals.forEach((z) => { sRe += z.re; prod = { re: prod.re * z.re - prod.im * z.im, im: prod.re * z.im + prod.im * z.re }; });
+    st.push(S('Verifikasi', { lines: [
+      `Σλ = ${vals.map((z) => par(fmtC(z))).join(' + ')} = ${fmt(sRe)}   (harus sama dengan trace = ${fmt(tr)})`,
+      `Πλ = ${fmt(prod.re)}   (harus sama dengan det = ${fmt(d)})`,
+    ] }));
+    return st;
+  }
+
   const OPS = [
     { group: 'Dua matriks (A dan B)', items: [
       { id: 'add', label: 'Penjumlahan — A + B', run: (c) => {
         const A = c.A(), B = c.B();
         need(rows(A) === rows(B) && cols(A) === cols(B), `A + B memerlukan ukuran yang sama (A: ${sz(A)}, B: ${sz(B)}).`);
-        return { title: 'A + B', matrix: addM(A, B, 1) };
+        const C = addM(A, B, 1), F = allInt(A, B) ? frac : fmt;
+        return { title: 'A + B', matrix: C, steps: [
+          S('Periksa ukuran', { p: `A berukuran ${sz(A)} dan B berukuran ${sz(B)} → sama, jadi dapat dijumlahkan.` }),
+          S('Jumlahkan elemen yang seletak', { p: 'Rumus: cij = aij + bij', mats: [{ label: 'aij + bij', cells: A.map((r, i) => r.map((x, j) => `${tm(x, F)} + ${tm(B[i][j], F)}`)) }] }),
+          S('Hitung hasilnya', { mats: [{ label: 'A + B', cells: mat(C, F) }] }),
+        ] };
       } },
       { id: 'sub', label: 'Pengurangan — A − B', run: (c) => {
         const A = c.A(), B = c.B();
         need(rows(A) === rows(B) && cols(A) === cols(B), `A − B memerlukan ukuran yang sama (A: ${sz(A)}, B: ${sz(B)}).`);
-        return { title: 'A − B', matrix: addM(A, B, -1) };
+        const C = addM(A, B, -1), F = allInt(A, B) ? frac : fmt;
+        return { title: 'A − B', matrix: C, steps: [
+          S('Periksa ukuran', { p: `A berukuran ${sz(A)} dan B berukuran ${sz(B)} → sama, jadi dapat dikurangkan.` }),
+          S('Kurangkan elemen yang seletak', { p: 'Rumus: cij = aij − bij', mats: [{ label: 'aij − bij', cells: A.map((r, i) => r.map((x, j) => `${tm(x, F)} − ${tm(B[i][j], F)}`)) }] }),
+          S('Hitung hasilnya', { mats: [{ label: 'A − B', cells: mat(C, F) }] }),
+        ] };
       } },
       { id: 'mul', label: 'Perkalian — A × B', run: (c) => {
         const A = c.A(), B = c.B();
         need(cols(A) === rows(B), `A × B: jumlah kolom A (${cols(A)}) harus sama dengan jumlah baris B (${rows(B)}).`);
-        return { title: 'A × B', matrix: mulM(A, B) };
+        return { title: 'A × B', matrix: mulM(A, B), steps: stepsMul(A, B, 'A', 'B', allInt(A, B) ? frac : fmt) };
       } },
       { id: 'mulba', label: 'Perkalian — B × A', run: (c) => {
         const A = c.A(), B = c.B();
         need(cols(B) === rows(A), `B × A: jumlah kolom B (${cols(B)}) harus sama dengan jumlah baris A (${rows(A)}).`);
-        return { title: 'B × A', matrix: mulM(B, A) };
+        return { title: 'B × A', matrix: mulM(B, A), steps: stepsMul(B, A, 'B', 'A', allInt(A, B) ? frac : fmt) };
       } },
       { id: 'spl', label: 'SPL — A·x = b (b = kolom 1 matriks B)', run: (c) => {
         const A = c.A(), B = c.B();
         need(rows(A) === rows(B), `SPL: jumlah baris A (${rows(A)}) harus sama dengan jumlah baris B (${rows(B)}); b diambil dari kolom 1 B.`);
-        const n = cols(A);
+        const n = cols(A), bcol = B.map((r) => [r[0]]), F = allInt(A, bcol) ? frac : fmt;
         const aug = A.map((r, i) => r.concat([B[i][0]]));
+        const g = gjTrace(aug, n, F, n);
         const { m, pivots } = rrefM(aug, n);
-        const info = { title: 'Solusi SPL A·x = b' };
-        if (pivots.length < rows(A) && m.slice(pivots.length).some((r) => Math.abs(r[n]) > 1e-9 * (maxAbs(aug) || 1)))
-          throw new Error('SPL tidak konsisten — tidak ada solusi.');
-        if (pivots.length < n) {
-          return { title: 'Solusi SPL A·x = b', scalars: [['rank(A)', String(pivots.length)], ['jumlah variabel', String(n)]],
-            matrix: m, colLabels: Array.from({ length: n }, (_, i) => 'x' + (i + 1)).concat(['b']),
-            note: 'Solusi tak hingga banyak (rank < jumlah variabel). Tabel menunjukkan bentuk eselon tereduksi [A | b].' };
+        const steps = [
+          S('Susun matriks gabungan', { p: 'Tiap persamaan menjadi satu baris pada [A | b]. Lalu lakukan operasi baris (Gauss-Jordan) hingga bagian kiri menjadi bentuk eselon tereduksi.', mats: [{ label: '[A | b]', cells: mat(aug, F), sep: n }] }),
+          ...g.blocks,
+        ];
+        const labels = Array.from({ length: n }, (_, i) => 'x' + (i + 1));
+        if (pivots.length < rows(A) && m.slice(pivots.length).some((r) => Math.abs(r[n]) > 1e-9 * (maxAbs(aug) || 1))) {
+          steps.push(S('Kesimpulan', { p: 'Terdapat baris berbentuk [0 0 … 0 | c] dengan c ≠ 0, artinya 0 = c (mustahil). SPL tidak konsisten — tidak ada solusi.' }));
+          return { title: 'SPL A·x = b', note: 'SPL tidak konsisten — tidak ada solusi.', matrix: m, colLabels: labels.concat(['b']), steps };
         }
-        info.matrix = Array.from({ length: n }, (_, i) => [m[i][n]]);
-        info.rowLabels = Array.from({ length: n }, (_, i) => 'x' + (i + 1));
-        info.note = 'Solusi tunggal.';
-        return info;
+        if (pivots.length < n) {
+          steps.push(S('Kesimpulan', { p: `Rank = ${pivots.length} < jumlah variabel (${n}), ada variabel bebas → solusi tak hingga banyak.` }));
+          return { title: 'Solusi SPL A·x = b', scalars: [['rank(A)', String(pivots.length)], ['jumlah variabel', String(n)]],
+            matrix: m, colLabels: labels.concat(['b']),
+            note: 'Solusi tak hingga banyak (rank < jumlah variabel). Tabel menunjukkan bentuk eselon tereduksi [A | b].', steps };
+        }
+        const x = Array.from({ length: n }, (_, i) => [m[i][n]]);
+        steps.push(S('Baca solusi', { p: 'Bagian kiri sudah menjadi I, sehingga kolom terakhir adalah solusi.', lines: x.map((r, i) => `x${i + 1} = ${F(r[0])}`) }));
+        return { title: 'Solusi SPL A·x = b', matrix: x, rowLabels: labels, note: 'Solusi tunggal.', steps };
       } },
     ] },
     { group: 'Satu matriks (pilih A atau B)', items: [
       { id: 'smul', unary: true, par: 'k', label: 'Perkalian skalar — k × M', run: (c) => {
-        const M = c.M(), k = c.k();
-        return { title: `${fmt(k)} × ${c.t}`, matrix: scaleM(M, k) };
+        const M = c.M(), k = c.k(), F = allInt(M) && isInt(k) ? frac : fmt;
+        return { title: `${fmt(k)} × ${c.t}`, matrix: scaleM(M, k), steps: [
+          S('Kalikan setiap elemen dengan k', { p: `Rumus: cij = k · aij, dengan k = ${F(k)}.`, mats: [{ label: 'k · aij', cells: M.map((r) => r.map((x) => `${par(F(k))}·${tm(x, F)}`)) }] }),
+          S('Hitung hasilnya', { mats: [{ label: `${fmt(k)} × ${c.t}`, cells: mat(scaleM(M, k), F) }] }),
+        ] };
       } },
-      { id: 'tr', unary: true, label: 'Transpos — Mᵀ', run: (c) => ({ title: `${c.t}ᵀ`, matrix: transposeM(c.M()) }) },
+      { id: 'tr', unary: true, label: 'Transpos — Mᵀ', run: (c) => {
+        const M = c.M(), F = allInt(M) ? frac : fmt;
+        return { title: `${c.t}ᵀ`, matrix: transposeM(M), steps: [
+          S('Ukuran baru', { p: `${c.t} berukuran ${sz(M)}, maka ${c.t}ᵀ berukuran ${cols(M)}×${rows(M)}.` }),
+          S('Tukar baris dengan kolom', { p: `Elemen aij pindah ke posisi aji: baris ke-i menjadi kolom ke-i.`, mats: [{ label: c.t, cells: mat(M, F) }, { label: `${c.t}ᵀ`, cells: mat(transposeM(M), F) }] }),
+        ] };
+      } },
       { id: 'det', unary: true, label: 'Determinan — det(M)', run: (c) => {
         const M = c.M(); square(M, c.t);
-        const d = detM(M);
+        const d = detM(M), F = allInt(M) ? frac : fmt;
         return { title: `det(${c.t})`, scalars: [[`det(${c.t})`, fmt(d)]],
-          note: d === 0 ? 'Determinan = 0: matriks singular (tidak punya invers).' : 'Determinan ≠ 0: matriks non-singular (punya invers).' };
+          note: d === 0 ? 'Determinan = 0: matriks singular (tidak punya invers).' : 'Determinan ≠ 0: matriks non-singular (punya invers).',
+          steps: stepsDet(M, c.t, F) };
       } },
       { id: 'inv', unary: true, label: 'Invers — M⁻¹', run: (c) => {
         const M = c.M(); square(M, c.t);
         const inv = inverseM(M);
         need(inv, `Matriks ${c.t} singular (determinan = 0) sehingga tidak punya invers.`);
-        return { title: `${c.t}⁻¹`, scalars: [[`det(${c.t})`, fmt(detM(M))]], matrix: inv };
+        return { title: `${c.t}⁻¹`, scalars: [[`det(${c.t})`, fmt(detM(M))]], matrix: inv,
+          steps: stepsInverse(M, c.t, allInt(M) ? frac : fmt, inv) };
       } },
       { id: 'rank', unary: true, label: 'Rank — rank(M)', run: (c) => {
-        const M = c.M(), r = rrefM(M).pivots.length, full = Math.min(rows(M), cols(M));
+        const M = c.M(), F = allInt(M) ? frac : fmt, g = gjTrace(M, null, F), r = g.pivots.length, full = Math.min(rows(M), cols(M));
         return { title: `rank(${c.t})`, scalars: [[`rank(${c.t})`, String(r)]],
-          note: r === full ? 'Rank penuh.' : `Rank kurang dari ${full} (baris/kolom saling bergantung linear).` };
+          note: r === full ? 'Rank penuh.' : `Rank kurang dari ${full} (baris/kolom saling bergantung linear).`,
+          steps: [
+            S('Matriks awal', { p: 'Rank = banyaknya baris tak nol setelah matriks diubah ke bentuk eselon tereduksi dengan operasi baris.', mats: [{ label: c.t, cells: mat(M, F) }] }),
+            ...g.blocks,
+            S('Hitung rank', { p: `Terdapat ${r} baris yang tidak nol → rank(${c.t}) = ${r}.`, mats: [{ label: 'Bentuk akhir', cells: mat(g.m, F) }] }),
+          ] };
       } },
       { id: 'trace', unary: true, label: 'Trace — tr(M)', run: (c) => {
         const M = c.M(); square(M, c.t);
-        let t = 0; for (let i = 0; i < rows(M); i++) t += M[i][i];
-        return { title: `tr(${c.t})`, scalars: [[`tr(${c.t})`, fmt(t)]] };
+        const F = allInt(M) ? frac : fmt, n = rows(M);
+        let t = 0; for (let i = 0; i < n; i++) t += M[i][i];
+        return { title: `tr(${c.t})`, scalars: [[`tr(${c.t})`, fmt(t)]], steps: [
+          S('Jumlahkan elemen diagonal utama', { p: 'Trace = a₁₁ + a₂₂ + … + aₙₙ', lines: [`tr(${c.t}) = ${M.map((r, i) => tm(r[i], F)).join(' + ')}`, `       = ${F(t)}`] }),
+        ] };
       } },
       { id: 'pow', unary: true, par: 'n', label: 'Pangkat — Mⁿ', run: (c) => {
         const M = c.M(), n = c.n(); square(M, c.t);
         const P = powerM(M, n);
         need(P, `Matriks ${c.t} singular, tidak bisa dipangkatkan negatif.`);
-        return { title: `${c.t}^${n}`, matrix: P };
+        const st = [], k = Math.abs(n);
+        let base = M, nm = c.t, F = allInt(M) ? frac : fmt;
+        if (n === 0) {
+          st.push(S('Aturan pangkat nol', { p: `${c.t}⁰ = I (matriks identitas berukuran ${rows(M)}×${rows(M)}).`, mats: [{ label: 'I', cells: mat(P, F) }] }));
+        } else {
+          if (n < 0) {
+            base = inverseM(M); nm = `(${c.t}⁻¹)`; F = allInt(base) ? frac : fmt;
+            st.push(S('Pangkat negatif', { p: `${c.t}^${n} = (${c.t}⁻¹)^${k}. Cari invers terlebih dahulu.`, mats: [{ label: `${c.t}⁻¹`, cells: mat(base, F) }] }));
+          }
+          if (k === 1) st.push(S('Pangkat 1', { p: `Pangkat 1 sama dengan matriks itu sendiri.`, mats: [{ label: `${c.t}^${n}`, cells: mat(P, F) }] }));
+          let cur = base;
+          for (let e = 2; e <= Math.min(k, 6); e++) {
+            const next = mulM(cur, base);
+            st.push(S(`${nm}^${e} = ${nm}^${e - 1} × ${nm}`, { p: 'Perkalian matriks: baris × kolom.', mats: [{ label: `${nm}^${e}`, cells: mat(next, F) }] }));
+            cur = next;
+          }
+          if (k > 6) st.push(S('Lanjutkan', { p: `Perkalian diteruskan sampai pangkat ${k} (di program memakai kuadrat berulang agar efisien). Hasil akhirnya ada pada tabel hasil.` }));
+        }
+        return { title: `${c.t}^${n}`, matrix: P, steps: st };
       } },
       { id: 'gram', unary: true, label: 'Perkalian transpos — MᵀM', run: (c) => {
-        const M = c.M();
-        return { title: `${c.t}ᵀ${c.t}`, matrix: mulM(transposeM(M), M) };
+        const M = c.M(), Mt = transposeM(M), F = allInt(M) ? frac : fmt;
+        return { title: `${c.t}ᵀ${c.t}`, matrix: mulM(Mt, M), steps: [
+          S(`Transposkan ${c.t}`, { mats: [{ label: c.t, cells: mat(M, F) }, { label: `${c.t}ᵀ`, cells: mat(Mt, F) }] }),
+          ...stepsMul(Mt, M, `${c.t}ᵀ`, c.t, F),
+        ] };
       } },
       { id: 'rref', unary: true, label: 'Eliminasi Gauss-Jordan (RREF)', run: (c) => {
-        const M = c.M(), { m, pivots } = rrefM(M);
+        const M = c.M(), { m, pivots } = rrefM(M), F = allInt(M) ? frac : fmt, g = gjTrace(M, null, F);
         return { title: `RREF(${c.t})`, matrix: m, scalars: [['rank', String(pivots.length)]],
-          note: 'Bentuk eselon baris tereduksi.' };
+          note: 'Bentuk eselon baris tereduksi.', steps: [
+            S('Matriks awal', { p: 'Tujuan: tiap pivot bernilai 1 dan semua elemen lain di kolom pivot bernilai 0, memakai operasi baris elementer (tukar baris, bagi baris, tambah kelipatan baris).', mats: [{ label: c.t, cells: mat(M, F) }] }),
+            ...g.blocks,
+            S('Hasil', { p: `Terdapat ${pivots.length} pivot → rank = ${pivots.length}.`, mats: [{ label: `RREF(${c.t})`, cells: mat(g.m, F) }] }),
+          ] };
       } },
       { id: 'eig', unary: true, label: 'Nilai eigen — λ', run: (c) => {
         const M = c.M(); square(M, c.t);
@@ -335,6 +610,7 @@
         } else {
           out.note = 'Matriks tidak simetris: nilai eigen dihitung numerik dengan iterasi QR (bentuk a ± bi berarti pasangan kompleks).';
         }
+        out.steps = stepsEig(M, c.t, e.values, sym);
         return out;
       } },
     ] },
@@ -344,28 +620,39 @@
         need(rows(B) === n, `OLS: jumlah baris A (${n}) harus sama dengan jumlah baris B (${rows(B)}); y diambil dari kolom 1 B.`);
         need(n >= p, `OLS: jumlah observasi (${n}) harus ≥ jumlah variabel (${p}).`);
         const y = B.map((r) => [r[0]]), Xt = transposeM(X);
-        const inv = inverseM(mulM(Xt, X));
+        const XtX = mulM(Xt, X), Xty = mulM(Xt, y);
+        const inv = inverseM(XtX);
         need(inv, 'XᵀX singular — ada kolom X yang saling bergantung linear (mis. kolom konstanta ganda).');
-        const beta = mulM(inv, mulM(Xt, y));
-        const fit = mulM(X, beta);
-        let sse = 0; for (let i = 0; i < n; i++) sse += (y[i][0] - fit[i][0]) ** 2;
+        const beta = mulM(inv, Xty), fit = mulM(X, beta);
+        const res = y.map((r, i) => [r[0] - fit[i][0]]);
+        let sse = 0; for (let i = 0; i < n; i++) sse += res[i][0] ** 2;
         const hasConst = Array.from({ length: p }, (_, j) => X.every((r) => Math.abs(r[j] - 1) < 1e-12)).some(Boolean);
         const scalars = [['n (observasi)', String(n)], ['p (parameter)', String(p)], ['SSE', fmt(sse)]];
         let note = 'Tambahkan satu kolom berisi angka 1 pada A bila model memerlukan intersep.';
+        const F = allInt(X, y) ? frac : fmt, Fd = fmt;
+        const lines = [`SSE = Σ eᵢ² = ${res.map((r) => tm(r[0], Fd) + '²').join(' + ')} = ${fmt(sse)}`];
         if (hasConst) {
           const ym = y.reduce((s, r) => s + r[0], 0) / n;
           const sst = y.reduce((s, r) => s + (r[0] - ym) ** 2, 0);
-          if (sst > 0) scalars.push(['R²', fmt(1 - sse / sst)]);
+          if (sst > 0) { scalars.push(['R²', fmt(1 - sse / sst)]); lines.push(`SST = Σ(yᵢ − ȳ)² = ${fmt(sst)}   (ȳ = ${fmt(ym)})`, `R² = 1 − SSE/SST = 1 − ${fmt(sse)}/${fmt(sst)} = ${fmt(1 - sse / sst)}`); }
           note = 'Kolom konstanta (angka 1) terdeteksi sebagai intersep.';
         }
-        return { title: 'Koefisien OLS (β)', scalars, matrix: beta,
-          rowLabels: Array.from({ length: p }, (_, i) => 'β' + (i + 1)), note };
+        const lab = Array.from({ length: p }, (_, i) => 'β' + (i + 1));
+        return { title: 'Koefisien OLS (β)', scalars, matrix: beta, rowLabels: lab, note, steps: [
+          S('Data', { p: 'X = matriks A (tiap baris = satu observasi, tiap kolom = satu variabel), y = kolom 1 matriks B. Rumus kuadrat terkecil: β = (XᵀX)⁻¹ Xᵀ y.', mats: [{ label: 'X', cells: mat(X, F) }, { label: 'y', cells: mat(y, F) }] }),
+          S('Transpos X', { mats: [{ label: 'Xᵀ', cells: mat(Xt, F) }] }),
+          S('Hitung XᵀX', { p: `Ukuran ${sz(XtX)}.`, mats: [{ label: 'XᵀX', cells: mat(XtX, F) }] }),
+          S('Hitung Xᵀy', { mats: [{ label: 'Xᵀy', cells: mat(Xty, F) }] }),
+          S('Cari invers (XᵀX)⁻¹', { p: `det(XᵀX) = ${fmt(detM(XtX))} ≠ 0, jadi invers ada (cara mencarinya: lihat operasi Invers).`, mats: [{ label: '(XᵀX)⁻¹', cells: mat(inv, allInt(inv) ? frac : F === frac ? frac : fmt) }] }),
+          S('Kalikan: β = (XᵀX)⁻¹ · Xᵀy', { mats: [{ label: 'β', cells: mat(beta, F === frac ? frac : fmt), rowLabels: lab }] }),
+          S('Periksa kecocokan model', { p: 'ŷ = Xβ, galat e = y − ŷ.', mats: [{ label: 'ŷ', cells: mat(fit, Fd) }, { label: 'e = y − ŷ', cells: mat(res, Fd) }], lines }),
+        ] };
       } },
     ] },
   ];
 
   const core = { parseCell, fmt, fmtC, detM, inverseM, rrefM, mulM, transposeM, powerM,
-    jacobiEigen, qrEigenvalues, isSymmetric, OPS };
+    jacobiEigen, qrEigenvalues, isSymmetric, OPS, frac };
   if (typeof module !== 'undefined' && module.exports) module.exports = core;
 
   /* ======================================================================
@@ -422,6 +709,20 @@
     #view-matriks .mx-actions{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:16px; }
     #view-matriks .mx-actions .btn-ghost{ min-height:38px; padding:6px 14px; font-size:13.5px; }
     #view-matriks .mx-status{ font-size:13px; color:var(--good); font-weight:600; }
+    #view-matriks .mx-steps{ margin-top:20px; border-top:1px solid var(--rule); padding-top:14px; }
+    #view-matriks .mx-steps > summary{ cursor:pointer; font-family:var(--font-display); font-size:18px; font-weight:600; color:var(--ink); padding:4px 0 10px; }
+    #view-matriks .mx-step{ display:flex; flex-direction:column; gap:8px; padding:12px 0 14px 14px; border-left:3px solid var(--accent-soft); margin-left:4px; min-width:0; }
+    #view-matriks .mx-step-h{ display:flex; align-items:center; gap:10px; font-weight:700; font-size:14.5px; color:var(--ink); }
+    #view-matriks .mx-step-n{ flex:none; display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; background:var(--accent); color:#fff; font-size:12.5px; font-family:var(--font-mono); margin-left:-28px; box-shadow:0 0 0 4px #fff; }
+    #view-matriks .mx-step p{ margin:0; font-size:14px; color:var(--ink-soft); text-align:left; }
+    #view-matriks pre.mx-lines{ margin:0; padding:10px 12px; background:var(--paper-2); border:1px solid var(--rule); border-radius:8px; font-family:var(--font-mono); font-size:13px; line-height:1.65; white-space:pre-wrap; word-break:break-word; color:var(--ink); }
+    #view-matriks .mx-mats{ display:flex; flex-wrap:wrap; gap:14px 22px; align-items:flex-start; }
+    #view-matriks .mx-fig{ margin:0; max-width:100%; }
+    #view-matriks .mx-fig figcaption{ font-family:var(--font-mono); font-size:12.5px; color:var(--ink-faint); margin-bottom:4px; }
+    #view-matriks table.mx-res td.sep{ border-left:2px dashed var(--accent-2); border-radius:0 8px 8px 0; }
+    #view-matriks table.mx-res td.sep-l{ border-radius:8px 0 0 8px; }
+    #view-matriks .mx-steps table.mx-res{ font-size:13.5px; border-spacing:4px; }
+    #view-matriks .mx-steps table.mx-res td{ min-width:44px; padding:7px 8px; }
     #view-matriks [hidden]{ display:none !important; }
     @media (max-width:520px){
       #view-matriks .mx-card{ padding:16px 14px 18px; }
@@ -485,6 +786,7 @@
           <button type="button" class="btn-ghost" id="mxToB">Jadikan matriks B</button>
           <span class="mx-status" id="mxStatus" role="status"></span>
         </div>
+        <div id="mxSteps"></div>
       </section>
     </div>`;
 
@@ -600,17 +902,29 @@
 
   const showErr = (msg) => { const el = $('#mxErr'); el.textContent = msg; el.hidden = !msg; };
 
-  function matTable(res) {
-    const R = rows(res.matrix), C = cols(res.matrix);
+  /* spec: { cells:[[string]], rowLabels?, colLabels?, sep? }  (sep = indeks kolom pertama setelah garis pemisah) */
+  function tableHTML(spec) {
+    const cells = spec.cells, R = cells.length, C = cells[0].length;
     let h = '<div class="mx-res-scroll"><table class="mx-res">';
-    if (res.colLabels) h += '<thead><tr>' + (res.rowLabels ? '<th></th>' : '') + res.colLabels.map((l) => `<th>${esc(l)}</th>`).join('') + '</tr></thead>';
+    if (spec.colLabels) h += '<thead><tr>' + (spec.rowLabels ? '<th></th>' : '') + spec.colLabels.map((l) => `<th>${esc(l)}</th>`).join('') + '</tr></thead>';
     h += '<tbody>';
     for (let i = 0; i < R; i++) {
-      h += '<tr>' + (res.rowLabels ? `<th>${esc(res.rowLabels[i])}</th>` : '');
-      for (let j = 0; j < C; j++) h += `<td>${esc(fmt(res.matrix[i][j]))}</td>`;
+      h += '<tr>' + (spec.rowLabels ? `<th>${esc(spec.rowLabels[i])}</th>` : '');
+      for (let j = 0; j < C; j++) h += `<td${spec.sep != null && j === spec.sep ? ' class="sep"' : ''}>${esc(cells[i][j])}</td>`;
       h += '</tr>';
     }
     return h + '</tbody></table></div>';
+  }
+  const matTable = (res) => tableHTML({ cells: res.matrix.map((r) => r.map(fmt)), rowLabels: res.rowLabels, colLabels: res.colLabels });
+
+  function stepsHTML(steps) {
+    return '<details class="mx-steps" open><summary>Langkah-langkah perhitungan</summary>' + steps.map((st, i) =>
+      `<div class="mx-step"><div class="mx-step-h"><span class="mx-step-n">${i + 1}</span><span>${esc(st.title)}</span></div>` +
+      (st.p ? `<p>${esc(st.p)}</p>` : '') +
+      (st.lines ? `<pre class="mx-lines">${esc(st.lines.join('\n'))}</pre>` : '') +
+      (st.mats ? '<div class="mx-mats">' + st.mats.map((m) =>
+        `<figure class="mx-fig"><figcaption>${esc(m.label || '')}</figcaption>${tableHTML(m)}</figure>`).join('') + '</div>' : '') +
+      '</div>').join('') + '</details>';
   }
 
   function showResult(res) {
@@ -621,6 +935,7 @@
     if (res.matrix) h += matTable(res);
     if (res.note) h += `<p class="mx-note">${esc(res.note)}</p>`;
     $('#mxRes').innerHTML = h;
+    $('#mxSteps').innerHTML = res.steps && res.steps.length ? stepsHTML(res.steps) : '';
     $('#mxToA').hidden = $('#mxToB').hidden = !res.matrix;
     $('#mxStatus').textContent = '';
     $('#mxResCard').hidden = false;
