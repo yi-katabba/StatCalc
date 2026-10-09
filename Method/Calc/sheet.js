@@ -403,9 +403,11 @@
     #view-metode-calc .sc-tab{ flex:1 1 0; max-width:150px; min-height:42px; padding:0 16px; border:1px solid transparent; border-bottom:none; border-radius:10px 10px 0 0; background:transparent; color:var(--ink-soft); font-family:var(--font-body); font-size:14px; font-weight:700; cursor:pointer; margin-bottom:-1px; }
     #view-metode-calc .sc-tab:hover{ color:var(--ink); background:rgba(255,255,255,.55); }
     #view-metode-calc .sc-tab[aria-selected="true"]{ background:#fff; color:var(--accent); border-color:var(--rule-strong); box-shadow:inset 0 3px 0 var(--accent-2); }
-    #view-metode-calc .sc-rpanel{ display:none; background:#fff; border-bottom:1px solid var(--rule); }
-    #view-metode-calc .sc-rpanel.on{ display:block; }
-    #view-metode-calc .sc-rbody{ display:flex; align-items:stretch; gap:0; padding:10px 8px 4px; overflow-x:auto; -webkit-overflow-scrolling:touch; overscroll-behavior-x:contain; }
+    #view-metode-calc .sc-ribbon{ display:grid; grid-template-columns:minmax(0,1fr); }
+    #view-metode-calc .sc-tabs{ grid-row:1; grid-column:1; }
+    #view-metode-calc .sc-rpanel{ grid-row:2; grid-column:1; min-width:0; display:block; visibility:hidden; background:#fff; border-bottom:1px solid var(--rule); }
+    #view-metode-calc .sc-rpanel.on{ visibility:visible; }
+    #view-metode-calc .sc-rbody{ display:flex; flex-wrap:nowrap; align-items:stretch; gap:0; padding:10px 8px 4px; overflow-x:auto; scrollbar-width:thin; -webkit-overflow-scrolling:touch; overscroll-behavior-x:contain; }
     #view-metode-calc .sc-grp{ flex:0 0 auto; display:flex; flex-direction:column; padding:0 12px; border-right:1px solid var(--rule); }
     #view-metode-calc .sc-grp:last-child{ border-right:none; }
     #view-metode-calc .sc-gbody{ flex:1; display:flex; align-items:center; gap:6px; }
@@ -436,7 +438,8 @@
     #view-metode-calc .sc-ribbon .plain-input.file{ width:150px; }
     #view-metode-calc .sc-chk{ display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; padding:8px 10px; border:1px solid var(--rule); border-radius:12px; background:var(--paper-2); cursor:pointer; max-width:150px; line-height:1.2; }
     #view-metode-calc .sc-chk input{ width:18px; height:18px; flex-shrink:0; accent-color:var(--accent); }
-    #view-metode-calc .sc-tip{ margin:0; padding:2px 16px 12px; font-size:12.5px; color:var(--ink-soft); text-align:left; hyphens:manual; }
+    #view-metode-calc .sc-tip{ margin:0; font-size:12.5px; color:var(--ink-soft); text-align:left; hyphens:manual; }
+    #view-metode-calc .sc-tips{ margin-top:6px; }
     #view-metode-calc .sc-body{ padding:12px 14px 16px; }
     #view-metode-calc .sc-msgs{ padding:0 14px; }
     #view-metode-calc .sc-msgs .sc-msg{ margin:10px 0 0; }
@@ -444,11 +447,12 @@
     #view-metode-calc .sc-body .sc-panel{ margin-top:0; }
     #view-metode-calc .sc-body .sc-bar{ margin-top:10px; }
     @media (min-width:700px){
-      #view-metode-calc .sc-rbody{ flex-wrap:wrap; row-gap:6px; overflow-x:visible; padding:12px 12px 6px; }
+      #view-metode-calc .sc-rbody{ padding:12px 12px 6px; }
       #view-metode-calc .sc-tab{ flex:0 0 auto; min-width:104px; }
     }
     @media (min-width:1024px){
       #view-metode-calc .chapter-inner{ max-width:1400px; }
+      body.side-off #view-metode-calc .chapter-inner{ max-width:none; }
       #view-metode-calc .sc-scroll{ height:clamp(340px,60vh,760px); }
     }
   `;
@@ -534,7 +538,6 @@
                 <div class="sc-glabel">Ekspor</div>
               </div>
             </div>
-            <p class="sc-tip">Tempel blok sel dari Excel, unggah .xlsx / .csv, atau buat tabel baru lalu isi langsung di lembar kerja.</p>
             <input type="file" id="scFile" hidden accept=".xlsx,.xls,.xlsm,.csv,.tsv,.txt,text/csv,text/plain">
           </div>
 
@@ -587,7 +590,6 @@
                 <div class="sc-glabel">Sel</div>
               </div>
             </div>
-            <p class="sc-tip">Pilih rentang dengan menyeret mouse, Shift+klik, Shift+panah, klik huruf kolom / nomor baris, atau ketik alamat (mis. A1:C10) di kotak nama. Delete mengosongkan rentang; Ctrl+C / X / V menyalin, memotong, menempel; Ctrl+D / R mengisi ke bawah / kanan. Awali dengan = untuk rumus.</p>
           </div>
 
           <!-- ============ TAB FUNGSI ============ -->
@@ -623,7 +625,6 @@
                 <div class="sc-glabel">Konversi</div>
               </div>
             </div>
-            <p class="sc-tip">Hasil berupa rumus yang diisi ke bawah, jadi ikut berubah bila data sumber diedit. Rumus bebas: tulis huruf kolom saja, mis. LOG10(A), (A-B)^2, IF(A&gt;100,A,0).</p>
           </div>
 
           <!-- ============ TAB KIRIM ============ -->
@@ -655,7 +656,6 @@
                 <div class="sc-glabel">Metode Stat / Graph</div>
               </div>
             </div>
-            <p class="sc-tip">Data (termasuk kolom hasil rumus) dibawa ke metode terpilih; tombol kembali membawa Anda ke lembar ini dengan data utuh. ANOVA belum menerima data dari Calc: salin kolom lalu tempel ke tabel ANOVA.</p>
           </div>
         </div>
 
@@ -686,6 +686,12 @@
             <div class="sc-inner" id="scInner"><div class="sc-rows" id="scRows"></div></div>
           </div>
           <p class="sc-note" id="scInfo"></p>
+          <div class="sc-tips">
+            <p class="sc-tip" data-tip="file">Tempel blok sel dari Excel, unggah .xlsx / .csv, atau buat tabel baru lalu isi langsung di lembar kerja.</p>
+            <p class="sc-tip" data-tip="edit" hidden>Pilih rentang dengan menyeret mouse, Shift+klik, Shift+panah, klik huruf kolom / nomor baris, atau ketik alamat (mis. A1:C10) di kotak nama. Delete mengosongkan rentang; Ctrl+C / X / V menyalin, memotong, menempel; Ctrl+D / R mengisi ke bawah / kanan. Awali dengan = untuk rumus.</p>
+            <p class="sc-tip" data-tip="fungsi" hidden>Hasil berupa rumus yang diisi ke bawah, jadi ikut berubah bila data sumber diedit. Rumus bebas: tulis huruf kolom saja, mis. LOG10(A), (A-B)^2, IF(A&gt;100,A,0).</p>
+            <p class="sc-tip" data-tip="kirim" hidden>Data (termasuk kolom hasil rumus) dibawa ke metode terpilih; tombol kembali membawa Anda ke lembar ini dengan data utuh. ANOVA belum menerima data dari Calc: salin kolom lalu tempel ke tabel ANOVA.</p>
+          </div>
         </div>
       </section>
     </div>`;
@@ -1182,6 +1188,7 @@
   function showTab(name) {
     $$('.sc-tab', section).forEach((b) => { const on = b.dataset.tab === name; b.setAttribute('aria-selected', on ? 'true' : 'false'); b.tabIndex = on ? 0 : -1; });
     $$('.sc-rpanel', section).forEach((p) => p.classList.toggle('on', p.dataset.panel === name));
+    $$('.sc-tip', section).forEach((p) => { p.hidden = p.dataset.tip !== name; });
     if (name === 'fungsi') updateSelects();
   }
   $$('.sc-tab', section).forEach((b, i, all) => {
