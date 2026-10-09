@@ -1024,6 +1024,16 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 .gf-empty{ grid-column:1 / -1; text-align:center; color:var(--ink-faint); font-size:13.5px; padding:20px 0; }
 .mc-tags{ display:flex; flex-wrap:wrap; gap:5px; }
 .mc-tags span{ font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:999px; background:var(--paper-2); color:var(--ink-soft); border:1px solid var(--rule); }
+
+/* ===== Teks penjelasan rata kiri-kanan (justify) ===== */
+.lede, .hint, .field-note, .gr-note, .gr-format,
+.test-sub, .test-conclusion, .test-note,
+.step-block p, .step-note, .hc-desc, .mc-desc, .gf-desc, .p-sub, .mc-sub, .imp-panel p,
+.card > p:not(.error-msg):not(.imp-ok):not(.chart-note){
+  text-align:justify; text-justify:inter-word;
+  hyphens:auto; -webkit-hyphens:auto; overflow-wrap:break-word;
+}
+.test-verdict, .chart-note, .error-msg, .imp-ok{ text-align:left; hyphens:manual; }
 </style>
 </head>
 <body class="pre-auth">
