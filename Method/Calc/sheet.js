@@ -8,6 +8,9 @@
    - "Rumus kolom": terapkan operasi (log, akar, z-score, selisih, ...) ke satu
      kolom lalu simpan hasilnya di kolom lain, sekali klik.
    - Ekspor: .xlsx (rumus ikut tersimpan) dan .csv (nilai).
+  - Seleksi rentang (seret mouse / Shift+klik / Shift+panah / klik kolom-baris / kotak nama),
+    Salin-Potong-Tempel, Isi ke bawah-kanan, serta sisip & hapus baris/kolom di posisi sel
+    terpilih (rumus ikut menyesuaikan). Lembar digambar memenuhi lebar & tinggi area kerja.
    Halaman dibuat otomatis (#view-metode-calc); tidak ada markup di index.html.
    ========================================================================= */
 (function () {
@@ -23,7 +26,9 @@
 
   /* ------------------------------ Model data ------------------------------ */
   const S = { R: 20, C: 6, cells: [], header: true };   // cells[r][c] = teks mentah ('' = kosong; '=...' = rumus)
-  const sel = { r: 0, c: 0 };
+  const sel = { r: 0, c: 0 };            // sel = sel aktif (jangkar); ext = ujung seberang rentang
+  const ext = { r: 0, c: 0 };
+  let clip = null, keepRange = false;
   let undoStack = [], redoStack = [];
 
   function emptyCells(R, C) { return Array.from({ length: R }, () => new Array(C).fill('')); }
@@ -75,6 +80,7 @@
         if (j >= src.length) throw new Error('str');
         t.push({ k: 'str', v: out }); i = j + 1; continue;
       }
+      if (src.substr(i, 5).toUpperCase() === '#REF!') { t.push({ k: 'err', v: '#REF!' }); i += 5; continue; }
       let m;
       if ((m = /^(\d+\.?\d*|\.\d+)(e[-+]?\d+)?/i.exec(src.slice(i)))) { t.push({ k: 'num', v: parseFloat(m[0]) }); i += m[0].length; continue; }
       if ((m = /^\$?[A-Za-z]{1,3}\$?\d+/.exec(src.slice(i))) && !/^[A-Za-z0-9_(]/.test(src.slice(i + m[0].length))) { t.push({ k: 'ref', v: m[0] }); i += m[0].length; continue; }
@@ -100,6 +106,7 @@
       if (!t) throw new Error('eof');
       if (t.k === 'num') { let n = { t: 'num', v: t.v }; while (isOp('%')) { next(); n = { t: 'bin', op: '/', a: n, b: { t: 'num', v: 100 } }; } return n; }
       if (t.k === 'str') return { t: 'str', v: t.v };
+      if (t.k === 'err') return { t: 'err', v: t.v };
       if (t.k === 'ref') {
         const a = parseRef(t.v);
         if (isOp(':')) { next(); const t2 = next(); if (!t2 || t2.k !== 'ref') throw new Error('rng'); const b = parseRef(t2.v); return { t: 'rng', r1: Math.min(a.r, b.r), c1: Math.min(a.c, b.c), r2: Math.max(a.r, b.r), c2: Math.max(a.c, b.c) }; }
@@ -234,6 +241,7 @@
     switch (n.t) {
       case 'num': case 'str': case 'bool': return n.v;
       case 'bad': return ERR('#NAME?');
+      case 'err': return ERR(n.v);
       case 'name': return n.v === 'PI' ? Math.PI : ERR('#NAME?');
       case 'ref': return cellVal(n.r, n.c);
       case 'rng': return { rng: n };
@@ -374,6 +382,20 @@
     #view-metode-calc .sc-h4{ font-size:14.5px; margin:18px 0 4px; font-family:var(--font-body); }
     #view-metode-calc code{ font-family:var(--font-mono); font-size:12.5px; background:var(--paper-2); padding:1px 5px; border-radius:4px; }
 
+    /* ---------------------- Seleksi rentang ---------------------- */
+    #view-metode-calc input.sc-name{ width:104px; box-sizing:border-box; min-height:var(--tap); color:var(--ink); cursor:text; }
+    #view-metode-calc input.sc-name:focus{ background:#fff; outline:2px solid var(--accent-2); outline-offset:-2px; }
+    #view-metode-calc .sc-scroll:focus{ outline:none; }
+    #view-metode-calc .sc-corner, #view-metode-calc .sc-ch, #view-metode-calc .sc-gut{ cursor:pointer; user-select:none; -webkit-user-select:none; }
+    #view-metode-calc .sc-cell{ --sT:0 0 #0000; --sB:0 0 #0000; --sL:0 0 #0000; --sR:0 0 #0000; }
+    #view-metode-calc .sc-cell.in{ background:var(--accent-soft); box-shadow:var(--sT),var(--sB),var(--sL),var(--sR); }
+    #view-metode-calc .sc-cell.in.act{ background:#fff; }
+    #view-metode-calc .sc-cell.sT{ --sT:inset 0 2px 0 0 var(--accent-2); }
+    #view-metode-calc .sc-cell.sB{ --sB:inset 0 -2px 0 0 var(--accent-2); }
+    #view-metode-calc .sc-cell.sL{ --sL:inset 2px 0 0 0 var(--accent-2); }
+    #view-metode-calc .sc-cell.sR{ --sR:inset -2px 0 0 0 var(--accent-2); }
+    #view-metode-calc .sc-scroll.dragging .sc-cell{ user-select:none; -webkit-user-select:none; cursor:cell; }
+
     /* ---------------------- Pita perintah (ribbon) ---------------------- */
     #view-metode-calc .sc-main{ padding:0; overflow:hidden; }
     #view-metode-calc .sc-tabs{ display:flex; gap:2px; padding:8px 10px 0; background:var(--paper-2); border-bottom:1px solid var(--rule-strong); overflow-x:auto; scrollbar-width:none; }
@@ -450,6 +472,12 @@
     clear: '<path d="M4.5 7h15M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/><path d="M10 11v5.5M14 11v5.5"/>',
     fx: '<text x="12" y="16.5" text-anchor="middle" font-size="13" font-style="italic" font-weight="700" font-family="Georgia,serif" fill="currentColor" stroke="none">fx</text><rect x="3" y="4" width="18" height="16" rx="2.5"/>',
     toval: '<path d="M4.5 8h8M4.5 12h8M4.5 16h5"/><path d="M15 12h5.5M18 9.5l2.5 2.5-2.5 2.5"/>',
+    copy: '<rect x="8.5" y="8.5" width="11.5" height="12" rx="2"/><path d="M15.5 8.5V6a2 2 0 0 0-2-2H6.5a2 2 0 0 0-2 2v8.5a2 2 0 0 0 2 2h2"/>',
+    cut: '<circle cx="6.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/><path d="M8.2 15.7 18 4M15.8 15.7 6 4"/>',
+    filldown: '<rect x="5" y="3.5" width="14" height="6" rx="1.5"/><path d="M12 9.5v8M9 14.5l3 3 3-3M5 20.5h14"/>',
+    fillright: '<rect x="3.5" y="5" width="6" height="14" rx="1.5"/><path d="M9.5 12h8M14.5 9l3 3-3 3M20.5 5v14"/>',
+    insrowup: '<rect x="3.5" y="12" width="17" height="8" rx="1.8"/><path d="M3.5 16h17M12 3.5v6M9 6.5h6"/>',
+    inscolleft: '<rect x="12" y="3.5" width="8.5" height="17" rx="1.8"/><path d="M16.2 3.5v17M5 9v6M2 12h6"/>',
     send: '<path d="M21 3 10.5 13.5"/><path d="M21 3l-6.5 18-3.5-7.5L3.5 10z"/>'
   };
   const svgI = (k) => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICO[k]}</svg>`;
@@ -473,7 +501,7 @@
             <button type="button" class="sc-tab" role="tab" data-tab="file" aria-selected="true">File</button>
             <button type="button" class="sc-tab" role="tab" data-tab="edit" aria-selected="false">Edit</button>
             <button type="button" class="sc-tab" role="tab" data-tab="fungsi" aria-selected="false">Fungsi</button>
-            <button type="button" class="sc-tab" role="tab" data-tab="kirim" aria-selected="false">Kirim</button>
+            <button type="button" class="sc-tab" role="tab" data-tab="kirim" aria-selected="false">Statistik</button>
           </div>
 
           <!-- ============ TAB FILE ============ -->
@@ -522,15 +550,32 @@
               </div>
               <div class="sc-grp">
                 <div class="sc-gbody">
-                  ${rb('scAddRow', 'addrow', 'Tambah baris', 'Tambah satu baris di bawah')}
-                  ${rb('scDelRow', 'delrow', 'Hapus baris', 'Hapus baris terakhir')}
+                  ${rb('scCopy', 'copy', 'Salin', 'Salin sel terpilih (Ctrl+C)')}
+                  ${rb('scCut', 'cut', 'Potong', 'Potong sel terpilih (Ctrl+X)')}
+                  ${rb('scPaste', 'paste', 'Tempel', 'Tempel di sel terpilih (Ctrl+V)')}
+                </div>
+                <div class="sc-glabel">Papan klip</div>
+              </div>
+              <div class="sc-grp">
+                <div class="sc-gbody">
+                  ${rb('scFillDown', 'filldown', 'Isi ke bawah', 'Isi ke bawah dari baris pertama rentang (Ctrl+D)')}
+                  ${rb('scFillRight', 'fillright', 'Isi ke kanan', 'Isi ke kanan dari kolom pertama rentang (Ctrl+R)')}
+                </div>
+                <div class="sc-glabel">Isi</div>
+              </div>
+              <div class="sc-grp">
+                <div class="sc-gbody">
+                  ${rb('scInsRowUp', 'insrowup', 'Sisip atas', 'Sisipkan baris kosong di atas sel terpilih')}
+                  ${rb('scInsRowDown', 'addrow', 'Sisip bawah', 'Sisipkan baris kosong di bawah sel terpilih')}
+                  ${rb('scDelRow', 'delrow', 'Hapus baris', 'Hapus baris sel terpilih', 'danger')}
                 </div>
                 <div class="sc-glabel">Baris</div>
               </div>
               <div class="sc-grp">
                 <div class="sc-gbody">
-                  ${rb('scAddCol', 'addcol', 'Tambah kolom', 'Tambah satu kolom di kanan')}
-                  ${rb('scDelCol', 'delcol', 'Hapus kolom', 'Hapus kolom terakhir')}
+                  ${rb('scInsColLeft', 'inscolleft', 'Sisip kiri', 'Sisipkan kolom kosong di kiri sel terpilih')}
+                  ${rb('scInsColRight', 'addcol', 'Sisip kanan', 'Sisipkan kolom kosong di kanan sel terpilih')}
+                  ${rb('scDelCol', 'delcol', 'Hapus kolom', 'Hapus kolom sel terpilih', 'danger')}
                 </div>
                 <div class="sc-glabel">Kolom</div>
               </div>
@@ -542,7 +587,7 @@
                 <div class="sc-glabel">Sel</div>
               </div>
             </div>
-            <p class="sc-tip">Ketuk sel untuk mengedit. Awali dengan = untuk rumus, mis. =LOG10(A2) atau =SUM(A2:A20). Enter turun, Tab ke kanan.</p>
+            <p class="sc-tip">Pilih rentang dengan menyeret mouse, Shift+klik, Shift+panah, klik huruf kolom / nomor baris, atau ketik alamat (mis. A1:C10) di kotak nama. Delete mengosongkan rentang; Ctrl+C / X / V menyalin, memotong, menempel; Ctrl+D / R mengisi ke bawah / kanan. Awali dengan = untuk rumus.</p>
           </div>
 
           <!-- ============ TAB FUNGSI ============ -->
@@ -586,7 +631,7 @@
             <div class="sc-rbody">
               <div class="sc-grp">
                 <div class="sc-gbody">
-                  <div class="sc-fld"><label for="scTarget">Kirim ke</label>
+                  <div class="sc-fld"><label for="scTarget">Analisis dengan</label>
                     <select id="scTarget" class="select-input" style="width:220px">
                       <optgroup label="Stat">
                         <option value="deskriptif">Statistika Deskriptif</option>
@@ -605,12 +650,12 @@
                       </optgroup>
                     </select>
                   </div>
-                  ${rb('scSend', 'send', 'Kirim & buka', 'Kirim data lembar kerja ke metode terpilih', 'pri')}
+                  ${rb('scSend', 'send', 'Buka & analisis', 'Bawa data lembar kerja ke metode terpilih', 'pri')}
                 </div>
-                <div class="sc-glabel">Stat / Graph</div>
+                <div class="sc-glabel">Metode Stat / Graph</div>
               </div>
             </div>
-            <p class="sc-tip">Data (termasuk kolom hasil rumus) dikirim ke metode terpilih; tombol kembali membawa Anda ke lembar ini dengan data utuh. ANOVA belum menerima kiriman dari Calc: salin kolom lalu tempel ke tabel ANOVA.</p>
+            <p class="sc-tip">Data (termasuk kolom hasil rumus) dibawa ke metode terpilih; tombol kembali membawa Anda ke lembar ini dengan data utuh. ANOVA belum menerima data dari Calc: salin kolom lalu tempel ke tabel ANOVA.</p>
           </div>
         </div>
 
@@ -633,10 +678,10 @@
             </div>
           </div>
           <div class="sc-fxrow">
-            <span class="sc-name" id="scName">A1</span>
+            <input type="text" class="sc-name" id="scName" value="A1" spellcheck="false" autocomplete="off" aria-label="Kotak nama: alamat sel atau rentang, mis. A1:C10">
             <input type="text" class="sc-fx" id="scFx" spellcheck="false" autocomplete="off" aria-label="Isi sel / rumus" placeholder="Isi sel atau rumus">
           </div>
-          <div class="sc-scroll" id="scScroll">
+          <div class="sc-scroll" id="scScroll" tabindex="-1">
             <div class="sc-head" id="scHead"></div>
             <div class="sc-inner" id="scInner"><div class="sc-rows" id="scRows"></div></div>
           </div>
@@ -654,12 +699,34 @@
   function hide(id) { q(id).hidden = true; }
 
   /* ----------------------------- Render grid ------------------------------ */
-  let rStart = -1, rEnd = -1, rafId = 0;
-  function totalW() { return GUT + S.C * CW; }
+  let rStart = -1, rEnd = -1, rafId = 0, prevMulti = false;
+  // Baris/kolom yang digambar minimal selebar & setinggi area lembar kerja, jadi tidak ada ruang kosong di kanan/bawah.
+  function vC() { return Math.min(MAX_C, Math.max(S.C, Math.ceil((elScroll.clientWidth - GUT) / CW))); }
+  function vR() { return Math.min(MAX_R, Math.max(S.R, Math.ceil((elScroll.clientHeight - 32) / RH))); }
+  function totalW() { return GUT + vC() * CW; }
+
+  /* Seleksi: rentang = kotak antara sel aktif (sel) dan ujung seberang (ext) */
+  const SELC = ['in', 'act', 'sT', 'sB', 'sL', 'sR'];
+  function rect() { return { r1: Math.min(sel.r, ext.r), r2: Math.max(sel.r, ext.r), c1: Math.min(sel.c, ext.c), c2: Math.max(sel.c, ext.c) }; }
+  function isMulti() { return sel.r !== ext.r || sel.c !== ext.c; }
+  function rangeLabel() { const R = rect(); return isMulti() ? colName(R.c1) + (R.r1 + 1) + ':' + colName(R.c2) + (R.r2 + 1) : colName(sel.c) + (sel.r + 1); }
+  function selClass(r, c) {
+    if (!isMulti()) return '';
+    const R = rect();
+    if (r < R.r1 || r > R.r2 || c < R.c1 || c > R.c2) return '';
+    let k = ' in';
+    if (r === sel.r && c === sel.c) k += ' act';
+    if (r === R.r1) k += ' sT';
+    if (r === R.r2) k += ' sB';
+    if (c === R.c1) k += ' sL';
+    if (c === R.c2) k += ' sR';
+    return k;
+  }
 
   function buildHead() {
-    let h = `<div class="sc-corner"></div>`;
-    for (let c = 0; c < S.C; c++) h += `<div class="sc-ch${c === sel.c ? ' on' : ''}" data-c="${c}">${colName(c)}</div>`;
+    const R = rect(), n = vC();
+    let h = `<div class="sc-corner" title="Pilih seluruh data"></div>`;
+    for (let c = 0; c < n; c++) h += `<div class="sc-ch${c >= R.c1 && c <= R.c2 ? ' on' : ''}" data-c="${c}">${colName(c)}</div>`;
     elHead.innerHTML = h;
     elHead.style.width = totalW() + 'px';
   }
@@ -670,25 +737,27 @@
     else k += ' txt';
     if (isErr(v)) k += ' er';
     if (t.charAt(0) === '=') k += ' fx';
-    return k;
+    return k + selClass(r, c);
   }
   function rowHTML(r) {
-    let h = `<div class="sc-row" data-r="${r}"><div class="sc-gut${r === sel.r ? ' on' : ''}">${r + 1}</div>`;
-    for (let c = 0; c < S.C; c++) {
+    const R = rect(), n = vC();
+    let h = `<div class="sc-row" data-r="${r}"><div class="sc-gut${r >= R.r1 && r <= R.r2 ? ' on' : ''}">${r + 1}</div>`;
+    for (let c = 0; c < n; c++) {
       const t = raw(r, c), v = cellVal(r, c);
       h += `<input class="${cellClass(r, c, v, t)}" data-r="${r}" data-c="${c}" value="${esc(display(v))}" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="text" aria-label="${colName(c)}${r + 1}">`;
     }
     return h + '</div>';
   }
   function layout() {
-    elInner.style.height = (S.R * RH) + 'px';
+    elInner.style.height = (vR() * RH) + 'px';
     elInner.style.width = totalW() + 'px';
     elScroll.dataset.rows = S.R;
   }
   function renderRows(force) {
     const top = Math.max(0, elScroll.scrollTop - 32);
     const vis = Math.ceil(elScroll.clientHeight / RH) + 1;
-    const a = Math.max(0, Math.floor(top / RH) - OVERSCAN), b = Math.min(S.R - 1, a + vis + OVERSCAN * 2);
+    const total = vR();
+    const a = Math.max(0, Math.floor(top / RH) - OVERSCAN), b = Math.min(total - 1, a + vis + OVERSCAN * 2);
     if (!force && a === rStart && b === rEnd) return;
     const active = document.activeElement;
     const keep = active && active.classList && active.classList.contains('sc-cell') ? { r: +active.dataset.r, c: +active.dataset.c, v: active.value, s: active.selectionStart } : null;
@@ -715,28 +784,38 @@
     const st = elScroll.scrollTop, sl = elScroll.scrollLeft;
     layout(); buildHead(); rStart = rEnd = -1; renderRows(true);
     if (keepScroll) { elScroll.scrollTop = st; elScroll.scrollLeft = sl; }
-    updateInfo(); updateSelects(); updateSelUI();
+    updateInfo(); updateSelects(); updateSelUI(true);
   }
+  // Dipakai saat ukuran area berubah (jendela diubah / sidebar dibuka): isi ulang kolom & baris agar lembar tetap penuh.
+  function refit() { layout(); buildHead(); renderRows(true); updateSelUI(true); }
   elScroll.addEventListener('scroll', () => { if (rafId) return; rafId = requestAnimationFrame(() => { rafId = 0; renderRows(false); }); });
 
   function updateInfo() {
-    const last = lastDataRow();
-    elInfo.textContent = `${S.R} baris × ${S.C} kolom · data terisi sampai baris ${last + 1 > 0 ? last + 1 : 0}. Batas lembar: ${MAX_R} baris × ${MAX_C} kolom.`;
+    const last = lastDataRow(), ub = usedBounds();
+    elInfo.textContent = last < 0 ? `Lembar masih kosong. Batas lembar: ${MAX_R} baris × ${MAX_C} kolom.` : `Data terisi: ${last + 1} baris × ${ub.C} kolom. Batas lembar: ${MAX_R} baris × ${MAX_C} kolom.`;
   }
   function updateUndoBtn() { q('scUndo').disabled = undoStack.length === 0; q('scRedo').disabled = redoStack.length === 0; }
 
   /* ----------------------------- Seleksi sel ------------------------------ */
-  function updateSelUI() {
-    elName.textContent = colName(sel.c) + (sel.r + 1);
-    const active = document.activeElement;
+  function updateSelUI(forceCells) {
+    const R = rect(), multi = isMulti(), active = document.activeElement;
+    if (active !== elName) elName.value = rangeLabel();
     if (active !== elFx) elFx.value = raw(sel.r, sel.c);
-    $$('.sc-ch', elHead).forEach((e) => e.classList.toggle('on', +e.dataset.c === sel.c));
-    $$('.sc-gut', elRows).forEach((e) => e.classList.toggle('on', +e.parentNode.dataset.r === sel.r));
+    $$('.sc-ch', elHead).forEach((e) => { const c = +e.dataset.c; e.classList.toggle('on', c >= R.c1 && c <= R.c2); });
+    $$('.sc-gut', elRows).forEach((e) => { const r = +e.parentNode.dataset.r; e.classList.toggle('on', r >= R.r1 && r <= R.r2); });
+    if (multi || prevMulti || forceCells) {
+      $$('.sc-cell', elRows).forEach((inp) => {
+        SELC.forEach((k) => inp.classList.remove(k));
+        const k = selClass(+inp.dataset.r, +inp.dataset.c);
+        if (k) k.trim().split(' ').forEach((x) => inp.classList.add(x));
+      });
+    }
+    prevMulti = multi;
   }
-  function select(r, c) { sel.r = r; sel.c = c; updateSelUI(); }
+  function select(r, c) { sel.r = ext.r = r; sel.c = ext.c = c; updateSelUI(); }
+  function extendTo(r, c) { ext.r = r; ext.c = c; updateSelUI(); }
 
-  function goTo(r, c, opts) {
-    r = Math.max(0, Math.min(S.R - 1, r)); c = Math.max(0, Math.min(S.C - 1, c));
+  function scrollToCell(r, c) {
     const y = r * RH, h = elScroll.clientHeight;
     if (y < elScroll.scrollTop) elScroll.scrollTop = y;
     else if (y + RH + 32 > elScroll.scrollTop + h) elScroll.scrollTop = y + RH + 32 - h;
@@ -744,11 +823,92 @@
     if (x < elScroll.scrollLeft) elScroll.scrollLeft = x;
     else if (x + CW > elScroll.scrollLeft + w) elScroll.scrollLeft = x + CW - w;
     renderRows(false);
+  }
+  /* Fokus ke sel tanpa memutus rentang (dipakai setelah seret / Shift+klik / pilih kolom). */
+  function focusCell(r, c, noScroll) {
+    keepRange = true;
+    if (!noScroll) scrollToCell(r, c);
+    let inp = cellInput(r, c);
+    if (!inp && !noScroll) { renderRows(true); inp = cellInput(r, c); }
+    (inp || elScroll).focus({ preventScroll: true });
+    keepRange = false;
+  }
+  function goTo(r, c, opts) {
+    r = Math.max(0, Math.min(MAX_R - 1, r)); c = Math.max(0, Math.min(MAX_C - 1, c));
+    if (r >= vR()) { ensure(r + 1, S.C); layout(); }
+    if (c >= vC()) { ensure(S.R, c + 1); layout(); buildHead(); }
+    scrollToCell(r, c);
     let inp = cellInput(r, c);
     if (!inp) { renderRows(true); inp = cellInput(r, c); }
     if (inp) { inp.focus({ preventScroll: true }); if (!(opts && opts.noSelect)) { try { inp.select(); } catch (e) { /* abaikan */ } } }
     select(r, c);
   }
+  function cellAt(x, y) {
+    const b = elScroll.getBoundingClientRect();
+    const c = Math.floor((x - b.left - GUT + elScroll.scrollLeft) / CW), r = Math.floor((y - b.top - 32 + elScroll.scrollTop) / RH);
+    return { r: Math.max(0, Math.min(vR() - 1, r)), c: Math.max(0, Math.min(vC() - 1, c)) };
+  }
+  function gotoRange(txt) {
+    let r1, c1, r2, c2, m;
+    if ((m = /^\s*([A-Za-z]{1,3})(\d+)\s*(?::\s*([A-Za-z]{1,3})(\d+))?\s*$/.exec(txt))) {
+      c1 = colIndex(m[1]); r1 = +m[2] - 1; c2 = m[3] ? colIndex(m[3]) : c1; r2 = m[4] ? +m[4] - 1 : r1;
+    } else if ((m = /^\s*([A-Za-z]{1,3})\s*:\s*([A-Za-z]{1,3})\s*$/.exec(txt))) {
+      c1 = colIndex(m[1]); c2 = colIndex(m[2]); r1 = 0; r2 = vR() - 1;
+    } else return false;
+    if (![r1, c1, r2, c2].every((x) => x >= 0) || Math.max(r1, r2) >= MAX_R || Math.max(c1, c2) >= MAX_C) return false;
+    const mr = Math.max(r1, r2), mc = Math.max(c1, c2);
+    if (mr >= vR()) ensure(mr + 1, S.C);
+    if (mc >= vC()) ensure(S.R, mc + 1);
+    layout(); buildHead();
+    sel.r = r1; sel.c = c1; ext.r = r2; ext.c = c2;
+    updateSelUI(); focusCell(r1, c1);
+    return true;
+  }
+  elName.addEventListener('focus', () => { try { elName.select(); } catch (e) { /* abaikan */ } });
+  elName.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); if (!gotoRange(elName.value)) flash('scErr', 'Alamat tidak dikenali. Tulis seperti B3, A1:C10, atau A:C.', 5000); else hide('scErr'); }
+    else if (e.key === 'Escape') { elName.blur(); }
+  });
+  elName.addEventListener('blur', () => updateSelUI());
+
+  /* Seret mouse / Shift+klik untuk memilih rentang */
+  let drag = null;
+  elScroll.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    const inp = e.target.closest ? e.target.closest('.sc-cell') : null;
+    if (!inp) return;
+    const r = +inp.dataset.r, c = +inp.dataset.c;
+    if (e.shiftKey) { e.preventDefault(); extendTo(r, c); focusCell(sel.r, sel.c, true); return; }
+    drag = { r, c, on: false };
+  });
+  document.addEventListener('mousemove', (e) => {
+    if (!drag) return;
+    if (!(e.buttons & 1)) { drag = null; elScroll.classList.remove('dragging'); return; }
+    const p = cellAt(e.clientX, e.clientY);
+    if (!drag.on) {
+      if (p.r === drag.r && p.c === drag.c) return;
+      drag.on = true; elScroll.classList.add('dragging');
+      const a = document.activeElement; if (a && a.blur) a.blur();
+      const gs = window.getSelection && window.getSelection(); if (gs && gs.removeAllRanges) gs.removeAllRanges();
+    }
+    const b = elScroll.getBoundingClientRect();
+    if (e.clientY > b.bottom - 28) elScroll.scrollTop += 28; else if (e.clientY < b.top + 60) elScroll.scrollTop -= 28;
+    if (e.clientX > b.right - 28) elScroll.scrollLeft += 28; else if (e.clientX < b.left + GUT + 28) elScroll.scrollLeft -= 28;
+    if (p.r !== ext.r || p.c !== ext.c) extendTo(p.r, p.c);
+  });
+  document.addEventListener('mouseup', () => {
+    if (!drag) return;
+    const was = drag.on; drag = null; elScroll.classList.remove('dragging');
+    if (was) focusCell(sel.r, sel.c, true);
+  });
+  /* Klik huruf kolom / nomor baris / pojok kiri atas */
+  function finishSel() { updateSelUI(); focusCell(sel.r, sel.c, true); }
+  elScroll.addEventListener('click', (e) => {
+    const ch = e.target.closest('.sc-ch'), gu = e.target.closest('.sc-gut'), co = e.target.closest('.sc-corner');
+    if (ch) { const c = +ch.dataset.c; if (!e.shiftKey) sel.c = c; sel.r = 0; ext.r = vR() - 1; ext.c = c; finishSel(); }
+    else if (gu) { const r = +gu.parentNode.dataset.r; if (!e.shiftKey) sel.r = r; sel.c = 0; ext.c = vC() - 1; ext.r = r; finishSel(); }
+    else if (co) { const ub = usedBounds(); sel.r = 0; sel.c = 0; ext.r = Math.max(0, ub.R - 1); ext.c = Math.max(0, ub.C - 1); finishSel(); }
+  });
 
   /* ------------------------------ Edit sel -------------------------------- */
   function normalizeInput(t) {
@@ -772,7 +932,7 @@
     const r = +inp.dataset.r, c = +inp.dataset.c;
     inp.value = raw(r, c);
     inp._orig = inp.value;
-    select(r, c);
+    if (keepRange) updateSelUI(); else select(r, c);
   });
   elRows.addEventListener('input', (e) => { if (e.target.classList.contains('sc-cell')) elFx.value = e.target.value; });
   elRows.addEventListener('focusout', (e) => {
@@ -781,36 +941,41 @@
     const r = +inp.dataset.r, c = +inp.dataset.c;
     const changed = inp.value !== (inp._orig === undefined ? raw(r, c) : inp._orig) ? commit(r, c, inp.value) : false;
     inp._orig = undefined;
-    if (changed) { updateInfo(); }
+    if (changed) { updateInfo(); updateSelects(); }
     const v = cellVal(r, c), t = raw(r, c);
     inp.value = display(v); inp.className = cellClass(r, c, v, t);
     if (changed) refreshVisible();
   });
-  elRows.addEventListener('keydown', (e) => {
-    const inp = e.target;
-    if (!inp.classList || !inp.classList.contains('sc-cell')) return;
-    const r = +inp.dataset.r, c = +inp.dataset.c;
-    const k = e.key;
-    if (k === 'Enter') { e.preventDefault(); if (r + 1 >= S.R && S.R < MAX_R && !e.shiftKey) { inp.blur(); addRows(1); } goTo(e.shiftKey ? r - 1 : r + 1, c); }
+  const cellOf = (t) => (t && t.classList && t.classList.contains('sc-cell') ? t : null);
+  const ARROWS = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] };
+  elScroll.addEventListener('keydown', (e) => {
+    const inp = cellOf(e.target), k = e.key, mod = e.ctrlKey || e.metaKey;
+    const r = sel.r, c = sel.c;
+    if (mod && !e.shiftKey && !e.altKey && (k === 'd' || k === 'D')) { e.preventDefault(); fillDown(); return; }
+    if (mod && !e.shiftKey && !e.altKey && (k === 'r' || k === 'R')) { e.preventDefault(); fillRight(); return; }
+    if (!mod && isMulti() && (k === 'Delete' || k === 'Backspace')) { e.preventDefault(); clearRange(); return; }
+    if (e.shiftKey && !mod && ARROWS[k]) {
+      const horiz = k === 'ArrowLeft' || k === 'ArrowRight';
+      const atEdge = inp && (k === 'ArrowRight' ? (inp.selectionStart === inp.value.length && inp.selectionEnd === inp.value.length) : (inp.selectionStart === 0 && inp.selectionEnd === 0));
+      if (!horiz || !inp || isMulti() || atEdge) {
+        e.preventDefault();
+        const d = ARROWS[k], nr = Math.max(0, Math.min(vR() - 1, ext.r + d[0])), nc = Math.max(0, Math.min(vC() - 1, ext.c + d[1]));
+        extendTo(nr, nc); scrollToCell(nr, nc);
+        if (!elScroll.contains(document.activeElement) || document.activeElement === document.body) focusCell(sel.r, sel.c, true);
+        return;
+      }
+    }
+    if (!inp) {
+      if (ARROWS[k] && !e.shiftKey) { e.preventDefault(); goTo(r + ARROWS[k][0], c + ARROWS[k][1], { noSelect: true }); }
+      return;
+    }
+    if (k === 'Enter') { e.preventDefault(); goTo(e.shiftKey ? r - 1 : r + 1, c); }
     else if (k === 'Tab') { e.preventDefault(); goTo(r, e.shiftKey ? c - 1 : c + 1); }
     else if (k === 'ArrowDown') { e.preventDefault(); goTo(r + 1, c); }
     else if (k === 'ArrowUp') { e.preventDefault(); goTo(r - 1, c); }
     else if (k === 'ArrowRight' && inp.selectionStart === inp.value.length && inp.selectionEnd === inp.value.length) { e.preventDefault(); goTo(r, c + 1); }
     else if (k === 'ArrowLeft' && inp.selectionStart === 0 && inp.selectionEnd === 0) { e.preventDefault(); goTo(r, c - 1); }
     else if (k === 'Escape') { inp.value = raw(r, c); inp._orig = inp.value; inp.blur(); }
-  });
-  elRows.addEventListener('paste', (e) => {
-    const inp = e.target;
-    if (!inp.classList || !inp.classList.contains('sc-cell')) return;
-    const text = (e.clipboardData || window.clipboardData).getData('text');
-    if (!text || !/[\t\n\r]/.test(text.replace(/[\r\n]+$/, ''))) return;   // paste satu nilai: biarkan bawaan
-    e.preventDefault();
-    const grid = parseDelimited(text);
-    pasteBlock(grid, +inp.dataset.r, +inp.dataset.c);
-  });
-  elScroll.addEventListener('click', (e) => {
-    const ch = e.target.closest('.sc-ch');
-    if (ch) goTo(sel.r, +ch.dataset.c, { noSelect: true });
   });
   elFx.addEventListener('focus', () => { elFx._orig = elFx.value; });
   elFx.addEventListener('keydown', (e) => {
@@ -822,15 +987,195 @@
     elFx.value = raw(sel.r, sel.c); refreshVisible();
   });
 
-  function pasteBlock(grid, r0, c0) {
+  /* ------------- Salin / Potong / Tempel / Isi (rentang sel) -------------- */
+  /* Menulis ulang referensi sel di dalam rumus (lewati teks di antara tanda kutip). */
+  const REFP = '(\\$?)([A-Za-z]{1,3})(\\$?)(\\d+)';
+  function mapFormula(f, cb) {
+    return f.split('"').map((seg, i) => (i % 2 ? seg : seg.replace(new RegExp('(^|[^A-Za-z0-9_$.])' + REFP + '(?::' + REFP + ')?(?![A-Za-z0-9_(])', 'g'),
+      (m, pre, a1, a2, a3, a4, b1, b2, b3, b4) => {
+        const a = { dc: a1, c: colIndex(a2), dr: a3, r: +a4 - 1 };
+        const b = b2 ? { dc: b1, c: colIndex(b2), dr: b3, r: +b4 - 1 } : null;
+        return pre + cb(a, b);
+      }))).join('"');
+  }
+  const okRef = (x) => x.r >= 0 && x.c >= 0 && x.r < MAX_R && x.c < MAX_C;
+  const fmtRef = (x) => x.dc + colName(x.c) + x.dr + (x.r + 1);
+  function shiftFormula(f, dr, dc) {
+    return mapFormula(f, (a, b) => {
+      const mv = (x) => ({ dc: x.dc, dr: x.dr, c: x.dc ? x.c : x.c + dc, r: x.dr ? x.r : x.r + dr });
+      const A = mv(a), B = b ? mv(b) : null;
+      if (!okRef(A) || (B && !okRef(B))) return '#REF!';
+      return fmtRef(A) + (B ? ':' + fmtRef(B) : '');
+    });
+  }
+  /* Sesuaikan rumus saat baris/kolom disisipkan atau dihapus */
+  function adjustFormula(f, axis, kind, at, n) {
+    const key = axis, end = at + n - 1;
+    return mapFormula(f, (a, b) => {
+      if (!b) {
+        let v = a[key];
+        if (kind === 'ins') { if (v >= at) v += n; }
+        else { if (v >= at && v <= end) return '#REF!'; if (v > end) v -= n; }
+        return fmtRef(Object.assign({}, a, { [key]: v }));
+      }
+      const s0 = Math.min(a[key], b[key]), e0 = Math.max(a[key], b[key]);
+      let ns, ne;
+      if (kind === 'ins') { ns = s0 >= at ? s0 + n : s0; ne = e0 >= at ? e0 + n : e0; }
+      else {
+        if (s0 >= at && e0 <= end) return '#REF!';
+        ns = s0 < at ? s0 : (s0 > end ? s0 - n : at);
+        ne = e0 < at ? e0 : (e0 > end ? e0 - n : at - 1);
+      }
+      const lowFirst = a[key] <= b[key];
+      return fmtRef(Object.assign({}, a, { [key]: lowFirst ? ns : ne })) + ':' + fmtRef(Object.assign({}, b, { [key]: lowFirst ? ne : ns }));
+    });
+  }
+  function adjustAll(axis, kind, at, n) {
+    S.cells.forEach((row) => { for (let i = 0; i < row.length; i++) if (row[i].charAt(0) === '=') row[i] = adjustFormula(row[i], axis, kind, at, n); });
+  }
+
+  function tsvOf(R) {
+    const lines = [];
+    for (let r = R.r1; r <= R.r2; r++) {
+      const row = [];
+      for (let c = R.c1; c <= R.c2; c++) {
+        const v = cellVal(r, c);
+        let t = isErr(v) ? v.code : (typeof v === 'number' ? String(v) : display(v));
+        if (/[\t\n"]/.test(t)) t = '"' + t.replace(/"/g, '""') + '"';
+        row.push(t);
+      }
+      lines.push(row.join('\t'));
+    }
+    return lines.join('\n');
+  }
+  function buildClip(cut) {
+    const R0 = rect(), ub = usedBounds();
+    const R = { r1: R0.r1, c1: R0.c1, r2: Math.max(R0.r1, Math.min(R0.r2, ub.R - 1)), c2: Math.max(R0.c1, Math.min(R0.c2, ub.C - 1)) };
+    const raws = [];
+    for (let r = R.r1; r <= R.r2; r++) { const row = []; for (let c = R.c1; c <= R.c2; c++) row.push(raw(r, c)); raws.push(row); }
+    clip = { R, raws, text: tsvOf(R), cut: !!cut };
+    return clip.text;
+  }
+  function legacyCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) { /* abaikan */ }
+    ta.remove();
+  }
+  function writeClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(text).catch(() => legacyCopy(text));
+    legacyCopy(text); return Promise.resolve();
+  }
+  function copyMsg(cut) { flash('scOk', (cut ? 'Dipotong: ' : 'Disalin: ') + rangeLabel() + (cut ? '. Pilih sel tujuan lalu klik Tempel (Ctrl+V).' : '.'), 3500); }
+  async function doCopy(cut) { const text = buildClip(cut); await writeClipboard(text); focusCell(sel.r, sel.c, true); copyMsg(cut); }
+
+  /* Tulis blok teks mentah mulai (r0,c0); clearR = rentang asal bila ini pemindahan (potong) */
+  function writeBlock(grid, r0, c0, clearR) {
     if (!grid.length) return;
-    const nR = r0 + grid.length, nC = c0 + Math.max.apply(null, grid.map((x) => x.length));
+    const w = Math.max.apply(null, grid.map((x) => x.length));
+    const nR = r0 + grid.length, nC = c0 + w;
     if (nR > MAX_R || nC > MAX_C) flash('scErr', `Data tempelan dipotong sesuai batas lembar (${MAX_R} baris × ${MAX_C} kolom).`, 6000);
     pushUndo();
+    if (clearR) for (let r = clearR.r1; r <= clearR.r2; r++) for (let c = clearR.c1; c <= clearR.c2; c++) if (r < S.R && c < S.C) S.cells[r][c] = '';
     ensure(nR, nC);
-    grid.forEach((row, i) => row.forEach((v, j) => { const r = r0 + i, c = c0 + j; if (r < MAX_R && c < MAX_C) S.cells[r][c] = normalizeInput(String(v)); }));
+    grid.forEach((row, i) => row.forEach((v, j) => { const r = r0 + i, c = c0 + j; if (r < MAX_R && c < MAX_C) S.cells[r][c] = v; }));
+    sel.r = r0; sel.c = c0; ext.r = Math.min(MAX_R - 1, nR - 1); ext.c = Math.min(MAX_C - 1, nC - 1);
     invalidate(); fullRender(true);
   }
+  function pasteBlock(grid, r0, c0) { writeBlock(grid.map((row) => row.map((v) => normalizeInput(String(v)))), r0, c0); }
+  function pasteClip(R) {
+    const src = clip.R, h = clip.raws.length, w = clip.raws[0].length;
+    const tile = h === 1 && w === 1 && (R.r2 > R.r1 || R.c2 > R.c1);   // 1 sel disalin -> isi seluruh rentang tujuan
+    const th = tile ? R.r2 - R.r1 + 1 : h, tw = tile ? R.c2 - R.c1 + 1 : w;
+    const grid = [];
+    for (let i = 0; i < th; i++) {
+      const row = [];
+      for (let j = 0; j < tw; j++) {
+        const si = tile ? 0 : i, sj = tile ? 0 : j, t = clip.raws[si][sj];
+        row.push(!clip.cut && t.charAt(0) === '=' ? shiftFormula(t, (R.r1 + i) - (src.r1 + si), (R.c1 + j) - (src.c1 + sj)) : t);
+      }
+      grid.push(row);
+    }
+    const moved = clip.cut ? src : null;
+    writeBlock(grid, R.r1, R.c1, moved);
+    if (clip.cut) clip = null;
+  }
+  function fillRect(R, v) {
+    pushUndo(); ensure(R.r2 + 1, R.c2 + 1);
+    for (let r = R.r1; r <= R.r2; r++) for (let c = R.c1; c <= R.c2; c++) S.cells[r][c] = v;
+    invalidate(); fullRender(true);
+  }
+  function clearRange() {
+    const R = rect();
+    pushUndo();
+    for (let r = R.r1; r <= Math.min(R.r2, S.R - 1); r++) for (let c = R.c1; c <= Math.min(R.c2, S.C - 1); c++) S.cells[r][c] = '';
+    invalidate(); fullRender(true);
+    flash('scOk', `Isi ${rangeLabel()} dikosongkan. Klik “Urungkan” bila salah.`, 3500);
+  }
+  const samePaste = (text) => !!clip && text.replace(/\r\n?/g, '\n').replace(/\n$/, '') === clip.text;
+  const isGridText = (text) => /[\t\n\r]/.test(text.replace(/[\r\n]+$/, ''));
+  function pasteText(text) {
+    const R = rect();
+    if (samePaste(text)) pasteClip(R);
+    else if (isGridText(text)) pasteBlock(parseDelimited(text), R.r1, R.c1);
+    else fillRect(R, normalizeInput(text.replace(/[\r\n]+$/, '')));
+  }
+  function partialSel(inp) { return inp && inp.selectionStart !== inp.selectionEnd && !(inp.selectionStart === 0 && inp.selectionEnd === inp.value.length); }
+  elScroll.addEventListener('copy', (e) => {
+    const inp = cellOf(e.target);
+    if (!isMulti() && partialSel(inp)) return;            // sedang menyalin potongan teks di dalam sel: bawaan browser
+    e.preventDefault(); e.clipboardData.setData('text/plain', buildClip(false)); copyMsg(false);
+  });
+  elScroll.addEventListener('cut', (e) => {
+    const inp = cellOf(e.target);
+    if (!isMulti() && partialSel(inp)) return;
+    e.preventDefault(); e.clipboardData.setData('text/plain', buildClip(true)); copyMsg(true);
+  });
+  elScroll.addEventListener('paste', (e) => {
+    const inp = cellOf(e.target);
+    const text = (e.clipboardData || window.clipboardData).getData('text');
+    if (!text) return;
+    if (inp && !isMulti() && (partialSel(inp) || (!samePaste(text) && !isGridText(text)))) return;   // satu nilai ke satu sel: bawaan browser
+    e.preventDefault(); pasteText(text);
+  });
+  q('scCopy').addEventListener('click', () => { doCopy(false); });
+  q('scCut').addEventListener('click', () => { doCopy(true); });
+  q('scPaste').addEventListener('click', async () => {
+    let text = null;
+    try { text = await navigator.clipboard.readText(); } catch (err) { /* diblokir browser */ }
+    if (!text && clip) text = clip.text;
+    if (!text) { flash('scErr', 'Papan klip kosong atau diblokir browser. Klik sel tujuan lalu tekan Ctrl+V.', 6000); return; }
+    pasteText(text);
+  });
+
+  /* Isi ke bawah / ke kanan: baris (kolom) pertama rentang menjadi sumber, rumus ikut menyesuaikan */
+  function fillDown() {
+    const R = rect();
+    let src = R.r1, from = R.r1 + 1;
+    if (R.r1 === R.r2) { if (R.r1 === 0) { flash('scErr', 'Tidak ada sel di atas untuk disalin. Pilih rentang beberapa baris, lalu Isi ke bawah.', 5000); return; } src = R.r1 - 1; from = R.r1; }
+    pushUndo(); ensure(R.r2 + 1, R.c2 + 1);
+    for (let c = R.c1; c <= R.c2; c++) {
+      const base = raw(src, c);
+      for (let r = from; r <= R.r2; r++) S.cells[r][c] = base.charAt(0) === '=' ? shiftFormula(base, r - src, 0) : base;
+    }
+    invalidate(); fullRender(true);
+    flash('scOk', `Diisi ke bawah: ${colName(R.c1)}${from + 1}\u2013${colName(R.c2)}${R.r2 + 1} dari baris ${src + 1}.`, 4000);
+  }
+  function fillRight() {
+    const R = rect();
+    let src = R.c1, from = R.c1 + 1;
+    if (R.c1 === R.c2) { if (R.c1 === 0) { flash('scErr', 'Tidak ada sel di kiri untuk disalin. Pilih rentang beberapa kolom, lalu Isi ke kanan.', 5000); return; } src = R.c1 - 1; from = R.c1; }
+    pushUndo(); ensure(R.r2 + 1, R.c2 + 1);
+    for (let r = R.r1; r <= R.r2; r++) {
+      const base = raw(r, src);
+      for (let c = from; c <= R.c2; c++) S.cells[r][c] = base.charAt(0) === '=' ? shiftFormula(base, 0, c - src) : base;
+    }
+    invalidate(); fullRender(true);
+    flash('scOk', `Diisi ke kanan: ${colName(from)}${R.r1 + 1}\u2013${colName(R.c2)}${R.r2 + 1} dari kolom ${colName(src)}.`, 4000);
+  }
+  q('scFillDown').addEventListener('click', fillDown);
+  q('scFillRight').addEventListener('click', fillRight);
 
 
   /* ------------------------------ Tab pita -------------------------------- */
@@ -848,27 +1193,46 @@
     });
   });
 
-  /* ------------------------ Baris / kolom / undo -------------------------- */
-  function addRows(n) {
-    if (S.R >= MAX_R) { flash('scErr', `Batas ${MAX_R} baris tercapai.`, 4000); return; }
-    pushUndo(); ensure(S.R + n, S.C); invalidate(); fullRender(true);
+  /* ------------------------ Sisip / hapus baris & kolom -------------------- */
+  function insertLines(axis, at, n) {
+    const isR = axis === 'r', used = isR ? lastDataRow() + 1 : usedBounds().C, MAX = isR ? MAX_R : MAX_C, nm = isR ? 'baris' : 'kolom';
+    if (at >= used) { flash('scOk', `Tidak ada data di ${isR ? 'bawah' : 'kanan'} posisi ini, jadi tidak ada yang perlu digeser.`, 4000); return; }
+    if (used + n > MAX) { flash('scErr', `Tidak bisa menyisipkan: melebihi batas ${MAX} ${nm}.`, 5000); return; }
+    let note = '';
+    if (isR && S.header && at === 0) { at = 1; note = ' Baris 1 adalah judul kolom, jadi sisipan ditaruh tepat di bawahnya.'; }
+    pushUndo();
+    if (isR) { S.cells.splice(at, 0, ...Array.from({ length: n }, () => new Array(S.C).fill(''))); S.R += n; }
+    else { S.cells.forEach((row) => row.splice(at, 0, ...new Array(n).fill(''))); S.C += n; }
+    if (S.R > MAX_R) { S.cells.length = MAX_R; S.R = MAX_R; }
+    if (S.C > MAX_C) { S.cells.forEach((row) => { row.length = MAX_C; }); S.C = MAX_C; }
+    adjustAll(axis, 'ins', at, n);
+    invalidate(); fullRender(true);
+    flash('scOk', `${n} ${nm} kosong disisipkan di ${isR ? 'baris ' + (at + 1) : 'kolom ' + colName(at)}; rumus ikut menyesuaikan.${note}`, 5000);
   }
-  q('scAddRow').addEventListener('click', () => { addRows(1); });
-  q('scDelRow').addEventListener('click', () => {
-    if (S.R <= 1) return;
-    pushUndo(); S.cells.pop(); S.R -= 1; sel.r = Math.min(sel.r, S.R - 1); invalidate(); fullRender(true);
-  });
-  q('scAddCol').addEventListener('click', () => {
-    if (S.C >= MAX_C) { flash('scErr', `Batas ${MAX_C} kolom tercapai.`, 4000); return; }
-    pushUndo(); ensure(S.R, S.C + 1); invalidate(); fullRender(true);
-  });
-  q('scDelCol').addEventListener('click', () => {
-    if (S.C <= 1) return;
-    pushUndo(); S.cells.forEach((row) => row.pop()); S.C -= 1; sel.c = Math.min(sel.c, S.C - 1); invalidate(); fullRender(true);
-  });
+  function deleteLines(axis, a, b) {
+    const isR = axis === 'r', size = isR ? S.R : S.C, nm = isR ? 'baris' : 'kolom';
+    if (a >= size) { flash('scOk', `Posisi ini di luar data, tidak ada ${nm} yang perlu dihapus.`, 4000); return; }
+    b = Math.min(b, size - 1);
+    const n = b - a + 1;
+    pushUndo();
+    if (isR) { S.cells.splice(a, n); S.R -= n; if (S.R < 1) { S.cells = emptyCells(1, S.C); S.R = 1; } }
+    else { S.cells.forEach((row) => row.splice(a, n)); S.C -= n; if (S.C < 1) { S.cells = emptyCells(S.R, 1); S.C = 1; } }
+    adjustAll(axis, 'del', a, n);
+    let note = '';
+    if (isR && S.header && a === 0) { S.header = false; q('scHeader').checked = false; note = ' Baris judul ikut terhapus, jadi opsi “Baris 1 judul kolom” dimatikan.'; }
+    if (isR) { sel.r = ext.r = Math.min(a, vR() - 1); ext.c = sel.c; } else { sel.c = ext.c = Math.min(a, vC() - 1); ext.r = sel.r; }
+    invalidate(); fullRender(true);
+    flash('scOk', `${n} ${nm} dihapus (${isR ? 'baris ' + (a + 1) + (n > 1 ? '\u2013' + (b + 1) : '') : 'kolom ' + colName(a) + (n > 1 ? '\u2013' + colName(b) : '')}). Rumus ikut menyesuaikan; klik “Urungkan” bila salah.${note}`, 6000);
+  }
+  q('scInsRowUp').addEventListener('click', () => { const R = rect(); insertLines('r', R.r1, R.r2 - R.r1 + 1); });
+  q('scInsRowDown').addEventListener('click', () => { const R = rect(); insertLines('r', R.r2 + 1, R.r2 - R.r1 + 1); });
+  q('scDelRow').addEventListener('click', () => { const R = rect(); deleteLines('r', R.r1, R.r2); });
+  q('scInsColLeft').addEventListener('click', () => { const R = rect(); insertLines('c', R.c1, R.c2 - R.c1 + 1); });
+  q('scInsColRight').addEventListener('click', () => { const R = rect(); insertLines('c', R.c2 + 1, R.c2 - R.c1 + 1); });
+  q('scDelCol').addEventListener('click', () => { const R = rect(); deleteLines('c', R.c1, R.c2); });
   function applySnapshot(js) {
     restore(js); invalidate(); q('scHeader').checked = S.header;
-    sel.r = Math.min(sel.r, S.R - 1); sel.c = Math.min(sel.c, S.C - 1);
+    sel.r = Math.min(sel.r, S.R - 1); sel.c = Math.min(sel.c, S.C - 1); ext.r = sel.r; ext.c = sel.c;
     updateUndoBtn(); fullRender(true);
   }
   q('scUndo').addEventListener('click', () => {
@@ -894,7 +1258,7 @@
     S.C = C; S.R = R + 1; S.header = true; q('scHeader').checked = true;
     S.cells = emptyCells(S.R, S.C);
     for (let c = 0; c < C; c++) S.cells[0][c] = 'Variabel ' + (c + 1);
-    sel.r = 1; sel.c = 0; invalidate(); fullRender(false); elScroll.scrollTop = 0; elScroll.scrollLeft = 0;
+    sel.r = ext.r = 1; sel.c = ext.c = 0; invalidate(); fullRender(false); elScroll.scrollTop = 0; elScroll.scrollLeft = 0;
     q('scFname').value = 'data-baru';
     flash('scOk', `Tabel baru ${R} baris \u00D7 ${C} kolom dibuat. Ganti judul kolom di baris 1, lalu isi datanya.`, 9000);
     section.scrollIntoView && q('scScroll').scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -952,7 +1316,7 @@
     S.cells = emptyCells(S.R, S.C);
     rows.forEach((row, r) => row.slice(0, MAX_C).forEach((v, c) => { S.cells[r][c] = normalizeInput(v); }));
     S.header = detectHeader(rows); q('scHeader').checked = S.header;
-    sel.r = 0; sel.c = 0; invalidate(); fullRender(false); elScroll.scrollTop = 0; elScroll.scrollLeft = 0;
+    sel.r = ext.r = 0; sel.c = ext.c = 0; invalidate(); fullRender(false); elScroll.scrollTop = 0; elScroll.scrollLeft = 0;
     hide('scErr');
     flash('scOk', `Data dimuat: ${rows.length} baris × ${Math.min(maxC, MAX_C)} kolom.${S.header ? ' Baris 1 dikenali sebagai judul kolom.' : ''}${clipped ? ' (Sebagian data dipotong karena melebihi batas lembar.)' : ''}`, 9000);
     void auto;
@@ -1225,7 +1589,8 @@
   // Render saat halaman dibuka pertama kali (ukuran kontainer baru diketahui setelah tampil).
   const mo = new MutationObserver(() => { if (section.classList.contains('active')) { fullRender(true); } });
   mo.observe(section, { attributes: true, attributeFilter: ['class'] });
-  window.addEventListener('resize', () => { if (section.classList.contains('active')) renderRows(true); });
+  window.addEventListener('resize', () => { if (section.classList.contains('active')) refit(); });
+  if (window.ResizeObserver) new ResizeObserver(() => { if (section.classList.contains('active')) refit(); }).observe(elScroll);
   layout(); buildHead(); updateSelects(); updateInfo(); updateSelUI();
   window.StatCalcSheet = { state: S, cellVal, display, loadGrid };
 })();
