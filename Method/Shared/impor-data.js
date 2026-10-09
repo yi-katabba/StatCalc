@@ -23,6 +23,7 @@
   const XLSX_URL = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
   const MAX_FILE_BYTES = 8 * 1024 * 1024;
   const MAX_ROWS = 2000;
+  const INSTANCES = {};   // card selector -> { ingest, wrap } (dipakai menu Calc untuk mengirim data)
 
   /* Metode yang didukung. Tabel harus berisi <input> per sel data, dengan
      tombol tambah/hapus baris yang sudah ada di metode tersebut. */
@@ -235,13 +236,13 @@
       inp.dispatchEvent(new Event('input', { bubbles: true }));
     }
 
-    function ingest(rows, source) {
+    function ingest(rows, source, opt) {
       clearMsg();
       rows = padRows(rows.filter((r) => r.some((c) => String(c).trim() !== '')));
       if (!rows.length || !rows[0].length) { showErr('Tidak ada data yang terbaca. Pastikan file/tempelan berisi angka.'); return; }
       if (rows.length > MAX_ROWS + 1) { showErr(`Data terlalu banyak (maksimal ${MAX_ROWS} baris).`); return; }
       if (!targets()) { showErr('Tabel input belum dibuat. Selesaikan Langkah 1 terlebih dahulu, lalu impor data.'); return; }
-      parsed = { rows, source, hasHeader: detectHeader(rows) };
+      parsed = { rows, source, hasHeader: opt && typeof opt.hasHeader === 'boolean' ? opt.hasHeader : detectHeader(rows) };
       panelPaste.hidden = true;
       renderPreview();
     }
@@ -305,6 +306,8 @@
       showOk(`Berhasil mengisi ${matrix.length} baris (${pairs}).` + (bad ? ` Perhatian: ${bad} sel bukan angka dan akan ditandai merah saat dihitung.` : ''));
       parsed = null;
     }
+
+    INSTANCES[cfg.card] = { ingest, wrap };
 
     wrap.addEventListener('click', (e) => {
       const b = e.target.closest('[data-act]');
@@ -384,5 +387,14 @@
   function esc(s) { return String(s === undefined || s === null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
   CONFIGS.forEach(setup);
-  window.StatCalcImport = { register: (cfg) => { CONFIGS.push(cfg); setup(cfg); }, normNum, parseGrid, detectHeader };
+  /* Kirim larik 2D (baris pertama = judul bila opt.hasHeader) ke tabel metode lain: membuka pratinjau pemetaan kolom.
+     Mengembalikan true bila kartu tujuan ditemukan. */
+  function send(cardSel, rows, source, opt) {
+    const inst = INSTANCES[cardSel];
+    if (!inst) return false;
+    inst.ingest(rows, source || 'lembar kerja Calc', opt);
+    try { inst.wrap.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* abaikan */ }
+    return true;
+  }
+  window.StatCalcImport = { register: (cfg) => { CONFIGS.push(cfg); setup(cfg); }, normNum, parseGrid, detectHeader, send, has: (c) => !!INSTANCES[c] };
 })();
