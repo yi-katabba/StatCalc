@@ -654,12 +654,12 @@
       <label style="${fld}">Gaya garis
         <select id="stBcStyle" class="select-input">
           <option value="smooth">Kurva halus</option>
-          <option value="line">Garis lurus antar titik (gaya Minitab)</option>
+          <option value="line">Garis lurus antar titik</option>
         </select></label>
       <label style="${fld}">Sumbu Y
         <select id="stBcClip" class="select-input">
           <option value="clip">Dipotong (fokus ke minimum)</option>
-          <option value="full">Skala penuh (gaya Minitab)</option>
+          <option value="full">Skala penuh (tanpa pemotongan)</option>
         </select></label>
       <label style="${fld}">Warna kurva &amp; titik
         <input type="color" id="stBcC1" value="${BC_VIEW_DEF.c1}" style="width:54px;height:32px;padding:0;border:1px solid #ccc;border-radius:6px;background:none;"></label>
@@ -737,8 +737,8 @@
         </tbody>
       </table></div>
       <p class="test-note">${bc.sigma === 'mr'
-        ? 'Estimator: moving range, \u03C3 = MR\u0304 / 1,128 (gaya Minitab untuk data individual). Estimator ini hanya melihat selisih antar data berurutan, sehingga pengaruh tren diminimalkan. Selang kepercayaan memakai rumus likelihood yang sama dengan opsi StDev biasa, sehingga batasnya bisa sedikit berbeda dari Minitab.'
-        : 'Estimator: simpangan baku sampel biasa. Bila data memiliki tren yang kuat, tren ikut memengaruhi StDev; pilih estimator moving range (gaya Minitab) untuk mengurangi pengaruh tren, dan periksa juga grafik data asli di tab Grafik.'}</p>
+        ? 'Estimator: moving range, \u03C3 = MR\u0304 / 1,128 (untuk data individual). Estimator ini hanya melihat selisih antar data berurutan, sehingga pengaruh tren diminimalkan. Selang kepercayaan memakai rumus likelihood yang sama dengan opsi StDev biasa, sehingga batasnya bisa sedikit berbeda dari hasil perangkat lunak statistik lain.'
+        : 'Estimator: simpangan baku sampel biasa. Bila data memiliki tren yang kuat, tren ikut memengaruhi StDev; pilih estimator moving range untuk mengurangi pengaruh tren, dan periksa juga grafik data asli di tab Grafik.'}</p>
     </div>`;
   }
 
@@ -956,7 +956,7 @@
       title: 'Transformasi Box-Cox terskala untuk setiap \u03BB',
       formula: 'W(\u03BB) = (Y^\u03BB \u2212 1) / (\u03BB \u00B7 GM^(\u03BB\u22121))      untuk \u03BB \u2260 0\nW(0) = GM \u00B7 ln(Y)                          untuk \u03BB = 0',
       note: bc.sigma === 'mr'
-        ? 'Untuk setiap \u03BB di rentang \u22125 sampai 5, hitung sigma within W(\u03BB) dengan moving range: \u03C3 = MR\u0304 / 1,128, di mana MR\u0304 = rata-rata |W[t] \u2212 W[t\u22121]|. Hasilnya adalah kurva StDev terhadap \u03BB pada grafik (gaya Minitab).'
+        ? 'Untuk setiap \u03BB di rentang \u22125 sampai 5, hitung sigma within W(\u03BB) dengan moving range: \u03C3 = MR\u0304 / 1,128, di mana MR\u0304 = rata-rata |W[t] \u2212 W[t\u22121]|. Hasilnya adalah kurva StDev terhadap \u03BB pada grafik.'
         : 'Untuk setiap \u03BB di rentang \u22125 sampai 5, hitung simpangan baku W(\u03BB). Hasilnya adalah kurva StDev terhadap \u03BB pada grafik.',
     });
     st.push({
@@ -1240,7 +1240,7 @@
       });
       const meta = [
         ['Jenis analisis', 'Uji stasioneritas dua tahap (varians: Box-Cox; mean: ' + R.tests.map((t) => TEST_SHORT[t.kind]).join(' + ') + ')'],
-        ['Estimator StDev Box-Cox', bc.sigma === 'mr' ? 'Moving range (MR\u0304/1,128, gaya Minitab)' : 'Simpangan baku sampel'],
+        ['Estimator StDev Box-Cox', bc.sigma === 'mr' ? 'Moving range (MR\u0304/1,128)' : 'Simpangan baku sampel'],
         ['\u03BB Box-Cox (estimasi)', fmt(bc.est, 4)],
         ['Selang kepercayaan 95% \u03BB', '[' + fmt(bc.lo, 3) + '; ' + fmt(bc.hi, 3) + ']'],
         ['\u03BB pembulatan', lamTxt(bc.rounded)],

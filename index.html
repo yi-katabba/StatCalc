@@ -1932,9 +1932,9 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
         <label for="stSigmaMode">Estimator StDev pada grafik Box-Cox</label>
         <select id="stSigmaMode" class="select-input">
           <option value="sd">Simpangan baku sampel (StDev biasa)</option>
-          <option value="mr">Moving range, &sigma; = MR&#772;/1,128 (gaya Minitab, data individual)</option>
+          <option value="mr">Moving range, &sigma; = MR&#772;/1,128 (untuk data individual)</option>
         </select>
-        <p class="field-note">StDev biasa memakai seluruh data sehingga tren ikut dihitung sebagai variasi. Moving range hanya melihat selisih antar data berurutan, sehingga hasilnya lebih mendekati grafik Box-Cox Minitab (subgroup size 1) pada data bertren.</p>
+        <p class="field-note">StDev biasa memakai seluruh data sehingga tren ikut dihitung sebagai variasi. Moving range hanya melihat selisih antar data berurutan, sehingga lebih cocok untuk data bertren (data individual, subgroup size 1).</p>
       </div>
       <div class="control-row" id="stLambdaRow" hidden>
         <label for="stLambda">Nilai &lambda;</label>
