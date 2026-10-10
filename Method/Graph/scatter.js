@@ -32,9 +32,9 @@
         const cid = u.nextClipId();
         const y1 = reg.a + reg.b * sxs.lo, y2 = reg.a + reg.b * sxs.hi;
         s += `<clipPath id="${cid}"><rect x="${L.m.l}" y="${L.m.t}" width="${L.pw}" height="${L.ph}"/></clipPath>` +
-          `<line clip-path="url(#${cid})" x1="${px(sxs.lo).toFixed(1)}" y1="${py(y1).toFixed(1)}" x2="${px(sxs.hi).toFixed(1)}" y2="${py(y2).toFixed(1)}" stroke="#BD7E1F" stroke-width="2.2" stroke-dasharray="6 4"/>`;
+          `<line clip-path="url(#${cid})" x1="${px(sxs.lo).toFixed(1)}" y1="${py(y1).toFixed(1)}" x2="${px(sxs.hi).toFixed(1)}" y2="${py(y2).toFixed(1)}" stroke="${u.ST.c2}" stroke-width="2.2" stroke-dasharray="6 4"/>`;
       }
-      x.forEach((xv, i) => { s += `<circle cx="${px(xv).toFixed(1)}" cy="${py(y[i]).toFixed(1)}" r="4.6" fill="#22384A" fill-opacity=".75" stroke="#fff" stroke-width="1"/>`; });
+      x.forEach((xv, i) => { s += `<circle cx="${px(xv).toFixed(1)}" cy="${py(y[i]).toFixed(1)}" r="4.6" fill="${u.ST.c1}" fill-opacity=".75" stroke="#fff" stroke-width="1"/>`; });
       s += '</svg>';
 
       const rOk = Number.isFinite(reg.r);

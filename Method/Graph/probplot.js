@@ -25,9 +25,9 @@
       if (o.line) {
         const cid = u.nextClipId();
         s += `<clipPath id="${cid}"><rect x="${L.m.l}" y="${L.m.t}" width="${L.pw}" height="${L.ph}"/></clipPath>` +
-          `<line clip-path="url(#${cid})" x1="${px(sxs.lo).toFixed(1)}" y1="${py(m + s1 * sxs.lo).toFixed(1)}" x2="${px(sxs.hi).toFixed(1)}" y2="${py(m + s1 * sxs.hi).toFixed(1)}" stroke="#BD7E1F" stroke-width="2.2" stroke-dasharray="6 4"/>`;
+          `<line clip-path="url(#${cid})" x1="${px(sxs.lo).toFixed(1)}" y1="${py(m + s1 * sxs.lo).toFixed(1)}" x2="${px(sxs.hi).toFixed(1)}" y2="${py(m + s1 * sxs.hi).toFixed(1)}" stroke="${u.ST.c2}" stroke-width="2.2" stroke-dasharray="6 4"/>`;
       }
-      z.forEach((zv, i) => { s += `<circle cx="${px(zv).toFixed(1)}" cy="${py(y[i]).toFixed(1)}" r="4.2" fill="#22384A" fill-opacity=".78" stroke="#fff" stroke-width="1"/>`; });
+      z.forEach((zv, i) => { s += `<circle cx="${px(zv).toFixed(1)}" cy="${py(y[i]).toFixed(1)}" r="4.2" fill="${u.ST.c1}" fill-opacity=".78" stroke="#fff" stroke-width="1"/>`; });
       s += '</svg>';
 
       const r = u.linreg(z, y).r;

@@ -20,6 +20,10 @@
      }],
    });
 
+   Jenis item tambahan (dipakai halaman Graph): { type:'text'|'number', id, label, placeholder, def },
+   { type:'color', id, label, def }, { type:'check', id, label, def }. Opsi cfg.onChange dipanggil
+   tiap ada perubahan nilai di pita.
+
    Kelas CSS pada halaman: .rb-off-{key-toggle} -> bagian disembunyikan.
    ========================================================================= */
 (function () {
@@ -47,6 +51,9 @@
 .rb-main .select-input{ width:190px; min-width:0; height:40px; border-radius:10px; font-size:14px; padding:0 8px; }
 .rb-chk{ display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; padding:8px 10px; border:1px solid var(--rule); border-radius:12px; background:var(--paper-2); cursor:pointer; line-height:1.2; }
 .rb-chk input{ width:18px; height:18px; flex-shrink:0; accent-color:var(--accent); }
+.rb-main .plain-input{ width:160px; min-width:0; height:40px; border-radius:10px; font-size:14px; padding:0 10px; text-align:left; font-family:var(--font-body); }
+.rb-color{ display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:13px; font-weight:600; padding:6px 10px; border:1px solid var(--rule); border-radius:12px; background:var(--paper-2); cursor:pointer; line-height:1.2; white-space:nowrap; }
+.rb-color input{ width:36px; height:30px; padding:0; border:1px solid var(--rule-strong); border-radius:8px; background:#fff; cursor:pointer; flex-shrink:0; }
 .rb-tip{ margin:0; padding:6px 16px 12px; font-size:12.5px; color:var(--ink-soft); border-bottom:1px solid var(--rule); }
 `;
   function injectCSS() {
@@ -61,6 +68,15 @@
     const k = cfg.key;
     const rules = [], toggles = [];
     const itemHTML = (it) => {
+      if (it.type === 'text' || it.type === 'number') {
+        return `<div class="rb-fld"><label for="${it.id}">${esc(it.label)}</label><input type="text" class="plain-input" id="${it.id}"${it.type === 'number' ? ' inputmode="decimal"' : ''} placeholder="${esc(it.placeholder || '')}" value="${esc(it.def === undefined || it.def === null ? '' : it.def)}" autocomplete="off"></div>`;
+      }
+      if (it.type === 'color') {
+        return `<label class="rb-color" for="${it.id}">${esc(it.label)}<input type="color" id="${it.id}" value="${esc(it.def || '#000000')}"></label>`;
+      }
+      if (it.type === 'check') {
+        return `<label class="rb-chk" for="${it.id}"><input type="checkbox" id="${it.id}"${it.def ? ' checked' : ''}> ${esc(it.label)}</label>`;
+      }
       if (it.type === 'select') {
         const opts = it.options.map(([v, l]) => `<option value="${esc(v)}"${v === it.selected ? ' selected' : ''}>${esc(l)}</option>`).join('');
         return `<div class="rb-fld"><label for="${it.id}">${esc(it.label)}</label><select id="${it.id}" class="select-input">${opts}</select></div>`;
@@ -110,6 +126,7 @@
       fixActive();
     }
     sec.addEventListener('change', (e) => { if (e.target.matches('[data-rb]')) apply(); });
+    if (cfg.onChange) { sec.addEventListener('input', cfg.onChange); sec.addEventListener('change', cfg.onChange); }
     /* hasil baru menyetel ulang tab aktif -> periksa lagi */
     let t = null;
     new MutationObserver(() => { clearTimeout(t); t = setTimeout(fixActive, 30); }).observe(view, { subtree: true, attributes: true, attributeFilter: ['class', 'hidden'] });

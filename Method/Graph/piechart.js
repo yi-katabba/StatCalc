@@ -41,11 +41,11 @@
         `<text x="${W / 2}" y="27" text-anchor="middle" font-size="16" font-weight="700" fill="${u.INK}">${u.esc(title)}</text>`;
       let a = -Math.PI / 2;
       if (items.length === 1) {
-        s += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${u.PAL[0]}"/>` + (ri ? `<circle cx="${cx}" cy="${cy}" r="${ri}" fill="#fff"/>` : '') +
+        s += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${u.ST.pal[0]}"/>` + (ri ? `<circle cx="${cx}" cy="${cy}" r="${ri}" fill="#fff"/>` : '') +
           `<text x="${cx}" y="${cy - (ri ? 0 : r * 0.55)}" text-anchor="middle" font-size="14" font-weight="700" fill="${ri ? u.INK : '#fff'}">100%</text>`;
       } else {
         items.forEach((it, i) => {
-          const frac = it.v / total, a1 = a + frac * 2 * Math.PI, col = u.PAL[i % u.PAL.length];
+          const frac = it.v / total, a1 = a + frac * 2 * Math.PI, col = u.ST.pal[i % u.ST.pal.length];
           s += `<path d="${arc(cx, cy, r, a, a1, ri)}" fill="${col}" stroke="#fff" stroke-width="2"/>`;
           if (frac >= 0.05) {
             const am = (a + a1) / 2, rr = ri ? (r + ri) / 2 : r * 0.64;
@@ -57,7 +57,7 @@
       const lx = 392, rowH = Math.min(26, 300 / items.length), ly0 = cy - (items.length * rowH) / 2 + 4;
       items.forEach((it, i) => {
         const y = ly0 + i * rowH, t = it.k.length > 20 ? it.k.slice(0, 19) + '\u2026' : it.k;
-        s += `<rect x="${lx}" y="${(y - 11).toFixed(1)}" width="14" height="14" rx="3" fill="${u.PAL[i % u.PAL.length]}"/>` +
+        s += `<rect x="${lx}" y="${(y - 11).toFixed(1)}" width="14" height="14" rx="3" fill="${u.ST.pal[i % u.ST.pal.length]}"/>` +
           `<text x="${lx + 22}" y="${y.toFixed(1)}" font-size="12.5" fill="${u.INK}">${u.esc(t)} <tspan fill="${u.SOFT}">(${u.esc(u.fmt(it.v))})</tspan></text>`;
       });
       s += '</svg>';

@@ -36,6 +36,7 @@
       lab.forEach((l, i) => {
         if (i % step !== 0) return;
         const x = px(i), t = l.length > 14 ? l.slice(0, 13) + '\u2026' : l;
+        if (u.ST.on && u.ST.v) s += `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${L.m.t}" y2="${yb}" stroke="${u.ST.gc}"/>`;
         s += `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${yb}" y2="${yb + 4}" stroke="${u.AXIS}"/>`;
         s += rot ? `<text transform="translate(${x.toFixed(1)} ${yb + 16}) rotate(-40)" text-anchor="end" font-size="11" fill="${u.SOFT}">${u.esc(t)}</text>`
           : `<text x="${x.toFixed(1)}" y="${yb + 17}" text-anchor="middle" font-size="11" fill="${u.SOFT}">${u.esc(t)}</text>`;
@@ -50,10 +51,10 @@
       if (o.trend && reg && reg.sxx > 0) {
         const cid = u.nextClipId();
         s += `<clipPath id="${cid}"><rect x="${L.m.l}" y="${L.m.t}" width="${L.pw}" height="${L.ph}"/></clipPath>` +
-          `<line clip-path="url(#${cid})" x1="${px(0).toFixed(1)}" y1="${py(reg.a + reg.b).toFixed(1)}" x2="${px(n - 1).toFixed(1)}" y2="${py(reg.a + reg.b * n).toFixed(1)}" stroke="#BD7E1F" stroke-width="2" stroke-dasharray="6 4"/>`;
+          `<line clip-path="url(#${cid})" x1="${px(0).toFixed(1)}" y1="${py(reg.a + reg.b).toFixed(1)}" x2="${px(n - 1).toFixed(1)}" y2="${py(reg.a + reg.b * n).toFixed(1)}" stroke="${u.ST.c2}" stroke-width="2" stroke-dasharray="6 4"/>`;
       }
-      s += `<polyline fill="none" stroke="#22384A" stroke-width="2.2" stroke-linejoin="round" points="${v.map((y, i) => `${px(i).toFixed(1)},${py(y).toFixed(1)}`).join(' ')}"/>`;
-      if (o.points) v.forEach((y, i) => { s += `<circle cx="${px(i).toFixed(1)}" cy="${py(y).toFixed(1)}" r="3.6" fill="#22384A" stroke="#fff" stroke-width="1"/>`; });
+      s += `<polyline fill="none" stroke="${u.ST.c1}" stroke-width="2.2" stroke-linejoin="round" points="${v.map((y, i) => `${px(i).toFixed(1)},${py(y).toFixed(1)}`).join(' ')}"/>`;
+      if (o.points) v.forEach((y, i) => { s += `<circle cx="${px(i).toFixed(1)}" cy="${py(y).toFixed(1)}" r="3.6" fill="${u.ST.c1}" stroke="#fff" stroke-width="1"/>`; });
       s += '</svg>';
 
       const iMax = v.indexOf(u.max(v)), iMin = v.indexOf(u.min(v));

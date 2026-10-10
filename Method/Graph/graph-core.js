@@ -19,6 +19,30 @@
 
   const PAL = ['#22384A', '#BD7E1F', '#2F7F79', '#7A4A7F', '#B5532F', '#4E7F3A', '#5B7DB1', '#A38B2B', '#8C5A3C', '#3F6E8C', '#9A3F5A', '#6B7F2A'];
   const INK = '#1C1E24', SOFT = '#52565F', GRID = '#E6E0CC', AXIS = '#948C77';
+  /* Gaya yang berlaku SAAT sebuah halaman Graph menggambar (diatur dari pita). Di luar itu (mis. grafik
+     pendukung metode Stat) nilainya kembali ke bawaan, jadi tampilan grafik lain tidak berubah. */
+  const PALETTES = {
+    bawaan: PAL,
+    cerah: ['#E6194B', '#3CB44B', '#4363D8', '#F58231', '#911EB4', '#42D4F4', '#F032E6', '#BFEF45', '#FFD400', '#469990', '#9A6324', '#800000'],
+    pastel: ['#8FB8DE', '#F4B183', '#A9D18E', '#FFD966', '#C9A6E4', '#9DC3C1', '#F4A6B8', '#C5C9A0', '#B4C7E7', '#E2B49A', '#B7DEE8', '#D9D2A5'],
+    laut: ['#0B3C5D', '#1D70A2', '#328CC1', '#4FA3D1', '#79BEDB', '#A6D4E8', '#2F7F79', '#5AA9A2', '#8CC7C1', '#1F4E5F', '#6C8EAD', '#B2CCE0'],
+    hangat: ['#7F1D1D', '#B5532F', '#D97706', '#E9A23B', '#F2C879', '#9A3F5A', '#C75D6B', '#8C5A3C', '#BD7E1F', '#A38B2B', '#D9B08C', '#6B3E26'],
+    mono: ['#1C1E24', '#3A3F4A', '#575D6B', '#747B8B', '#9199A8', '#AEB5C2', '#CBD0DA', '#2B3038', '#484E5B', '#656C7B', '#828A9B', '#9FA6B5'],
+  };
+  const PALETTE_LABEL = { bawaan: 'Bawaan', cerah: 'Cerah', pastel: 'Pastel', laut: 'Laut (biru-hijau)', hangat: 'Hangat', mono: 'Monokrom' };
+  const ST0 = { on: false, h: true, v: false, gc: GRID, c1: PAL[0], c2: '#BD7E1F', pal: PAL, bg: '#ffffff' };
+  const ST = Object.assign({}, ST0);
+  const resetST = () => Object.assign(ST, ST0);
+  /* Pengaturan pita per grafik: grid = garis kisi bawaan (null = tanpa kisi); c1/c2 = label pemilih warna; pal = pakai palet */
+  const GRAPH_STYLE = {
+    scatter: { grid: { h: 1, v: 1 }, c1: 'Warna titik', c2: 'Warna garis regresi' },
+    histogram: { grid: { h: 1, v: 0 }, c1: 'Warna batang' },
+    probplot: { grid: { h: 1, v: 1 }, c1: 'Warna titik', c2: 'Warna garis acuan' },
+    boxplot: { grid: { h: 1, v: 0 }, pal: true },
+    barchart: { grid: { h: 1, v: 0 }, c1: 'Warna batang', pal: true },
+    piechart: { grid: null, pal: true },
+    timeseries: { grid: { h: 1, v: 0 }, c1: 'Warna garis data', c2: 'Warna garis tren' },
+  };
   const TYPE_LABEL = {
     numerik1: 'Numerik 1 variabel', numerik2: 'Dua variabel numerik',
     kelompok: 'Numerik per kelompok', kategorik: 'Kategorik', waktu: 'Deret waktu',
@@ -110,7 +134,7 @@
   const sy = (L, sc) => (v) => L.m.t + L.ph - (v - sc.lo) / (sc.hi - sc.lo) * L.ph;
 
   function head(L, title) {
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${L.W} ${L.H}" font-family="Inter, Arial, Helvetica, sans-serif"><rect width="${L.W}" height="${L.H}" fill="#fff"/>` +
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${L.W} ${L.H}" font-family="Inter, Arial, Helvetica, sans-serif"><rect width="${L.W}" height="${L.H}" fill="${ST.bg}"/>` +
       (title ? `<text x="${L.W / 2}" y="27" text-anchor="middle" font-size="16" font-weight="700" fill="${INK}">${esc(title)}</text>` : '');
   }
   function gridY(L, sc, label) {
@@ -118,8 +142,8 @@
     let s = '';
     sc.ticks.forEach((t) => {
       const y = py(t);
-      s += `<line x1="${L.m.l}" x2="${L.W - L.m.r}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${GRID}"/>` +
-        `<text x="${L.m.l - 8}" y="${(y + 4).toFixed(1)}" text-anchor="end" font-size="11" fill="${SOFT}">${esc(fmt(t))}</text>`;
+      if (!ST.on || ST.h) s += `<line x1="${L.m.l}" x2="${L.W - L.m.r}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${ST.gc}"/>`;
+      s += `<text x="${L.m.l - 8}" y="${(y + 4).toFixed(1)}" text-anchor="end" font-size="11" fill="${SOFT}">${esc(fmt(t))}</text>`;
     });
     s += `<line x1="${L.m.l}" y1="${L.m.t}" x2="${L.m.l}" y2="${L.m.t + L.ph}" stroke="${AXIS}"/>`;
     if (label) s += `<text transform="translate(15 ${(L.m.t + L.ph / 2).toFixed(1)}) rotate(-90)" text-anchor="middle" font-size="12" fill="${INK}">${esc(label)}</text>`;
@@ -130,7 +154,7 @@
     let s = '';
     (ticks || sc.ticks).forEach((t) => {
       const x = px(t);
-      if (vgrid) s += `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${L.m.t}" y2="${yb}" stroke="${GRID}"/>`;
+      if (ST.on ? ST.v : vgrid) s += `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${L.m.t}" y2="${yb}" stroke="${ST.gc}"/>`;
       s += `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${yb}" y2="${yb + 4}" stroke="${AXIS}"/>` +
         `<text x="${x.toFixed(1)}" y="${yb + 17}" text-anchor="middle" font-size="11" fill="${SOFT}">${esc(fmt(t))}</text>`;
     });
@@ -153,6 +177,7 @@
     const n = labels.length, bw = L.pw / n, yb = L.m.t + L.ph, rot = needRot(labels);
     const maxc = rot ? 16 : Math.max(3, Math.floor(bw / 6.2));
     let s = `<line x1="${L.m.l}" y1="${yb}" x2="${L.W - L.m.r}" y2="${yb}" stroke="${AXIS}"/>`;
+    if (ST.on && ST.v) for (let i = 0; i <= n; i++) { const gx = (L.m.l + bw * i).toFixed(1); s += `<line x1="${gx}" x2="${gx}" y1="${L.m.t}" y2="${yb}" stroke="${ST.gc}"/>`; }
     labels.forEach((lb, i) => {
       const cx = L.m.l + bw * (i + 0.5);
       const t = String(lb).length > maxc ? String(lb).slice(0, maxc - 1) + '\u2026' : String(lb);
@@ -240,6 +265,7 @@
     }
     (cfg.options || []).forEach((o) => opts.push(o));
 
+    const useRibbon = !!window.StatRibbon;
     function optHTML(o) {
       const oid = P + 'o-' + o.key;
       if (o.type === 'checkbox') return `<label class="gr-check" for="${oid}"><input type="checkbox" id="${oid}" ${o.def ? 'checked' : ''}> ${esc(o.label)}</label>`;
@@ -323,9 +349,10 @@
 
         <section class="card step-card">
           <div class="step-tag">Langkah ${S + 2}</div>
-          <h2>Pengaturan grafik</h2>
-          <p class="hint">Semua pengaturan bersifat opsional. Kosongkan untuk memakai pengaturan bawaan.</p>
-          <div class="gr-opts">${opts.map(optHTML).join('')}</div>
+          <h2>${useRibbon ? 'Gambar grafik' : 'Pengaturan grafik'}</h2>
+          ${useRibbon
+    ? '<p class="hint">Judul, label, opsi grafik, <strong>warna</strong>, dan <strong>garis kisi</strong> diatur lewat pita di bagian atas halaman ini. Setelah grafik muncul, setiap perubahan pada pita langsung diterapkan.</p>'
+    : `<p class="hint">Semua pengaturan bersifat opsional. Kosongkan untuk memakai pengaturan bawaan.</p><div class="gr-opts">${opts.map(optHTML).join('')}</div>`}
           <div class="control-row">
             <button type="button" class="btn-primary" id="${P}draw">Gambar Grafik &rarr;</button>
           </div>
@@ -501,18 +528,88 @@
       return { names, series: vals, n: vals.reduce((s, a) => s + a.length, 0) };
     }
 
+    /* ---- pita (ribbon): teks, opsi, warna, garis kisi ---- */
+    const GS = Object.assign({ grid: { h: 1, v: 0 }, c1: 'Warna utama', pal: true }, GRAPH_STYLE[id] || {}, cfg.style || {});
+    const sid = (k) => P + 's-' + k;
+    const gel = (k) => $('#' + sid(k), section);
+    function buildRibbon() {
+      const item = (o) => {
+        const oid = P + 'o-' + o.key;
+        if (o.type === 'checkbox') return { type: 'check', id: oid, label: o.label, def: !!o.def };
+        if (o.type === 'select') return { type: 'select', id: oid, label: o.label, options: o.choices, selected: o.def };
+        return { type: o.type === 'number' ? 'number' : 'text', id: oid, label: o.label, placeholder: o.placeholder || '', def: o.def };
+      };
+      const texts = opts.filter((o) => o.type === 'text'), others = opts.filter((o) => o.type !== 'text');
+      const tabs = [{ id: 'grafik', label: 'Grafik', groups: [{ label: 'Teks', cols: texts.length, items: texts.map(item) }].concat(others.length ? [{ label: 'Opsi grafik', cols: Math.min(2, others.length), items: others.map(item) }] : []) }];
+      const cItems = [];
+      if (GS.c1) cItems.push({ type: 'color', id: sid('c1'), label: GS.c1, def: PAL[0] });
+      if (GS.c2) cItems.push({ type: 'color', id: sid('c2'), label: GS.c2, def: ST0.c2 });
+      const cg = [];
+      if (cItems.length) cg.push({ label: 'Warna data', cols: 1, items: cItems });
+      if (GS.pal) cg.push({ label: 'Palet warna', cols: 1, items: [{ type: 'select', id: sid('pal'), label: 'Palet (grafik banyak warna)', options: Object.keys(PALETTES).map((k) => [k, PALETTE_LABEL[k]]), selected: 'bawaan' }] });
+      cg.push({ label: 'Latar', cols: 1, items: [{ type: 'color', id: sid('bg'), label: 'Warna latar grafik', def: ST0.bg }] });
+      tabs.push({ id: 'warna', label: 'Warna', groups: cg, tip: GS.pal ? 'Palet dipakai untuk grafik berwarna-warni (tiap boxplot, irisan pie, atau batang bila &ldquo;Warna berbeda tiap batang&rdquo; aktif).' : '' });
+      if (GS.grid) tabs.push({ id: 'kisi', label: 'Garis kisi', groups: [
+        { label: 'Tampilkan', cols: 1, items: [{ type: 'check', id: sid('gh'), label: 'Garis horizontal', def: !!GS.grid.h }, { type: 'check', id: sid('gv'), label: 'Garis vertikal', def: !!GS.grid.v }] },
+        { label: 'Gaya', cols: 1, items: [{ type: 'color', id: sid('gc'), label: 'Warna garis kisi', def: GRID }] },
+      ] });
+      window.StatRibbon.mount({ view: '#view-' + id, key: 'gr-' + id, tabs, onChange: schedule });
+    }
+    /* pilihan (mis. arah batang) boleh mengatur ulang bawaan garis kisi: o.gridDef = { nilai: {h, v} } */
+    function bindGridDefaults() {
+      opts.forEach((o) => {
+        if (o.type !== 'select' || !o.gridDef) return;
+        const el = $('#' + P + 'o-' + o.key, section);
+        if (el) el.addEventListener('change', () => {
+          const d = o.gridDef[el.value], h = gel('gh'), v = gel('gv');
+          if (!d) return;
+          if (h) h.checked = !!d.h;
+          if (v) v.checked = !!d.v;
+        });
+      });
+    }
+    function applyStyle() {
+      ST.on = true;
+      if (gel('c1')) ST.c1 = gel('c1').value;
+      if (gel('c2')) ST.c2 = gel('c2').value;
+      if (gel('pal')) ST.pal = PALETTES[gel('pal').value] || PAL;
+      if (gel('bg')) ST.bg = gel('bg').value;
+      ST.h = gel('gh') ? gel('gh').checked : false;
+      ST.v = gel('gv') ? gel('gv').checked : false;
+      if (gel('gc')) ST.gc = gel('gc').value;
+    }
+
+    let lastData = null, redrawTimer = null;
+    function paint(scroll) {
+      const o = readOpts();
+      let res;
+      applyStyle();
+      try { res = lastData.wide ? W_.draw(lastData.d, o) : cfg.draw(lastData.d, o); } finally { resetST(); }
+      lastSvg = res.svg;
+      q('chart').innerHTML = res.svg;
+      q('sum').innerHTML = res.summary || '';
+      outCard.hidden = false;
+      if (scroll) {
+        if (window.StatCalc && window.StatCalc.trackCalc) window.StatCalc.trackCalc();
+        if (outCard.scrollIntoView) outCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+    function schedule() {
+      if (!lastData || outCard.hidden) return;
+      clearTimeout(redrawTimer);
+      redrawTimer = setTimeout(() => {
+        try { hideErr(); paint(false); } catch (err) { showErr(err && err.message ? err.message : 'Terjadi kesalahan saat menggambar grafik.'); }
+      }, 40);
+    }
+    if (useRibbon) { buildRibbon(); bindGridDefaults(); }
+
     q('draw').addEventListener('click', () => {
       hideErr();
       try {
-        const o = readOpts();
-        const res = isWide() ? W_.draw(readWide(), o) : cfg.draw(readData(), o);
-        lastSvg = res.svg;
-        q('chart').innerHTML = res.svg;
-        q('sum').innerHTML = res.summary || '';
-        outCard.hidden = false;
-        if (window.StatCalc && window.StatCalc.trackCalc) window.StatCalc.trackCalc();
-        if (outCard.scrollIntoView) outCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        lastData = isWide() ? { wide: true, d: readWide() } : { wide: false, d: readData() };
+        paint(true);
       } catch (err) {
+        lastData = null;
         outCard.hidden = true;
         showErr(err && err.message ? err.message : 'Terjadi kesalahan saat menggambar grafik.');
       }
@@ -547,7 +644,7 @@
   window.GraphCore = {
     add,
     u: {
-      esc, fmt, parseNum, PAL, INK, SOFT, GRID, AXIS,
+      esc, fmt, parseNum, PAL, INK, SOFT, GRID, AXIS, ST,
       sum, mean, min, max, sd, sortedAsc, quantile, linreg, invNorm,
       niceTicks, mlFor, layout, sx, sy, head, gridY, axisX, axisCat, needRot, catBottom,
       kv, grid, note,

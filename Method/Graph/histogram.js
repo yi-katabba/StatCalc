@@ -45,7 +45,7 @@
       let s = u.head(L, title) + u.gridY(L, sys, yl) + u.axisX(L, sxs, xl, false, xticks);
       counts.forEach((c, i) => {
         const x0 = px(edges[i]), x1 = px(edges[i + 1]), y = py(c);
-        s += `<rect x="${x0.toFixed(1)}" y="${y.toFixed(1)}" width="${(x1 - x0).toFixed(1)}" height="${(py(0) - y).toFixed(1)}" fill="#22384A" fill-opacity=".85" stroke="#fff" stroke-width="1.5"/>`;
+        s += `<rect x="${x0.toFixed(1)}" y="${y.toFixed(1)}" width="${(x1 - x0).toFixed(1)}" height="${(py(0) - y).toFixed(1)}" fill="${u.ST.c1}" fill-opacity=".85" stroke="#fff" stroke-width="1.5"/>`;
         if (o.pct && c > 0) s += `<text x="${((x0 + x1) / 2).toFixed(1)}" y="${(y - 5).toFixed(1)}" text-anchor="middle" font-size="11" fill="#1C1E24">${c}</text>`;
       });
       s += '</svg>';

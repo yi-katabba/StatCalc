@@ -62,3 +62,15 @@ Urutan `<script>`: `Method/Graph/*.js` -> `stat-charts.js` -> `export-hasil.js`.
 Tiap modul di `Method/Stat/` memanggil `StatExport.publish` setelah perhitungan (fungsi `exportOne`, `exportTwo`,
 `exportRegresi`, `exportSmoothing`, `exportStasioner`). Isi laporan diambil dari DOM hasil yang tampil,
 jadi tabel/uji/kesimpulan di Word selalu sama dengan di layar.
+
+## Pita (ribbon), warna, dan garis kisi
+
+Setiap halaman Graph otomatis mendapat pita bertab (**Grafik**, **Warna**, **Garis kisi**) lewat
+`StatRibbon.mount` (`Method/Shared/ribbon-metode.js`). Setelah grafik digambar, perubahan pita langsung
+menggambar ulang. Di file graph, ambil gaya lewat `u.ST` (jangan menulis warna permanen):
+
+- `u.ST.c1` warna data utama, `u.ST.c2` warna garis sorotan, `u.ST.pal[i]` palet, `u.ST.bg` latar, `u.ST.gc` warna kisi.
+- Kisi horizontal dikendalikan `gridY`, kisi vertikal oleh `axisX`/`axisCat` (otomatis). Bila membuat sumbu sendiri,
+  gambar kisi hanya jika `u.ST.on && u.ST.v` (vertikal) atau `u.ST.on && u.ST.h` (horizontal).
+- Atur pemilih yang tampil per grafik di tabel `GRAPH_STYLE` pada `graph-core.js` (atau `style: {...}` di `GraphCore.add`);
+  `grid: null` menyembunyikan tab Garis kisi. Opsi `select` boleh punya `gridDef: { nilai: {h, v} }` untuk mengatur bawaan kisi.

@@ -47,7 +47,7 @@
     let s = u.head(L, title) + u.gridY(L, sys, yl) + ax.svg;
     const bwid = Math.min(64, ax.bw * 0.5);
     st.forEach((x, i) => {
-      const cx = ax.cx(i), col = u.PAL[i % u.PAL.length], x0 = cx - bwid / 2;
+      const cx = ax.cx(i), col = u.ST.pal[i % u.ST.pal.length], x0 = cx - bwid / 2;
       const whi = showOut ? x.whi : x.max, wlo = showOut ? x.wlo : x.min;
       s += `<line x1="${cx.toFixed(1)}" x2="${cx.toFixed(1)}" y1="${py(whi).toFixed(1)}" y2="${py(x.q3).toFixed(1)}" stroke="${col}" stroke-width="1.6"/>` +
         `<line x1="${cx.toFixed(1)}" x2="${cx.toFixed(1)}" y1="${py(x.q1).toFixed(1)}" y2="${py(wlo).toFixed(1)}" stroke="${col}" stroke-width="1.6"/>` +

@@ -12,7 +12,7 @@
     sample: [['Mahasiswa Baru', 120], ['Semester 3', 98], ['Semester 5', 76], ['Semester 7', 54], ['Semester 9', 31]],
     axes: ['Kategori', 'Nilai'],
     options: [
-      { key: 'orient', type: 'select', label: 'Arah batang', def: 'v', choices: [['v', 'Vertikal'], ['h', 'Horizontal']] },
+      { key: 'orient', type: 'select', label: 'Arah batang', def: 'v', gridDef: { v: { h: 1, v: 0 }, h: { h: 0, v: 1 } }, choices: [['v', 'Vertikal'], ['h', 'Horizontal']] },
       { key: 'sort', type: 'select', label: 'Urutan kategori', def: 'none', choices: [['none', 'Sesuai urutan input'], ['desc', 'Terbesar \u2192 terkecil'], ['asc', 'Terkecil \u2192 terbesar']] },
       { key: 'labels', type: 'checkbox', label: 'Tampilkan nilai di ujung batang', def: true },
       { key: 'multi', type: 'checkbox', label: 'Warna berbeda tiap batang', def: false },
@@ -28,7 +28,7 @@
       const vmin = u.min(vals), vmax = u.max(vals);
       const sc = u.niceTicks(vmin < 0 ? vmin * 1.1 : 0, vmax > 0 ? vmax * 1.1 : 0);
       const title = o.title || 'Bar Chart', xl = o.xLabel || 'Kategori', yl = o.yLabel || 'Nilai';
-      const colorOf = (i) => (o.multi ? u.PAL[i % u.PAL.length] : '#22384A');
+      const colorOf = (i) => (o.multi ? u.ST.pal[i % u.ST.pal.length] : u.ST.c1);
       let s;
 
       if (o.orient === 'h') {
@@ -37,6 +37,7 @@
         const L = u.layout({ title, ml: Math.round(maxLen * 6.4 + 22 + 18), xl: true, H });
         const px = u.sx(L, sc), bh = L.ph / items.length, bar = Math.min(34, bh * 0.66);
         s = u.head(L, title) + u.axisX(L, sc, yl, true);
+        if (u.ST.on && u.ST.h) for (let i = 0; i <= items.length; i++) { const gy = (L.m.t + bh * i).toFixed(1); s += `<line x1="${L.m.l}" x2="${L.W - L.m.r}" y1="${gy}" y2="${gy}" stroke="${u.ST.gc}"/>`; }
         s += `<line x1="${L.m.l}" y1="${L.m.t}" x2="${L.m.l}" y2="${L.m.t + L.ph}" stroke="${u.AXIS}"/>` +
           `<text transform="translate(14 ${(L.m.t + L.ph / 2).toFixed(1)}) rotate(-90)" text-anchor="middle" font-size="12" fill="${u.INK}">${u.esc(xl)}</text>`;
         items.forEach((it, i) => {
