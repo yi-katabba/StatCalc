@@ -154,7 +154,7 @@ $$G_2 = \frac{n(n+1)}{(n-1)(n-2)(n-3)} \sum_{i=1}^{n}\left(\frac{x_i - \bar{x}}{
 <tr><td>Rata-rata vs median</td><td>Selisih besar menandakan sebaran menceng atau ada pencilan.</td></tr>
 <tr><td>Simpangan baku &amp; KV</td><td>KV kecil berarti data seragam; KV besar berarti data sangat beragam.</td></tr>
 <tr><td>Q1, Q3, IQR</td><td>Rentang 50% data tengah; dasar untuk boxplot dan pencilan.</td></tr>
-<tr><td>Skewness &amp; kurtosis</td><td>Petunjuk awal kenormalan. Untuk uji formal pakai Jarque-Bera (lihat materi Regresi Linear).</td></tr>
+<tr><td>Skewness &amp; kurtosis</td><td>Petunjuk awal kenormalan. Untuk uji formal pakai Jarque-Bera, Shapiro-Wilk, atau Kolmogorov-Smirnov (lihat materi Regresi Linear).</td></tr>
 <tr><td>CI 95% rata-rata</td><td>Rentang yang masuk akal untuk rata-rata populasi.</td></tr>
 <tr><td>Jumlah pencilan</td><td>Periksa kebenaran data sebelum analisis lanjutan.</td></tr>
 </tbody></table></div>

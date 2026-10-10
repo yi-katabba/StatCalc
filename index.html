@@ -1615,6 +1615,23 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
       <div class="step-tag">Langkah 4</div>
       <h2>Uji Asumsi Regresi</h2>
       <p class="hint">Nilai uji asumsi klasik untuk model regresi yang telah dihitung, lengkap dengan hipotesis (H0 &amp; H1), statistik uji, dan kesimpulannya.</p>
+      <div class="control-row">
+        <label for="asmNormTest">Uji normalitas residual</label>
+        <select id="asmNormTest" class="select-input">
+          <option value="jb" selected>Jarque-Bera</option>
+          <option value="sw">Shapiro-Wilk</option>
+          <option value="ks">Kolmogorov-Smirnov (Lilliefors)</option>
+        </select>
+      </div>
+      <div class="control-row">
+        <label for="asmHeteroTest">Uji heteroskedastisitas</label>
+        <select id="asmHeteroTest" class="select-input">
+          <option value="glejser" selected>Glejser</option>
+          <option value="bp">Breusch-Pagan</option>
+          <option value="white">White</option>
+        </select>
+        <p class="field-note" id="asmTestHint"><strong>Jarque-Bera</strong>: berbasis skewness &amp; kurtosis, cocok untuk sampel besar (pendekatan asimtotik). <strong>Glejser</strong>: meregresikan |residual| terhadap tiap X.</p>
+      </div>
       <div id="assumptionsWrap" class="equation-wrap"></div>
     </section>
 

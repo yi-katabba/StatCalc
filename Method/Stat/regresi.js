@@ -4,7 +4,9 @@
 (function () {
   'use strict';
 
-  const state = { k: 1, minRows: 3 };
+  const state = { k: 1, minRows: 3, normTest: 'jb', heteroTest: 'glejser', last: null };
+  const NORM_NAMES = { jb: 'Jarque-Bera', sw: 'Shapiro-Wilk', ks: 'Kolmogorov-Smirnov' };
+  const HETERO_NAMES = { glejser: 'Glejser', bp: 'Breusch-Pagan', white: 'White' };
   const $ = (sel, ctx = document) => ctx.querySelector(sel);
   const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
 
@@ -19,6 +21,7 @@
     stepsWrap: $('#stepsWrap'), equationWrap: $('#equationWrap'), chartWrap: $('#chartWrap'),
     assumptionsCard: $('#assumptions-card'), assumptionsWrap: $('#assumptionsWrap'),
     conclusionCard: $('#conclusion-card'), conclusionWrap: $('#conclusionWrap'),
+    normSel: $('#asmNormTest'), heteroSel: $('#asmHeteroTest'), testHint: $('#asmTestHint'),
   };
 
   el.incVar.addEventListener('click', () => { el.varCount.value = Math.min(6, (parseInt(el.varCount.value, 10) || 1) + 1); });
@@ -163,6 +166,182 @@
   }
   /* p-value (upper-tail) chi-square dengan df = 2 -> bentuk tertutup: 1 - CDF = exp(-x/2) */
   function chiSq2UpperP(x) { return Math.exp(-x / 2); }
+
+  /* ---------- Fungsi tambahan: chi-square db bebas, distribusi normal, Shapiro-Wilk, Lilliefors, regresi bantu ---------- */
+  /* Gamma tak lengkap teregularisasi Q(a, x) = 1 - P(a, x) (deret + pecahan berlanjut). */
+  function gammaQ(a, x) {
+    if (!(a > 0) || !(x >= 0)) return NaN;
+    if (x === 0) return 1;
+    const gln = logGamma(a);
+    if (x < a + 1) {
+      let ap = a, sum = 1 / a, del = sum;
+      for (let n = 0; n < 500; n++) { ap += 1; del *= x / ap; sum += del; if (Math.abs(del) < Math.abs(sum) * 1e-15) break; }
+      return Math.max(0, Math.min(1, 1 - sum * Math.exp(-x + a * Math.log(x) - gln)));
+    }
+    const FPMIN = 1e-300;
+    let b = x + 1 - a, c = 1 / FPMIN, d = 1 / b, h = d;
+    for (let i = 1; i < 500; i++) {
+      const an = -i * (i - a);
+      b += 2;
+      d = an * d + b; if (Math.abs(d) < FPMIN) d = FPMIN;
+      c = b + an / c; if (Math.abs(c) < FPMIN) c = FPMIN;
+      d = 1 / d;
+      const del = d * c; h *= del;
+      if (Math.abs(del - 1) < 1e-15) break;
+    }
+    return Math.max(0, Math.min(1, Math.exp(-x + a * Math.log(x) - gln) * h));
+  }
+  /* p-value (upper-tail) chi-square dengan derajat bebas df */
+  function chiSqUpperP(x, df) { return (Number.isFinite(x) && x >= 0 && df > 0) ? gammaQ(df / 2, x / 2) : NaN; }
+  /* Fungsi sebaran normal baku: CDF dan ekor atas */
+  function normCdf(z) { const q = 0.5 * gammaQ(0.5, z * z / 2); return z >= 0 ? 1 - q : q; }
+  function normUpperP(z) { const q = 0.5 * gammaQ(0.5, z * z / 2); return z >= 0 ? q : 1 - q; }
+  /* Kuantil normal baku (Wichura, AS 241 / PPND16) */
+  function normInv(p) {
+    if (!(p > 0 && p < 1)) return p <= 0 ? -Infinity : Infinity;
+    const q = p - 0.5;
+    let r, v;
+    if (Math.abs(q) <= 0.425) {
+      r = 0.180625 - q * q;
+      return q * (((((((r * 2509.0809287301226727 + 33430.575583588128105) * r + 67265.770927008700853) * r + 45921.953931549871457) * r + 13731.693765509461125) * r + 1971.5909503065514427) * r + 133.14166789178437745) * r + 3.387132872796366608) /
+        (((((((r * 5226.495278852545925 + 28729.085735721942674) * r + 39307.89580009271061) * r + 21213.794301586595867) * r + 5394.1960214247511077) * r + 687.1870074920579083) * r + 42.313330701600911252) * r + 1);
+    }
+    r = q < 0 ? p : 1 - p;
+    r = Math.sqrt(-Math.log(r));
+    if (r <= 5) {
+      r -= 1.6;
+      v = (((((((r * 7.7454501427834140764e-4 + 0.0227238449892691845833) * r + 0.24178072517745061177) * r + 1.27045825245236838258) * r + 3.64784832476320460504) * r + 5.7694972214606914055) * r + 4.6303378461565452959) * r + 1.42343711074968357734) /
+        (((((((r * 1.05075007164441684324e-9 + 5.475938084995344946e-4) * r + 0.0151986665636164571966) * r + 0.14810397642748007459) * r + 0.68976733498510000455) * r + 1.6763848301838038494) * r + 2.05319162663775882187) * r + 1);
+    } else {
+      r -= 5;
+      v = (((((((r * 2.01033439929228813265e-7 + 2.71155556874348757815e-5) * r + 0.0012426609473880784386) * r + 0.026532189526576123093) * r + 0.29656057182850489123) * r + 1.7848265399172913358) * r + 5.4637849111641143699) * r + 6.6579046435011037772) /
+        (((((((r * 2.04426310338993978564e-15 + 1.4215117583164458887e-7) * r + 1.8463183175100546818e-5) * r + 7.868691311456132591e-4) * r + 0.0148753612908506148525) * r + 0.13692988092273580531) * r + 0.59983220655588793769) * r + 1);
+    }
+    return q < 0 ? -v : v;
+  }
+
+  /* Uji Shapiro-Wilk: koefisien & p-value memakai aproksimasi Royston (1992), algoritma AS R94 (n = 3 s/d 5000). */
+  function shapiroWilk(values) {
+    const x = values.slice().sort((a, b) => a - b);
+    const n = x.length;
+    if (n < 3) return null;
+    const range = x[n - 1] - x[0];
+    if (!(range > 1e-19)) return null;
+    const poly = (cc, t) => { let r = cc[0]; if (cc.length > 1) { let p = t * cc[cc.length - 1]; for (let j = cc.length - 2; j > 0; j--) p = (p + cc[j]) * t; r += p; } return r; };
+    const nn2 = Math.floor(n / 2);
+    const a = new Array(nn2 + 1).fill(0); // 1-based
+    if (n === 3) {
+      a[1] = Math.SQRT1_2;
+    } else {
+      const an25 = n + 0.25;
+      let summ2 = 0;
+      for (let i = 1; i <= nn2; i++) { a[i] = normInv((i - 0.375) / an25); summ2 += a[i] * a[i]; }
+      summ2 *= 2;
+      const ssumm2 = Math.sqrt(summ2), rsn = 1 / Math.sqrt(n);
+      const a1 = poly([0, 0.221157, -0.147981, -2.07119, 4.434685, -2.706056], rsn) - a[1] / ssumm2;
+      let i1, fac;
+      if (n > 5) {
+        i1 = 3;
+        const a2 = -a[2] / ssumm2 + poly([0, 0.042981, -0.293762, -1.752461, 5.682633, -3.582633], rsn);
+        fac = Math.sqrt((summ2 - 2 * a[1] * a[1] - 2 * a[2] * a[2]) / (1 - 2 * a1 * a1 - 2 * a2 * a2));
+        a[2] = a2;
+      } else {
+        i1 = 2;
+        fac = Math.sqrt((summ2 - 2 * a[1] * a[1]) / (1 - 2 * a1 * a1));
+      }
+      a[1] = a1;
+      for (let i = i1; i <= nn2; i++) a[i] /= -fac;
+    }
+    // koefisien penuh (antisimetris) lalu W = kuadrat korelasi antara data dan koefisien
+    const coef = new Array(n).fill(0);
+    for (let i = 0; i < n; i++) { const j = n - 1 - i; if (i < j) coef[i] = -a[i + 1]; else if (i > j) coef[i] = a[j + 1]; }
+    const xs = x.map((v) => v / range);
+    const mx = xs.reduce((s, v) => s + v, 0) / n, ma = coef.reduce((s, v) => s + v, 0) / n;
+    let ssa = 0, ssx = 0, sax = 0;
+    for (let i = 0; i < n; i++) { const da = coef[i] - ma, dx = xs[i] - mx; ssa += da * da; ssx += dx * dx; sax += da * dx; }
+    const ssassx = Math.sqrt(ssa * ssx);
+    const w1 = (ssassx - sax) * (ssassx + sax) / (ssa * ssx);
+    const W = Math.min(1, 1 - w1);
+    let p;
+    if (n === 3) {
+      p = 1.90985931710274 * (Math.asin(Math.sqrt(W)) - 1.04719755119660);
+      p = Math.max(0, p);
+    } else {
+      let y = Math.log(w1), m, s;
+      if (n <= 11) {
+        const gamma = poly([-2.273, 0.459], n);
+        if (y >= gamma) return { W, p: 1e-99, n };
+        y = -Math.log(gamma - y);
+        m = poly([0.544, -0.39978, 0.025054, -6.714e-4], n);
+        s = Math.exp(poly([1.3822, -0.77857, 0.062767, -0.0020322], n));
+      } else {
+        const xx = Math.log(n);
+        m = poly([-1.5861, -0.31082, -0.083751, 0.0038915], xx);
+        s = Math.exp(poly([-0.4803, -0.082676, 0.0030302], xx));
+      }
+      p = normUpperP((y - m) / s);
+    }
+    return { W, p: Math.max(0, Math.min(1, p)), n };
+  }
+
+  /* Uji Kolmogorov-Smirnov untuk normalitas dengan koreksi Lilliefors (mean & simpangan baku ditaksir dari data).
+     p-value: pendekatan Dallal & Wilkinson (1986), seperti paket nortest::lillie.test. */
+  function lilliefors(values) {
+    const x = values.slice().sort((a, b) => a - b);
+    const n = x.length;
+    if (n < 4) return null;
+    const mean = x.reduce((s, v) => s + v, 0) / n;
+    const sd = Math.sqrt(x.reduce((s, v) => s + (v - mean) ** 2, 0) / (n - 1));
+    if (!(sd > 0)) return null;
+    let dPlus = -Infinity, dMinus = -Infinity;
+    x.forEach((v, i) => {
+      const F = normCdf((v - mean) / sd);
+      dPlus = Math.max(dPlus, (i + 1) / n - F);
+      dMinus = Math.max(dMinus, F - i / n);
+    });
+    const D = Math.max(dPlus, dMinus);
+    let Kd = D, nd = n;
+    if (n > 100) { Kd = D * Math.pow(n / 100, 0.49); nd = 100; }
+    let p = Math.exp(-7.01256 * Kd * Kd * (nd + 2.78019) + 2.99587 * Kd * Math.sqrt(nd + 2.78019) - 0.122119 + 0.974598 / Math.sqrt(nd) + 1.67997 / nd);
+    if (p > 0.1) {
+      const KK = (Math.sqrt(n) - 0.01 + 0.85 / Math.sqrt(n)) * D;
+      if (KK <= 0.302) p = 1;
+      else if (KK <= 0.5) p = 2.76773 - 19.828315 * KK + 80.709644 * KK ** 2 - 138.55152 * KK ** 3 + 81.218052 * KK ** 4;
+      else if (KK <= 0.9) p = -4.901232 + 40.662806 * KK - 97.490286 * KK ** 2 + 94.029866 * KK ** 3 - 32.355711 * KK ** 4;
+      else if (KK <= 1.31) p = 6.198765 - 19.558097 * KK + 23.186922 * KK ** 2 - 12.234627 * KK ** 3 + 2.423045 * KK ** 4;
+      else p = 0;
+    }
+    return { D, dPlus, dMinus, mean, sd, p: Math.max(0, Math.min(1, p)), n };
+  }
+
+  /* Regresi bantu (OLS) lewat ortogonalisasi Gram-Schmidt: aman terhadap kolom yang kolinear (otomatis dibuang).
+     Mengembalikan R², banyaknya regresor efektif (q), dan statistik F regresi bantu. */
+  function auxRegression(y, cols) {
+    const n = y.length;
+    const center = (v) => { const m = v.reduce((s, t) => s + t, 0) / n; return v.map((t) => t - m); };
+    const dot = (u, v) => { let s = 0; for (let i = 0; i < n; i++) s += u[i] * v[i]; return s; };
+    const yc = center(y), sst = dot(yc, yc);
+    if (!(sst > 1e-300)) return null;
+    const Q = [];
+    cols.forEach((col) => {
+      let v = center(col);
+      const n0 = Math.sqrt(dot(v, v));
+      if (!(n0 > 1e-12)) return;
+      for (let pass = 0; pass < 2; pass++) Q.forEach((q) => { const c = dot(q, v); for (let i = 0; i < n; i++) v[i] -= c * q[i]; });
+      const n1 = Math.sqrt(dot(v, v));
+      if (n1 / n0 < 1e-7) return;
+      Q.push(v.map((t) => t / n1));
+    });
+    const q = Q.length;
+    if (q === 0) return null;
+    let ssr = 0;
+    Q.forEach((u) => { const c = dot(u, yc); ssr += c * c; });
+    const R2 = Math.min(1, ssr / sst);
+    const df2 = n - q - 1;
+    const F = (df2 > 0 && R2 < 1) ? (R2 / q) / ((1 - R2) / df2) : NaN;
+    return { R2, q, n, df2, F };
+  }
+
 
   function transpose(M) {
     const rows = M.length, cols = M[0].length;
@@ -332,6 +511,7 @@
     catch (err) { showError(el.dataError, err.message); return; }
     renderResults(result, data);
     el.resultsCard.hidden = false;
+    state.last = { result, data };
     renderAssumptions(result, data);
     el.assumptionsCard.hidden = false;
     renderConclusion(result, data);
@@ -340,6 +520,19 @@
     el.resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
     if (window.StatCalc && window.StatCalc.trackCalc) window.StatCalc.trackCalc();
   });
+
+  /* Ganti uji asumsi: hitung ulang Langkah 4, Langkah 5, dan ekspor tanpa mengulang regresi */
+  function onTestChange() {
+    state.normTest = el.normSel.value;
+    state.heteroTest = el.heteroSel.value;
+    if (el.testHint) el.testHint.innerHTML = TEST_HINTS_NORM[state.normTest] + ' ' + TEST_HINTS_HETERO[state.heteroTest];
+    if (!state.last) return;
+    renderAssumptions(state.last.result, state.last.data);
+    renderConclusion(state.last.result, state.last.data);
+    exportRegresi(state.last.result, state.last.data);
+  }
+  if (el.normSel) el.normSel.addEventListener('change', onTestChange);
+  if (el.heteroSel) el.heteroSel.addEventListener('change', onTestChange);
 
   function renderResults(res, data) {
     renderSumsTable(res, data);
@@ -526,7 +719,8 @@
       SE.publish({
         id: 'regresi', title: k === 1 ? 'Hasil Regresi Linear Sederhana' : 'Hasil Regresi Linear Berganda', anchor: '#conclusion-card', resultsCard: '#results-card',
         meta: [['Jenis analisis', k === 1 ? 'Regresi linear sederhana (1 variabel X)' : 'Regresi linear berganda (' + k + ' variabel X)'], ['Jumlah pengamatan (n)', n], ['Persamaan regresi', buildEquationString(res.beta)],
-          ['R\u00B2', fmt(res.R2)], ['R\u00B2 adjusted', fmt(res.adjR2)], ['Galat baku estimasi (Se)', fmt(res.Se)], ['Derajat bebas galat', res.df]],
+          ['R\u00B2', fmt(res.R2)], ['R\u00B2 adjusted', fmt(res.adjR2)], ['Galat baku estimasi (Se)', fmt(res.Se)], ['Derajat bebas galat', res.df],
+          ['Uji normalitas residual', NORM_NAMES[state.normTest]], ['Uji heteroskedastisitas', HETERO_NAMES[state.heteroTest]]],
         sections: [
           { heading: 'Tabel Bantu', sel: '#sumsTableWrap' }, { heading: 'Langkah Perhitungan', sel: '#stepsWrap' },
           { heading: 'Persamaan & Uji Signifikansi', sel: '#equationWrap' }, { heading: 'Uji Asumsi Regresi', sel: '#assumptionsWrap' }, { heading: 'Kesimpulan Model', sel: '#conclusionWrap' },
@@ -563,7 +757,7 @@
      Heteroskedastisitas, Autokorelasi — lengkap dengan hipotesis H0/H1.
      ========================================================================= */
 
-  function computeNormalityTest(res) {
+  function computeJarqueBera(res) {
     const e = res.residuals, n = e.length;
     const mean = e.reduce((a, b) => a + b, 0) / n;
     const m2 = e.reduce((s, v) => s + (v - mean) ** 2, 0) / n;
@@ -574,7 +768,26 @@
     const kurt = sd > 0 ? m4 / (sd ** 4) : 3;
     const JB = (n / 6) * (skew ** 2 + ((kurt - 3) ** 2) / 4);
     const p = chiSq2UpperP(JB);
-    return { JB, skew, kurt, p, normal: p >= 0.05 };
+    return { kind: 'jb', name: NORM_NAMES.jb, JB, skew, kurt, p, normal: p >= 0.05 };
+  }
+
+  function computeShapiroWilkTest(res) {
+    const r = shapiroWilk(res.residuals);
+    if (!r) return { kind: 'sw', name: NORM_NAMES.sw, unavailable: true, normal: null, reason: 'Uji Shapiro-Wilk memerlukan minimal 3 data dan residual yang tidak seluruhnya sama.' };
+    return { kind: 'sw', name: NORM_NAMES.sw, W: r.W, p: r.p, n: r.n, normal: r.p >= 0.05 };
+  }
+
+  function computeKolmogorovTest(res) {
+    const r = lilliefors(res.residuals);
+    if (!r) return { kind: 'ks', name: NORM_NAMES.ks, unavailable: true, normal: null, reason: 'Uji Kolmogorov-Smirnov (Lilliefors) memerlukan minimal 4 data dan residual yang tidak seluruhnya sama.' };
+    return { kind: 'ks', name: NORM_NAMES.ks, D: r.D, mean: r.mean, sd: r.sd, p: r.p, n: r.n, normal: r.p >= 0.05 };
+  }
+
+  /* Uji normalitas sesuai pilihan di Langkah 4 */
+  function computeNormalityTest(res) {
+    if (state.normTest === 'sw') return computeShapiroWilkTest(res);
+    if (state.normTest === 'ks') return computeKolmogorovTest(res);
+    return computeJarqueBera(res);
   }
 
   function computeVIF(data, res) {
@@ -599,7 +812,7 @@
     return rows;
   }
 
-  function computeHeteroscedasticity(res, data) {
+  function computeGlejser(res, data) {
     const absE = res.residuals.map((e) => Math.abs(e));
     let aux;
     try { aux = res.k === 1 ? runSimple(absE, data.X.map((r) => r[0])) : runMultiple(absE, data.X, res.k); }
@@ -612,7 +825,42 @@
       return { name: varNames[j], b, t, p, problematic: Number.isFinite(p) ? p < 0.05 : false };
     });
     const anyProblem = rows.some((r) => r.problematic);
-    return { rows, anyProblem, df: aux.df };
+    return { kind: 'glejser', name: HETERO_NAMES.glejser, rows, anyProblem, df: aux.df };
+  }
+
+  /* Breusch-Pagan (versi Koenker/studentized): regresikan e\u00B2 terhadap X, LM = n\u00B7R\u00B2 ~ \u03C7\u00B2(q). */
+  function computeBreuschPagan(res, data) {
+    const n = res.n, e2 = res.residuals.map((e) => e * e);
+    const cols = Array.from({ length: res.k }, (_, j) => data.X.map((r) => r[j]));
+    const aux = auxRegression(e2, cols);
+    if (!aux || !(aux.df2 >= 1)) return null;
+    const LM = n * aux.R2;
+    const p = chiSqUpperP(LM, aux.q);
+    const Fp = Number.isFinite(aux.F) ? fUpperP(aux.F, aux.q, aux.df2) : NaN;
+    return { kind: 'bp', name: HETERO_NAMES.bp, LM, R2: aux.R2, df: aux.q, F: aux.F, df2: aux.df2, p, Fp, anyProblem: p < 0.05 };
+  }
+
+  /* White: regresikan e\u00B2 terhadap X, X\u00B2 dan (bila data cukup) hasil kali silang antar X; LM = n\u00B7R\u00B2 ~ \u03C7\u00B2(q). */
+  function computeWhite(res, data) {
+    const n = res.n, k = res.k, e2 = res.residuals.map((e) => e * e);
+    const Xc = Array.from({ length: k }, (_, j) => data.X.map((r) => r[j]));
+    const base = [], sq = [], cross = [];
+    for (let j = 0; j < k; j++) { base.push(Xc[j]); sq.push(Xc[j].map((v) => v * v)); }
+    for (let a = 0; a < k; a++) for (let b = a + 1; b < k; b++) cross.push(Xc[a].map((v, i) => v * Xc[b][i]));
+    let aux = auxRegression(e2, base.concat(sq, cross)), withCross = cross.length > 0;
+    if ((!aux || !(aux.df2 >= 1)) && cross.length > 0) { aux = auxRegression(e2, base.concat(sq)); withCross = false; }
+    if (!aux || !(aux.df2 >= 1)) return null;
+    const LM = n * aux.R2;
+    const p = chiSqUpperP(LM, aux.q);
+    const Fp = Number.isFinite(aux.F) ? fUpperP(aux.F, aux.q, aux.df2) : NaN;
+    return { kind: 'white', name: HETERO_NAMES.white, LM, R2: aux.R2, df: aux.q, F: aux.F, df2: aux.df2, p, Fp, withCross, hasCross: cross.length > 0, anyProblem: p < 0.05 };
+  }
+
+  /* Uji heteroskedastisitas sesuai pilihan di Langkah 4 */
+  function computeHeteroscedasticity(res, data) {
+    if (state.heteroTest === 'bp') return computeBreuschPagan(res, data);
+    if (state.heteroTest === 'white') return computeWhite(res, data);
+    return computeGlejser(res, data);
   }
 
   function computeAutocorrelation(res) {
@@ -629,6 +877,120 @@
     return { DW, verdict };
   }
 
+  /* ---------- Tampilan blok uji normalitas & heteroskedastisitas (mengikuti pilihan pengguna) ---------- */
+  const TEST_HINTS_NORM = {
+    jb: '<strong>Jarque-Bera</strong>: berbasis skewness &amp; kurtosis, cocok untuk sampel besar (pendekatan asimtotik).',
+    sw: '<strong>Shapiro-Wilk</strong>: umumnya paling kuat untuk sampel kecil&ndash;sedang (n 3&ndash;5000).',
+    ks: '<strong>Kolmogorov-Smirnov</strong> (koreksi Lilliefors): membandingkan sebaran kumulatif residual dengan normal; butuh n &ge; 4.',
+  };
+  const TEST_HINTS_HETERO = {
+    glejser: '<strong>Glejser</strong>: meregresikan |residual| terhadap tiap X.',
+    bp: '<strong>Breusch-Pagan</strong>: meregresikan residual kuadrat terhadap X (mendeteksi ragam yang berubah linear terhadap X).',
+    white: '<strong>White</strong>: seperti Breusch-Pagan, ditambah X&sup2; (dan hasil kali silang) sehingga bentuk ragam lebih fleksibel.',
+  };
+
+  function hypBox(h0, h1) {
+    return `<div class="hyp-box">
+        <div class="hyp-row"><span class="hyp-tag">H0:</span><span class="hyp-text">${h0}</span></div>
+        <div class="hyp-row"><span class="hyp-tag">H1:</span><span class="hyp-text">${h1}</span></div>
+      </div>`;
+  }
+
+  function normalityBlockHTML(norm) {
+    const title = `1. Uji Normalitas Residual (${norm.name})`;
+    const sub = '<p class="test-sub">Menguji apakah residual (galat) model regresi berdistribusi normal &mdash; syarat agar uji t dan uji F valid.</p>';
+    if (norm.unavailable) {
+      return `<div class="test-block"><h4>${title}</h4>${sub}<p class="test-note">${escapeHTML(norm.reason)} Pilih uji normalitas lain atau tambahkan data.</p></div>`;
+    }
+    let cards, note;
+    if (norm.kind === 'sw') {
+      cards = `${statCard('Statistik W', fmt(norm.W))}${statCard('n', norm.n)}${statCard('Sig. (p-value)', fmt(norm.p, 4))}`;
+      note = 'Statistik W adalah kuadrat korelasi antara residual terurut dan nilai harapan sebaran normal; W mendekati 1 berarti residual mendekati normal, sedangkan W yang kecil mengarah pada penolakan H0. P-value dihitung dengan aproksimasi Royston (1992) yang berlaku untuk n = 3 sampai 5000.';
+    } else if (norm.kind === 'ks') {
+      cards = `${statCard('D maksimum', fmt(norm.D))}${statCard('Mean residual', fmt(norm.mean))}${statCard('Simpangan baku', fmt(norm.sd))}${statCard('Sig. (p-value)', fmt(norm.p, 4))}`;
+      note = 'Statistik D adalah selisih terbesar antara sebaran kumulatif empiris residual dan sebaran kumulatif normal dengan mean &amp; simpangan baku yang ditaksir dari residual itu sendiri. Karena parameter ditaksir dari data, dipakai koreksi Lilliefors (p-value pendekatan Dallal &amp; Wilkinson), sama seperti kolom &ldquo;Kolmogorov-Smirnov&rdquo; pada SPSS. P-value berupa pendekatan sehingga pada n kecil sebaiknya dibaca bersama Q-Q plot.';
+    } else {
+      cards = `${statCard('Statistik JB', fmt(norm.JB))}${statCard('Skewness', fmt(norm.skew))}${statCard('Kurtosis', fmt(norm.kurt))}${statCard('Sig. (p-value)', fmt(norm.p, 4))}`;
+      note = 'Uji Jarque-Bera mengukur kemencengan (skewness) dan keruncingan (kurtosis) residual dibandingkan distribusi normal (skewness = 0, kurtosis = 3); statistik JB mengikuti distribusi Chi-Square dengan df = 2.';
+    }
+    return `<div class="test-block">
+      <h4>${title}</h4>
+      ${sub}
+      ${hypBox('Residual berdistribusi normal.', 'Residual tidak berdistribusi normal.')}
+      <div class="test-stat-row">${cards}</div>
+      <div class="test-verdict ${norm.normal ? 'ok' : 'bad'}">${norm.normal ? 'Normal (p &ge; 0.05)' : 'Tidak Normal (p &lt; 0.05)'}</div>
+      <p class="test-conclusion">${norm.normal
+        ? 'Karena nilai signifikansi &ge; 0.05, H0 gagal ditolak. Artinya, residual model regresi berdistribusi normal sehingga asumsi normalitas terpenuhi.'
+        : 'Karena nilai signifikansi &lt; 0.05, H0 ditolak. Artinya, residual model regresi belum terbukti berdistribusi normal sehingga asumsi normalitas belum terpenuhi &mdash; pertimbangkan menambah data atau mentransformasi variabel.'}</p>
+      <p class="test-note">${note}</p>
+    </div>`;
+  }
+
+  function heteroBlockHTML(h) {
+    const name = h ? h.name : HETERO_NAMES[state.heteroTest];
+    const title = `3. Uji Heteroskedastisitas (${name})`;
+    if (h === null) {
+      return `<div class="test-block"><h4>${title}</h4><p class="test-note">Uji ini tidak dapat dihitung untuk data saat ini (data kurang atau residual tidak bervariasi). Coba uji lain atau tambahkan data.</p></div>`;
+    }
+    const verdict = `<div class="test-verdict ${h.anyProblem ? 'bad' : 'ok'}">${h.anyProblem ? 'Terjadi Heteroskedastisitas' : 'Tidak Terjadi Heteroskedastisitas'}</div>`;
+    if (h.kind === 'glejser') {
+      const rows = h.rows.map((r) => `<tr>
+          <td>${escapeHTML(r.name)}</td>
+          <td>${fmt(r.b, 4)}</td>
+          <td>${fmt(r.t, 4)}</td>
+          <td>${fmt(r.p, 4)}</td>
+          <td class="${r.problematic ? 'bad' : 'ok'}">${r.problematic ? 'Signifikan' : 'Tidak Sig.'}</td>
+        </tr>`).join('');
+      return `<div class="test-block">
+        <h4>${title}</h4>
+        <p class="test-sub">Menguji apakah varians residual bersifat homogen (konstan) di setiap nilai X, dengan meregresikan nilai mutlak residual |e| terhadap tiap variabel X.</p>
+        ${hypBox('Varians residual homogen (tidak terjadi heteroskedastisitas).', 'Varians residual tidak homogen (terjadi heteroskedastisitas).')}
+        <div class="table-scroll"><table class="mini-table">
+          <thead><tr><th>Variabel</th><th>Koef. b</th><th>t hitung</th><th>Sig.</th><th>Keputusan</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table></div>
+        ${verdict}
+        <p class="test-conclusion">${h.anyProblem
+          ? 'Ada variabel yang berpengaruh signifikan terhadap |residual| (p &lt; 0.05), sehingga H0 ditolak &mdash; terindikasi terjadi heteroskedastisitas pada model ini.'
+          : 'Tidak ada variabel yang berpengaruh signifikan terhadap |residual| (p &ge; 0.05 untuk semua), sehingga H0 gagal ditolak &mdash; varians residual cenderung homogen (tidak terjadi heteroskedastisitas).'}</p>
+      </div>`;
+    }
+    const isWhite = h.kind === 'white';
+    const sub = isWhite
+      ? 'Menguji homoskedastisitas dengan meregresikan residual kuadrat (e&sup2;) terhadap seluruh variabel X, kuadratnya (X&sup2;)' + (h.withCross ? ', dan hasil kali silang antar X' : '') + '. Tidak mengasumsikan bentuk hubungan tertentu antara ragam dan X.'
+      : 'Menguji homoskedastisitas dengan meregresikan residual kuadrat (e&sup2;) terhadap variabel X; bila X menjelaskan e&sup2; secara signifikan, ragam residual tidak konstan.';
+    const h1 = isWhite
+      ? 'Ragam residual tidak konstan (terjadi heteroskedastisitas).'
+      : 'Ragam residual berubah mengikuti variabel X (terjadi heteroskedastisitas).';
+    const crossNote = isWhite && h.hasCross && !h.withCross
+      ? ' Jumlah data belum cukup untuk memuat suku hasil kali silang, sehingga regresi bantu hanya memakai X dan X&sup2;.'
+      : (isWhite && h.hasCross ? ' Regresi bantu memuat X, X&sup2;, dan hasil kali silang antar X.' : '');
+    const note = isWhite
+      ? `Statistik LM = n &times; R&sup2; dari regresi bantu dan mengikuti Chi-Square dengan db = ${h.df} (banyaknya regresor bantu di luar konstanta).${crossNote} Uji White sensitif juga terhadap kesalahan spesifikasi model, dan pada n kecil dengan banyak variabel dayanya rendah.`
+      : `Statistik LM = n &times; R&sup2; dari regresi bantu (versi Koenker, sama dengan bptest() di R) dan mengikuti Chi-Square dengan db = ${h.df}. Keputusan memakai p-value LM; F bantu ditampilkan sebagai pembanding.`;
+    return `<div class="test-block">
+      <h4>${title}</h4>
+      <p class="test-sub">${sub}</p>
+      ${hypBox('Ragam residual konstan (homoskedastisitas, tidak terjadi heteroskedastisitas).', h1)}
+      <div class="test-stat-row">
+        ${statCard('R\u00B2 regresi bantu', fmt(h.R2))}
+        ${statCard('LM = n\u00B7R\u00B2', fmt(h.LM))}
+        ${statCard('db', h.df)}
+        ${statCard('Sig. (p-value LM)', fmt(h.p, 4))}
+      </div>
+      <div class="test-stat-row">
+        ${statCard('F bantu', fmt(h.F))}
+        ${statCard('db (F)', `${h.df}, ${h.df2}`)}
+        ${statCard('Sig. (p-value F)', fmt(h.Fp, 4))}
+      </div>
+      ${verdict}
+      <p class="test-conclusion">${h.anyProblem
+        ? 'Karena nilai signifikansi (p-value LM) &lt; 0.05, H0 ditolak &mdash; terindikasi terjadi heteroskedastisitas pada model ini.'
+        : 'Karena nilai signifikansi (p-value LM) &ge; 0.05, H0 gagal ditolak &mdash; ragam residual cenderung konstan (tidak terjadi heteroskedastisitas).'}</p>
+      <p class="test-note">${note}</p>
+    </div>`;
+  }
+
   function renderAssumptions(res, data) {
     if (!(res.df > 0)) {
       el.assumptionsWrap.innerHTML = `<div class="test-block"><h4>Uji Asumsi Regresi</h4><p class="test-note">Derajat bebas tidak mencukupi untuk melakukan uji asumsi &mdash; tambahkan lebih banyak data.</p></div>`;
@@ -636,27 +998,8 @@
     }
     let html = '';
 
-    // ---- 1. Uji Normalitas Residual (Jarque-Bera) ----
-    const norm = computeNormalityTest(res);
-    html += `<div class="test-block">
-      <h4>1. Uji Normalitas Residual (Jarque-Bera)</h4>
-      <p class="test-sub">Menguji apakah residual (galat) model regresi berdistribusi normal &mdash; syarat agar uji t dan uji F valid.</p>
-      <div class="hyp-box">
-        <div class="hyp-row"><span class="hyp-tag">H0:</span><span class="hyp-text">Residual berdistribusi normal.</span></div>
-        <div class="hyp-row"><span class="hyp-tag">H1:</span><span class="hyp-text">Residual tidak berdistribusi normal.</span></div>
-      </div>
-      <div class="test-stat-row">
-        ${statCard('Statistik JB', fmt(norm.JB))}
-        ${statCard('Skewness', fmt(norm.skew))}
-        ${statCard('Kurtosis', fmt(norm.kurt))}
-        ${statCard('Sig. (p-value)', fmt(norm.p, 4))}
-      </div>
-      <div class="test-verdict ${norm.normal ? 'ok' : 'bad'}">${norm.normal ? 'Normal (p &ge; 0.05)' : 'Tidak Normal (p &lt; 0.05)'}</div>
-      <p class="test-conclusion">${norm.normal
-        ? 'Karena nilai signifikansi &ge; 0.05, H0 gagal ditolak. Artinya, residual model regresi berdistribusi normal sehingga asumsi normalitas terpenuhi.'
-        : 'Karena nilai signifikansi &lt; 0.05, H0 ditolak. Artinya, residual model regresi belum terbukti berdistribusi normal sehingga asumsi normalitas belum terpenuhi &mdash; pertimbangkan menambah data atau mentransformasi variabel.'}</p>
-      <p class="test-note">Uji Jarque-Bera mengukur kemencengan (skewness) dan keruncingan (kurtosis) residual dibandingkan distribusi normal (skewness = 0, kurtosis = 3); statistik JB mengikuti distribusi Chi-Square dengan df = 2.</p>
-    </div>`;
+    // ---- 1. Uji Normalitas Residual (sesuai pilihan) ----
+    html += normalityBlockHTML(computeNormalityTest(res));
 
     // ---- 2. Uji Multikolinearitas (VIF) ----
     const vif = computeVIF(data, res);
@@ -692,38 +1035,8 @@
       </div>`;
     }
 
-    // ---- 3. Uji Heteroskedastisitas (Glejser) ----
-    const hetero = computeHeteroscedasticity(res, data);
-    if (hetero === null) {
-      html += `<div class="test-block">
-        <h4>3. Uji Heteroskedastisitas (Glejser)</h4>
-        <p class="test-note">Uji ini tidak dapat dihitung untuk data saat ini.</p>
-      </div>`;
-    } else {
-      const rows = hetero.rows.map((r) => `<tr>
-          <td>${escapeHTML(r.name)}</td>
-          <td>${fmt(r.b, 4)}</td>
-          <td>${fmt(r.t, 4)}</td>
-          <td>${fmt(r.p, 4)}</td>
-          <td class="${r.problematic ? 'bad' : 'ok'}">${r.problematic ? 'Signifikan' : 'Tidak Sig.'}</td>
-        </tr>`).join('');
-      html += `<div class="test-block">
-        <h4>3. Uji Heteroskedastisitas (Glejser)</h4>
-        <p class="test-sub">Menguji apakah varians residual bersifat homogen (konstan) di setiap nilai X, dengan meregresikan nilai mutlak residual |e| terhadap tiap variabel X.</p>
-        <div class="hyp-box">
-          <div class="hyp-row"><span class="hyp-tag">H0:</span><span class="hyp-text">Varians residual homogen (tidak terjadi heteroskedastisitas).</span></div>
-          <div class="hyp-row"><span class="hyp-tag">H1:</span><span class="hyp-text">Varians residual tidak homogen (terjadi heteroskedastisitas).</span></div>
-        </div>
-        <div class="table-scroll"><table class="mini-table">
-          <thead><tr><th>Variabel</th><th>Koef. b</th><th>t hitung</th><th>Sig.</th><th>Keputusan</th></tr></thead>
-          <tbody>${rows}</tbody>
-        </table></div>
-        <div class="test-verdict ${hetero.anyProblem ? 'bad' : 'ok'}">${hetero.anyProblem ? 'Terjadi Heteroskedastisitas' : 'Tidak Terjadi Heteroskedastisitas'}</div>
-        <p class="test-conclusion">${hetero.anyProblem
-          ? 'Ada variabel yang berpengaruh signifikan terhadap |residual| (p &lt; 0.05), sehingga H0 ditolak &mdash; terindikasi terjadi heteroskedastisitas pada model ini.'
-          : 'Tidak ada variabel yang berpengaruh signifikan terhadap |residual| (p &ge; 0.05 untuk semua), sehingga H0 gagal ditolak &mdash; varians residual cenderung homogen (tidak terjadi heteroskedastisitas).'}</p>
-      </div>`;
-    }
+    // ---- 3. Uji Heteroskedastisitas (sesuai pilihan) ----
+    html += heteroBlockHTML(computeHeteroscedasticity(res, data));
 
     // ---- 4. Uji Autokorelasi (Durbin-Watson) ----
     const dw = computeAutocorrelation(res);
@@ -775,9 +1088,9 @@
     // ---- checklist (hanya butir yang benar-benar dapat dihitung yang menentukan lulus/tidak) ----
     const items = [
       { label: 'Uji F (model signifikan)', pass: fTest.significant, applicable: true },
-      { label: 'Normalitas residual', pass: norm.normal, applicable: true },
+      { label: 'Normalitas residual (' + norm.name + ')', pass: norm.normal, applicable: norm.normal !== null },
       { label: 'Non-multikolinearitas', pass: multicolOk, applicable: multicolOk !== null },
-      { label: 'Non-heteroskedastisitas', pass: heteroOk, applicable: heteroOk !== null },
+      { label: 'Non-heteroskedastisitas (' + HETERO_NAMES[state.heteroTest] + ')', pass: heteroOk, applicable: heteroOk !== null },
       { label: 'Non-autokorelasi', pass: autocorrOk, applicable: autocorrOk !== null },
     ];
     const applicableItems = items.filter((it) => it.applicable);

@@ -25,7 +25,8 @@
 <tr><td>Uji t koefisien</td><td>$\beta_j = 0$</td><td>$\beta_j \ne 0$</td></tr>
 <tr><td>ANOVA</td><td>$\mu_1 = \mu_2 = \dots = \mu_k$</td><td>Minimal satu rata-rata berbeda</td></tr>
 <tr><td>ADF (stasioneritas)</td><td>$\gamma = 0$ (ada akar unit)</td><td>$\gamma \lt 0$ (stasioner)</td></tr>
-<tr><td>Jarque-Bera</td><td>Residual normal</td><td>Residual tidak normal</td></tr>
+<tr><td>Jarque-Bera, Shapiro-Wilk, Kolmogorov-Smirnov</td><td>Residual normal</td><td>Residual tidak normal</td></tr>
+<tr><td>Glejser, Breusch-Pagan, White</td><td>Ragam residual konstan (homoskedastis)</td><td>Ragam residual tidak konstan</td></tr>
 </tbody></table></div>
 
 <h3>Satu sisi dan dua sisi</h3>
@@ -95,7 +96,7 @@ $$\text{statistik uji} = \frac{\text{taksiran} - \text{nilai di } H_0}{\text{gal
 <tr><td><strong>Normal baku</strong> $Z$</td><td>&mdash;</td><td>Dasar teori; pendekatan untuk sampel besar.</td></tr>
 <tr><td><strong>$t$</strong></td><td>db $= v$</td><td>Uji koefisien regresi, CI rata-rata. Mirip normal tetapi ekor lebih tebal; mendekati normal bila $v$ besar.</td></tr>
 <tr><td><strong>$F$</strong></td><td>db $= (v_1, v_2)$</td><td>Uji F regresi dan ANOVA. Nilainya selalu $\ge 0$ dan menceng kanan; uji selalu satu sisi (ekor kanan).</td></tr>
-<tr><td><strong>$\chi^2$</strong></td><td>db $= v$</td><td>Uji Jarque-Bera (db 2), uji kesesuaian dan independensi.</td></tr>
+<tr><td><strong>$\chi^2$</strong></td><td>db $= v$</td><td>Uji Jarque-Bera (db 2), Breusch-Pagan dan White (db = banyak regresor bantu), uji kesesuaian dan independensi.</td></tr>
 <tr><td><strong>Dickey-Fuller (MacKinnon)</strong></td><td>model uji, $N$</td><td>ADF. Bukan distribusi $t$ biasa; lihat materi Uji Stasioneritas.</td></tr>
 </tbody></table></div>
 <p>Hubungan yang berguna: untuk satu koefisien, $t^2 = F$ dengan db $(1, v)$. Karena itu uji t dua sisi dan uji F pada regresi sederhana selalu memberi p-value yang sama.</p>`

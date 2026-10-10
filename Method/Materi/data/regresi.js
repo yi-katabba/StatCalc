@@ -4,8 +4,8 @@
   window.StatCalcMateri.register({
     id: 'regresi', order: 3, method: 'regresi', tone: 'navy',
     title: 'Regresi Linear', subtitle: 'Sederhana & Berganda',
-    desc: 'Model, penaksiran kuadrat terkecil, R², uji F dan uji t, serta uji asumsi klasik (normalitas, multikolinearitas, heteroskedastisitas, autokorelasi).',
-    keywords: ['regresi', 'OLS', 'kuadrat terkecil', 'koefisien', 'slope', 'intercept', 'R2', 'determinasi', 'adjusted', 'uji F', 'uji t', 'Jarque-Bera', 'VIF', 'multikolinearitas', 'Glejser', 'heteroskedastisitas', 'Durbin-Watson', 'autokorelasi', 'residual', 'asumsi klasik', 'korelasi'],
+    desc: 'Model, penaksiran kuadrat terkecil, R², uji F dan uji t, serta uji asumsi klasik: normalitas (Jarque-Bera, Shapiro-Wilk, Kolmogorov-Smirnov), multikolinearitas, heteroskedastisitas (Glejser, Breusch-Pagan, White), dan autokorelasi.',
+    keywords: ['regresi', 'OLS', 'kuadrat terkecil', 'koefisien', 'slope', 'intercept', 'R2', 'determinasi', 'adjusted', 'uji F', 'uji t', 'Jarque-Bera', 'Shapiro-Wilk', 'Kolmogorov-Smirnov', 'Lilliefors', 'normalitas', 'Breusch-Pagan', 'White', 'uji White', 'homoskedastisitas', 'VIF', 'multikolinearitas', 'Glejser', 'heteroskedastisitas', 'Durbin-Watson', 'autokorelasi', 'residual', 'asumsi klasik', 'korelasi'],
     icon: '<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>',
     sections: [
       {
@@ -128,19 +128,41 @@ $$SE(b) = \frac{S_e}{\sqrt{S_{XX}}},\qquad SE(a) = S_e\sqrt{\frac{1}{n} + \frac{
       {
         id: 'asumsi', title: 'Asumsi klasik regresi',
         html: String.raw`
-<p>Uji F dan uji t hanya dapat dipercaya bila asumsi berikut terpenuhi. Aplikasi memeriksa keempatnya di Langkah 4 setelah perhitungan:</p>
+<p>Uji F dan uji t hanya dapat dipercaya bila asumsi berikut terpenuhi. Aplikasi memeriksa keempatnya di Langkah 4 setelah perhitungan. Untuk normalitas dan heteroskedastisitas tersedia beberapa uji yang bisa dipilih lewat menu di Langkah 4 (lihat <strong>Memilih uji</strong>):</p>
 <div class="mt-tw"><table>
 <thead><tr><th>Asumsi</th><th>Maksud</th><th>Uji di aplikasi</th></tr></thead>
 <tbody>
-<tr><td>Normalitas</td><td>Residual berdistribusi normal</td><td>Jarque-Bera</td></tr>
+<tr><td>Normalitas</td><td>Residual berdistribusi normal</td><td>Jarque-Bera, Shapiro-Wilk, atau Kolmogorov-Smirnov (Lilliefors)</td></tr>
 <tr><td>Non-multikolinearitas</td><td>Variabel $X$ tidak saling berkorelasi tinggi</td><td>VIF</td></tr>
-<tr><td>Homoskedastisitas</td><td>Ragam residual konstan</td><td>Glejser</td></tr>
+<tr><td>Homoskedastisitas</td><td>Ragam residual konstan</td><td>Glejser, Breusch-Pagan, atau White</td></tr>
 <tr><td>Non-autokorelasi</td><td>Residual saling bebas</td><td>Durbin-Watson</td></tr>
 </tbody></table></div>
 <p>Asumsi tambahan yang tidak diuji otomatis: hubungan benar-benar linear dan tidak ada variabel penting yang terlewat. Periksa dengan grafik residual dan scatter plot di tab Grafik.</p>
 <div class="mt-box note" data-label="Catatan">
   <p>Multikolinearitas hanya relevan untuk regresi berganda. Autokorelasi paling bermakna bila data berurutan (misal deret waktu). Pada data lintas individu, urutan baris biasanya tidak bermakna.</p>
 </div>`
+      },
+      {
+        id: 'pilih-uji', title: 'Memilih uji normalitas dan heteroskedastisitas',
+        html: String.raw`
+<p>Di Langkah 4 kalkulator Regresi Linear tersedia beberapa uji untuk satu asumsi yang sama. Pilihlah lewat menu <strong>Uji normalitas residual</strong> dan <strong>Uji heteroskedastisitas</strong>; hasil Langkah 4, Kesimpulan Model, dan berkas ekspor langsung mengikuti pilihan itu tanpa menghitung ulang regresi.</p>
+<div class="mt-tw"><table>
+<thead><tr><th>Asumsi</th><th>Uji</th><th>Ide dasar</th><th>Cocok bila</th></tr></thead>
+<tbody>
+<tr><td rowspan="3">Normalitas residual</td><td>Jarque-Bera</td><td>Skewness dan kurtosis</td><td>Sampel besar (ratusan data)</td></tr>
+<tr><td>Shapiro-Wilk</td><td>Korelasi dengan nilai normal teoretis</td><td>Sampel kecil sampai sedang; umumnya paling kuat</td></tr>
+<tr><td>Kolmogorov-Smirnov (Lilliefors)</td><td>Jarak terjauh antar sebaran kumulatif</td><td>Dipakai bila format laporan meminta K-S</td></tr>
+<tr><td rowspan="3">Heteroskedastisitas</td><td>Glejser</td><td>Regresi $|e|$ terhadap $X$</td><td>Pemeriksaan cepat, tafsir per variabel</td></tr>
+<tr><td>Breusch-Pagan</td><td>Regresi $e^2$ terhadap $X$</td><td>Ragam diduga berubah linear terhadap $X$</td></tr>
+<tr><td>White</td><td>Regresi $e^2$ terhadap $X$, $X^2$, silang</td><td>Bentuk ragam tidak diketahui; data cukup banyak</td></tr>
+</tbody></table></div>
+<div class="mt-box key" data-label="Saran praktis">
+  <p>Jika data sedikit (di bawah sekitar 50), pakai <strong>Shapiro-Wilk</strong> untuk normalitas. Jika model punya banyak variabel $X$ dan data terbatas, pilih <strong>Breusch-Pagan</strong> karena regresi bantunya paling hemat derajat bebas; White bisa kehilangan daya karena banyak suku tambahan.</p>
+</div>
+<div class="mt-box warn" data-label="Jangan memilih-milih hasil">
+  <p>Pilih uji <em>sebelum</em> melihat hasilnya, lalu laporkan uji yang dipilih. Berganti-ganti uji sampai memperoleh kesimpulan yang diinginkan membuat peluang salah menyimpulkan membesar. Bila beberapa uji berbeda hasil, lihat juga grafik (Q-Q plot, histogram, residual terhadap nilai prediksi) dan bahas perbedaannya secara jujur.</p>
+</div>
+<p>Semua uji memakai taraf signifikansi $\alpha = 0{,}05$. Ingat arah keputusan: pada uji asumsi kita <em>berharap tidak menolak</em> $H_0$ (residual normal, ragam konstan).</p>`
       },
       {
         id: 'jarque-bera', title: 'Uji normalitas: Jarque-Bera',
@@ -156,7 +178,81 @@ $$JB = \frac{n}{6}\left(S^2 + \frac{(K-3)^2}{4}\right),\qquad S = \frac{m_3}{m_2
   <p>$p \ge 0{,}05$: gagal tolak $H_0$, residual dianggap normal (asumsi terpenuhi).<br>$p \lt 0{,}05$: tolak $H_0$, residual tidak normal.</p>
 </div>
 <div class="mt-box warn" data-label="Hati-hati">
-  <p>Pada $n$ kecil, uji ini punya daya rendah dan p-value-nya hanya pendekatan asimtotik. Lihat juga Q-Q plot dan histogram residual di tab Grafik. Titik yang mengikuti garis menandakan residual mendekati normal.</p>
+  <p>Pada $n$ kecil, uji ini punya daya rendah dan p-value-nya hanya pendekatan asimtotik. Lihat juga Q-Q plot dan histogram residual di tab Grafik. Titik yang mengikuti garis menandakan residual mendekati normal. Untuk sampel kecil, pertimbangkan <strong>Shapiro-Wilk</strong> (bagian berikutnya).</p>
+</div>`
+      },
+      {
+        id: 'shapiro-wilk', title: 'Uji normalitas: Shapiro-Wilk',
+        html: String.raw`
+<p>Uji Shapiro-Wilk menilai seberapa lurus titik-titik pada Q-Q plot, yaitu seberapa kuat residual terurut berkorelasi dengan nilai harapan sebaran normal. Uji ini banyak dipakai untuk sampel kecil sampai sedang ($3 \le n \le 5000$) karena dayanya baik.</p>
+<div class="mt-box def" data-label="Hipotesis">
+  <p>$H_0:$ residual berdistribusi normal &nbsp;&nbsp; $H_1:$ residual tidak berdistribusi normal</p>
+</div>
+<h3>Statistik uji</h3>
+<p>Urutkan residual dari kecil ke besar: $e_{(1)} \le e_{(2)} \le \dots \le e_{(n)}$. Statistik $W$ adalah</p>
+$$W = \frac{\left(\sum_{i=1}^{n} a_i\, e_{(i)}\right)^2}{\sum_{i=1}^{n} (e_i - \bar{e})^2}$$
+<p>Koefisien $a_i$ berasal dari nilai harapan dan kovarians statistik terurut sebaran normal baku $(a_1,\dots,a_n) = \dfrac{\mathbf{m}^{\top}\mathbf{V}^{-1}}{\sqrt{\mathbf{m}^{\top}\mathbf{V}^{-1}\mathbf{V}^{-1}\mathbf{m}}}$, bersifat antisimetris ($a_i = -a_{n+1-i}$). Bila $n$ genap, penjumlahan itu dapat ditulis sebagai</p>
+$$b = \sum_{i=1}^{n/2} a_{n+1-i}\,\bigl(e_{(n+1-i)} - e_{(i)}\bigr),\qquad W = \frac{b^2}{SS},\quad SS = \sum (e_i - \bar{e})^2$$
+<p>(untuk $n$ ganjil, residual tengah tidak ikut karena $a_{(n+1)/2} = 0$). Nilai $0 \lt W \le 1$.</p>
+<div class="mt-box key" data-label="Cara membaca W">
+  <p>$W$ mendekati 1: residual sangat mirip sebaran normal. $W$ kecil: menyimpang dari normal. Pada regresi OLS dengan konstanta, $\bar{e}=0$, sehingga penyebut sama dengan $SSE$.</p>
+</div>
+<h3>P-value</h3>
+<p>Nilai kritis $W$ bergantung pada $n$. Aplikasi memakai aproksimasi Royston (1992, algoritma AS R94): untuk $n \ge 12$ transformasi $\ln(1-W)$ dianggap menyebar normal, $z = \dfrac{\ln(1-W) - \mu_n}{\sigma_n}$, dan $p = P(Z \gt z)$; $\mu_n$ dan $\sigma_n$ adalah polinomial dalam $\ln n$. Untuk $n$ kecil dipakai polinomial dalam $n$, dan untuk $n = 3$ ada rumus eksak. Hasilnya sama dengan fungsi <code>shapiro.test()</code> di R.</p>
+<div class="mt-box key" data-label="Keputusan">
+  <p>$p \ge 0{,}05$: gagal tolak $H_0$, residual dianggap normal (asumsi terpenuhi).<br>$p \lt 0{,}05$: tolak $H_0$, residual tidak normal.</p>
+</div>
+<div class="mt-box ex" data-label="Contoh hitung">
+  <p>Dari materi <em>Contoh hitung</em> (regresi $\hat{Y} = 2{,}2 + 0{,}6X$), residual $e = (-0{,}8;\ 0{,}6;\ 1{,}0;\ -0{,}6;\ -0{,}2)$. Terurut: $-0{,}8;\ -0{,}6;\ -0{,}2;\ 0{,}6;\ 1{,}0$.</p>
+</div>
+<ol class="mt-steps">
+  <li><strong>Koefisien</strong> untuk $n=5$: $a_5 = 0{,}6646$ dan $a_4 = 0{,}2413$ (tabel Shapiro-Wilk).</li>
+  <li><strong>Pembilang:</strong> $b = 0{,}6646\,(1{,}0 - (-0{,}8)) + 0{,}2413\,(0{,}6 - (-0{,}6)) = 1{,}1963 + 0{,}2896 = 1{,}4858$.</li>
+  <li><strong>Penyebut:</strong> $SS = \sum e_i^2 = 2{,}4$ (karena $\bar{e} = 0$, sama dengan $SSE$).</li>
+  <li><strong>Statistik:</strong> $W = \dfrac{1{,}4858^2}{2{,}4} = \dfrac{2{,}2077}{2{,}4} = 0{,}920$.</li>
+  <li><strong>Keputusan:</strong> $p \approx 0{,}530 \ge 0{,}05$, gagal tolak $H_0$. Residual tidak menunjukkan penyimpangan dari normal. Dengan $n=5$ daya uji sangat rendah, jadi kesimpulan ini lemah.</li>
+</ol>
+<div class="mt-box warn" data-label="Hati-hati">
+  <p>Pada $n$ sangat besar, penyimpangan kecil yang tidak berarti pun bisa memberi $p \lt 0{,}05$; pada $n$ sangat kecil, hampir semua data lolos. Selalu pasangkan dengan Q-Q plot. Shapiro-Wilk juga peka terhadap nilai residual yang berulang (banyak nilai kembar).</p>
+</div>`
+      },
+      {
+        id: 'kolmogorov-smirnov', title: 'Uji normalitas: Kolmogorov-Smirnov (Lilliefors)',
+        html: String.raw`
+<p>Uji Kolmogorov-Smirnov (K-S) membandingkan <strong>fungsi sebaran kumulatif empiris</strong> residual dengan fungsi sebaran kumulatif normal. Jika kedua kurva berjauhan di suatu titik, residual diragukan normal.</p>
+<div class="mt-box def" data-label="Hipotesis">
+  <p>$H_0:$ residual berdistribusi normal &nbsp;&nbsp; $H_1:$ residual tidak berdistribusi normal</p>
+</div>
+<h3>Statistik uji</h3>
+<p>Standarkan residual terurut memakai rata-rata dan simpangan baku <em>yang ditaksir dari residual itu sendiri</em>, lalu hitung peluang normal bakunya $F_i = \Phi(z_i)$:</p>
+$$z_{(i)} = \frac{e_{(i)} - \bar{e}}{s},\qquad s = \sqrt{\frac{\sum (e_i - \bar{e})^2}{n-1}},\qquad F_i = \Phi\bigl(z_{(i)}\bigr)$$
+$$D^{+} = \max_i \left(\frac{i}{n} - F_i\right),\qquad D^{-} = \max_i \left(F_i - \frac{i-1}{n}\right),\qquad D = \max(D^{+}, D^{-})$$
+<div class="mt-box note" data-label="Mengapa Lilliefors">
+  <p>Tabel K-S klasik hanya sah bila rata-rata dan simpangan baku sebaran normal <em>diketahui</em> lebih dulu. Pada residual regresi, keduanya ditaksir dari data, sehingga $D$ cenderung lebih kecil dan uji klasik terlalu sulit menolak $H_0$. Koreksi <strong>Lilliefors</strong> memakai nilai kritis yang lebih ketat. Kolom &ldquo;Kolmogorov-Smirnov&rdquo; dengan koreksi ini yang dilaporkan SPSS untuk uji normalitas residual.</p>
+</div>
+<h3>Nilai kritis dan p-value</h3>
+<p>Tolak $H_0$ bila $D$ melebihi nilai kritis Lilliefors. Untuk $\alpha = 0{,}05$ nilai kritisnya kira-kira $\dfrac{0{,}886}{\sqrt{n}}$ bagi $n \gt 30$ (untuk $n=5$ tabelnya 0,337). Aplikasi menghitung p-value dengan pendekatan Dallal &amp; Wilkinson (1986), seperti fungsi <code>lillie.test()</code> di R. Nilainya berupa pendekatan, terutama pada $n$ kecil.</p>
+<div class="mt-box key" data-label="Keputusan">
+  <p>$p \ge 0{,}05$ (atau $D \le D_{kritis}$): gagal tolak $H_0$, residual dianggap normal.<br>$p \lt 0{,}05$ (atau $D \gt D_{kritis}$): tolak $H_0$, residual tidak normal.</p>
+</div>
+<div class="mt-box ex" data-label="Contoh hitung">
+  <p>Residual terurut dari <em>Contoh hitung</em>: $-0{,}8;\ -0{,}6;\ -0{,}2;\ 0{,}6;\ 1{,}0$ dengan $\bar{e} = 0$ dan $s = \sqrt{2{,}4/4} = 0{,}7746$.</p>
+</div>
+<div class="mt-tw"><table>
+<thead><tr><th class="c">$i$</th><th class="c">$e_{(i)}$</th><th class="c">$z_{(i)}$</th><th class="c">$F_i = \Phi(z)$</th><th class="c">$i/n - F_i$</th><th class="c">$F_i - (i-1)/n$</th></tr></thead>
+<tbody>
+<tr><td class="c">1</td><td class="c">-0,8</td><td class="c">-1,033</td><td class="c">0,1508</td><td class="c">0,0492</td><td class="c">0,1508</td></tr>
+<tr><td class="c">2</td><td class="c">-0,6</td><td class="c">-0,775</td><td class="c">0,2193</td><td class="c">0,1807</td><td class="c">0,0193</td></tr>
+<tr><td class="c">3</td><td class="c">-0,2</td><td class="c">-0,258</td><td class="c">0,3981</td><td class="c">0,2019</td><td class="c">-0,0019</td></tr>
+<tr><td class="c">4</td><td class="c">0,6</td><td class="c">0,775</td><td class="c">0,7807</td><td class="c">0,0193</td><td class="c">0,1807</td></tr>
+<tr><td class="c">5</td><td class="c">1,0</td><td class="c">1,291</td><td class="c">0,9016</td><td class="c">0,0984</td><td class="c">0,1016</td></tr>
+</tbody></table></div>
+<ol class="mt-steps">
+  <li>$D^{+} = 0{,}2019$ dan $D^{-} = 0{,}1807$, sehingga $D = 0{,}2019$.</li>
+  <li>Nilai kritis Lilliefors untuk $n=5$, $\alpha = 0{,}05$ adalah $0{,}337$. Karena $0{,}2019 \lt 0{,}337$ (p-value $\approx 0{,}72$), $H_0$ gagal ditolak: residual dianggap normal.</li>
+</ol>
+<div class="mt-box warn" data-label="Hati-hati">
+  <p>K-S/Lilliefors umumnya <strong>kurang kuat</strong> daripada Shapiro-Wilk, terutama pada sampel kecil, dan lebih peka terhadap bagian tengah sebaran daripada ekornya. Bila kedua uji tersedia dan berbeda, Shapiro-Wilk biasanya lebih dapat dipercaya. Aplikasi memerlukan minimal 4 data untuk uji ini.</p>
 </div>`
       },
       {
@@ -188,7 +284,78 @@ $$|e_i| = \alpha + \gamma_1 X_{1i} + \dots + \gamma_k X_{ki} + v_i$$
 </div>
 <p>Setiap $\gamma_j$ diuji dengan uji t. Jika ada variabel dengan $p \lt 0{,}05$, ada indikasi heteroskedastisitas. Jika semua $p \ge 0{,}05$, asumsi terpenuhi.</p>
 <div class="mt-box note" data-label="Penanganan">
-  <p>Transformasi $Y$ (misal logaritma), regresi terboboti (WLS), atau galat baku robust. Grafik residual yang melebar seperti corong (kipas) adalah tanda visualnya.</p>
+  <p>Transformasi $Y$ (misal logaritma), regresi terboboti (WLS), atau galat baku robust. Grafik residual yang melebar seperti corong (kipas) adalah tanda visualnya. Alternatif uji formal yang lebih baku: <strong>Breusch-Pagan</strong> dan <strong>White</strong>.</p>
+</div>`
+      },
+      {
+        id: 'breusch-pagan', title: 'Uji heteroskedastisitas: Breusch-Pagan',
+        html: String.raw`
+<p>Uji Breusch-Pagan memeriksa apakah ragam residual berkaitan dengan variabel $X$. Idenya: bila ragam konstan, kuadrat residual $e^2$ <em>tidak</em> bisa dijelaskan oleh $X$.</p>
+<div class="mt-box def" data-label="Hipotesis">
+  <p>$H_0: \mathrm{Var}(\varepsilon_i) = \sigma^2$ (konstan, homoskedastisitas)<br>$H_1:$ ragam residual berubah mengikuti $X$ (heteroskedastisitas)</p>
+</div>
+<h3>Langkah uji</h3>
+<ol class="mt-steps">
+  <li>Taksir model asli dengan OLS dan simpan residual $e_i$.</li>
+  <li>Bentuk kuadrat residual $e_i^2$, lalu lakukan <strong>regresi bantu</strong>:
+  $$e_i^2 = \delta_0 + \delta_1 X_{1i} + \dots + \delta_k X_{ki} + v_i$$</li>
+  <li>Ambil $R^2$ dari regresi bantu itu dan hitung statistik <em>Lagrange Multiplier</em> (LM):
+  $$LM = n\,R^2_{\text{bantu}} \;\sim\; \chi^2_{(k)}\quad\text{di bawah } H_0$$</li>
+  <li>Bandingkan dengan $\chi^2_{(k)}$ pada $\alpha = 0{,}05$, atau pakai p-value $= P(\chi^2_{(k)} \gt LM)$.</li>
+</ol>
+<p>Selain LM, aplikasi menampilkan statistik $F$ regresi bantu sebagai pembanding:</p>
+$$F = \frac{R^2_{\text{bantu}}/k}{(1 - R^2_{\text{bantu}})/(n-k-1)} \;\sim\; F_{(k,\;n-k-1)}$$
+<div class="mt-box note" data-label="Versi yang dipakai">
+  <p>Uji Breusch-Pagan asli membagi $e_i^2$ dengan $\hat{\sigma}^2 = SSE/n$ dan memakai setengah jumlah kuadrat regresi bantu, serta mengandaikan galat normal. Aplikasi memakai <strong>versi Koenker (<em>studentized</em>)</strong>, $LM = nR^2$, yang tidak memerlukan kenormalan galat dan sama dengan hasil <code>bptest()</code> di R, <code>het_breuschpagan</code> di Python, dan &ldquo;Breusch-Pagan-Godfrey&rdquo; (Obs*R-squared) di EViews.</p>
+</div>
+<div class="mt-box key" data-label="Keputusan">
+  <p>$p \ge 0{,}05$ (atau $LM \le \chi^2_{kritis}$): gagal tolak $H_0$, ragam residual konstan.<br>$p \lt 0{,}05$ (atau $LM \gt \chi^2_{kritis}$): tolak $H_0$, terjadi heteroskedastisitas.</p>
+</div>
+<div class="mt-box ex" data-label="Contoh hitung">
+  <p>Residual <em>Contoh hitung</em>: $e = (-0{,}8;\ 0{,}6;\ 1{,}0;\ -0{,}6;\ -0{,}2)$ sehingga $e^2 = (0{,}64;\ 0{,}36;\ 1{,}00;\ 0{,}36;\ 0{,}04)$ dan $X = 1,2,3,4,5$.</p>
+</div>
+<ol class="mt-steps">
+  <li><strong>Regresi bantu</strong> $e^2$ terhadap $X$: $\bar{e^2} = 0{,}48$, $S_{Xe^2} = -1{,}2$, $S_{XX} = 10$, $S_{e^2e^2} = 0{,}5184$.</li>
+  <li><strong>$R^2$ bantu:</strong> $R^2 = \dfrac{(-1{,}2)^2}{10 \times 0{,}5184} = \dfrac{1{,}44}{5{,}184} = 0{,}2778$.</li>
+  <li><strong>Statistik:</strong> $LM = 5 \times 0{,}2778 = 1{,}389$ dengan db $=1$.</li>
+  <li><strong>Keputusan:</strong> nilai kritis $\chi^2_{(1)} = 3{,}841$. Karena $1{,}389 \lt 3{,}841$ ($p = 0{,}239$), $H_0$ gagal ditolak: tidak ada bukti heteroskedastisitas.</li>
+</ol>
+<div class="mt-box note" data-label="Penanganan">
+  <p>Jika heteroskedastisitas terdeteksi: transformasi $Y$ (misal $\ln Y$), regresi terboboti (WLS), atau galat baku <em>robust</em> (White/HC). Kekuatan uji ini bagus bila ragam memang berubah <em>linear</em> terhadap $X$; bila bentuknya lebih rumit (misal kuadratik), uji White lebih tepat.</p>
+</div>`
+      },
+      {
+        id: 'white', title: 'Uji heteroskedastisitas: White',
+        html: String.raw`
+<p>Uji White adalah perluasan Breusch-Pagan yang <strong>tidak mengandaikan bentuk</strong> hubungan antara ragam dan $X$. Regresi bantunya memuat variabel $X$, kuadratnya, dan hasil kali silang antar variabel, sehingga dapat menangkap ragam yang melengkung atau bergantung pada interaksi.</p>
+<div class="mt-box def" data-label="Hipotesis">
+  <p>$H_0:$ ragam residual konstan (homoskedastisitas)<br>$H_1:$ ragam residual tidak konstan (heteroskedastisitas)</p>
+</div>
+<h3>Regresi bantu</h3>
+<p><strong>Satu variabel $X$:</strong></p>
+$$e_i^2 = \delta_0 + \delta_1 X_i + \delta_2 X_i^2 + v_i$$
+<p><strong>Dua variabel $X_1, X_2$:</strong></p>
+$$e_i^2 = \delta_0 + \delta_1 X_{1i} + \delta_2 X_{2i} + \delta_3 X_{1i}^2 + \delta_4 X_{2i}^2 + \delta_5 X_{1i}X_{2i} + v_i$$
+<p>Untuk $k$ variabel $X$, banyak regresor bantu (di luar konstanta) adalah $q = k + k + \dfrac{k(k-1)}{2} = \dfrac{k(k+3)}{2}$, yaitu 2, 5, 9, 14, 20, 27 untuk $k = 1,\dots,6$. Statistiknya</p>
+$$LM = n\,R^2_{\text{bantu}} \;\sim\; \chi^2_{(q)}\quad\text{di bawah } H_0$$
+<p>dan aplikasi menampilkan juga $F = \dfrac{R^2/q}{(1-R^2)/(n-q-1)}$ sebagai pembanding.</p>
+<div class="mt-box warn" data-label="Syarat jumlah data">
+  <p>Regresi bantu butuh $n \ge q + 2$. Bila data tidak cukup untuk memuat hasil kali silang, aplikasi otomatis memakai $X$ dan $X^2$ saja (tanpa suku silang) dan menuliskannya pada catatan hasil. Kolom bantu yang identik atau kolinear (misal $X^2 = X$ pada variabel biner) dibuang otomatis, dan db disesuaikan.</p>
+</div>
+<div class="mt-box key" data-label="Keputusan">
+  <p>$p \ge 0{,}05$ (atau $LM \le \chi^2_{kritis}$): gagal tolak $H_0$, ragam residual konstan.<br>$p \lt 0{,}05$ (atau $LM \gt \chi^2_{kritis}$): tolak $H_0$, terjadi heteroskedastisitas.</p>
+</div>
+<div class="mt-box ex" data-label="Contoh hitung">
+  <p>Residual <em>Contoh hitung</em>: $e^2 = (0{,}64;\ 0{,}36;\ 1{,}00;\ 0{,}36;\ 0{,}04)$ dan $X = 1,2,3,4,5$ (satu variabel, jadi $q=2$).</p>
+</div>
+<ol class="mt-steps">
+  <li><strong>Regresi bantu</strong> $e^2$ terhadap $X$ dan $X^2$ menghasilkan $\hat{e^2} = 0{,}16 + 0{,}4629X - 0{,}0971X^2$.</li>
+  <li><strong>$R^2$ bantu</strong> $= 0{,}5326$.</li>
+  <li><strong>Statistik:</strong> $LM = 5 \times 0{,}5326 = 2{,}663$ dengan db $=2$.</li>
+  <li><strong>Keputusan:</strong> nilai kritis $\chi^2_{(2)} = 5{,}991$. Karena $2{,}663 \lt 5{,}991$ ($p = 0{,}264$), $H_0$ gagal ditolak: tidak ada bukti heteroskedastisitas.</li>
+</ol>
+<div class="mt-box note" data-label="Kelebihan dan keterbatasan">
+  <p><strong>Kelebihan:</strong> fleksibel terhadap bentuk heteroskedastisitas dan tidak mengandaikan galat normal.<br><strong>Keterbatasan:</strong> memakai banyak derajat bebas sehingga dayanya turun pada data sedikit; hasil &ldquo;signifikan&rdquo; juga bisa muncul karena <em>salah spesifikasi</em> model (misal variabel penting terlewat atau bentuk fungsi keliru), bukan hanya karena heteroskedastisitas. Karena itu tinjau juga grafik residual terhadap nilai prediksi.</p>
 </div>`
       },
       {

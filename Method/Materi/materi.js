@@ -398,8 +398,12 @@
     regresi: [
       [/Tabel ANOVA Regresi|Uji F \(Simultan\)/i, 'uji-f'],
       [/Uji t \(Parsial\)/i, 'uji-t'],
+      [/Normalitas Residual.*Shapiro/i, 'shapiro-wilk'],
+      [/Normalitas Residual.*Kolmogorov/i, 'kolmogorov-smirnov'],
       [/Normalitas Residual/i, 'jarque-bera'],
       [/Multikolinearitas/i, 'vif'],
+      [/Heteroskedastisitas.*Breusch/i, 'breusch-pagan'],
+      [/Heteroskedastisitas.*White/i, 'white'],
       [/Heteroskedastisitas/i, 'glejser'],
       [/Autokorelasi/i, 'durbin-watson'],
       [/Ringkasan Kekuatan|Kesimpulan Model/i, 'determinasi'],
