@@ -405,8 +405,14 @@
   /* Pengaturan tampilan grafik Box-Cox (dipakai grafik di halaman DAN grafik di panel ekspor/.docx).
      style: 'smooth' = kurva halus; 'line' = garis lurus antar titik \u03BB.
      clip: true = sumbu Y dipotong agar bagian sekitar minimum terbaca; false = skala penuh tanpa pemotongan.
-     c1 = warna kurva & titik; c2 = warna titik \u03BB estimasi. Pita Warna di panel ekspor (bila diubah) menimpa c1/c2/latar/kisi. */
-  const BC_VIEW_DEF = { style: 'smooth', clip: true, c1: '#0B5CA5', c2: '#BD7E1F' };
+     c1 = warna kurva & titik; c2 = warna titik \u03BB estimasi; bg/gc/cc = warna latar / garis kisi / garis batas.
+     gridH, gridV, showCL, showLimit, showPts, showEst, showSum = tampil/sembunyi tiap elemen.
+     Pita Warna & Garis kisi di panel ekspor (bila diubah) menimpa warna, latar, dan garis kisi. */
+  const BC_VIEW_DEF = {
+    style: 'smooth', clip: true, c1: '#0B5CA5', c2: '#BD7E1F',
+    bg: '#ffffff', gc: '#E4E4E4', cc: '#8C8C8C', // latar, garis kisi, garis batas (CL & Limit)
+    gridH: true, gridV: true, showCL: true, showLimit: true, showPts: true, showEst: true, showSum: true,
+  };
   const bcView = Object.assign({}, BC_VIEW_DEF);
 
   /* Grafik Box-Cox: StDev (y) terhadap \u03BB (x), garis batas, CL bawah/atas, ringkasan di kanan. */
@@ -415,8 +421,8 @@
     const GST = window.GraphCore && window.GraphCore.u && window.GraphCore.u.ST;
     const useST = !!(GST && GST.on);
     const COL1 = useST ? GST.c1 : V.c1, COL2 = useST ? GST.c2 : V.c2;
-    const BG = useST ? GST.bg : '#ffffff', GRIDC = useST ? GST.gc : '#E4E4E4';
-    const gridH = !useST || GST.h, gridV = !useST || GST.v === null || GST.v;
+    const BG = useST ? GST.bg : V.bg, GRIDC = useST ? GST.gc : V.gc, CLC = V.cc;
+    const gridH = useST ? !!GST.h : V.gridH, gridV = useST ? (GST.v === null ? V.gridV : !!GST.v) : V.gridV;
     const W = 720, H = 470, L = 84, T = 84, PW = 432, PH = 316, X0 = L, Y0 = T;
     const xs = (l) => X0 + (l - BC_MIN) / (BC_MAX - BC_MIN) * PW;
     const all = bc.curve.map((p) => p.sd).concat([bc.limit]);
@@ -448,13 +454,15 @@
     /* garis CL */
     const xLo = xs(Math.min(BC_MAX, Math.max(BC_MIN, bc.lo))), xHi = xs(Math.min(BC_MAX, Math.max(BC_MIN, bc.hi)));
     const near = xHi - xLo < 96; // selang sempit: label dipisah ke kiri/kanan agar tidak bertumpuk
-    [[xLo, 'Lower CL', near ? 'end' : 'middle', near ? 4 : 0], [xHi, 'Upper CL', near ? 'start' : 'middle', near ? -4 : 0]].forEach(([x, lb, anc, dx]) => {
-      s += `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${Y0}" y2="${Y0 + PH}" stroke="#8C8C8C" stroke-dasharray="6 4"/>`;
+    if (V.showCL) [[xLo, 'Lower CL', near ? 'end' : 'middle', near ? 4 : 0], [xHi, 'Upper CL', near ? 'start' : 'middle', near ? -4 : 0]].forEach(([x, lb, anc, dx]) => {
+      s += `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${Y0}" y2="${Y0 + PH}" stroke="${CLC}" stroke-dasharray="6 4"/>`;
       s += `<text x="${(x + dx).toFixed(1)}" y="${Y0 - 8}" text-anchor="${anc}" font-size="12.5" font-weight="600" fill="${SOFT}">${lb}</text>`;
     });
     const ly = ys(bc.limit);
-    s += `<line x1="${X0}" x2="${X0 + PW + 6}" y1="${ly.toFixed(1)}" y2="${ly.toFixed(1)}" stroke="#8C8C8C" stroke-dasharray="6 4"/>`;
-    s += `<text x="${X0 + PW + 10}" y="${(ly + 4).toFixed(1)}" font-size="12.5" font-weight="600" fill="${SOFT}">Limit</text>`;
+    if (V.showLimit) {
+      s += `<line x1="${X0}" x2="${X0 + PW + 6}" y1="${ly.toFixed(1)}" y2="${ly.toFixed(1)}" stroke="${CLC}" stroke-dasharray="6 4"/>`;
+      s += `<text x="${X0 + PW + 10}" y="${(ly + 4).toFixed(1)}" font-size="12.5" font-weight="600" fill="${SOFT}">Limit</text>`;
+    }
     /* kurva & titik. 'line' = garis lurus antar titik \u03BB (rapat di sekitar optimum); 'smooth' = kurva halus */
     let pts;
     if (V.style === 'line') {
@@ -466,13 +474,14 @@
         .filter((l, i, arr) => i === 0 || l - arr[i - 1] > 1e-6).map((l) => ({ l, sd: bc.sdAt(l) }));
     } else pts = bc.curve;
     s += `<path d="${pts.map((p, i) => (i ? 'L' : 'M') + xs(p.l).toFixed(1) + ' ' + ys(p.sd).toFixed(1)).join(' ')}" fill="none" stroke="${BLUE}" stroke-width="1.3" stroke-linejoin="round" clip-path="url(#bcclip)"/>`;
-    (V.style === 'line' ? pts : bc.marks).forEach((p) => { if (p.sd > yMax) return; s += `<circle cx="${xs(p.l).toFixed(1)}" cy="${ys(p.sd).toFixed(1)}" r="4.2" fill="${BLUE}"/>`; });
+    if (V.showPts) (V.style === 'line' ? pts : bc.marks).forEach((p) => { if (p.sd > yMax) return; s += `<circle cx="${xs(p.l).toFixed(1)}" cy="${ys(p.sd).toFixed(1)}" r="4.2" fill="${BLUE}"/>`; });
     const ex = xs(bc.est), ey = ys(bc.sdMin);
-    s += `<circle cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="5.2" fill="${COL2}" stroke="#fff" stroke-width="1.2"/>`;
+    if (V.showEst) s += `<circle cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="5.2" fill="${COL2}" stroke="#fff" stroke-width="1.2"/>`;
     s += `<text x="${(X0 - 66)}" y="${Y0 + PH / 2}" transform="rotate(-90 ${X0 - 66} ${Y0 + PH / 2})" text-anchor="middle" font-size="14" font-weight="600" fill="${INK}">StDev</text>`;
     s += `<text x="${X0 + PW / 2}" y="${H - 22}" text-anchor="middle" font-size="19" fill="${INK}">\u03BB</text>`;
     /* panel ringkasan kanan */
     const px = 540, pr = 712, cx = (px + pr) / 2 + 4;
+    if (!V.showSum) return s + '</svg>';
     s += `<text x="${cx}" y="106" text-anchor="middle" font-size="15" font-weight="600" fill="${INK}">\u03BB</text>`;
     s += `<text x="${cx}" y="126" text-anchor="middle" font-size="11" fill="${INK}">(using 95.0% confidence)</text>`;
     const rows = [['Estimate', f2(bc.est)], ['Lower CL', (bc.loOpen ? '\u2264 ' : '') + f2(bc.lo)], ['Upper CL', (bc.hiOpen ? '\u2265 ' : '') + f2(bc.hi)], ['Rounded Value', f2(bc.rounded)]];
@@ -648,40 +657,72 @@
     if (document.getElementById('stBcCtl')) return;
     const box = document.createElement('div');
     box.id = 'stBcCtl';
-    box.style.cssText = 'display:flex;flex-wrap:wrap;gap:10px 16px;align-items:flex-end;margin:0 0 12px;padding:10px 12px;border:1px solid var(--rule,#E6E0CC);border-radius:10px;background:var(--paper,#FAF8F1);';
+    box.style.cssText = 'margin:0 0 12px;padding:10px 12px;border:1px solid var(--rule,#E6E0CC);border-radius:10px;background:var(--paper,#FAF8F1);';
     const fld = 'display:flex;flex-direction:column;gap:3px;font-size:12.5px;font-weight:600;color:var(--ink-soft,#52565F);';
+    const row = 'display:flex;flex-wrap:wrap;gap:10px 16px;align-items:flex-end;';
+    const head = 'font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--accent,#22384A);margin:0 0 6px;';
+    const clr = 'width:54px;height:32px;padding:0;border:1px solid #ccc;border-radius:6px;background:none;';
+    const chk = 'display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--ink,#1C1E24);cursor:pointer;';
+    const color = (id, label) => `<label style="${fld}">${label}<input type="color" id="${id}" style="${clr}"></label>`;
+    const check = (id, label) => `<label style="${chk}"><input type="checkbox" id="${id}"> ${label}</label>`;
     box.innerHTML = `
-      <label style="${fld}">Gaya garis
-        <select id="stBcStyle" class="select-input">
-          <option value="smooth">Kurva halus</option>
-          <option value="line">Garis lurus antar titik</option>
-        </select></label>
-      <label style="${fld}">Sumbu Y
-        <select id="stBcClip" class="select-input">
-          <option value="clip">Dipotong (fokus ke minimum)</option>
-          <option value="full">Skala penuh (tanpa pemotongan)</option>
-        </select></label>
-      <label style="${fld}">Warna kurva &amp; titik
-        <input type="color" id="stBcC1" value="${BC_VIEW_DEF.c1}" style="width:54px;height:32px;padding:0;border:1px solid #ccc;border-radius:6px;background:none;"></label>
-      <label style="${fld}">Warna titik &lambda; estimasi
-        <input type="color" id="stBcC2" value="${BC_VIEW_DEF.c2}" style="width:54px;height:32px;padding:0;border:1px solid #ccc;border-radius:6px;background:none;"></label>
-      <button type="button" class="btn-ghost" id="stBcReset" style="height:34px;padding:0 14px;">Setel ulang</button>
-      <span style="flex-basis:100%;font-size:12px;color:var(--ink-soft,#52565F);">Pengaturan ini juga dipakai pada grafik di panel unduhan dan berkas .docx. Pita Warna di panel unduhan, bila diubah, menimpa warna di sini.</span>`;
+      <div style="${head}">Garis &amp; sumbu</div>
+      <div style="${row}">
+        <label style="${fld}">Gaya garis
+          <select id="stBcStyle" class="select-input">
+            <option value="smooth">Kurva halus</option>
+            <option value="line">Garis lurus antar titik</option>
+          </select></label>
+        <label style="${fld}">Sumbu Y
+          <select id="stBcClip" class="select-input">
+            <option value="clip">Dipotong (fokus ke minimum)</option>
+            <option value="full">Skala penuh (tanpa pemotongan)</option>
+          </select></label>
+      </div>
+      <div style="${head};margin-top:12px">Warna</div>
+      <div style="${row}">
+        ${color('stBcC1', 'Kurva &amp; titik')}
+        ${color('stBcC2', 'Titik &lambda; estimasi')}
+        ${color('stBcCC', 'Garis batas (CL &amp; Limit)')}
+        ${color('stBcGC', 'Garis kisi')}
+        ${color('stBcBG', 'Latar grafik')}
+      </div>
+      <div style="${head};margin-top:12px">Tampilkan / sembunyikan</div>
+      <div style="${row}gap:8px 18px;">
+        ${check('stBcGridH', 'Kisi horizontal')}
+        ${check('stBcGridV', 'Kisi vertikal')}
+        ${check('stBcShowCL', 'Garis Lower/Upper CL')}
+        ${check('stBcShowLimit', 'Garis Limit')}
+        ${check('stBcShowPts', 'Titik pada kurva')}
+        ${check('stBcShowEst', 'Titik &lambda; estimasi')}
+        ${check('stBcShowSum', 'Panel ringkasan')}
+      </div>
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin-top:12px;">
+        <button type="button" class="btn-ghost" id="stBcReset" style="height:34px;padding:0 14px;">Setel ulang</button>
+        <span style="flex:1 1 260px;font-size:12px;color:var(--ink-soft,#52565F);">Pengaturan ini juga dipakai pada grafik di panel unduhan dan berkas .docx. Pita Warna &amp; Garis kisi di panel unduhan, bila diubah, menimpa warna, latar, dan kisi di sini.</span>
+      </div>`;
     el.varChartWrap.parentNode.insertBefore(box, el.varChartWrap);
+
+    const MAP = [ // [id, kunci bcView, jenis]
+      ['stBcC1', 'c1', 'color'], ['stBcC2', 'c2', 'color'], ['stBcCC', 'cc', 'color'], ['stBcGC', 'gc', 'color'], ['stBcBG', 'bg', 'color'],
+      ['stBcGridH', 'gridH', 'check'], ['stBcGridV', 'gridV', 'check'], ['stBcShowCL', 'showCL', 'check'],
+      ['stBcShowLimit', 'showLimit', 'check'], ['stBcShowPts', 'showPts', 'check'], ['stBcShowEst', 'showEst', 'check'], ['stBcShowSum', 'showSum', 'check'],
+    ];
+    const syncUI = () => {
+      $('#stBcStyle').value = bcView.style;
+      $('#stBcClip').value = bcView.clip ? 'clip' : 'full';
+      MAP.forEach(([id, k, t]) => { const e = $('#' + id); if (t === 'color') e.value = bcView[k]; else e.checked = !!bcView[k]; });
+    };
     const apply = () => {
       bcView.style = $('#stBcStyle').value;
       bcView.clip = $('#stBcClip').value === 'clip';
-      bcView.c1 = $('#stBcC1').value;
-      bcView.c2 = $('#stBcC2').value;
+      MAP.forEach(([id, k, t]) => { const e = $('#' + id); bcView[k] = t === 'color' ? e.value : e.checked; });
       drawBoxcoxChart();
       if (lastR) exportStasioner(lastR);
     };
-    ['stBcStyle', 'stBcClip', 'stBcC1', 'stBcC2'].forEach((id) => $('#' + id).addEventListener('input', apply));
-    $('#stBcReset').addEventListener('click', () => {
-      $('#stBcStyle').value = BC_VIEW_DEF.style; $('#stBcClip').value = 'clip';
-      $('#stBcC1').value = BC_VIEW_DEF.c1; $('#stBcC2').value = BC_VIEW_DEF.c2;
-      apply();
-    });
+    syncUI();
+    ['stBcStyle', 'stBcClip'].concat(MAP.map((m) => m[0])).forEach((id) => $('#' + id).addEventListener('input', apply));
+    $('#stBcReset').addEventListener('click', () => { Object.assign(bcView, BC_VIEW_DEF); syncUI(); apply(); });
   }
 
   function renderVar(R) {
