@@ -4,9 +4,11 @@
 (function () {
   'use strict';
 
-  const state = { k: 1, minRows: 3, normTest: 'jb', heteroTest: 'glejser', last: null };
+  const state = { k: 1, minRows: 3, normTest: 'jb', heteroTest: 'glejser', multiTest: 'vif', autoTest: 'dw', last: null };
   const NORM_NAMES = { jb: 'Jarque-Bera', sw: 'Shapiro-Wilk', ks: 'Kolmogorov-Smirnov' };
   const HETERO_NAMES = { glejser: 'Glejser', bp: 'Breusch-Pagan', white: 'White' };
+  const MULTI_NAMES = { vif: 'VIF', corr: 'Korelasi antar X', ci: 'Condition Index' };
+  const AUTO_NAMES = { dw: 'Durbin-Watson', bg: 'Breusch-Godfrey', runs: 'Runs' };
   const $ = (sel, ctx = document) => ctx.querySelector(sel);
   const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
 
@@ -21,7 +23,7 @@
     stepsWrap: $('#stepsWrap'), equationWrap: $('#equationWrap'), chartWrap: $('#chartWrap'),
     assumptionsCard: $('#assumptions-card'), assumptionsWrap: $('#assumptionsWrap'),
     conclusionCard: $('#conclusion-card'), conclusionWrap: $('#conclusionWrap'),
-    normSel: $('#asmNormTest'), heteroSel: $('#asmHeteroTest'), testHint: $('#asmTestHint'),
+    normSel: $('#asmNormTest'), heteroSel: $('#asmHeteroTest'), multiSel: $('#asmMultiTest'), autoSel: $('#asmAutoTest'), testHint: $('#asmTestHint'),
   };
 
   el.incVar.addEventListener('click', () => { el.varCount.value = Math.min(6, (parseInt(el.varCount.value, 10) || 1) + 1); });
@@ -525,7 +527,9 @@
   function onTestChange() {
     state.normTest = el.normSel.value;
     state.heteroTest = el.heteroSel.value;
-    if (el.testHint) el.testHint.innerHTML = TEST_HINTS_NORM[state.normTest] + ' ' + TEST_HINTS_HETERO[state.heteroTest];
+    if (el.multiSel) state.multiTest = el.multiSel.value;
+    if (el.autoSel) state.autoTest = el.autoSel.value;
+    if (el.testHint) el.testHint.innerHTML = TEST_HINTS_NORM[state.normTest] + ' ' + TEST_HINTS_HETERO[state.heteroTest] + ' ' + TEST_HINTS_MULTI[state.multiTest] + ' ' + TEST_HINTS_AUTO[state.autoTest];
     if (!state.last) return;
     renderAssumptions(state.last.result, state.last.data);
     renderConclusion(state.last.result, state.last.data);
@@ -533,6 +537,8 @@
   }
   if (el.normSel) el.normSel.addEventListener('change', onTestChange);
   if (el.heteroSel) el.heteroSel.addEventListener('change', onTestChange);
+  if (el.multiSel) el.multiSel.addEventListener('change', onTestChange);
+  if (el.autoSel) el.autoSel.addEventListener('change', onTestChange);
 
   function renderResults(res, data) {
     renderSumsTable(res, data);
@@ -720,7 +726,8 @@
         id: 'regresi', title: k === 1 ? 'Hasil Regresi Linear Sederhana' : 'Hasil Regresi Linear Berganda', anchor: '#conclusion-card', resultsCard: '#results-card',
         meta: [['Jenis analisis', k === 1 ? 'Regresi linear sederhana (1 variabel X)' : 'Regresi linear berganda (' + k + ' variabel X)'], ['Jumlah pengamatan (n)', n], ['Persamaan regresi', buildEquationString(res.beta)],
           ['R\u00B2', fmt(res.R2)], ['R\u00B2 adjusted', fmt(res.adjR2)], ['Galat baku estimasi (Se)', fmt(res.Se)], ['Derajat bebas galat', res.df],
-          ['Uji normalitas residual', NORM_NAMES[state.normTest]], ['Uji heteroskedastisitas', HETERO_NAMES[state.heteroTest]]],
+          ['Uji normalitas residual', NORM_NAMES[state.normTest]], ['Uji heteroskedastisitas', HETERO_NAMES[state.heteroTest]],
+          ['Uji multikolinearitas', k === 1 ? '(tidak berlaku, 1 variabel X)' : MULTI_NAMES[state.multiTest]], ['Uji autokorelasi', AUTO_NAMES[state.autoTest]]],
         sections: [
           { heading: 'Tabel Bantu', sel: '#sumsTableWrap' }, { heading: 'Langkah Perhitungan', sel: '#stepsWrap' },
           { heading: 'Persamaan & Uji Signifikansi', sel: '#equationWrap' }, { heading: 'Uji Asumsi Regresi', sel: '#assumptionsWrap' }, { heading: 'Kesimpulan Model', sel: '#conclusionWrap' },
@@ -877,6 +884,115 @@
     return { DW, verdict };
   }
 
+  /* ---------- Uji multikolinearitas tambahan & pemilih uji ---------- */
+  /* Eigen-decomposition matriks simetris (Jacobi) -> nilai eigen terurut menurun */
+  function symmetricEigenvalues(M) {
+    const n = M.length, A = M.map((r) => r.slice());
+    for (let sweep = 0; sweep < 100; sweep++) {
+      let off = 0;
+      for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) off += A[i][j] * A[i][j];
+      if (off < 1e-22) break;
+      for (let p = 0; p < n - 1; p++) for (let q = p + 1; q < n; q++) {
+        if (Math.abs(A[p][q]) < 1e-300) continue;
+        const theta = (A[q][q] - A[p][p]) / (2 * A[p][q]);
+        const t = Math.sign(theta || 1) / (Math.abs(theta) + Math.sqrt(theta * theta + 1));
+        const c = 1 / Math.sqrt(t * t + 1), sn = t * c;
+        for (let k = 0; k < n; k++) { const akp = A[k][p], akq = A[k][q]; A[k][p] = c * akp - sn * akq; A[k][q] = sn * akp + c * akq; }
+        for (let k = 0; k < n; k++) { const apk = A[p][k], aqk = A[q][k]; A[p][k] = c * apk - sn * aqk; A[q][k] = sn * apk + c * aqk; }
+      }
+    }
+    return A.map((r, i) => r[i]).sort((a, b) => b - a);
+  }
+  function pearsonR(a, b) {
+    const n = a.length, ma = a.reduce((s, v) => s + v, 0) / n, mb = b.reduce((s, v) => s + v, 0) / n;
+    let sab = 0, saa = 0, sbb = 0;
+    for (let i = 0; i < n; i++) { sab += (a[i] - ma) * (b[i] - mb); saa += (a[i] - ma) ** 2; sbb += (b[i] - mb) ** 2; }
+    return (saa > 0 && sbb > 0) ? sab / Math.sqrt(saa * sbb) : NaN;
+  }
+  function computeCorrelationTest(res, data) {
+    const k = res.k, n = res.n;
+    if (k < 2) return null;
+    const cols = Array.from({ length: k }, (_, j) => data.X.map((r) => r[j]));
+    const pairs = [];
+    for (let a = 0; a < k; a++) for (let b = a + 1; b < k; b++) {
+      const r = pearsonR(cols[a], cols[b]);
+      const df = n - 2;
+      const t = Number.isFinite(r) ? (Math.abs(r) >= 1 ? Infinity : r * Math.sqrt(df / (1 - r * r))) : NaN;
+      const p = Number.isFinite(t) ? (t === Infinity ? 0 : tTwoTailedP(t, df)) : NaN;
+      pairs.push({ a: 'X' + (a + 1), b: 'X' + (b + 1), r, p, problematic: !Number.isFinite(r) || Math.abs(r) > 0.8 });
+    }
+    return { kind: 'corr', name: MULTI_NAMES.corr, pairs, anyProblem: pairs.some((q) => q.problematic) };
+  }
+  function computeConditionIndex(res, data) {
+    const k = res.k, n = res.n;
+    if (k < 2) return null;
+    const cols = Array.from({ length: k }, (_, j) => data.X.map((r) => r[j]));
+    const R = Array.from({ length: k }, () => new Array(k).fill(0));
+    for (let a = 0; a < k; a++) for (let b = 0; b < k; b++) R[a][b] = a === b ? 1 : pearsonR(cols[a], cols[b]);
+    if (R.some((row) => row.some((v) => !Number.isFinite(v)))) return { kind: 'ci', name: MULTI_NAMES.ci, unavailable: true, reason: 'Ada variabel X yang nilainya konstan sehingga korelasinya tidak terdefinisi.' };
+    const eig = symmetricEigenvalues(R).map((v) => Math.max(v, 0));
+    const lmax = eig[0];
+    const rows = eig.map((lam, i) => ({ no: i + 1, lam, ci: lam > 1e-12 ? Math.sqrt(lmax / lam) : Infinity }));
+    const maxCI = Math.max(...rows.map((r) => r.ci));
+    return { kind: 'ci', name: MULTI_NAMES.ci, rows, maxCI, anyProblem: maxCI > 30 };
+  }
+  function computeMulticollinearity(res, data) {
+    if (res.k < 2) return null;
+    if (state.multiTest === 'corr') return computeCorrelationTest(res, data);
+    if (state.multiTest === 'ci') return computeConditionIndex(res, data);
+    const rows = computeVIF(data, res);
+    return { kind: 'vif', name: MULTI_NAMES.vif, rows, anyProblem: rows.some((v) => v.problematic) };
+  }
+
+  /* ---------- Uji autokorelasi tambahan ---------- */
+  function computeDurbinWatson(res) {
+    const a = computeAutocorrelation(res);
+    return { kind: 'dw', name: AUTO_NAMES.dw, DW: a.DW, verdict: a.verdict, anyProblem: a.verdict === 'positive' || a.verdict === 'negative', unavailable: a.verdict === 'unknown', reason: 'Statistik Durbin-Watson tidak dapat dihitung untuk data ini.' };
+  }
+  /* Breusch-Godfrey (orde 1): regresikan e_t terhadap seluruh X dan e_{t-1} (e_0 = 0); LM = n·R² ~ χ²(1). */
+  function computeBreuschGodfrey(res, data) {
+    const e = res.residuals, n = e.length, k = res.k;
+    const lag = e.map((_, i) => (i === 0 ? 0 : e[i - 1]));
+    const cols = Array.from({ length: k }, (_, j) => data.X.map((r) => r[j]));
+    cols.push(lag);
+    const aux = auxRegression(e, cols);
+    if (!aux || !(aux.df2 >= 1)) return { kind: 'bg', name: AUTO_NAMES.bg, unavailable: true, reason: 'Uji Breusch-Godfrey tidak dapat dihitung (data kurang atau residual tidak bervariasi).' };
+    const LM = n * aux.R2, p = chiSqUpperP(LM, 1);
+    const Fp = Number.isFinite(aux.F) ? fUpperP(aux.F, aux.q, aux.df2) : NaN;
+    return { kind: 'bg', name: AUTO_NAMES.bg, LM, R2: aux.R2, p, F: aux.F, df2: aux.df2, q: aux.q, Fp, anyProblem: p < 0.05 };
+  }
+  /* Runs test (Wald-Wolfowitz) pada tanda residual: aproksimasi normal. */
+  function computeRunsTest(res) {
+    const sg = res.residuals.filter((v) => Math.abs(v) > 1e-12).map((v) => v > 0);
+    const n = sg.length;
+    const n1 = sg.filter(Boolean).length, n2 = n - n1;
+    if (n1 === 0 || n2 === 0 || n < 3) return { kind: 'runs', name: AUTO_NAMES.runs, unavailable: true, reason: 'Uji Runs memerlukan residual bertanda positif dan negatif sekaligus.' };
+    let runs = 1;
+    for (let i = 1; i < n; i++) if (sg[i] !== sg[i - 1]) runs++;
+    const mu = (2 * n1 * n2) / n + 1;
+    const v = (2 * n1 * n2 * (2 * n1 * n2 - n)) / (n * n * (n - 1));
+    if (!(v > 0)) return { kind: 'runs', name: AUTO_NAMES.runs, unavailable: true, reason: 'Ragam statistik Runs bernilai nol untuk data ini.' };
+    const z = (runs - mu) / Math.sqrt(v);
+    const p = Math.min(1, 2 * normUpperP(Math.abs(z)));
+    return { kind: 'runs', name: AUTO_NAMES.runs, n, n1, n2, runs, mu, sd: Math.sqrt(v), z, p, anyProblem: p < 0.05, few: runs < mu };
+  }
+  function computeAutocorrelationTest(res, data) {
+    if (state.autoTest === 'bg') return computeBreuschGodfrey(res, data);
+    if (state.autoTest === 'runs') return computeRunsTest(res);
+    return computeDurbinWatson(res);
+  }
+
+  const TEST_HINTS_MULTI = {
+    vif: '<strong>VIF</strong>: meregresikan tiap X terhadap X lain (VIF &gt; 10 = bermasalah).',
+    corr: '<strong>Korelasi antar X</strong>: korelasi Pearson tiap pasangan X (|r| &gt; 0,8 = bermasalah).',
+    ci: '<strong>Condition Index</strong>: dari nilai eigen matriks korelasi X (CI &gt; 30 = bermasalah).',
+  };
+  const TEST_HINTS_AUTO = {
+    dw: '<strong>Durbin-Watson</strong>: korelasi residual berurutan, rentang praktis 1,5&ndash;2,5.',
+    bg: '<strong>Breusch-Godfrey</strong>: uji LM (orde 1) dari regresi residual terhadap X dan residual sebelumnya.',
+    runs: '<strong>Runs</strong>: menghitung pergantian tanda residual (+/&minus;), tanpa asumsi apa pun tentang model.',
+  };
+
   /* ---------- Tampilan blok uji normalitas & heteroskedastisitas (mengikuti pilihan pengguna) ---------- */
   const TEST_HINTS_NORM = {
     jb: '<strong>Jarque-Bera</strong>: berbasis skewness &amp; kurtosis, cocok untuk sampel besar (pendekatan asimtotik).',
@@ -991,6 +1107,137 @@
     </div>`;
   }
 
+  function multiBlockHTML(m) {
+    const name = m ? m.name : MULTI_NAMES[state.multiTest];
+    const title = `2. Uji Multikolinearitas (${name})`;
+    if (m === null) {
+      return `<div class="test-block">
+        <h4>${title}</h4>
+        <p class="test-sub">Uji ini hanya berlaku untuk regresi linear berganda (lebih dari 1 variabel X), karena mengukur korelasi antar variabel X.</p>
+        <p class="test-note">Model Anda hanya memiliki 1 variabel X (regresi sederhana), sehingga uji multikolinearitas tidak relevan/tidak dapat dihitung.</p>
+      </div>`;
+    }
+    if (m.unavailable) return `<div class="test-block"><h4>${title}</h4><p class="test-note">${escapeHTML(m.reason)} Pilih uji lain.</p></div>`;
+    const verdict = `<div class="test-verdict ${m.anyProblem ? 'bad' : 'ok'}">${m.anyProblem ? 'Terjadi Multikolinearitas' : 'Tidak Terjadi Multikolinearitas'}</div>`;
+    if (m.kind === 'corr') {
+      const rows = m.pairs.map((q) => `<tr>
+          <td>${q.a} &ndash; ${q.b}</td><td>${fmt(q.r, 4)}</td><td>${fmt(q.p, 4)}</td>
+          <td class="${q.problematic ? 'bad' : 'ok'}">${q.problematic ? '|r| > 0,8' : 'Aman'}</td></tr>`).join('');
+      return `<div class="test-block">
+        <h4>${title}</h4>
+        <p class="test-sub">Memeriksa korelasi Pearson tiap pasangan variabel X. Korelasi yang sangat tinggi menandakan dua variabel hampir mengukur hal yang sama.</p>
+        ${hypBox('Tidak terjadi multikolinearitas: semua pasangan X memiliki |r| &le; 0,8.', 'Terjadi multikolinearitas: ada pasangan X dengan |r| &gt; 0,8.')}
+        <div class="table-scroll"><table class="mini-table">
+          <thead><tr><th>Pasangan</th><th>r</th><th>Sig. (p-value)</th><th>Keputusan</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table></div>
+        ${verdict}
+        <p class="test-conclusion">${m.anyProblem
+          ? 'Ada pasangan variabel X dengan |r| &gt; 0,8, sehingga H0 ditolak &mdash; terindikasi multikolinearitas antar variabel X.'
+          : 'Seluruh pasangan variabel X memiliki |r| &le; 0,8, sehingga H0 gagal ditolak &mdash; tidak terindikasi multikolinearitas.'}</p>
+        <p class="test-note">Batas |r| &gt; 0,8 adalah aturan praktis (sebagian buku memakai 0,9). Uji ini hanya melihat hubungan <em>berpasangan</em>, sehingga tidak menangkap multikolinearitas yang melibatkan tiga variabel atau lebih; untuk itu gunakan VIF atau Condition Index.</p>
+      </div>`;
+    }
+    if (m.kind === 'ci') {
+      const rows = m.rows.map((r) => `<tr>
+          <td>${r.no}</td><td>${fmt(r.lam, 4)}</td>
+          <td class="${r.ci > 30 ? 'bad' : 'ok'}">${Number.isFinite(r.ci) ? fmt(r.ci, 3) : '∞'}</td>
+          <td>${r.ci > 30 ? 'Serius' : (r.ci >= 10 ? 'Sedang' : 'Aman')}</td></tr>`).join('');
+      return `<div class="test-block">
+        <h4>${title}</h4>
+        <p class="test-sub">Memeriksa ketergantungan linear antar variabel X lewat nilai eigen matriks korelasi X. Nilai eigen yang mendekati nol menghasilkan Condition Index (CI) yang besar.</p>
+        ${hypBox('Tidak terjadi multikolinearitas (CI maksimum &le; 30).', 'Terjadi multikolinearitas (CI maksimum &gt; 30).')}
+        <div class="table-scroll"><table class="mini-table">
+          <thead><tr><th>Dimensi</th><th>Nilai eigen</th><th>Condition Index</th><th>Tafsir</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table></div>
+        <div class="test-stat-row">${statCard('CI maksimum', Number.isFinite(m.maxCI) ? fmt(m.maxCI, 3) : '∞')}</div>
+        ${verdict}
+        <p class="test-conclusion">${m.anyProblem
+          ? 'Condition Index maksimum &gt; 30, sehingga H0 ditolak &mdash; terdapat multikolinearitas yang serius antar variabel X.'
+          : 'Condition Index maksimum &le; 30, sehingga H0 gagal ditolak &mdash; tidak terjadi multikolinearitas yang serius antar variabel X.'}</p>
+        <p class="test-note">CI = &radic;(&lambda;maks / &lambda;i). Patokan umum: CI &lt; 10 aman, 10&ndash;30 sedang, &gt; 30 serius. Perhitungan memakai matriks korelasi X (variabel sudah dibakukan, tanpa konstanta), sehingga nilainya dapat berbeda dari keluaran SPSS yang menyertakan konstanta.</p>
+      </div>`;
+    }
+    const rows = m.rows.map((v) => `<tr>
+          <td>${escapeHTML(v.name)}</td>
+          <td>${fmt(v.Rj2, 4)}</td>
+          <td>${fmt(v.tolerance, 4)}</td>
+          <td class="${v.problematic ? 'bad' : 'ok'}">${Number.isFinite(v.VIF) ? fmt(v.VIF, 3) : '∞'}</td>
+        </tr>`).join('');
+    return `<div class="test-block">
+        <h4>${title}</h4>
+        <p class="test-sub">Menguji apakah antar variabel X dalam model saling berkorelasi kuat (yang dapat membuat estimasi koefisien tidak stabil).</p>
+        ${hypBox('Tidak terjadi multikolinearitas antar variabel X (VIF &le; 10).', 'Terjadi multikolinearitas antar variabel X (VIF &gt; 10).')}
+        <div class="table-scroll"><table class="mini-table">
+          <thead><tr><th>Variabel</th><th>R² (thd X lain)</th><th>Tolerance</th><th>VIF</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table></div>
+        ${verdict}
+        <p class="test-conclusion">${m.anyProblem
+          ? 'Ada variabel dengan VIF &gt; 10 (Tolerance &lt; 0.1), sehingga H0 ditolak &mdash; terdapat multikolinearitas yang cukup serius antar variabel X pada model ini.'
+          : 'Seluruh variabel memiliki VIF &le; 10 (Tolerance &ge; 0.1), sehingga H0 gagal ditolak &mdash; tidak terjadi multikolinearitas yang serius antar variabel X pada model ini.'}</p>
+      </div>`;
+  }
+
+  function autoBlockHTML(a) {
+    const title = `4. Uji Autokorelasi (${a.name})`;
+    const orderNote = 'Uji ini paling relevan bila data tersusun berurutan (mis. deret waktu); untuk data cross-section acak, hasilnya dapat diabaikan atau dijadikan pelengkap saja.';
+    if (a.unavailable) return `<div class="test-block"><h4>${title}</h4><p class="test-note">${escapeHTML(a.reason)} Pilih uji autokorelasi lain.</p></div>`;
+    const verdict = `<div class="test-verdict ${a.anyProblem ? 'bad' : 'ok'}">${a.kind === 'dw' ? ({ positive: 'Terindikasi Autokorelasi Positif', negative: 'Terindikasi Autokorelasi Negatif', none: 'Tidak Ada Autokorelasi' }[a.verdict]) : (a.anyProblem ? 'Terjadi Autokorelasi' : 'Tidak Ada Autokorelasi')}</div>`;
+    if (a.kind === 'bg') {
+      return `<div class="test-block">
+      <h4>${title}</h4>
+      <p class="test-sub">Menguji autokorelasi orde 1 dengan meregresikan residual terhadap seluruh variabel X dan residual satu periode sebelumnya. Berlaku untuk model berganda dan lebih fleksibel daripada Durbin-Watson.</p>
+      ${hypBox('Tidak ada autokorelasi antar residual.', 'Ada autokorelasi antar residual.')}
+      <div class="test-stat-row">
+        ${statCard('R² regresi bantu', fmt(a.R2))}
+        ${statCard('LM = n·R²', fmt(a.LM))}
+        ${statCard('db', 1)}
+        ${statCard('Sig. (p-value LM)', fmt(a.p, 4))}
+      </div>
+      ${verdict}
+      <p class="test-conclusion">${a.anyProblem
+        ? 'Karena nilai signifikansi (p-value LM) &lt; 0.05, H0 ditolak &mdash; terindikasi autokorelasi antar residual.'
+        : 'Karena nilai signifikansi (p-value LM) &ge; 0.05, H0 gagal ditolak &mdash; tidak terindikasi autokorelasi antar residual.'}</p>
+      <p class="test-note">Statistik LM = n &times; R&sup2; dari regresi bantu dan mengikuti Chi-Square dengan db = 1 (orde 1; residual awal diisi 0, seperti bgtest() di R). Keputusan memakai p-value. ${orderNote}</p>
+    </div>`;
+    }
+    if (a.kind === 'runs') {
+      return `<div class="test-block">
+      <h4>${title}</h4>
+      <p class="test-sub">Menguji keacakan urutan tanda residual (positif/negatif). Terlalu sedikit pergantian tanda berarti autokorelasi positif; terlalu banyak berarti autokorelasi negatif.</p>
+      ${hypBox('Urutan residual acak (tidak ada autokorelasi).', 'Urutan residual tidak acak (ada autokorelasi).')}
+      <div class="test-stat-row">
+        ${statCard('Jumlah runs (R)', a.runs)}
+        ${statCard('Residual (+ / \u2212)', a.n1 + ' / ' + a.n2)}
+        ${statCard('Harapan runs', fmt(a.mu))}
+        ${statCard('Z', fmt(a.z))}
+        ${statCard('Sig. (p-value)', fmt(a.p, 4))}
+      </div>
+      ${verdict}
+      <p class="test-conclusion">${a.anyProblem
+        ? `Karena nilai signifikansi &lt; 0.05, H0 ditolak &mdash; urutan residual tidak acak (${a.few ? 'runs terlalu sedikit, mengarah ke autokorelasi positif' : 'runs terlalu banyak, mengarah ke autokorelasi negatif'}).`
+        : 'Karena nilai signifikansi &ge; 0.05, H0 gagal ditolak &mdash; urutan residual cukup acak (tidak terindikasi autokorelasi).'}</p>
+      <p class="test-note">Statistik Z memakai aproksimasi normal: Z = (R &minus; &mu;)/&sigma;, dengan &mu; = 2n&#8321;n&#8322;/n + 1. Aproksimasi kurang akurat bila n kecil (di bawah sekitar 20). ${orderNote}</p>
+    </div>`;
+    }
+    const dwOk = !a.anyProblem;
+    return `<div class="test-block">
+      <h4>${title}</h4>
+      <p class="test-sub">Menguji apakah residual pada satu data berkorelasi dengan residual pada data sebelumnya (relevan terutama jika urutan data mengikuti waktu/deret).</p>
+      ${hypBox('Tidak ada autokorelasi antar residual.', 'Ada autokorelasi (positif atau negatif) antar residual.')}
+      <div class="test-stat-row">${statCard('Durbin-Watson (d)', fmt(a.DW))}</div>
+      ${verdict}
+      <p class="test-conclusion">${dwOk
+        ? 'Nilai d berada di sekitar 2 (antara 1,5 dan 2,5), sehingga H0 gagal ditolak &mdash; tidak terindikasi autokorelasi antar residual.'
+        : a.verdict === 'positive'
+          ? 'Nilai d di bawah 1,5, sehingga H0 ditolak &mdash; terindikasi adanya autokorelasi positif antar residual.'
+          : 'Nilai d di atas 2,5, sehingga H0 ditolak &mdash; terindikasi adanya autokorelasi negatif antar residual.'}</p>
+      <p class="test-note">Rentang keputusan di atas (&lt;1,5 / 1,5&ndash;2,5 / &gt;2,5) adalah aturan praktis (rule of thumb) yang umum dipakai, karena nilai kritis dL dan dU yang tepat bergantung pada tabel Durbin-Watson khusus (n dan jumlah variabel X). ${orderNote}</p>
+    </div>`;
+  }
+
   function renderAssumptions(res, data) {
     if (!(res.df > 0)) {
       el.assumptionsWrap.innerHTML = `<div class="test-block"><h4>Uji Asumsi Regresi</h4><p class="test-note">Derajat bebas tidak mencukupi untuk melakukan uji asumsi &mdash; tambahkan lebih banyak data.</p></div>`;
@@ -1001,65 +1248,14 @@
     // ---- 1. Uji Normalitas Residual (sesuai pilihan) ----
     html += normalityBlockHTML(computeNormalityTest(res));
 
-    // ---- 2. Uji Multikolinearitas (VIF) ----
-    const vif = computeVIF(data, res);
-    if (vif === null) {
-      html += `<div class="test-block">
-        <h4>2. Uji Multikolinearitas (VIF)</h4>
-        <p class="test-sub">Uji ini hanya berlaku untuk regresi linear berganda (lebih dari 1 variabel X), karena mengukur korelasi antar variabel X.</p>
-        <p class="test-note">Model Anda hanya memiliki 1 variabel X (regresi sederhana), sehingga uji multikolinearitas tidak relevan/tidak dapat dihitung.</p>
-      </div>`;
-    } else {
-      const rows = vif.map((v) => `<tr>
-          <td>${escapeHTML(v.name)}</td>
-          <td>${fmt(v.Rj2, 4)}</td>
-          <td>${fmt(v.tolerance, 4)}</td>
-          <td class="${v.problematic ? 'bad' : 'ok'}">${Number.isFinite(v.VIF) ? fmt(v.VIF, 3) : '\u221E'}</td>
-        </tr>`).join('');
-      const anyProblem = vif.some((v) => v.problematic);
-      html += `<div class="test-block">
-        <h4>2. Uji Multikolinearitas (VIF)</h4>
-        <p class="test-sub">Menguji apakah antar variabel X dalam model saling berkorelasi kuat (yang dapat membuat estimasi koefisien tidak stabil).</p>
-        <div class="hyp-box">
-          <div class="hyp-row"><span class="hyp-tag">H0:</span><span class="hyp-text">Tidak terjadi multikolinearitas antar variabel X (VIF &le; 10).</span></div>
-          <div class="hyp-row"><span class="hyp-tag">H1:</span><span class="hyp-text">Terjadi multikolinearitas antar variabel X (VIF &gt; 10).</span></div>
-        </div>
-        <div class="table-scroll"><table class="mini-table">
-          <thead><tr><th>Variabel</th><th>R\u00B2 (thd X lain)</th><th>Tolerance</th><th>VIF</th></tr></thead>
-          <tbody>${rows}</tbody>
-        </table></div>
-        <div class="test-verdict ${anyProblem ? 'bad' : 'ok'}">${anyProblem ? 'Terjadi Multikolinearitas' : 'Tidak Terjadi Multikolinearitas'}</div>
-        <p class="test-conclusion">${anyProblem
-          ? 'Ada variabel dengan VIF &gt; 10 (Tolerance &lt; 0.1), sehingga H0 ditolak &mdash; terdapat multikolinearitas yang cukup serius antar variabel X pada model ini.'
-          : 'Seluruh variabel memiliki VIF &le; 10 (Tolerance &ge; 0.1), sehingga H0 gagal ditolak &mdash; tidak terjadi multikolinearitas yang serius antar variabel X pada model ini.'}</p>
-      </div>`;
-    }
+    // ---- 2. Uji Multikolinearitas (sesuai pilihan) ----
+    html += multiBlockHTML(computeMulticollinearity(res, data));
 
     // ---- 3. Uji Heteroskedastisitas (sesuai pilihan) ----
     html += heteroBlockHTML(computeHeteroscedasticity(res, data));
 
-    // ---- 4. Uji Autokorelasi (Durbin-Watson) ----
-    const dw = computeAutocorrelation(res);
-    const dwLabel = { positive: 'Terindikasi Autokorelasi Positif', negative: 'Terindikasi Autokorelasi Negatif', none: 'Tidak Ada Autokorelasi', unknown: 'Tidak Dapat Ditentukan' }[dw.verdict];
-    const dwOk = dw.verdict === 'none';
-    html += `<div class="test-block">
-      <h4>4. Uji Autokorelasi (Durbin-Watson)</h4>
-      <p class="test-sub">Menguji apakah residual pada satu data berkorelasi dengan residual pada data sebelumnya (relevan terutama jika urutan data mengikuti waktu/deret).</p>
-      <div class="hyp-box">
-        <div class="hyp-row"><span class="hyp-tag">H0:</span><span class="hyp-text">Tidak ada autokorelasi antar residual.</span></div>
-        <div class="hyp-row"><span class="hyp-tag">H1:</span><span class="hyp-text">Ada autokorelasi (positif atau negatif) antar residual.</span></div>
-      </div>
-      <div class="test-stat-row">${statCard('Durbin-Watson (d)', fmt(dw.DW))}</div>
-      <div class="test-verdict ${dwOk ? 'ok' : 'bad'}">${dwLabel}</div>
-      <p class="test-conclusion">${dwOk
-        ? 'Nilai d berada di sekitar 2 (antara 1,5 dan 2,5), sehingga H0 gagal ditolak &mdash; tidak terindikasi autokorelasi antar residual.'
-        : dw.verdict === 'positive'
-          ? 'Nilai d di bawah 1,5, sehingga H0 ditolak &mdash; terindikasi adanya autokorelasi positif antar residual.'
-          : dw.verdict === 'negative'
-            ? 'Nilai d di atas 2,5, sehingga H0 ditolak &mdash; terindikasi adanya autokorelasi negatif antar residual.'
-            : 'Statistik Durbin-Watson tidak dapat dihitung untuk data ini.'}</p>
-      <p class="test-note">Rentang keputusan di atas (&lt;1,5 / 1,5&ndash;2,5 / &gt;2,5) adalah aturan praktis (rule of thumb) yang umum dipakai, karena nilai kritis dL dan dU yang tepat bergantung pada tabel Durbin-Watson khusus (n dan jumlah variabel X). Uji ini paling relevan bila data tersusun berurutan (mis. deret waktu); untuk data cross-section acak, hasilnya dapat diabaikan atau dijadikan pelengkap saja.</p>
-    </div>`;
+    // ---- 4. Uji Autokorelasi (sesuai pilihan) ----
+    html += autoBlockHTML(computeAutocorrelationTest(res, data));
 
     el.assumptionsWrap.innerHTML = html;
   }
@@ -1077,21 +1273,21 @@
 
     const { fTest } = computeSignificanceTests(res, data);
     const norm = computeNormalityTest(res);
-    const vif = computeVIF(data, res);
+    const multi = computeMulticollinearity(res, data);
     const hetero = computeHeteroscedasticity(res, data);
-    const dw = computeAutocorrelation(res);
+    const auto = computeAutocorrelationTest(res, data);
 
-    const multicolOk = vif === null ? null : !vif.some((v) => v.problematic);
+    const multicolOk = (multi === null || multi.unavailable) ? null : !multi.anyProblem;
     const heteroOk = hetero === null ? null : !hetero.anyProblem;
-    const autocorrOk = dw.verdict === 'unknown' ? null : dw.verdict === 'none';
+    const autocorrOk = auto.unavailable ? null : !auto.anyProblem;
 
     // ---- checklist (hanya butir yang benar-benar dapat dihitung yang menentukan lulus/tidak) ----
     const items = [
       { label: 'Uji F (model signifikan)', pass: fTest.significant, applicable: true },
       { label: 'Normalitas residual (' + norm.name + ')', pass: norm.normal, applicable: norm.normal !== null },
-      { label: 'Non-multikolinearitas', pass: multicolOk, applicable: multicolOk !== null },
+      { label: 'Non-multikolinearitas (' + MULTI_NAMES[state.multiTest] + ')', pass: multicolOk, applicable: multicolOk !== null },
       { label: 'Non-heteroskedastisitas (' + HETERO_NAMES[state.heteroTest] + ')', pass: heteroOk, applicable: heteroOk !== null },
-      { label: 'Non-autokorelasi', pass: autocorrOk, applicable: autocorrOk !== null },
+      { label: 'Non-autokorelasi (' + AUTO_NAMES[state.autoTest] + ')', pass: autocorrOk, applicable: autocorrOk !== null },
     ];
     const applicableItems = items.filter((it) => it.applicable);
     const passedCount = applicableItems.filter((it) => it.pass).length;

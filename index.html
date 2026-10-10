@@ -1630,7 +1630,23 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
           <option value="bp">Breusch-Pagan</option>
           <option value="white">White</option>
         </select>
-        <p class="field-note" id="asmTestHint"><strong>Jarque-Bera</strong>: berbasis skewness &amp; kurtosis, cocok untuk sampel besar (pendekatan asimtotik). <strong>Glejser</strong>: meregresikan |residual| terhadap tiap X.</p>
+      </div>
+      <div class="control-row">
+        <label for="asmMultiTest">Uji multikolinearitas</label>
+        <select id="asmMultiTest" class="select-input">
+          <option value="vif" selected>VIF</option>
+          <option value="corr">Korelasi antar X</option>
+          <option value="ci">Condition Index</option>
+        </select>
+      </div>
+      <div class="control-row">
+        <label for="asmAutoTest">Uji autokorelasi</label>
+        <select id="asmAutoTest" class="select-input">
+          <option value="dw" selected>Durbin-Watson</option>
+          <option value="bg">Breusch-Godfrey</option>
+          <option value="runs">Runs</option>
+        </select>
+        <p class="field-note" id="asmTestHint"><strong>Jarque-Bera</strong>: berbasis skewness &amp; kurtosis, cocok untuk sampel besar (pendekatan asimtotik). <strong>Glejser</strong>: meregresikan |residual| terhadap tiap X. <strong>VIF</strong>: meregresikan tiap X terhadap X lain (VIF &gt; 10 = bermasalah). <strong>Durbin-Watson</strong>: korelasi residual berurutan, rentang praktis 1,5&ndash;2,5.</p>
       </div>
       <div id="assumptionsWrap" class="equation-wrap"></div>
     </section>

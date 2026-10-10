@@ -4,8 +4,8 @@
   window.StatCalcMateri.register({
     id: 'regresi', order: 3, method: 'regresi', tone: 'navy',
     title: 'Regresi Linear', subtitle: 'Sederhana & Berganda',
-    desc: 'Model, penaksiran kuadrat terkecil, R², uji F dan uji t, serta uji asumsi klasik: normalitas (Jarque-Bera, Shapiro-Wilk, Kolmogorov-Smirnov), multikolinearitas, heteroskedastisitas (Glejser, Breusch-Pagan, White), dan autokorelasi.',
-    keywords: ['regresi', 'OLS', 'kuadrat terkecil', 'koefisien', 'slope', 'intercept', 'R2', 'determinasi', 'adjusted', 'uji F', 'uji t', 'Jarque-Bera', 'Shapiro-Wilk', 'Kolmogorov-Smirnov', 'Lilliefors', 'normalitas', 'Breusch-Pagan', 'White', 'uji White', 'homoskedastisitas', 'VIF', 'multikolinearitas', 'Glejser', 'heteroskedastisitas', 'Durbin-Watson', 'autokorelasi', 'residual', 'asumsi klasik', 'korelasi'],
+    desc: 'Model, penaksiran kuadrat terkecil, R², uji F dan uji t, serta uji asumsi klasik: normalitas (Jarque-Bera, Shapiro-Wilk, Kolmogorov-Smirnov), multikolinearitas (VIF, korelasi antar X, Condition Index), heteroskedastisitas (Glejser, Breusch-Pagan, White), dan autokorelasi (Durbin-Watson, Breusch-Godfrey, Runs).',
+    keywords: ['regresi', 'OLS', 'kuadrat terkecil', 'koefisien', 'slope', 'intercept', 'R2', 'determinasi', 'adjusted', 'uji F', 'uji t', 'Jarque-Bera', 'Shapiro-Wilk', 'Kolmogorov-Smirnov', 'Lilliefors', 'normalitas', 'Breusch-Pagan', 'White', 'uji White', 'homoskedastisitas', 'VIF', 'multikolinearitas', 'Glejser', 'heteroskedastisitas', 'Durbin-Watson', 'Breusch-Godfrey', 'Runs', 'Condition Index', 'korelasi antar X', 'autokorelasi', 'residual', 'asumsi klasik', 'korelasi'],
     icon: '<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>',
     sections: [
       {
@@ -128,14 +128,14 @@ $$SE(b) = \frac{S_e}{\sqrt{S_{XX}}},\qquad SE(a) = S_e\sqrt{\frac{1}{n} + \frac{
       {
         id: 'asumsi', title: 'Asumsi klasik regresi',
         html: String.raw`
-<p>Uji F dan uji t hanya dapat dipercaya bila asumsi berikut terpenuhi. Aplikasi memeriksa keempatnya di Langkah 4 setelah perhitungan. Untuk normalitas dan heteroskedastisitas tersedia beberapa uji yang bisa dipilih lewat menu di Langkah 4 (lihat <strong>Memilih uji</strong>):</p>
+<p>Uji F dan uji t hanya dapat dipercaya bila asumsi berikut terpenuhi. Aplikasi memeriksa keempatnya di Langkah 4 setelah perhitungan. Untuk keempat asumsi ini tersedia beberapa uji yang bisa dipilih lewat menu di Langkah 4 (lihat <strong>Memilih uji</strong>):</p>
 <div class="mt-tw"><table>
 <thead><tr><th>Asumsi</th><th>Maksud</th><th>Uji di aplikasi</th></tr></thead>
 <tbody>
 <tr><td>Normalitas</td><td>Residual berdistribusi normal</td><td>Jarque-Bera, Shapiro-Wilk, atau Kolmogorov-Smirnov (Lilliefors)</td></tr>
-<tr><td>Non-multikolinearitas</td><td>Variabel $X$ tidak saling berkorelasi tinggi</td><td>VIF</td></tr>
+<tr><td>Non-multikolinearitas</td><td>Variabel $X$ tidak saling berkorelasi tinggi</td><td>VIF, Korelasi antar $X$, atau Condition Index</td></tr>
 <tr><td>Homoskedastisitas</td><td>Ragam residual konstan</td><td>Glejser, Breusch-Pagan, atau White</td></tr>
-<tr><td>Non-autokorelasi</td><td>Residual saling bebas</td><td>Durbin-Watson</td></tr>
+<tr><td>Non-autokorelasi</td><td>Residual saling bebas</td><td>Durbin-Watson, Breusch-Godfrey, atau Runs</td></tr>
 </tbody></table></div>
 <p>Asumsi tambahan yang tidak diuji otomatis: hubungan benar-benar linear dan tidak ada variabel penting yang terlewat. Periksa dengan grafik residual dan scatter plot di tab Grafik.</p>
 <div class="mt-box note" data-label="Catatan">
@@ -143,9 +143,9 @@ $$SE(b) = \frac{S_e}{\sqrt{S_{XX}}},\qquad SE(a) = S_e\sqrt{\frac{1}{n} + \frac{
 </div>`
       },
       {
-        id: 'pilih-uji', title: 'Memilih uji normalitas dan heteroskedastisitas',
+        id: 'pilih-uji', title: 'Memilih uji asumsi',
         html: String.raw`
-<p>Di Langkah 4 kalkulator Regresi Linear tersedia beberapa uji untuk satu asumsi yang sama. Pilihlah lewat menu <strong>Uji normalitas residual</strong> dan <strong>Uji heteroskedastisitas</strong>; hasil Langkah 4, Kesimpulan Model, dan berkas ekspor langsung mengikuti pilihan itu tanpa menghitung ulang regresi.</p>
+<p>Di Langkah 4 kalkulator Regresi Linear tersedia beberapa uji untuk satu asumsi yang sama. Pilihlah lewat menu <strong>Uji normalitas residual</strong>, <strong>Uji heteroskedastisitas</strong>, <strong>Uji multikolinearitas</strong>, dan <strong>Uji autokorelasi</strong>; hasil Langkah 4, Kesimpulan Model, dan berkas ekspor langsung mengikuti pilihan itu tanpa menghitung ulang regresi.</p>
 <div class="mt-tw"><table>
 <thead><tr><th>Asumsi</th><th>Uji</th><th>Ide dasar</th><th>Cocok bila</th></tr></thead>
 <tbody>
@@ -155,9 +155,16 @@ $$SE(b) = \frac{S_e}{\sqrt{S_{XX}}},\qquad SE(a) = S_e\sqrt{\frac{1}{n} + \frac{
 <tr><td rowspan="3">Heteroskedastisitas</td><td>Glejser</td><td>Regresi $|e|$ terhadap $X$</td><td>Pemeriksaan cepat, tafsir per variabel</td></tr>
 <tr><td>Breusch-Pagan</td><td>Regresi $e^2$ terhadap $X$</td><td>Ragam diduga berubah linear terhadap $X$</td></tr>
 <tr><td>White</td><td>Regresi $e^2$ terhadap $X$, $X^2$, silang</td><td>Bentuk ragam tidak diketahui; data cukup banyak</td></tr>
+<tr><td rowspan="3">Multikolinearitas</td><td>VIF</td><td>Regresi tiap $X_j$ terhadap $X$ lain</td><td>Pilihan standar; menangkap hubungan banyak variabel</td></tr>
+<tr><td>Korelasi antar $X$</td><td>Korelasi Pearson tiap pasangan $X$</td><td>Pemeriksaan cepat dan mudah dibaca</td></tr>
+<tr><td>Condition Index</td><td>Nilai eigen matriks korelasi $X$</td><td>Mendeteksi ketergantungan linear gabungan</td></tr>
+<tr><td rowspan="3">Autokorelasi</td><td>Durbin-Watson</td><td>Selisih residual berurutan</td><td>Data deret waktu, orde 1, ada konstanta</td></tr>
+<tr><td>Breusch-Godfrey</td><td>Regresi $e_t$ terhadap $X$ dan $e_{t-1}$</td><td>Uji formal ber-$p$-value; berlaku untuk model berganda</td></tr>
+<tr><td>Runs</td><td>Banyaknya pergantian tanda residual</td><td>Pemeriksaan sederhana tanpa asumsi model</td></tr>
 </tbody></table></div>
 <div class="mt-box key" data-label="Saran praktis">
   <p>Jika data sedikit (di bawah sekitar 50), pakai <strong>Shapiro-Wilk</strong> untuk normalitas. Jika model punya banyak variabel $X$ dan data terbatas, pilih <strong>Breusch-Pagan</strong> karena regresi bantunya paling hemat derajat bebas; White bisa kehilangan daya karena banyak suku tambahan.</p>
+  <p>Untuk multikolinearitas, <strong>VIF</strong> adalah pilihan utama; tambahkan <strong>Condition Index</strong> bila ingin memeriksa ketergantungan gabungan. Untuk autokorelasi, <strong>Breusch-Godfrey</strong> memberi $p$-value formal, sedangkan Durbin-Watson cukup sebagai pemeriksaan cepat.</p>
 </div>
 <div class="mt-box warn" data-label="Jangan memilih-milih hasil">
   <p>Pilih uji <em>sebelum</em> melihat hasilnya, lalu laporkan uji yang dipilih. Berganti-ganti uji sampai memperoleh kesimpulan yang diinginkan membuat peluang salah menyimpulkan membesar. Bila beberapa uji berbeda hasil, lihat juga grafik (Q-Q plot, histogram, residual terhadap nilai prediksi) dan bahas perbedaannya secara jujur.</p>
@@ -274,6 +281,38 @@ $$VIF_j = \frac{1}{1 - R_j^2},\qquad \text{Tolerance}_j = \frac{1}{VIF_j} = 1 - 
 <p><strong>Penanganan:</strong> hapus salah satu variabel yang berkorelasi tinggi, gabungkan variabel yang mengukur hal yang sama, atau tambah data. Sebagian buku memakai batas yang lebih ketat (VIF $>5$).</p>`
       },
       {
+        id: 'korelasi-x', title: 'Uji multikolinearitas: Korelasi antar X',
+        html: String.raw`
+<p>Cara paling sederhana memeriksa multikolinearitas adalah melihat korelasi Pearson tiap pasangan variabel $X$:</p>
+$$r_{ab} = \frac{\sum (X_a - \bar{X}_a)(X_b - \bar{X}_b)}{\sqrt{\sum (X_a - \bar{X}_a)^2 \sum (X_b - \bar{X}_b)^2}}$$
+<div class="mt-box def" data-label="Hipotesis di aplikasi">
+  <p>$H_0:$ semua pasangan $|r| \le 0{,}8$ (tidak ada multikolinearitas) &nbsp;&nbsp; $H_1:$ ada pasangan dengan $|r| > 0{,}8$</p>
+</div>
+<p>Aplikasi juga menampilkan $p$-value uji $t$ untuk tiap korelasi, $t = r\sqrt{\dfrac{n-2}{1-r^2}}$, sebagai informasi tambahan. Keputusan memakai batas $|r|$, bukan $p$-value, karena korelasi kecil pun bisa signifikan pada $n$ besar.</p>
+<div class="mt-box warn" data-label="Keterbatasan">
+  <p>Uji ini hanya melihat hubungan <em>berpasangan</em>. Tiga variabel bisa saling terkait kuat (mis. $X_3 \approx X_1 + X_2$) walau tidak ada pasangan yang berkorelasi di atas 0,8. Karena itu gunakan VIF atau Condition Index sebagai pelengkap. Sebagian buku memakai batas 0,9 yang lebih longgar.</p>
+</div>`
+      },
+      {
+        id: 'condition-index', title: 'Uji multikolinearitas: Condition Index',
+        html: String.raw`
+<p>Condition Index (CI) memeriksa ketergantungan linear lewat nilai eigen $\lambda_1 \ge \lambda_2 \ge \dots \ge \lambda_k$ dari matriks korelasi variabel $X$. Bila ada $\lambda$ yang mendekati nol, variabel $X$ hampir bergantung linear.</p>
+$$CI_i = \sqrt{\frac{\lambda_{\max}}{\lambda_i}}$$
+<div class="mt-box def" data-label="Hipotesis di aplikasi">
+  <p>$H_0:$ CI maksimum $\le 30$ (tidak ada multikolinearitas serius) &nbsp;&nbsp; $H_1:$ CI maksimum $> 30$</p>
+</div>
+<div class="mt-tw"><table>
+<thead><tr><th>CI</th><th>Tafsir</th></tr></thead>
+<tbody>
+<tr><td>$\lt 10$</td><td>Aman</td></tr>
+<tr><td>$10$ sampai $30$</td><td>Multikolinearitas sedang</td></tr>
+<tr><td>$> 30$</td><td>Multikolinearitas serius</td></tr>
+</tbody></table></div>
+<div class="mt-box note" data-label="Catatan">
+  <p>Aplikasi memakai matriks korelasi $X$ (variabel dibakukan, tanpa konstanta), sehingga jumlah nilai eigen sama dengan $k$ dan nilai CI dapat berbeda dari keluaran SPSS yang memasukkan konstanta. Kesimpulan umumnya serupa.</p>
+</div>`
+      },
+      {
         id: 'glejser', title: 'Uji heteroskedastisitas: Glejser',
         html: String.raw`
 <p>Homoskedastisitas berarti ragam residual sama di semua nilai $X$. Bila tidak (heteroskedastisitas), taksiran koefisien tetap tidak bias tetapi galat baku keliru, sehingga uji t dan F menyesatkan.</p>
@@ -373,6 +412,39 @@ $$d = \frac{\sum_{t=2}^{n}(e_t - e_{t-1})^2}{\sum_{t=1}^{n} e_t^2} \;\approx\; 2
 </tbody></table></div>
 <div class="mt-box note" data-label="Aturan praktis">
   <p>Rentang 1,5&ndash;2,5 di atas adalah aturan praktis. Uji formal memakai tabel batas bawah $d_L$ dan batas atas $d_U$ yang bergantung pada $n$ dan $k$, dengan daerah ragu-ragu di antaranya. Untuk data deret waktu yang jelas bermasalah, lihat materi <strong>Uji Stasioneritas</strong>.</p>
+</div>`
+      },
+      {
+        id: 'breusch-godfrey', title: 'Uji autokorelasi: Breusch-Godfrey',
+        html: String.raw`
+<p>Uji Breusch-Godfrey (uji LM) memeriksa autokorelasi dengan meregresikan residual $e_t$ terhadap seluruh variabel $X$ dan residual periode sebelumnya:</p>
+$$e_t = \alpha_0 + \alpha_1 X_{1t} + \dots + \alpha_k X_{kt} + \rho\, e_{t-1} + u_t$$
+<div class="mt-box def" data-label="Hipotesis">
+  <p>$H_0: \rho = 0$ (tidak ada autokorelasi) &nbsp;&nbsp; $H_1: \rho \ne 0$ (ada autokorelasi)</p>
+</div>
+<p>Statistik ujinya $LM = n \cdot R^2_{bantu}$ yang mengikuti $\chi^2$ dengan db sama dengan orde (di aplikasi orde 1, jadi db $=1$). Bila $p \lt 0{,}05$, $H_0$ ditolak. Nilai $e_0$ diisi 0.</p>
+<div class="mt-box key" data-label="Kelebihan">
+  <p>Memberi $p$-value yang jelas (tanpa tabel $d_L$/$d_U$) dan tetap sahih untuk model berganda. Aplikasi memakai orde 1; untuk pola musiman diperlukan orde lebih tinggi.</p>
+</div>`
+      },
+      {
+        id: 'runs-test', title: 'Uji autokorelasi: Runs',
+        html: String.raw`
+<p>Uji Runs (Wald-Wolfowitz) hanya melihat tanda residual (+ atau &minus;). Satu <em>run</em> adalah deretan tanda sejenis yang berurutan. Misal tanda $+ + - - - + -$ memiliki 4 run.</p>
+<p>Dengan $n_1$ residual positif, $n_2$ negatif, $n = n_1 + n_2$, dan $R$ banyaknya run:</p>
+$$\mu_R = \frac{2 n_1 n_2}{n} + 1,\qquad \sigma_R^2 = \frac{2 n_1 n_2 (2 n_1 n_2 - n)}{n^2 (n-1)},\qquad Z = \frac{R - \mu_R}{\sigma_R}$$
+<div class="mt-box def" data-label="Hipotesis">
+  <p>$H_0:$ urutan residual acak (tidak ada autokorelasi) &nbsp;&nbsp; $H_1:$ urutan residual tidak acak</p>
+</div>
+<div class="mt-tw"><table>
+<thead><tr><th>Hasil</th><th>Tafsir</th></tr></thead>
+<tbody>
+<tr><td>$R$ jauh di bawah $\mu_R$</td><td>Tanda sejenis bergerombol: autokorelasi positif</td></tr>
+<tr><td>$R$ jauh di atas $\mu_R$</td><td>Tanda sering berganti: autokorelasi negatif</td></tr>
+</tbody></table></div>
+<p>$p$-value dua arah dihitung dari sebaran normal baku, $p = 2\,P(Z > |z|)$. Residual yang tepat nol dibuang.</p>
+<div class="mt-box warn" data-label="Keterbatasan">
+  <p>Aproksimasi normal kurang akurat bila $n$ kecil (di bawah sekitar 20), dan uji ini hanya mengukur keacakan tanda, bukan besar korelasi residual. Pasangkan dengan Durbin-Watson atau Breusch-Godfrey.</p>
 </div>`
       },
       {
