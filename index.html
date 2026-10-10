@@ -1249,6 +1249,56 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
   #hubGrid .hub-card:last-child:nth-child(odd){ grid-column:span 3; }
 }
 
+
+/* ===== KALKULATOR ILMIAH v2: editor LaTeX berkursor + riwayat ===== */
+.calc-layout{ display:grid; grid-template-columns:minmax(0,1fr); gap:16px; }
+.calc-display{ text-align:left; padding:10px 14px 8px; }
+.calc-prev{ min-height:24px; font-size:15px; color:rgba(255,255,255,.62); overflow-x:auto; overflow-y:hidden; white-space:nowrap; text-align:right; scrollbar-width:none; }
+.calc-editor{ color:#fff; overflow-x:auto; overflow-y:hidden; cursor:text; min-height:64px; display:flex; align-items:center; scrollbar-width:none; }
+.calc-editor::-webkit-scrollbar, .calc-prev::-webkit-scrollbar{ display:none; }
+.calc-inner{ position:relative; display:flex; justify-content:flex-end; align-items:center; width:max-content; min-width:100%; padding:6px 3px; }
+.calc-math{ font-size:28px; line-height:1.25; white-space:nowrap; }
+.calc-math.empty{ opacity:.45; }
+.calc-math .katex{ font-size:1em; }
+.calc-caret{ position:absolute; width:2px; border-radius:1px; background:var(--accent-2); pointer-events:none; animation:calcBlink 1.05s steps(1) infinite; }
+@keyframes calcBlink{ 50%{ opacity:0; } }
+.calc-live{ min-height:22px; text-align:right; font-size:17px; color:rgba(255,255,255,.72); overflow-x:auto; overflow-y:hidden; white-space:nowrap; scrollbar-width:none; }
+.calc-live.err{ color:#FFB4A2; font-size:13px; font-family:var(--font-body); }
+.calc-mode-row .grow{ flex:1; }
+.calc-btn.nav{ background:var(--accent-soft); color:var(--accent); font-size:13px; }
+.calc-btn.eq{ grid-column:span 3; }
+.calc-btn sup{ font-size:.7em; line-height:0; }
+.calc-tip{ margin:12px 2px 0; font-size:12.5px; color:var(--ink-faint); }
+.calc-hist-card{ padding:16px; }
+.calc-hist-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.calc-hist-head h2{ margin:0; font-size:17px; }
+.calc-hist{ display:flex; flex-direction:column; gap:8px; max-height:240px; overflow-y:auto; }
+.calc-hist-item{ background:var(--paper-2); border:1px solid var(--rule); border-radius:10px; padding:8px 12px; text-align:right; }
+.calc-hist-item .hx, .calc-hist-item .hr{ cursor:pointer; overflow-x:auto; overflow-y:hidden; white-space:nowrap; scrollbar-width:none; }
+.calc-hist-item .hx{ color:var(--ink-soft); font-size:15px; }
+.calc-hist-item .hr{ color:var(--accent); font-size:18px; font-weight:600; margin-top:2px; }
+.calc-hist-empty{ color:var(--ink-faint); font-size:13.5px; text-align:center; padding:16px 0; }
+@media (hover:hover){ .calc-hist-item .hx:hover, .calc-hist-item .hr:hover{ color:var(--accent-2); } }
+
+/* Tablet & PC: dua kolom (kalkulator + riwayat), tombol lebih besar */
+@media (min-width:760px){
+  #view-kalkulator .chapter-inner{ max-width:1100px; }
+  .calc-layout{ grid-template-columns:minmax(0,1.55fr) minmax(250px,1fr); gap:22px; align-items:start; }
+  .calc-layout .calc-card{ max-width:none; margin:0; padding:22px 22px 24px; }
+  .calc-display{ padding:14px 18px 10px; }
+  .calc-math{ font-size:36px; }
+  .calc-editor{ min-height:88px; }
+  .calc-live{ font-size:19px; }
+  .calc-grid{ gap:10px; }
+  .calc-btn{ min-height:58px; font-size:17px; }
+  .calc-btn.fn, .calc-btn.nav{ font-size:14.5px; }
+  .calc-hist-card{ position:sticky; top:16px; padding:20px; }
+  .calc-hist{ max-height:min(60vh,540px); }
+}
+@media (min-width:1100px){
+  .calc-math{ font-size:42px; }
+  .calc-btn{ min-height:62px; }
+}
 </style>
 <link rel="stylesheet" href="Method/Materi/katex/katex.min.css">
 </head>
@@ -1471,7 +1521,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
       </div>
       <div class="petunjuk-item">
         <span class="petunjuk-num">4</span>
-        <div><h3>Kalkulator Ilmiah</h3><p>Buka menu <strong>Kalkulator</strong> untuk menghitung operasi aritmatika maupun fungsi ilmiah seperti sin, cos, tan, log, akar, dan pangkat. Ketuk tombol <strong>DEG/RAD</strong> untuk mengatur satuan sudut sebelum menghitung fungsi trigonometri.</p></div>
+        <div><h3>Kalkulator Ilmiah</h3><p>Ekspresi tampil sebagai LaTeX. <strong>Ketuk</strong> bagian mana pun dari ekspresi untuk memindahkan kursor, lalu sisipkan atau hapus di posisi itu (tombol &#9664; &#9654; juga menggeser kursor). Tersedia pecahan, akar, pangkat, fungsi trigonometri dan logaritma, tombol <strong>DEG/RAD/INV</strong>, riwayat perhitungan, serta <strong>Salin LaTeX</strong>.</p></div>
       </div>
       <div class="petunjuk-item">
         <span class="petunjuk-num">5</span>
@@ -1493,59 +1543,70 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
       <p class="lede">Kalkulator lengkap untuk operasi aritmatika sehari-hari maupun fungsi ilmiah.</p>
     </div>
 
-    <section class="card calc-card">
-      <div class="calc-display">
-        <div class="calc-expr" id="calcExpr">&nbsp;</div>
-        <div class="calc-main" id="calcDisplay">0</div>
-      </div>
-      <div class="calc-mode-row">
-        <button type="button" class="calc-mode-btn active" id="calcDegBtn">DEG</button>
-        <button type="button" class="calc-mode-btn" id="calcRadBtn">RAD</button>
-        <button type="button" class="calc-mode-btn" id="calcInvBtn">INV</button>
-      </div>
-      <div class="calc-grid" id="calcGrid">
-        <button type="button" class="calc-btn fn" data-fn="sin">sin</button>
-        <button type="button" class="calc-btn fn" data-fn="cos">cos</button>
-        <button type="button" class="calc-btn fn" data-fn="tan">tan</button>
-        <button type="button" class="calc-btn fn" data-fn="log">log</button>
-        <button type="button" class="calc-btn fn" data-fn="ln">ln</button>
-
-        <button type="button" class="calc-btn fn" data-ins="(">(</button>
-        <button type="button" class="calc-btn fn" data-ins=")">)</button>
-        <button type="button" class="calc-btn fn" data-fn="sqrt">&radic;</button>
-        <button type="button" class="calc-btn fn" data-ins="^">x^y</button>
-        <button type="button" class="calc-btn fn" data-ins="!">x!</button>
-
-        <button type="button" class="calc-btn fn" data-ins="pi">&pi;</button>
-        <button type="button" class="calc-btn fn" data-ins="e">e</button>
-        <button type="button" class="calc-btn fn" data-act="percent">%</button>
-        <button type="button" class="calc-btn clear" data-act="clear">AC</button>
-        <button type="button" class="calc-btn clear" data-act="back">&larr;</button>
-
-        <button type="button" class="calc-btn" data-ins="7">7</button>
-        <button type="button" class="calc-btn" data-ins="8">8</button>
-        <button type="button" class="calc-btn" data-ins="9">9</button>
-        <button type="button" class="calc-btn op" data-ins="/">&divide;</button>
-        <button type="button" class="calc-btn fn" data-fn="1/x">1/x</button>
-
-        <button type="button" class="calc-btn" data-ins="4">4</button>
-        <button type="button" class="calc-btn" data-ins="5">5</button>
-        <button type="button" class="calc-btn" data-ins="6">6</button>
-        <button type="button" class="calc-btn op" data-ins="*">&times;</button>
-        <button type="button" class="calc-btn fn" data-fn="x2">x&sup2;</button>
-
-        <button type="button" class="calc-btn" data-ins="1">1</button>
-        <button type="button" class="calc-btn" data-ins="2">2</button>
-        <button type="button" class="calc-btn" data-ins="3">3</button>
-        <button type="button" class="calc-btn op" data-ins="-">&minus;</button>
-        <button type="button" class="calc-btn op" data-ins="+">+</button>
-
-        <button type="button" class="calc-btn" data-ins="0">0</button>
-        <button type="button" class="calc-btn" data-ins=".">.</button>
-        <button type="button" class="calc-btn fn" data-act="negate">&plusmn;</button>
-        <button type="button" class="calc-btn eq" data-act="equals">=</button>
-      </div>
-    </section>
+    <div class="calc-layout">
+      <section class="card calc-card">
+        <div class="calc-display">
+          <div class="calc-prev" id="calcPrev">&nbsp;</div>
+          <div class="calc-editor" id="calcEditor" aria-label="Ekspresi — ketuk untuk memindahkan kursor">
+            <div class="calc-inner" id="calcInner"><span class="calc-math" id="calcMath"></span><i class="calc-caret" id="calcCaret"></i></div>
+          </div>
+          <div class="calc-live" id="calcLive">&nbsp;</div>
+        </div>
+        <div class="calc-mode-row">
+          <button type="button" class="calc-mode-btn active" id="calcDegBtn">DEG</button>
+          <button type="button" class="calc-mode-btn" id="calcRadBtn">RAD</button>
+          <button type="button" class="calc-mode-btn" id="calcInvBtn">INV</button>
+          <span class="grow"></span>
+          <button type="button" class="calc-mode-btn" id="calcCopyBtn">Salin LaTeX</button>
+        </div>
+        <div class="calc-grid" id="calcGrid">
+          <button type="button" class="calc-btn fn" data-k="sin">sin</button>
+          <button type="button" class="calc-btn fn" data-k="cos">cos</button>
+          <button type="button" class="calc-btn fn" data-k="tan">tan</button>
+          <button type="button" class="calc-btn fn" data-k="log">log</button>
+          <button type="button" class="calc-btn fn" data-k="ln">ln</button>
+          <button type="button" class="calc-btn fn" data-k="(">(</button>
+          <button type="button" class="calc-btn fn" data-k=")">)</button>
+          <button type="button" class="calc-btn fn" data-k="sqrt">&radic;</button>
+          <button type="button" class="calc-btn fn" data-k="pow">x<sup>n</sup></button>
+          <button type="button" class="calc-btn fn" data-k="frac">a&frasl;b</button>
+          <button type="button" class="calc-btn fn" data-k="pi">&pi;</button>
+          <button type="button" class="calc-btn fn" data-k="e">e</button>
+          <button type="button" class="calc-btn fn" data-k="x2">x&sup2;</button>
+          <button type="button" class="calc-btn fn" data-k="fact">x!</button>
+          <button type="button" class="calc-btn fn" data-k="percent">%</button>
+          <button type="button" class="calc-btn nav" data-k="left" title="Geser kursor ke kiri">&#9664;</button>
+          <button type="button" class="calc-btn nav" data-k="right" title="Geser kursor ke kanan">&#9654;</button>
+          <button type="button" class="calc-btn fn" data-k="ans" title="Sisipkan hasil terakhir">ANS</button>
+          <button type="button" class="calc-btn clear" data-k="back" title="Hapus sebelum kursor">&larr;</button>
+          <button type="button" class="calc-btn clear" data-k="clear">AC</button>
+          <button type="button" class="calc-btn" data-k="7">7</button>
+          <button type="button" class="calc-btn" data-k="8">8</button>
+          <button type="button" class="calc-btn" data-k="9">9</button>
+          <button type="button" class="calc-btn op" data-k="/">&divide;</button>
+          <button type="button" class="calc-btn fn" data-k="inv">1/x</button>
+          <button type="button" class="calc-btn" data-k="4">4</button>
+          <button type="button" class="calc-btn" data-k="5">5</button>
+          <button type="button" class="calc-btn" data-k="6">6</button>
+          <button type="button" class="calc-btn op" data-k="*">&times;</button>
+          <button type="button" class="calc-btn fn" data-k="negate">&plusmn;</button>
+          <button type="button" class="calc-btn" data-k="1">1</button>
+          <button type="button" class="calc-btn" data-k="2">2</button>
+          <button type="button" class="calc-btn" data-k="3">3</button>
+          <button type="button" class="calc-btn op" data-k="-">&minus;</button>
+          <button type="button" class="calc-btn op" data-k="+">+</button>
+          <button type="button" class="calc-btn" data-k="0">0</button>
+          <button type="button" class="calc-btn" data-k=".">.</button>
+          <button type="button" class="calc-btn eq" data-k="equals">=</button>
+        </div>
+        <p class="hint calc-tip">Ketuk bagian mana pun dari ekspresi untuk memindahkan kursor, lalu ketik atau hapus di posisi itu. Di PC, keyboard fisik juga bisa dipakai.</p>
+      </section>
+      <aside class="card calc-hist-card">
+        <div class="calc-hist-head"><h2>Riwayat</h2><button type="button" class="calc-mode-btn" id="calcHistClear">Hapus</button></div>
+        <div class="calc-hist" id="calcHist"></div>
+        <p class="hint">Ketuk ekspresi untuk memuat ulang, ketuk hasil untuk menyisipkannya.</p>
+      </aside>
+    </div>
   </div>
 </main>
 
@@ -2616,11 +2677,11 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 <script src="matriks.js"></script>
 
 <!-- ===================== KALKULATOR ILMIAH (logika di kalkulator.js) ===================== -->
-<script src="kalkulator.js"></script>
 
 <!-- ===================== MATERI STATISTIK (KaTeX lokal + Method/Materi/; muat PALING AKHIR agar bisa menempelkan tautan ke halaman metode Stat) ===================== -->
 <script src="Method/Materi/katex/katex.min.js"></script>
 <script src="Method/Materi/katex/auto-render.min.js"></script>
+<script src="kalkulator.js"></script>
 <script src="Method/Materi/materi.js"></script>
 <script src="Method/Materi/data/deskriptif.js"></script>
 <script src="Method/Materi/data/konsep-uji.js"></script>
