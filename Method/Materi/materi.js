@@ -467,5 +467,5 @@
   METHOD_LINKS.forEach(decorateView);
 
   /* ------------------------------ API publik ------------------------------ */
-  window.StatCalcMateri = { register, open, topics: () => TOPICS.slice(), has: (id) => !!topicById(id) };
+  window.StatCalcMateri = { register, open, topics: () => TOPICS.slice(), has: (id) => !!topicById(id), currentId: () => (current ? current.id : null) };
 })();

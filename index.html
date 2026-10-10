@@ -2318,6 +2318,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
   };
   let backTarget = 'home';
   let backOpts = null;
+  let navHook = null;   // dipanggil setiap kali halaman berpindah (router URL)
 
   const available = METHODS.filter((c) => c.status === 'available').length;
   tocCount.textContent = `${available} tersedia \u00B7 ${METHODS.length - available} segera hadir`;
@@ -2420,6 +2421,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
       backOpts = opts.backOpts || null;
     }
     window.scrollTo({ top: opts.scrollTo || 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+    if (navHook) navHook();
   }
   // Alias lama, dipakai beberapa tempat & tersedia untuk metode lain nanti.
   function switchTab(tabId) { navigate(tabId); }
@@ -2447,6 +2449,20 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
     backOpts = null;
     $$('.nav-item', bottomNav).forEach((b) => b.classList.toggle('active', b.dataset.tab === 'metode'));
     window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+    if (navHook) navHook();
+  }
+
+  /* ---- Buka halaman berdasarkan id view (dipakai router URL saat refresh / tombol Back-Forward browser) ---- */
+  function openView(viewId) {
+    const id = String(viewId).replace(/^view-/, '');
+    const st = METHODS.find((m) => m.id === id && m.status === 'available');
+    const gr = GRAPH_METHODS.find((m) => m.id === id);
+    if (st && document.getElementById('view-' + id)) { goToMethod(id, st.title, 'metode-stat'); return true; }
+    if (gr && document.getElementById('view-' + id)) { goToMethod(id, gr.title, 'metode-graph'); return true; }
+    if (!TABS[id] && !document.getElementById('view-' + id)) return false;
+    const sub = id === 'metode-stat' || id === 'metode-graph' || id === 'metode-calc';
+    navigate(id, { backTo: sub ? 'metode' : 'home' });
+    return true;
   }
 
   backBtn.addEventListener('click', () => navigate(backTarget, backOpts || {}));
@@ -2509,6 +2525,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
     $('#view-login').classList.add('active');
     topbar.classList.remove('visible');
     document.body.classList.add('pre-auth');
+    if (navHook) navHook();
   });
 
   /* ================= INISIALISASI ================= */
@@ -2526,7 +2543,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
   }
 
   // expose minimal API untuk metode lain nanti
-  window.StatCalc = { switchTab, navigate, goToMethod, showToast, trackCalc };
+  window.StatCalc = { switchTab, navigate, goToMethod, showToast, trackCalc, openView, onNavigate: (fn) => { navHook = fn; } };
 })();
 
 /* =========================================================================
@@ -2732,5 +2749,85 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 <script src="Method/Materi/data/smoothing.js"></script>
 <script src="Method/Materi/data/stasioner.js"></script>
 
+
+<!-- =========================================================================
+     ROUTER URL (hash) - refresh tetap di halaman yang sama
+     -------------------------------------------------------------------------
+     Contoh: /StatCalc/#Method/Calc, #Method/Regresi, #Method/Histogram, #Materi/regresi,
+     #Matriks, #Kalkulator, #Petunjuk, #Tentang, #Home. Tombol Back/Forward browser ikut bekerja.
+     Dimuat paling akhir agar semua halaman dinamis (Calc, Graph, Materi) sudah terdaftar.
+     ========================================================================= -->
+<script>
+(function () {
+  'use strict';
+  var app = window.StatCalc;
+  if (!app || !app.openView) return;
+
+  var FIXED = {
+    'view-home': 'Home', 'view-metode': 'Method', 'view-metode-stat': 'Method/Stat', 'view-metode-graph': 'Method/Graph',
+    'view-metode-calc': 'Method/Calc', 'view-tentang': 'Tentang', 'view-petunjuk': 'Petunjuk',
+    'view-matriks': 'Matriks', 'view-kalkulator': 'Kalkulator', 'view-materi': 'Materi'
+  };
+  var REVERSE = {};
+  Object.keys(FIXED).forEach(function (k) { REVERSE[FIXED[k].toLowerCase()] = k; });
+
+  function cap(x) { return x.charAt(0).toUpperCase() + x.slice(1); }
+  // "#Method/#CALC", "#/method/ calc", "#Method/Calc" -> "method/calc"
+  function canon(h) {
+    var t = String(h || '');
+    try { t = decodeURIComponent(t); } catch (e) { /* abaikan */ }
+    return t.split(/[#\/\s]+/).filter(Boolean).join('/').toLowerCase();
+  }
+  function authed() { return !document.body.classList.contains('pre-auth'); }
+
+  // Alamat halaman yang sedang tampil ('' = login / tanpa alamat, null = tidak diketahui)
+  function currentPath() {
+    var v = document.querySelector('.view.active');
+    if (!v) return null;
+    if (v.id === 'view-login' || !authed()) return '';
+    if (FIXED[v.id]) return FIXED[v.id];
+    if (v.id === 'view-materi-detail') {
+      var m = window.StatCalcMateri, id = m && m.currentId && m.currentId();
+      return id ? 'Materi/' + id : 'Materi';
+    }
+    return 'Method/' + cap(v.id.replace(/^view-/, ''));
+  }
+
+  function sync(replace) {
+    var p = currentPath();
+    if (p === null) return;
+    var want = p ? '#' + p : '';
+    if (canon(location.hash) === canon(want)) return;
+    if (!want) { history.replaceState(null, '', location.pathname + location.search); return; }
+    if (replace) history.replaceState(null, '', location.pathname + location.search + want);
+    else location.hash = want;
+  }
+
+  // Terapkan alamat di URL -> true bila halaman ditemukan
+  function apply() {
+    if (!authed()) return false;
+    var c = canon(location.hash);
+    if (!c) return false;
+    if (canon(currentPath()) === c) return true;
+    var parts = c.split('/');
+    var mat = window.StatCalcMateri;
+    if (parts[0] === 'materi' && parts.length > 1) {
+      var tid = parts.slice(1).join('/');
+      if (mat && mat.has(tid)) { mat.open(tid); return true; }
+      return app.openView('view-materi');
+    }
+    var viewId = REVERSE[c];
+    if (!viewId && parts[0] === 'method' && parts.length === 2) viewId = 'view-' + parts[1];
+    if (!viewId || !document.getElementById(viewId) || viewId === 'view-login') return false;
+    return app.openView(viewId);
+  }
+
+  app.onNavigate(function () { sync(false); });
+  window.addEventListener('hashchange', function () { if (!apply()) sync(true); });
+
+  // Saat halaman dibuka / di-refresh
+  if (!apply()) sync(true);
+})();
+</script>
 </body>
 </html>
