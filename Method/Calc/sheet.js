@@ -365,7 +365,7 @@
     #view-metode-calc .sc-fxrow{ display:flex; align-items:center; gap:8px; margin:12px 0 8px; }
     #view-metode-calc .sc-name{ flex:0 0 auto; min-width:54px; text-align:center; font-family:var(--font-mono); font-weight:600; font-size:13px; padding:9px 8px; border:1px solid var(--rule-strong); border-radius:var(--radius); background:var(--paper-2); }
     #view-metode-calc .sc-fx{ flex:1; min-width:0; font-family:var(--font-mono); font-size:16px; padding:8px 10px; border:1px solid var(--rule-strong); border-radius:var(--radius); background:#fff; color:var(--ink); min-height:var(--tap); }
-    #view-metode-calc .sc-scroll{ position:relative; overflow:auto; height:clamp(280px,56vh,540px); border:1px solid var(--rule-strong); border-radius:var(--radius); background:#fff; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
+    #view-metode-calc .sc-scroll{ position:relative; overflow:auto; height:calc(clamp(280px,56vh,540px) / var(--scz,1)); border:1px solid var(--rule-strong); border-radius:var(--radius); background:#fff; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
     #view-metode-calc .sc-head{ position:sticky; top:0; z-index:4; display:flex; height:32px; background:var(--paper-2); }
     #view-metode-calc .sc-corner, #view-metode-calc .sc-gut{ position:sticky; left:0; z-index:3; flex:0 0 ${GUT}px; width:${GUT}px; background:var(--paper-2); border-right:1px solid var(--rule-strong); border-bottom:1px solid var(--rule); box-sizing:border-box; font-family:var(--font-mono); font-size:12px; color:var(--ink-soft); display:flex; align-items:center; justify-content:center; }
     #view-metode-calc .sc-corner{ z-index:5; border-bottom:1px solid var(--rule-strong); }
@@ -459,8 +459,24 @@
     @media (min-width:1024px){
       #view-metode-calc .chapter-inner{ max-width:1400px; }
       body.side-off #view-metode-calc .chapter-inner{ max-width:none; }
-      #view-metode-calc .sc-scroll{ height:clamp(340px,60vh,760px); }
+      #view-metode-calc .sc-scroll{ height:calc(clamp(340px,60vh,760px) / var(--scz,1)); }
     }
+
+    /* ---------------------- Zoom lembar kerja + pita ---------------------- */
+    #view-metode-calc .sc-zoomhost{ position:relative; overflow:hidden; }
+    #view-metode-calc .sc-zoomer{ transform-origin:0 0; }
+    #view-metode-calc .sc-zoomer .sc-body{ padding-bottom:10px; }
+    #view-metode-calc .sc-status{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:6px 12px; background:var(--paper-2); border-top:1px solid var(--rule-strong); }
+    #view-metode-calc .sc-status .sc-note{ margin:0; flex:1 1 220px; min-width:0; text-align:left; hyphens:manual; }
+    #view-metode-calc .sc-zoom{ display:flex; align-items:center; gap:6px; margin-left:auto; }
+    #view-metode-calc .sc-zb{ width:30px; height:30px; padding:0; border:1px solid var(--rule-strong); border-radius:50%; background:#fff; color:var(--accent); font-size:18px; font-weight:700; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; font-family:var(--font-body); }
+    #view-metode-calc .sc-zb:hover:not(:disabled){ background:var(--accent-soft); }
+    #view-metode-calc .sc-zb:active:not(:disabled){ transform:scale(.92); }
+    #view-metode-calc .sc-zb:disabled{ opacity:.38; cursor:default; }
+    #view-metode-calc .sc-zr{ width:140px; height:28px; margin:0; accent-color:var(--accent); cursor:pointer; }
+    #view-metode-calc .sc-zp{ min-width:52px; height:30px; padding:0 8px; border:1px solid transparent; border-radius:8px; background:transparent; color:var(--ink); font-family:var(--font-mono); font-size:13px; font-weight:600; cursor:pointer; text-align:center; }
+    #view-metode-calc .sc-zp:hover{ background:var(--accent-soft); border-color:var(--rule-strong); }
+    @media (max-width:520px){ #view-metode-calc .sc-zr{ width:96px; } }
   `;
   document.head.appendChild(style);
 
@@ -718,6 +734,67 @@
   const elScroll = q('scScroll'), elHead = q('scHead'), elInner = q('scInner'), elRows = q('scRows');
   const elName = q('scName'), elFx = q('scFx'), elInfo = q('scInfo');
 
+  /* ------------------- Zoom lembar kerja + pita (pojok kanan bawah) ------------------- */
+  // Pita, kotak rumus, dan lembar diskalakan bersama (transform) di dalam .sc-zoomer; bilah status zoom tidak ikut membesar.
+  const ZMIN = 50, ZMAX = 200, ZKEY = 'statcalc.calc.zoom';
+  let zoomPct = 100;
+  const zCard = $('.sc-main', section);
+  const zTips = $('.sc-tips', zCard);
+  const zHost = document.createElement('div'); zHost.className = 'sc-zoomhost';
+  const zBox = document.createElement('div'); zBox.className = 'sc-zoomer';
+  [$('.sc-ribbon', zCard), $('.sc-msgs', zCard), $('.sc-body', zCard)].forEach((n) => zBox.appendChild(n));
+  zHost.appendChild(zBox);
+  const zStatus = document.createElement('div'); zStatus.className = 'sc-status';
+  zStatus.innerHTML = `
+    <div class="sc-zoom" role="group" aria-label="Zoom lembar kerja dan pita">
+      <button type="button" class="sc-zb" id="scZoomOut" title="Perkecil" aria-label="Perkecil">&minus;</button>
+      <input type="range" class="sc-zr" id="scZoomRange" min="${ZMIN}" max="${ZMAX}" step="10" value="100" aria-label="Tingkat zoom" title="Geser untuk zoom (atau Ctrl + gulir di lembar)">
+      <button type="button" class="sc-zb" id="scZoomIn" title="Perbesar" aria-label="Perbesar">+</button>
+      <button type="button" class="sc-zp" id="scZoomPct" title="Klik untuk kembali ke 100%" aria-label="Kembalikan zoom ke 100 persen">100%</button>
+    </div>`;
+  zStatus.insertBefore(elInfo, zStatus.firstChild);
+  const zTail = document.createElement('div'); zTail.className = 'sc-body sc-tail';
+  zTail.appendChild(zTips);
+  while (zCard.firstChild) zCard.removeChild(zCard.firstChild);
+  zCard.appendChild(zHost); zCard.appendChild(zStatus); zCard.appendChild(zTail);
+
+  function sizeZoomHost() {
+    const z = zoomPct / 100, h = zBox.offsetHeight;
+    zHost.style.height = z === 1 || !h ? '' : Math.ceil(h * z) + 'px';
+  }
+  function applyZoom(p, noSave) {
+    p = Math.round(Math.min(ZMAX, Math.max(ZMIN, Number(p) || 100)));
+    zoomPct = p;
+    const z = p / 100;
+    section.style.setProperty('--scz', String(z));
+    if (z === 1) { zBox.style.transform = ''; zBox.style.width = ''; }
+    else { zBox.style.transform = 'scale(' + z + ')'; zBox.style.width = (100 / z) + '%'; }
+    sizeZoomHost();
+    q('scZoomRange').value = String(p);
+    q('scZoomPct').textContent = p + '%';
+    q('scZoomOut').disabled = p <= ZMIN; q('scZoomIn').disabled = p >= ZMAX;
+    if (!noSave) { try { localStorage.setItem(ZKEY, String(p)); } catch (e) { /* abaikan */ } }
+  }
+  function stepZoom(dir) {
+    const p = zoomPct;
+    applyZoom(dir > 0 ? (Math.floor(p / 10) + 1) * 10 : (Math.ceil(p / 10) - 1) * 10);
+  }
+  // Faktor skala nyata (tahan terhadap transform di leluhur): piksel layar -> piksel tata letak.
+  function zoomScale() { const w = elScroll.offsetWidth; return w ? elScroll.getBoundingClientRect().width / w : 1; }
+  q('scZoomOut').addEventListener('click', () => stepZoom(-1));
+  q('scZoomIn').addEventListener('click', () => stepZoom(1));
+  q('scZoomPct').addEventListener('click', () => applyZoom(100));
+  q('scZoomRange').addEventListener('input', (e) => applyZoom(e.target.value));
+  let zWheel = 0;
+  elScroll.addEventListener('wheel', (e) => {
+    if (!(e.ctrlKey || e.metaKey)) return;
+    e.preventDefault();
+    zWheel += e.deltaMode === 1 ? e.deltaY * 33 : e.deltaY;
+    if (Math.abs(zWheel) >= 40) { stepZoom(zWheel < 0 ? 1 : -1); zWheel = 0; }
+  }, { passive: false });
+  if (window.ResizeObserver) new ResizeObserver(sizeZoomHost).observe(zBox);
+  { let saved = 100; try { saved = parseInt(localStorage.getItem(ZKEY), 10) || 100; } catch (e) { /* abaikan */ } applyZoom(saved, true); }
+
   function flash(id, msg, ms) { const e = q(id); $$('.sc-msg', section).forEach((m) => { if (m !== e) m.hidden = true; }); e.textContent = msg; e.hidden = false; clearTimeout(e._t); if (ms) e._t = setTimeout(() => { e.hidden = true; }, ms); }
   function hide(id) { q(id).hidden = true; }
 
@@ -868,8 +945,8 @@
     select(r, c);
   }
   function cellAt(x, y) {
-    const b = elScroll.getBoundingClientRect();
-    const c = Math.floor((x - b.left - GUT + elScroll.scrollLeft) / CW), r = Math.floor((y - b.top - 32 + elScroll.scrollTop) / RH);
+    const b = elScroll.getBoundingClientRect(), z = zoomScale();
+    const c = Math.floor(((x - b.left) / z - GUT + elScroll.scrollLeft) / CW), r = Math.floor(((y - b.top) / z - 32 + elScroll.scrollTop) / RH);
     return { r: Math.max(0, Math.min(vR() - 1, r)), c: Math.max(0, Math.min(vC() - 1, c)) };
   }
   function gotoRange(txt) {
@@ -915,9 +992,9 @@
       const a = document.activeElement; if (a && a.blur) a.blur();
       const gs = window.getSelection && window.getSelection(); if (gs && gs.removeAllRanges) gs.removeAllRanges();
     }
-    const b = elScroll.getBoundingClientRect();
-    if (e.clientY > b.bottom - 28) elScroll.scrollTop += 28; else if (e.clientY < b.top + 60) elScroll.scrollTop -= 28;
-    if (e.clientX > b.right - 28) elScroll.scrollLeft += 28; else if (e.clientX < b.left + GUT + 28) elScroll.scrollLeft -= 28;
+    const b = elScroll.getBoundingClientRect(), z = zoomScale();
+    if (e.clientY > b.bottom - 28 * z) elScroll.scrollTop += 28; else if (e.clientY < b.top + 60 * z) elScroll.scrollTop -= 28;
+    if (e.clientX > b.right - 28 * z) elScroll.scrollLeft += 28; else if (e.clientX < b.left + (GUT + 28) * z) elScroll.scrollLeft -= 28;
     if (p.r !== ext.r || p.c !== ext.c) extendTo(p.r, p.c);
   });
   document.addEventListener('mouseup', () => {
@@ -1647,5 +1724,6 @@
       refreshInfo: () => updateInfo(),
     },
     els: { section, scroll: elScroll, inner: elInner, rows: elRows },
+    zoom: { get: () => zoomPct, set: (p) => applyZoom(p), scale: zoomScale },
   };
 })();

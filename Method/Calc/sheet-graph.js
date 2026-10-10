@@ -360,11 +360,12 @@
       select(ch.uid, true);
       try { el.focus({ preventScroll: true }); } catch (err) { /* abaikan */ }
       const hd = e.target.closest('.sg-h');
-      const st = { px: e.clientX, py: e.clientY, x: ch.x, y: ch.y, w: ch.w, h: ch.h, hd: hd ? hd.dataset.h : '' };
+      const zf = elScroll.offsetWidth ? elScroll.getBoundingClientRect().width / elScroll.offsetWidth : 1;   // skala zoom lembar
+      const st = { px: e.clientX, py: e.clientY, x: ch.x, y: ch.y, w: ch.w, h: ch.h, hd: hd ? hd.dataset.h : '', z: zf || 1 };
       try { el.setPointerCapture(e.pointerId); } catch (err) { /* abaikan */ }
       el.classList.add('drag');
       const mv = (ev) => {
-        const dx = ev.clientX - st.px, dy = ev.clientY - st.py;
+        const dx = (ev.clientX - st.px) / st.z, dy = (ev.clientY - st.py) / st.z;
         if (!st.hd) {
           ch.x = st.x + dx; ch.y = st.y + dy; clampPos(ch);
         } else {

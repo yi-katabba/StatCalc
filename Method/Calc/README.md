@@ -23,3 +23,7 @@ Semua perintah dicatat di riwayat Urungkan/Ulangi (status filter ikut tersimpan 
 
 `registerState(get, set)` (status ekstra ikut undo/redo), `setInfoHook`, `onReset` (dipanggil saat data diganti: impor, tabel baru, kosongkan),
 `onTab(nama, fn)`, serta `pushUndo`, `invalidate`, `fullRender`, `flash`, `shiftFormula`, `adjustFormula`, `adjustAll`, `normalizeInput`, `ensure`.
+
+## Zoom (`sheet.js`)
+
+Di pojok kanan bawah lembar kerja ada kontrol zoom: tombol − / +, penggeser (50%–200%, langkah 10%), dan angka persen (klik untuk kembali ke 100%). Ctrl + gulir mouse (atau cubit di trackpad) di atas lembar juga mengubah zoom. Zoom memperbesar/memperkecil **pita, kotak rumus, dan lembar** sekaligus; ukuran area lembar tetap, jadi zoom mengubah jumlah sel yang tampak (seperti Excel). Tingkat zoom diingat (`localStorage`). API: `StatCalcSheet.zoom.get() / set(persen)`.
