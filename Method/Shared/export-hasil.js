@@ -17,6 +17,9 @@
        data: { head: [...], rows: [[...]], caption: '...' },                    // lampiran data input
      });
 
+   Panel grafik punya pita (Warna, Garis kisi) lewat StatRibbon.mount(host); gaya disimpan per metode
+   (STYLE) dan dipakai saat grafik dibangun ulang, juga untuk .docx. Tombol "Setel ulang" mengembalikan bawaan.
+
    Isi sections diambil dari DOM halaman (tabel, rumus, hipotesis, kesimpulan),
    sehingga dokumen selalu sama dengan yang tampil di layar.
    ========================================================================= */
@@ -289,7 +292,7 @@
   }
 
   async function buildDocx(spec) {
-    const charts = resolveCharts(spec.charts);
+    const charts = resolveCharts(spec.charts, spec.id);
     let body = para(run(spec.title), { style: 'Title' }) +
       para(run('Dibuat dengan StatCalc \u2022 ' + TGL()), { style: 'Subtitle' });
     if (spec.meta && spec.meta.length) body += para(run('Pengaturan analisis'), { style: 'Heading1' }) + kvTable(spec.meta);
@@ -345,11 +348,25 @@
     return new Blob([zip(files)], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
   }
 
-  function resolveCharts(list) {
+  /* Gaya grafik (pita Warna / Garis kisi) disimpan per metode. Selama belum diubah (dirty=false) grafik
+     digambar dengan tampilan bawaan. Gaya diterapkan ke GraphCore.u.ST hanya selama grafik dibangun,
+     lalu dikembalikan, sehingga halaman Graph tidak terpengaruh. Berlaku juga untuk grafik di .docx. */
+  const STYLE = {};
+  const DEF_STYLE = () => ({ dirty: false, c1: '#22384A', c2: '#BD7E1F', pal: 'bawaan', bg: '#ffffff', h: true, v: 'auto', gc: '#E6E0CC' });
+  function withStyle(id, fn) {
+    const gu = window.GraphCore && window.GraphCore.u, st = STYLE[id];
+    if (!gu || !st || !st.dirty) return fn();
+    Object.assign(gu.ST, {
+      on: true, h: st.h, v: st.v === 'auto' ? null : st.v === 'on',
+      gc: st.gc, c1: st.c1, c2: st.c2, bg: st.bg, pal: gu.PALETTES[st.pal] || gu.PAL,
+    });
+    try { return fn(); } finally { gu.resetST(); }
+  }
+  function resolveCharts(list, id) {
     const out = [];
     (list || []).forEach((c) => {
       try {
-        const svg = c.svg || (c.build ? c.build() : null);
+        const svg = c.svg || (c.build ? withStyle(id, c.build) : null);
         if (svg) out.push({ title: c.title, caption: c.caption || '', svg });
       } catch (e) { console.warn('Grafik dilewati:', c.title, e); }
     });
@@ -368,6 +385,8 @@
     .ex-fig figcaption strong{ display:block; color:var(--ink); font-size:14px; margin-bottom:2px; }
     .ex-fig .control-row{ padding:6px 14px 14px; margin:0; }
     .ex-status{ margin:10px 0 0; font-size:13.5px; }
+    .ex-rib{ margin:14px 0 0; }
+    .ex-rib .rb-main{ box-shadow:none; margin:0; }
   `;
   document.head.appendChild(style);
 
@@ -418,9 +437,61 @@
     catch (e) { status(panel, 'Peramban ini tidak dapat membuat PNG. Gunakan Unduh SVG.', true); }
   }
 
+  /* ---- pita Warna / Garis kisi untuk grafik pendukung ---- */
+  const sid = (id, k) => 'exs-' + id + '-' + k;
+  function mountRibbon(id, panel) {
+    const slot = $('[data-rib-slot]', panel);
+    if (!slot || !window.StatRibbon || !window.GraphCore) return;
+    const gu = window.GraphCore.u, st = STYLE[id];
+    const tabs = [
+      { id: 'warna', label: 'Warna', groups: [
+        { label: 'Warna data', cols: 1, items: [
+          { type: 'color', id: sid(id, 'c1'), label: 'Warna utama (titik, batang, histogram)', def: st.c1 },
+          { type: 'color', id: sid(id, 'c2'), label: 'Warna garis sorotan (regresi, kurva, rata-rata)', def: st.c2 },
+        ] },
+        { label: 'Palet warna', cols: 1, items: [{ type: 'select', id: sid(id, 'pal'), label: 'Palet (grafik banyak warna)', options: Object.keys(gu.PALETTES).map((k) => [k, gu.PALETTE_LABEL[k]]), selected: st.pal }] },
+        { label: 'Latar', cols: 1, items: [{ type: 'color', id: sid(id, 'bg'), label: 'Warna latar grafik', def: st.bg }] },
+      ], tip: 'Perubahan langsung diterapkan ke semua grafik di bawah, dan ikut terbawa ke berkas .docx serta unduhan PNG/SVG/ZIP.' },
+      { id: 'kisi', label: 'Garis kisi', groups: [
+        { label: 'Tampilkan', cols: 1, items: [
+          { type: 'select', id: sid(id, 'gh'), label: 'Garis horizontal', options: [['on', 'Tampil'], ['off', 'Sembunyi']], selected: st.h ? 'on' : 'off' },
+          { type: 'select', id: sid(id, 'gv'), label: 'Garis vertikal', options: [['auto', 'Otomatis (sesuai jenis grafik)'], ['on', 'Tampil'], ['off', 'Sembunyi']], selected: st.v },
+        ] },
+        { label: 'Gaya', cols: 1, items: [{ type: 'color', id: sid(id, 'gc'), label: 'Warna garis kisi', def: st.gc }] },
+      ], tip: 'Garis vertikal hanya berlaku untuk grafik dengan sumbu angka atau kategori; histogram dan diagram batang tetap mengikuti pilihan Anda.' },
+    ];
+    window.StatRibbon.mount({ view: '#ex-panel-' + id, key: 'ex-' + id, host: slot, tabs, onChange: () => onRibbon(id) });
+  }
+  const rTimers = {};
+  function readRibbon(id) {
+    const st = STYLE[id], g = (k) => document.getElementById(sid(id, k));
+    if (!g('c1')) return;
+    st.c1 = g('c1').value; st.c2 = g('c2').value; st.pal = g('pal').value; st.bg = g('bg').value;
+    st.h = g('gh').value === 'on'; st.v = g('gv').value; st.gc = g('gc').value;
+  }
+  function onRibbon(id) {
+    clearTimeout(rTimers[id]);
+    rTimers[id] = setTimeout(() => { readRibbon(id); STYLE[id].dirty = true; redraw(id); }, 40);
+  }
+  function redraw(id) {
+    const spec = STORE[id], panel = $('#ex-panel-' + id);
+    if (!spec || !panel) return;
+    spec.resolved = resolveCharts(spec.charts, id);
+    const holders = $$('.ex-fig .ex-chart', panel);
+    if (holders.length !== spec.resolved.length) { publish(spec); return; }
+    holders.forEach((h, i) => { h.innerHTML = spec.resolved[i].svg; });
+  }
+  function resetStyle(id) {
+    STYLE[id] = DEF_STYLE();
+    const st = STYLE[id], set = (k, v) => { const el = document.getElementById(sid(id, k)); if (el) el.value = v; };
+    set('c1', st.c1); set('c2', st.c2); set('pal', st.pal); set('bg', st.bg); set('gh', 'on'); set('gv', 'auto'); set('gc', st.gc);
+    redraw(id);
+  }
+
   function publish(spec) {
     const id = spec.id;
-    spec.resolved = resolveCharts(spec.charts);
+    if (!STYLE[id]) STYLE[id] = DEF_STYLE();
+    spec.resolved = resolveCharts(spec.charts, id);
     STORE[id] = spec;
     const anchor = $(spec.anchor);
     if (!anchor) { console.warn('StatExport: anchor tidak ditemukan', spec.anchor); return; }
@@ -435,10 +506,13 @@
         const k = b.dataset.ex;
         if (k === 'docx') doDocx(id);
         else if (k === 'zip') doZip(id);
+        else if (k === 'reset') resetStyle(id);
         else if (k === 'png' || k === 'svg') doFig(id, +b.dataset.i, k);
       });
+      panel.innerHTML = '<div class="ex-dyn"></div>';
       anchor.parentNode.insertBefore(panel, anchor.nextSibling);
     }
+    const dyn = $('.ex-dyn', panel);
     const figs = spec.resolved.map((c, i) => `
       <figure class="ex-fig">
         <div class="ex-chart">${c.svg}</div>
@@ -449,16 +523,18 @@
         </div>
       </figure>`).join('');
     panel.hidden = false;
-    panel.innerHTML = `
+    dyn.innerHTML = `
       <div class="step-tag">Ekspor</div>
       <h2>Grafik Pendukung &amp; Unduh Hasil</h2>
       <p class="hint">Grafik dibuat dari data yang baru dihitung. Unduh tiap grafik sebagai PNG/SVG, atau unduh <strong>seluruh hasil</strong> (pengaturan, tabel, uji, kesimpulan, grafik, dan data input) dalam satu dokumen Word.</p>
       <div class="control-row">
         <button type="button" class="btn-primary" data-ex="docx" data-ex-id="${id}">Unduh Hasil (.docx)</button>
-        ${spec.resolved.length ? '<button type="button" class="btn-ghost" data-ex="zip">Unduh semua grafik (.zip)</button>' : ''}
+        ${spec.resolved.length ? '<button type="button" class="btn-ghost" data-ex="zip">Unduh semua grafik (.zip)</button><button type="button" class="btn-ghost" data-ex="reset">Setel ulang warna &amp; kisi</button>' : ''}
       </div>
       <p class="ex-status" hidden></p>
+      ${spec.resolved.length ? '<div class="ex-rib" data-rib-slot></div>' : ''}
       ${spec.resolved.length ? `<div class="ex-grid">${figs}</div>` : ''}`;
+    mountRibbon(id, panel);
 
     /* tombol ringkas di kartu hasil */
     const rc = spec.resultsCard ? $(spec.resultsCard) : null;

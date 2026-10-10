@@ -74,3 +74,20 @@ menggambar ulang. Di file graph, ambil gaya lewat `u.ST` (jangan menulis warna p
   gambar kisi hanya jika `u.ST.on && u.ST.v` (vertikal) atau `u.ST.on && u.ST.h` (horizontal).
 - Atur pemilih yang tampil per grafik di tabel `GRAPH_STYLE` pada `graph-core.js` (atau `style: {...}` di `GraphCore.add`);
   `grid: null` menyembunyikan tab Garis kisi. Opsi `select` boleh punya `gridDef: { nilai: {h, v} }` untuk mengatur bawaan kisi.
+
+## Pita warna & kisi untuk grafik pendukung di halaman Stat
+
+Panel **Grafik Pendukung & Unduh Hasil** (histogram, boxplot, Q-Q plot, dst.) juga punya pita bertab
+**Warna** dan **Garis kisi**, dibuat oleh `StatExport.publish` lewat `StatRibbon.mount({ host })`.
+
+- **Warna**: warna utama, warna garis sorotan (regresi / kurva normal / rata-rata), palet, dan latar.
+- **Garis kisi**: horizontal (tampil/sembunyi), vertikal (**otomatis** / tampil / sembunyi), dan warna kisi.
+  "Otomatis" mempertahankan bawaan tiap grafik (mis. scatter & Q-Q memakai kisi vertikal, histogram tidak).
+- Perubahan langsung menggambar ulang semua grafik di panel, dan ikut ke unduhan PNG/SVG/ZIP serta berkas `.docx`.
+- Pilihan disimpan per metode dan bertahan saat data dihitung ulang. Tombol **Setel ulang warna & kisi** mengembalikan bawaan.
+- Selama pita belum disentuh, grafik tampil persis seperti sebelumnya.
+
+Untuk modul Stat baru: cukup beri tiap grafik fungsi `build` (bukan `svg` jadi) agar bisa digambar ulang.
+Di `stat-charts.js`, ambil warna lewat `ST.c1` / `ST.c2` / `palAt(i)`, bukan kode warna permanen. Warna bawaan
+`#22384A`, `#BD7E1F`, `#2F7F79` yang ditulis modul diterjemahkan otomatis oleh `tone()`; warna status
+(hijau/merah/abu-abu) tetap.

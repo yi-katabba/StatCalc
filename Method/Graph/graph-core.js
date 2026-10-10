@@ -30,6 +30,7 @@
     mono: ['#1C1E24', '#3A3F4A', '#575D6B', '#747B8B', '#9199A8', '#AEB5C2', '#CBD0DA', '#2B3038', '#484E5B', '#656C7B', '#828A9B', '#9FA6B5'],
   };
   const PALETTE_LABEL = { bawaan: 'Bawaan', cerah: 'Cerah', pastel: 'Pastel', laut: 'Laut (biru-hijau)', hangat: 'Hangat', mono: 'Monokrom' };
+  /* ST.v === null = kisi vertikal "otomatis" (ikut bawaan tiap grafik; dipakai pita grafik pendukung Stat). */
   const ST0 = { on: false, h: true, v: false, gc: GRID, c1: PAL[0], c2: '#BD7E1F', pal: PAL, bg: '#ffffff' };
   const ST = Object.assign({}, ST0);
   const resetST = () => Object.assign(ST, ST0);
@@ -154,7 +155,7 @@
     let s = '';
     (ticks || sc.ticks).forEach((t) => {
       const x = px(t);
-      if (ST.on ? ST.v : vgrid) s += `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${L.m.t}" y2="${yb}" stroke="${ST.gc}"/>`;
+      if (ST.on && ST.v !== null ? ST.v : vgrid) s += `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${L.m.t}" y2="${yb}" stroke="${ST.gc}"/>`;
       s += `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${yb}" y2="${yb + 4}" stroke="${AXIS}"/>` +
         `<text x="${x.toFixed(1)}" y="${yb + 17}" text-anchor="middle" font-size="11" fill="${SOFT}">${esc(fmt(t))}</text>`;
     });
@@ -644,7 +645,7 @@
   window.GraphCore = {
     add,
     u: {
-      esc, fmt, parseNum, PAL, INK, SOFT, GRID, AXIS, ST,
+      esc, fmt, parseNum, PAL, INK, SOFT, GRID, AXIS, ST, ST0, PALETTES, PALETTE_LABEL, resetST,
       sum, mean, min, max, sd, sortedAsc, quantile, linreg, invNorm,
       niceTicks, mlFor, layout, sx, sy, head, gridY, axisX, axisCat, needRot, catBottom,
       kv, grid, note,

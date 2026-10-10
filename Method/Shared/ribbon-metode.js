@@ -24,6 +24,9 @@
    { type:'color', id, label, def }, { type:'check', id, label, def }. Opsi cfg.onChange dipanggil
    tiap ada perubahan nilai di pita.
 
+   Opsi cfg.host (elemen DOM): pita ditempatkan di dalam elemen itu, bukan di bawah .chapter-head
+   (dipakai StatExport untuk pita Warna/Garis kisi pada grafik pendukung).
+
    Kelas CSS pada halaman: .rb-off-{key-toggle} -> bagian disembunyikan.
    ========================================================================= */
 (function () {
@@ -101,7 +104,8 @@
     sec.setAttribute('aria-label', 'Pita pengaturan ' + k);
     sec.innerHTML = `<div class="rb-ribbon"><div class="rb-tabs" role="tablist">${tabsHTML}</div>${panelsHTML}</div>`;
     const head = view.querySelector('.chapter-head');
-    if (head && head.parentNode) head.parentNode.insertBefore(sec, head.nextSibling); else view.prepend(sec);
+    if (cfg.host) cfg.host.appendChild(sec);                 /* pita ditaruh di elemen yang ditentukan (mis. panel grafik Stat) */
+    else if (head && head.parentNode) head.parentNode.insertBefore(sec, head.nextSibling); else view.prepend(sec);
     if (rules.length) { const st = document.createElement('style'); st.textContent = rules.join('\n'); document.head.appendChild(st); }
 
     $$('.rb-tab', sec).forEach((b) => b.addEventListener('click', () => {

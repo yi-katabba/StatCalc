@@ -9,7 +9,13 @@
   'use strict';
   if (!window.GraphCore) { console.error('stat-charts.js: GraphCore belum dimuat.'); return; }
   const u = GraphCore.u;
-  const { esc, fmt, PAL, INK, SOFT, GRID, AXIS } = u;
+  const { esc, fmt, INK, SOFT, GRID, AXIS, ST } = u;
+  /* Warna mengikuti gaya bersama u.ST (diatur pita Warna/Garis kisi di panel grafik, lihat export-hasil.js).
+     Tanpa pengaturan pita, nilainya sama dengan bawaan lama, jadi tampilan tidak berubah. */
+  const palAt = (k) => ST.pal[k % ST.pal.length];
+  /* Modul Stat menulis warna bawaan secara literal; terjemahkan ke warna gaya agar ikut berubah.
+     #22384A = warna utama, #BD7E1F = warna sorotan, #2F7F79 = warna ke-3 palet. Warna lain (status/abu-abu) tetap. */
+  const tone = (c) => (c === '#22384A' ? ST.c1 : c === '#BD7E1F' ? ST.c2 : c === '#2F7F79' ? ST.pal[2 % ST.pal.length] : c);
 
   const f1 = (v) => (+v).toFixed(1);
   const finite = (v) => v !== null && v !== undefined && Number.isFinite(v);
@@ -75,16 +81,17 @@
     o.labels.forEach((lb, i) => {
       if (i % step) return;
       const x = px(i);
+      if (ST.on && ST.v) s += `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${L.m.t}" y2="${yb}" stroke="${ST.gc}"/>`;
       s += `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${yb}" y2="${yb + 4}" stroke="${AXIS}"/>`;
       s += rot
         ? `<text transform="translate(${x.toFixed(1)} ${yb + 14}) rotate(-40)" text-anchor="end" font-size="11" fill="${SOFT}">${esc(String(lb))}</text>`
         : `<text x="${x.toFixed(1)}" y="${yb + 17}" text-anchor="middle" font-size="11" fill="${SOFT}">${esc(String(lb))}</text>`;
     });
     if (o.xLabel) s += `<text x="${(L.m.l + L.pw / 2).toFixed(1)}" y="${L.H - 10}" text-anchor="middle" font-size="12" fill="${INK}">${esc(o.xLabel)}</text>`;
-    (o.hlines || []).forEach((h) => { s += hline(L, sys, h.y, h.color || '#BD7E1F', h.dash !== false, h.label); });
+    (o.hlines || []).forEach((h) => { s += hline(L, sys, h.y, tone(h.color) || ST.c2, h.dash !== false, h.label); });
     const items = [];
     o.series.forEach((se, k) => {
-      const col = se.color || PAL[k % PAL.length];
+      const col = tone(se.color) || palAt(k);
       let d = '', pen = false;
       se.values.forEach((v, i) => {
         if (!finite(v)) { pen = false; return; }
@@ -114,12 +121,12 @@
     let s = u.head(L, o.title) + u.gridY(L, sys, o.yLabel) + u.axisX(L, sxs, o.xLabel, true);
     const items = [];
     if (o.hzero) s += hline(L, sys, 0, '#948C77', true);
-    if (o.diag) { s += `<line x1="${px(sxs.lo).toFixed(1)}" y1="${py(sxs.lo).toFixed(1)}" x2="${px(sxs.hi).toFixed(1)}" y2="${py(sxs.hi).toFixed(1)}" stroke="#BD7E1F" stroke-width="2" stroke-dasharray="6 4"/>`; items.push({ name: 'Garis y = x (prediksi sempurna)', color: '#BD7E1F', dash: true, marker: false }); }
+    if (o.diag) { s += `<line x1="${px(sxs.lo).toFixed(1)}" y1="${py(sxs.lo).toFixed(1)}" x2="${px(sxs.hi).toFixed(1)}" y2="${py(sxs.hi).toFixed(1)}" stroke="${ST.c2}" stroke-width="2" stroke-dasharray="6 4"/>`; items.push({ name: 'Garis y = x (prediksi sempurna)', color: ST.c2, dash: true, marker: false }); }
     if (o.fit) {
-      s += `<line x1="${px(xr.lo).toFixed(1)}" y1="${py(o.fit.a + o.fit.b * xr.lo).toFixed(1)}" x2="${px(xr.hi).toFixed(1)}" y2="${py(o.fit.a + o.fit.b * xr.hi).toFixed(1)}" stroke="#BD7E1F" stroke-width="2.4"/>`;
-      if (o.fit.name) items.push({ name: o.fit.name, color: '#BD7E1F', marker: false });
+      s += `<line x1="${px(xr.lo).toFixed(1)}" y1="${py(o.fit.a + o.fit.b * xr.lo).toFixed(1)}" x2="${px(xr.hi).toFixed(1)}" y2="${py(o.fit.a + o.fit.b * xr.hi).toFixed(1)}" stroke="${ST.c2}" stroke-width="2.4"/>`;
+      if (o.fit.name) items.push({ name: o.fit.name, color: ST.c2, marker: false });
     }
-    const col = o.color || PAL[0];
+    const col = tone(o.color) || ST.c1;
     o.x.forEach((x, i) => { s += `<circle cx="${px(x).toFixed(1)}" cy="${py(o.y[i]).toFixed(1)}" r="4.3" fill="${col}" fill-opacity=".8" stroke="#fff" stroke-width="1"/>`; });
     if (items.length) s += legendSvg(L, items, 46);
     return s + '</svg>';
@@ -168,12 +175,12 @@
     let s = u.head(L, o.title || 'Histogram') + u.gridY(L, sys, 'Frekuensi') + u.axisX(L, sxs, o.xLabel || 'Nilai', false, tickShow);
     counts.forEach((c, i) => {
       const x0 = px(lo + i * w), x1 = px(lo + (i + 1) * w);
-      s += `<rect x="${(x0 + 0.5).toFixed(1)}" y="${py(c).toFixed(1)}" width="${Math.max(1, x1 - x0 - 1).toFixed(1)}" height="${(py(0) - py(c)).toFixed(1)}" fill="${o.color || PAL[0]}" fill-opacity=".72"/>`;
+      s += `<rect x="${(x0 + 0.5).toFixed(1)}" y="${py(c).toFixed(1)}" width="${Math.max(1, x1 - x0 - 1).toFixed(1)}" height="${(py(0) - py(c)).toFixed(1)}" fill="${tone(o.color) || ST.c1}" fill-opacity=".72"/>`;
     });
     if (curve) {
       let d = '';
       for (let i = 0; i <= 60; i++) { const x = lo + (hi - lo) * i / 60; d += (i ? 'L' : 'M') + px(x).toFixed(1) + ' ' + py(pdf(x)).toFixed(1) + ' '; }
-      s += `<path d="${d}" fill="none" stroke="#BD7E1F" stroke-width="2.2"/>` + legendSvg(L, [{ name: 'Kurva normal (rata-rata & s.baku sampel)', color: '#BD7E1F', marker: false }], 46);
+      s += `<path d="${d}" fill="none" stroke="${ST.c2}" stroke-width="2.2"/>` + legendSvg(L, [{ name: 'Kurva normal (rata-rata & s.baku sampel)', color: ST.c2, marker: false }], 46);
     }
     return s + '</svg>';
   }
@@ -195,12 +202,12 @@
     const bw = o.thin ? Math.min(5, ax.bw * 0.4) : Math.min(56, ax.bw * 0.64), y0 = py(0);
     o.values.forEach((v, i) => {
       if (!finite(v)) return;
-      const cx = ax.cx(i), yv = py(v), col = (o.colors && o.colors[i]) || o.color || PAL[0];
+      const cx = ax.cx(i), yv = py(v), col = tone((o.colors && o.colors[i]) || o.color) || ST.c1;
       s += `<rect x="${(cx - bw / 2).toFixed(1)}" y="${Math.min(y0, yv).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(1, Math.abs(yv - y0)).toFixed(1)}" fill="${col}" fill-opacity=".85"/>`;
       if (o.valueLabels && n <= 14) s += `<text x="${cx.toFixed(1)}" y="${(v >= 0 ? yv - 5 : yv + 13).toFixed(1)}" text-anchor="middle" font-size="10.5" fill="${INK}">${esc(fmt(v))}</text>`;
     });
     s += `<line x1="${L.m.l}" x2="${L.W - L.m.r}" y1="${y0.toFixed(1)}" y2="${y0.toFixed(1)}" stroke="${AXIS}"/>`;
-    (o.hlines || []).forEach((h) => { s += hline(L, sys, h.y, h.color || '#BD7E1F', h.dash !== false, h.label); });
+    (o.hlines || []).forEach((h) => { s += hline(L, sys, h.y, tone(h.color) || ST.c2, h.dash !== false, h.label); });
     return s + '</svg>';
   }
 
@@ -215,7 +222,7 @@
     let s = u.head(L, o.title) + u.gridY(L, sys, o.yLabel) + ax.svg;
     const bw = Math.min(40, (ax.bw * 0.78) / m), y0 = py(0);
     o.series.forEach((se, k) => {
-      const col = se.color || PAL[k % PAL.length];
+      const col = tone(se.color) || palAt(k);
       se.values.forEach((v, i) => {
         if (!finite(v)) return;
         const cx = ax.cx(i) - (m * bw) / 2 + bw * (k + 0.5), yv = py(v);
@@ -223,7 +230,7 @@
       });
     });
     s += `<line x1="${L.m.l}" x2="${L.W - L.m.r}" y1="${y0.toFixed(1)}" y2="${y0.toFixed(1)}" stroke="${AXIS}"/>`;
-    if (m > 1) s += legendSvg(L, o.series.map((se, k) => ({ name: se.name, color: se.color || PAL[k % PAL.length], kind: 'box' })), 46);
+    if (m > 1) s += legendSvg(L, o.series.map((se, k) => ({ name: se.name, color: tone(se.color) || palAt(k), kind: 'box' })), 46);
     return s + '</svg>';
   }
 
@@ -237,9 +244,9 @@
     const L = withLegend(u.layout({ title: o.title, ml: u.mlFor(sys.ticks, !!o.yLabel), mb: u.catBottom(labs, !!o.xLabel), H: o.H || 380 }), true);
     const py = u.sy(L, sys), ax = u.axisCat(L, labs, o.xLabel);
     let s = u.head(L, o.title) + u.gridY(L, sys, o.yLabel) + ax.svg;
-    if (finite(o.grand)) s += hline(L, sys, o.grand, '#BD7E1F', true);
+    if (finite(o.grand)) s += hline(L, sys, o.grand, ST.c2, true);
     o.means.forEach((m, i) => {
-      const cx = ax.cx(i), col = PAL[i % PAL.length], cap = Math.min(10, ax.bw * 0.18);
+      const cx = ax.cx(i), col = palAt(i), cap = Math.min(10, ax.bw * 0.18);
       if (finite(o.lo[i]) && finite(o.hi[i])) {
         s += `<line x1="${cx.toFixed(1)}" x2="${cx.toFixed(1)}" y1="${py(o.lo[i]).toFixed(1)}" y2="${py(o.hi[i]).toFixed(1)}" stroke="${col}" stroke-width="2"/>` +
           `<line x1="${(cx - cap).toFixed(1)}" x2="${(cx + cap).toFixed(1)}" y1="${py(o.lo[i]).toFixed(1)}" y2="${py(o.lo[i]).toFixed(1)}" stroke="${col}" stroke-width="2"/>` +
@@ -248,7 +255,7 @@
       s += `<circle cx="${cx.toFixed(1)}" cy="${py(m).toFixed(1)}" r="5" fill="${col}" stroke="#fff" stroke-width="1.2"/>`;
     });
     const items = [{ name: o.note || 'Rata-rata \u00B1 selang kepercayaan 95%', color: INK, kind: 'dot' }];
-    if (finite(o.grand)) items.push({ name: 'Rata-rata keseluruhan', color: '#BD7E1F', dash: true, marker: false });
+    if (finite(o.grand)) items.push({ name: 'Rata-rata keseluruhan', color: ST.c2, dash: true, marker: false });
     s += legendSvg(L, items, 46);
     return s + '</svg>';
   }
@@ -263,7 +270,7 @@
     const py = u.sy(L, sys), ax = u.axisCat(L, names, o.xLabel);
     let s = u.head(L, o.title) + u.gridY(L, sys, o.yLabel) + ax.svg;
     groups.forEach((g, i) => {
-      const cx = ax.cx(i), col = PAL[i % PAL.length], half = Math.min(30, ax.bw * 0.3);
+      const cx = ax.cx(i), col = palAt(i), half = Math.min(30, ax.bw * 0.3);
       const sorted = u.sortedAsc(g.vals), cnt = {};
       sorted.forEach((v, k) => {
         const key = py(v).toFixed(0); cnt[key] = (cnt[key] || 0) + 1;
@@ -294,7 +301,7 @@
     if (n < 6) return noData('Data terlalu sedikit untuk ACF (minimal 6).');
     const maxLag = Math.max(2, Math.min(o.maxLag || 20, Math.floor(n / 2) - 1, n - 2));
     const v = acfValues(x, maxLag), b = 1.96 / Math.sqrt(n);
-    const col = v.map((a) => (Math.abs(a) > b ? '#B5532F' : PAL[0]));
+    const col = v.map((a) => (Math.abs(a) > b ? '#B5532F' : ST.c1));
     return bars({
       title: o.title || 'Autokorelasi (ACF)', xLabel: 'Lag', yLabel: 'Autokorelasi',
       labels: v.map((_, i) => i + 1), values: v, colors: col, thin: true,
