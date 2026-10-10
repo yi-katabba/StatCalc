@@ -119,7 +119,7 @@
   section.id = 'view-deskriptif';
   section.innerHTML = `
     <div class="chapter-inner">
-      <div class="chapter-head">
+      <div class="chapter-head ch-wide">
         <span class="eyebrow">Metode Statistik</span>
         <h1>Statistika Deskriptif</h1>
         <p class="lede">Ringkas data satu atau banyak variabel sekaligus: rata-rata, median, modus, ragam, simpangan baku, kuartil, kemencengan (skewness), keruncingan (kurtosis), selang kepercayaan rata-rata, dan pencilan, lengkap dengan langkah perhitungan dan interpretasi.</p>
@@ -352,41 +352,6 @@
     q('dsInterpWrap').innerHTML = h;
   }
 
-  /* Grafik pendukung: boxplot (semua variabel), histogram + kurva normal, Q-Q plot, dan perbandingan rata-rata */
-  function buildCharts(used) {
-    const SC = window.StatCharts;
-    if (!SC) return [];
-    const charts = [];
-    const groups = used.map((u) => ({ name: u.name, vals: u.x }));
-    charts.push({
-      title: used.length > 1 ? 'Boxplot antarvariabel' : 'Boxplot ' + used[0].name,
-      caption: 'Kotak = Q1 sampai Q3, garis tengah = median, belah ketupat = rata-rata, titik di luar kumis = pencilan (aturan 1,5\u00D7IQR).',
-      build: () => SC.box(groups, { title: used.length > 1 ? 'Boxplot per Variabel' : 'Boxplot ' + used[0].name, xLabel: used.length > 1 ? 'Variabel' : '', yLabel: 'Nilai', mean: true }),
-    });
-    used.forEach((u) => {
-      charts.push({
-        title: 'Histogram ' + u.name,
-        caption: 'Batang = frekuensi tiap kelas; kurva oranye = kurva normal dengan rata-rata (' + fmt(u.d.mean) + ') dan simpangan baku (' + fmt(u.d.sd) + ') sampel. Bentuk yang jauh dari lonceng menandakan data miring atau berekor.',
-        build: () => SC.hist(u.x, { title: 'Histogram ' + u.name, xLabel: u.name }),
-      });
-    });
-    used.forEach((u) => {
-      charts.push({
-        title: 'Q-Q plot ' + u.name,
-        caption: 'Titik yang mengikuti garis lurus menandakan data mendekati sebaran normal.',
-        build: () => SC.qq(u.x, { title: 'Q-Q Plot ' + u.name }),
-      });
-    });
-    if (used.length > 1) {
-      charts.push({
-        title: 'Perbandingan rata-rata',
-        caption: 'Tinggi batang = rata-rata tiap variabel (nilai tertera di atas batang).',
-        build: () => SC.bars({ title: 'Rata-rata per Variabel', xLabel: 'Variabel', yLabel: 'Rata-rata', labels: used.map((u) => u.name), values: used.map((u) => u.d.mean), valueLabels: true }),
-      });
-    }
-    return charts;
-  }
-
   function publish(used) {
     try {
       const SE = window.StatExport; if (!SE) return;
@@ -396,9 +361,9 @@
         meta: [['Metode', 'Statistika Deskriptif'], ['Jumlah variabel', used.length], ['Variabel', used.map((u) => u.name).join(', ')]],
         sections: [{ heading: 'Ringkasan Statistik', sel: '#dsSumWrap' }, { heading: 'Langkah Perhitungan', sel: '#dsStepsWrap' }, { heading: 'Interpretasi', sel: '#dsInterpWrap' }],
         data: { head: ['#'].concat(used.map((u) => u.name)), rows: Array.from({ length: n }, (_, i) => [i + 1].concat(used.map((u) => (i < u.x.length ? u.x[i] : '')))), caption: 'Data yang dipakai pada perhitungan.' },
-        charts: buildCharts(used),
+        charts: [],
       });
-    } catch (e) { console.warn('Ekspor Statistika Deskriptif:', e); }
+    } catch (e) { /* ekspor opsional */ }
   }
 
   window.StatCalcDeskriptif = { describe, tCrit };

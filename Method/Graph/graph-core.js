@@ -319,7 +319,7 @@
     section.id = 'view-' + id;
     section.innerHTML = `
       <div class="chapter-inner">
-        <div class="chapter-head">
+        <div class="chapter-head ch-wide">
           <span class="eyebrow">Graph &rsaquo; ${esc(typeText)}</span>
           <h1>${esc(cfg.title)}</h1>
           <p class="lede">${cfg.lede || ''}</p>

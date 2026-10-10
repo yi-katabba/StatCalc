@@ -274,6 +274,8 @@ button:focus-visible, input:focus-visible, [tabindex]:focus-visible{
   font-size:clamp(28px,4.5vw,40px); line-height:1.12; margin:0 0 10px;
 }
 .chapter-head .lede{ font-size:16px; color:var(--ink-soft); max-width:60ch; margin:0; text-align:justify; text-justify:inter-word; }
+/* Halaman metode Stat & Graph: judul dan paragraf penjelas memenuhi lebar konten (PC & tablet) */
+.chapter-head.ch-wide, .chapter-head.ch-wide .lede{ max-width:none; }
 
 /* ---------- CARDS (regresi chapter reuses this) ---------- */
 .card{
@@ -1614,7 +1616,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 <section class="view" id="view-regresi">
   <div class="chapter-inner">
 
-    <div class="chapter-head">
+    <div class="chapter-head ch-wide">
       <span class="eyebrow">Metode Statistik</span>
       <h1>Regresi Linear</h1>
       <p class="lede">Regresi linear sederhana (1 variabel X) maupun berganda (2&ndash;6 variabel X), lengkap dengan tabel bantu, langkah manual, persamaan, dan interpretasi.</p>
@@ -1694,7 +1696,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 <section class="view" id="view-smoothing">
   <div class="chapter-inner">
 
-    <div class="chapter-head">
+    <div class="chapter-head ch-wide">
       <span class="eyebrow">Metode Statistik</span>
       <h1>Metode Smoothing</h1>
       <p class="lede">Ramalkan data deret waktu (time series) dengan Single Moving Average (SMA), Double Moving Average (DMA), Single Exponential Smoothing (SES), Double Exponential Smoothing &mdash; Holt (DES), atau Triple Exponential Smoothing &mdash; Winter (TES), lengkap dengan tabel hasil, langkah manual, grafik, dan evaluasi akurasi (MSE &amp; MAPE).</p>
@@ -1802,7 +1804,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 <section class="view" id="view-anova">
   <div class="chapter-inner">
 
-    <div class="chapter-head">
+    <div class="chapter-head ch-wide">
       <span class="eyebrow">Metode Statistik</span>
       <h1>ANOVA Lengkap</h1>
       <p class="lede">Analysis of Variance (ANOVA) satu arah (one-way) untuk membandingkan rata-rata beberapa kelompok berdasarkan satu faktor, atau ANOVA dua arah (two-way) dengan dua faktor sekaligus termasuk pengaruh interaksinya, lengkap dengan tabel ANOVA, hipotesis, dan kesimpulan.</p>
@@ -1907,7 +1909,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 <section class="view" id="view-stasioner">
   <div class="chapter-inner">
 
-    <div class="chapter-head">
+    <div class="chapter-head ch-wide">
       <span class="eyebrow">Metode Statistik</span>
       <h1>Uji Stasioneritas</h1>
       <p class="lede">Uji stasioneritas data deret waktu dalam dua tahap: (1) stasioner dalam <strong>varians</strong> dengan transformasi Box-Cox dan grafiknya, lalu (2) stasioner dalam <strong>mean</strong> dengan uji akar unit ADF, Phillips-Perron, atau KPSS. Lihat hipotesis, nilai kritis, p-value, grafik, dan kesimpulan akhir.</p>
