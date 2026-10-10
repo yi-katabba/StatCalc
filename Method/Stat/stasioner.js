@@ -318,7 +318,7 @@
 
   /* Estimator \u03C3 untuk grafik Box-Cox:
      'sd' = simpangan baku sampel biasa (seluruh data; tren ikut dihitung sebagai variasi).
-     'mr' = sigma within dari moving range, MR\u0304 / 1,128 (gaya Minitab untuk data individual / subgroup size 1);
+     'mr' = sigma within dari moving range, MR\u0304 / 1,128 (untuk data individual / subgroup size 1);
             hanya melihat selisih antar data berurutan, sehingga pengaruh tren diminimalkan. */
   const MR_D2 = 1.128;
   function sigmaMR(a) {
@@ -403,13 +403,13 @@
   }
 
   /* Pengaturan tampilan grafik Box-Cox (dipakai grafik di halaman DAN grafik di panel ekspor/.docx).
-     style: 'smooth' = kurva halus; 'line' = garis lurus antar titik \u03BB (seperti Minitab).
-     clip: true = sumbu Y dipotong agar bagian sekitar minimum terbaca; false = skala penuh (seperti Minitab).
+     style: 'smooth' = kurva halus; 'line' = garis lurus antar titik \u03BB.
+     clip: true = sumbu Y dipotong agar bagian sekitar minimum terbaca; false = skala penuh tanpa pemotongan.
      c1 = warna kurva & titik; c2 = warna titik \u03BB estimasi. Pita Warna di panel ekspor (bila diubah) menimpa c1/c2/latar/kisi. */
   const BC_VIEW_DEF = { style: 'smooth', clip: true, c1: '#0B5CA5', c2: '#BD7E1F' };
   const bcView = Object.assign({}, BC_VIEW_DEF);
 
-  /* Grafik Box-Cox bergaya Minitab: StDev (y) terhadap \u03BB (x), garis batas, CL bawah/atas, ringkasan di kanan. */
+  /* Grafik Box-Cox: StDev (y) terhadap \u03BB (x), garis batas, CL bawah/atas, ringkasan di kanan. */
   function boxcoxSvg(bc, name, opt) {
     const V = Object.assign({}, bcView, opt || {});
     const GST = window.GraphCore && window.GraphCore.u && window.GraphCore.u.ST;
@@ -455,7 +455,7 @@
     const ly = ys(bc.limit);
     s += `<line x1="${X0}" x2="${X0 + PW + 6}" y1="${ly.toFixed(1)}" y2="${ly.toFixed(1)}" stroke="#8C8C8C" stroke-dasharray="6 4"/>`;
     s += `<text x="${X0 + PW + 10}" y="${(ly + 4).toFixed(1)}" font-size="12.5" font-weight="600" fill="${SOFT}">Limit</text>`;
-    /* kurva & titik. 'line' = garis lurus antar titik \u03BB (gaya Minitab, rapat di sekitar optimum); 'smooth' = kurva halus */
+    /* kurva & titik. 'line' = garis lurus antar titik \u03BB (rapat di sekitar optimum); 'smooth' = kurva halus */
     let pts;
     if (V.style === 'line') {
       const set = [-5, -2.5, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2.5, 5, bc.est];
