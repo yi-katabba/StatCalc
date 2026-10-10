@@ -1248,6 +1248,32 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
   #hubGrid .hub-card:nth-child(n+4){ grid-column:span 3; min-height:150px; }
   #hubGrid .hub-card:last-child:nth-child(odd){ grid-column:span 3; }
 }
+
+/* ===== Pita pengaturan Regresi (gaya sama dengan pita Calc) ===== */
+#view-regresi .rg-main{ padding:0; overflow:hidden; }
+#view-regresi .rg-tabs{ display:flex; gap:2px; padding:8px 10px 0; background:var(--paper-2); border-bottom:1px solid var(--rule-strong); overflow-x:auto; scrollbar-width:none; }
+#view-regresi .rg-tab{ flex:1 1 0; max-width:150px; min-height:42px; padding:0 16px; border:1px solid transparent; border-bottom:none; border-radius:10px 10px 0 0; background:transparent; color:var(--ink-soft); font-family:var(--font-body); font-size:14px; font-weight:700; cursor:pointer; margin-bottom:-1px; }
+#view-regresi .rg-tab:hover{ color:var(--ink); background:rgba(255,255,255,.55); }
+#view-regresi .rg-tab[aria-selected="true"]{ background:#fff; color:var(--accent); border-color:var(--rule-strong); box-shadow:inset 0 3px 0 var(--accent-2); }
+#view-regresi .rg-rpanel{ display:none; background:#fff; }
+#view-regresi .rg-rpanel.on{ display:block; }
+#view-regresi .rg-rbody{ display:flex; flex-wrap:nowrap; align-items:stretch; padding:10px 8px 4px; overflow-x:auto; scrollbar-width:thin; -webkit-overflow-scrolling:touch; overscroll-behavior-x:contain; }
+#view-regresi .rg-grp{ flex:0 0 auto; display:flex; flex-direction:column; padding:0 12px; border-right:1px solid var(--rule); }
+#view-regresi .rg-grp:last-child{ border-right:none; }
+#view-regresi .rg-gbody{ flex:1; display:flex; align-items:center; gap:6px; }
+#view-regresi .rg-gbody.rg-wrap{ display:grid; grid-template-columns:repeat(2,max-content); gap:6px 8px; }
+#view-regresi .rg-glabel{ text-align:center; font-size:11px; font-weight:700; letter-spacing:.04em; color:var(--ink-faint); padding:6px 0 4px; }
+#view-regresi .rg-fld{ display:flex; flex-direction:column; gap:3px; min-width:0; }
+#view-regresi .rg-fld > label{ font-size:11.5px; font-weight:600; color:var(--ink-soft); line-height:1.2; }
+#view-regresi .rg-ribbon .select-input{ width:190px; min-width:0; height:40px; border-radius:10px; font-size:14px; padding:0 8px; }
+#view-regresi .rg-chk{ display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; padding:8px 10px; border:1px solid var(--rule); border-radius:12px; background:var(--paper-2); cursor:pointer; line-height:1.2; }
+#view-regresi .rg-chk input{ width:18px; height:18px; flex-shrink:0; accent-color:var(--accent); }
+#view-regresi .rg-tip{ margin:0; padding:6px 16px 12px; font-size:12.5px; color:var(--ink-soft); border-bottom:1px solid var(--rule); }
+#view-regresi.rg-hide-a1 [data-asm="1"], #view-regresi.rg-hide-a2 [data-asm="2"],
+#view-regresi.rg-hide-a3 [data-asm="3"], #view-regresi.rg-hide-a4 [data-asm="4"],
+#view-regresi.rg-hide-concl #conclusion-card,
+#view-regresi.rg-hide-hyp .hyp-box{ display:none; }
+#view-regresi.rg-hide-note .test-note, #view-regresi.rg-hide-note .test-sub{ display:none; }
 </style>
 <link rel="stylesheet" href="Method/Materi/katex/katex.min.css">
 </head>
@@ -1558,6 +1584,88 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
       <p class="lede">Regresi linear sederhana (1 variabel X) maupun berganda (2&ndash;6 variabel X), lengkap dengan tabel bantu, langkah manual, persamaan, dan interpretasi.</p>
     </div>
 
+    <section class="card rg-main" id="rgRibbon">
+      <div class="rg-ribbon">
+        <div class="rg-tabs" role="tablist" aria-label="Pita pengaturan regresi">
+          <button type="button" class="rg-tab" role="tab" data-rgtab="uji" aria-selected="true">Uji Asumsi</button>
+          <button type="button" class="rg-tab" role="tab" data-rgtab="tampil" aria-selected="false">Tampilan</button>
+        </div>
+
+        <div class="rg-rpanel on" data-rgpanel="uji" role="tabpanel">
+          <div class="rg-rbody">
+            <div class="rg-grp">
+              <div class="rg-gbody">
+                <div class="rg-fld"><label for="asmNormTest">Normalitas residual</label>
+                  <select id="asmNormTest" class="select-input">
+                    <option value="jb" selected>Jarque-Bera</option>
+                    <option value="sw">Shapiro-Wilk</option>
+                    <option value="ks">Kolmogorov-Smirnov (Lilliefors)</option>
+                  </select></div>
+              </div>
+              <div class="rg-glabel">Normalitas</div>
+            </div>
+            <div class="rg-grp">
+              <div class="rg-gbody">
+                <div class="rg-fld"><label for="asmMultiTest">Multikolinearitas</label>
+                  <select id="asmMultiTest" class="select-input">
+                    <option value="vif" selected>VIF</option>
+                    <option value="corr">Korelasi antar X</option>
+                    <option value="ci">Condition Index</option>
+                  </select></div>
+              </div>
+              <div class="rg-glabel">Antar variabel X</div>
+            </div>
+            <div class="rg-grp">
+              <div class="rg-gbody">
+                <div class="rg-fld"><label for="asmHeteroTest">Heteroskedastisitas</label>
+                  <select id="asmHeteroTest" class="select-input">
+                    <option value="glejser" selected>Glejser</option>
+                    <option value="bp">Breusch-Pagan</option>
+                    <option value="white">White</option>
+                  </select></div>
+              </div>
+              <div class="rg-glabel">Ragam residual</div>
+            </div>
+            <div class="rg-grp">
+              <div class="rg-gbody">
+                <div class="rg-fld"><label for="asmAutoTest">Autokorelasi</label>
+                  <select id="asmAutoTest" class="select-input">
+                    <option value="dw" selected>Durbin-Watson</option>
+                    <option value="bg">Breusch-Godfrey</option>
+                    <option value="runs">Runs</option>
+                  </select></div>
+              </div>
+              <div class="rg-glabel">Residual berurutan</div>
+            </div>
+          </div>
+          <p class="rg-tip" id="asmTestHint"><strong>Jarque-Bera</strong>: berbasis skewness &amp; kurtosis, cocok untuk sampel besar (pendekatan asimtotik). <strong>Glejser</strong>: meregresikan |residual| terhadap tiap X. <strong>VIF</strong>: meregresikan tiap X terhadap X lain (VIF &gt; 10 = bermasalah). <strong>Durbin-Watson</strong>: korelasi residual berurutan, rentang praktis 1,5&ndash;2,5.</p>
+        </div>
+
+        <div class="rg-rpanel" data-rgpanel="tampil" role="tabpanel">
+          <div class="rg-rbody">
+            <div class="rg-grp">
+              <div class="rg-gbody rg-wrap">
+                <label class="rg-chk"><input type="checkbox" data-rgshow="a1" checked> 1. Normalitas</label>
+                <label class="rg-chk"><input type="checkbox" data-rgshow="a2" checked> 2. Multikolinearitas</label>
+                <label class="rg-chk"><input type="checkbox" data-rgshow="a3" checked> 3. Heteroskedastisitas</label>
+                <label class="rg-chk"><input type="checkbox" data-rgshow="a4" checked> 4. Autokorelasi</label>
+              </div>
+              <div class="rg-glabel">Blok uji yang ditampilkan</div>
+            </div>
+            <div class="rg-grp">
+              <div class="rg-gbody rg-wrap">
+                <label class="rg-chk"><input type="checkbox" data-rgshow="hyp" checked> Hipotesis H0/H1</label>
+                <label class="rg-chk"><input type="checkbox" data-rgshow="note" checked> Catatan &amp; penjelasan</label>
+                <label class="rg-chk"><input type="checkbox" data-rgshow="concl" checked> Langkah 5 Kesimpulan</label>
+              </div>
+              <div class="rg-glabel">Rincian</div>
+            </div>
+          </div>
+          <p class="rg-tip">Pengaturan di tab ini hanya menyembunyikan atau menampilkan bagian hasil. Perhitungan regresi dan Kesimpulan Model tetap memakai seluruh uji.</p>
+        </div>
+      </div>
+    </section>
+
     <section class="card step-card" id="setup-card">
       <div class="step-tag">Langkah 1</div>
       <h2>Tentukan jumlah variabel bebas (X)</h2>
@@ -1614,40 +1722,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
     <section class="card step-card" id="assumptions-card" hidden>
       <div class="step-tag">Langkah 4</div>
       <h2>Uji Asumsi Regresi</h2>
-      <p class="hint">Nilai uji asumsi klasik untuk model regresi yang telah dihitung, lengkap dengan hipotesis (H0 &amp; H1), statistik uji, dan kesimpulannya.</p>
-      <div class="control-row">
-        <label for="asmNormTest">Uji normalitas residual</label>
-        <select id="asmNormTest" class="select-input">
-          <option value="jb" selected>Jarque-Bera</option>
-          <option value="sw">Shapiro-Wilk</option>
-          <option value="ks">Kolmogorov-Smirnov (Lilliefors)</option>
-        </select>
-      </div>
-      <div class="control-row">
-        <label for="asmHeteroTest">Uji heteroskedastisitas</label>
-        <select id="asmHeteroTest" class="select-input">
-          <option value="glejser" selected>Glejser</option>
-          <option value="bp">Breusch-Pagan</option>
-          <option value="white">White</option>
-        </select>
-      </div>
-      <div class="control-row">
-        <label for="asmMultiTest">Uji multikolinearitas</label>
-        <select id="asmMultiTest" class="select-input">
-          <option value="vif" selected>VIF</option>
-          <option value="corr">Korelasi antar X</option>
-          <option value="ci">Condition Index</option>
-        </select>
-      </div>
-      <div class="control-row">
-        <label for="asmAutoTest">Uji autokorelasi</label>
-        <select id="asmAutoTest" class="select-input">
-          <option value="dw" selected>Durbin-Watson</option>
-          <option value="bg">Breusch-Godfrey</option>
-          <option value="runs">Runs</option>
-        </select>
-        <p class="field-note" id="asmTestHint"><strong>Jarque-Bera</strong>: berbasis skewness &amp; kurtosis, cocok untuk sampel besar (pendekatan asimtotik). <strong>Glejser</strong>: meregresikan |residual| terhadap tiap X. <strong>VIF</strong>: meregresikan tiap X terhadap X lain (VIF &gt; 10 = bermasalah). <strong>Durbin-Watson</strong>: korelasi residual berurutan, rentang praktis 1,5&ndash;2,5.</p>
-      </div>
+      <p class="hint">Nilai uji asumsi klasik untuk model regresi yang telah dihitung, lengkap dengan hipotesis (H0 &amp; H1), statistik uji, dan kesimpulannya. Pilihan uji diatur dari pita <strong>Uji Asumsi</strong> di bagian atas halaman.</p>
       <div id="assumptionsWrap" class="equation-wrap"></div>
     </section>
 

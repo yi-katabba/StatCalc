@@ -535,6 +535,14 @@
     renderConclusion(state.last.result, state.last.data);
     exportRegresi(state.last.result, state.last.data);
   }
+  /* ---------- Pita pengaturan: ganti tab & atur tampilan (tidak menyentuh perhitungan) ---------- */
+  $$('.rg-tab').forEach((t) => t.addEventListener('click', () => {
+    $$('.rg-tab').forEach((x) => x.setAttribute('aria-selected', String(x === t)));
+    $$('.rg-rpanel').forEach((pnl) => pnl.classList.toggle('on', pnl.dataset.rgpanel === t.dataset.rgtab));
+  }));
+  $$('[data-rgshow]').forEach((c) => c.addEventListener('change', () => {
+    $('#view-regresi').classList.toggle('rg-hide-' + c.dataset.rgshow, !c.checked);
+  }));
   if (el.normSel) el.normSel.addEventListener('change', onTestChange);
   if (el.heteroSel) el.heteroSel.addEventListener('change', onTestChange);
   if (el.multiSel) el.multiSel.addEventListener('change', onTestChange);
@@ -1258,6 +1266,7 @@
     html += autoBlockHTML(computeAutocorrelationTest(res, data));
 
     el.assumptionsWrap.innerHTML = html;
+    Array.from(el.assumptionsWrap.children).forEach((b, i) => { b.dataset.asm = String(i + 1); });
   }
 
   /* =========================================================================
