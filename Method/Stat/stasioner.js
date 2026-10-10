@@ -132,7 +132,7 @@
 
   const el = {
     view: $('#view-stasioner'),
-    boxMode: $('#stBoxMode'), lambdaRow: $('#stLambdaRow'), lambda: $('#stLambda'),
+    boxMode: $('#stBoxMode'), sigmaMode: $('#stSigmaMode'), lambdaRow: $('#stLambdaRow'), lambda: $('#stLambda'),
     test: $('#stTest'),
     diff: $('#stDiff'), model: $('#stModel'), lagMode: $('#stLagMode'), lag: $('#stLag'), lagRow: $('#stLagRow'),
     buildBtn: $('#stBuildTableBtn'), setupError: $('#stSetupError'),
@@ -147,7 +147,9 @@
   };
   if (!el.view) { console.error('Uji Stasioneritas: elemen #view-stasioner tidak ditemukan di index.html.'); return; }
 
-  const state = { d: 0, model: 'c', lagMode: 'auto', lag: 1, minRows: 10, test: 'adf', boxMode: 'auto', lambda: 0 };
+  const state = { d: 0, model: 'c', lagMode: 'auto', lag: 1, minRows: 10, test: 'adf', boxMode: 'auto', lambda: 0, sigma: 'sd' };
+
+  let lastR = null; // hasil perhitungan terakhir (untuk menggambar ulang grafik Box-Cox saat tampilan diubah)
 
   const SAMPLE = [100, 105.5, 106.3, 108.2, 110.9, 110.9, 112.7, 114.5, 112.5, 116.5, 119.6, 120.1, 121.5, 124.4, 125.6,
     126.9, 125.5, 128.5, 130.6, 133, 131.4, 136.9, 139, 139.9, 146.2, 147.9, 146.5, 147.4, 144.2, 148.3];
@@ -181,6 +183,7 @@
     }
     state.d = d; state.model = el.model.value; state.lagMode = lagMode; state.lag = lag;
     state.test = el.test.value; state.boxMode = boxMode; state.lambda = lambda;
+    state.sigma = el.sigmaMode && el.sigmaMode.value === 'mr' ? 'mr' : 'sd';
     state.minRows = 10 + d + (lagMode === 'manual' ? lag : 0);
     el.minRowsHint.textContent = state.minRows;
     buildTable(Math.max(state.minRows, 12));
@@ -313,6 +316,18 @@
   const mean = (a) => a.reduce((s, v) => s + v, 0) / a.length;
   const sdSample = (a) => { const m = mean(a); return Math.sqrt(a.reduce((s, v) => s + (v - m) * (v - m), 0) / (a.length - 1)); };
 
+  /* Estimator \u03C3 untuk grafik Box-Cox:
+     'sd' = simpangan baku sampel biasa (seluruh data; tren ikut dihitung sebagai variasi).
+     'mr' = sigma within dari moving range, MR\u0304 / 1,128 (gaya Minitab untuk data individual / subgroup size 1);
+            hanya melihat selisih antar data berurutan, sehingga pengaruh tren diminimalkan. */
+  const MR_D2 = 1.128;
+  function sigmaMR(a) {
+    let s = 0;
+    for (let i = 1; i < a.length; i++) s += Math.abs(a[i] - a[i - 1]);
+    return (s / (a.length - 1)) / MR_D2;
+  }
+  const SIGMA_FN = { sd: sdSample, mr: sigmaMR };
+
   /* Transformasi Box-Cox: (Y^\u03BB \u2212 1)/\u03BB, atau ln Y bila \u03BB = 0. shift = konstanta penggeser agar Y > 0. */
   function bcTransform(raw, lam, shift) {
     return raw.map((v) => { const y = v + shift; return Math.abs(lam) < 1e-9 ? Math.log(y) : (Math.pow(y, lam) - 1) / lam; });
@@ -328,7 +343,8 @@
     return 'pangkat Y^' + String(+l.toFixed(3));
   }
 
-  function boxcox(raw) {
+  function boxcox(raw, sigmaMode) {
+    const sigma = sigmaMode === 'mr' ? 'mr' : 'sd', sigmaFn = SIGMA_FN[sigma];
     const n = raw.length;
     const mn = Math.min.apply(null, raw);
     const shift = mn > 0 ? 0 : Math.abs(mn) + 1;
@@ -339,7 +355,7 @@
        nilai untuk \u03BB berbeda sebanding; meminimalkan StDev ini = memaksimalkan likelihood Box-Cox. */
     const sdAt = (l) => {
       const w = Math.abs(l) < 1e-9 ? lny.map((v) => gm * v) : y.map((v) => Math.pow(v, l) / (l * Math.pow(gm, l - 1)));
-      return sdSample(w);
+      return sigmaFn(w);
     };
     let bi = 0, bv = Infinity;
     const STEP = 0.01, M = Math.round((BC_MAX - BC_MIN) / STEP);
@@ -381,38 +397,51 @@
     const marks = [-5, -2.5, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2.5, 5].map((l) => ({ l, sd: sdAt(l) }));
     const table = [-2, -1, -0.5, 0, 0.5, 1, 2].map((l) => ({ l, sd: sdAt(l) }));
     return {
-      n, shift, gm, est, sdMin, limit, lo: lo.v, hi: hi.v, loOpen: lo.open, hiOpen: hi.open, rounded, sd1, chi, pLR,
+      n, sigma, shift, gm, est, sdMin, limit, lo: lo.v, hi: hi.v, loOpen: lo.open, hiOpen: hi.open, rounded, sd1, chi, pLR,
       needTransform: chi > CHI2_95, curve, marks, table, sdAt,
     };
   }
 
+  /* Pengaturan tampilan grafik Box-Cox (dipakai grafik di halaman DAN grafik di panel ekspor/.docx).
+     style: 'smooth' = kurva halus; 'line' = garis lurus antar titik \u03BB (seperti Minitab).
+     clip: true = sumbu Y dipotong agar bagian sekitar minimum terbaca; false = skala penuh (seperti Minitab).
+     c1 = warna kurva & titik; c2 = warna titik \u03BB estimasi. Pita Warna di panel ekspor (bila diubah) menimpa c1/c2/latar/kisi. */
+  const BC_VIEW_DEF = { style: 'smooth', clip: true, c1: '#0B5CA5', c2: '#BD7E1F' };
+  const bcView = Object.assign({}, BC_VIEW_DEF);
+
   /* Grafik Box-Cox bergaya Minitab: StDev (y) terhadap \u03BB (x), garis batas, CL bawah/atas, ringkasan di kanan. */
-  function boxcoxSvg(bc, name) {
-    const W = 720, H = 470, L = 64, T = 84, PW = 452, PH = 316, X0 = L, Y0 = T;
+  function boxcoxSvg(bc, name, opt) {
+    const V = Object.assign({}, bcView, opt || {});
+    const GST = window.GraphCore && window.GraphCore.u && window.GraphCore.u.ST;
+    const useST = !!(GST && GST.on);
+    const COL1 = useST ? GST.c1 : V.c1, COL2 = useST ? GST.c2 : V.c2;
+    const BG = useST ? GST.bg : '#ffffff', GRIDC = useST ? GST.gc : '#E4E4E4';
+    const gridH = !useST || GST.h, gridV = !useST || GST.v === null || GST.v;
+    const W = 720, H = 470, L = 84, T = 84, PW = 432, PH = 316, X0 = L, Y0 = T;
     const xs = (l) => X0 + (l - BC_MIN) / (BC_MAX - BC_MIN) * PW;
     const all = bc.curve.map((p) => p.sd).concat([bc.limit]);
     let lo = Math.min.apply(null, all), hi = Math.max.apply(null, all);
     /* Bila ujung kurva (\u03BB = \u00B15) jauh melampaui Limit, potong sumbu y agar bagian di sekitar minimum tetap terbaca
        (grafik acuan dengan rasio ujung/Limit < 8 tidak terpotong). */
-    const cap = bc.limit * 8, clipped = hi > cap;
+    const cap = bc.limit * 8, clipped = V.clip && hi > cap;
     if (clipped) hi = cap;
     lo = Math.max(0, lo - (hi - lo) * 0.06); hi += (hi - lo) * 0.03;
     const raw = (hi - lo) / 7, mag = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / mag;
     const stp = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * mag;
     const yMin = Math.floor(lo / stp) * stp, yMax = Math.ceil(hi / stp) * stp;
     const ys = (v) => Y0 + PH - (v - yMin) / (yMax - yMin) * PH;
-    const INK = '#1C1E24', SOFT = '#52565F', BLUE = '#0B5CA5';
+    const INK = '#1C1E24', SOFT = '#52565F', BLUE = COL1;
     const f2 = (v) => (Math.abs(v) < 0.005 ? '0.00' : v.toFixed(2));
-    let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" font-family="Inter, Arial, sans-serif"><rect width="${W}" height="${H}" fill="#fff"/>`;
+    let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" font-family="Inter, Arial, sans-serif"><rect width="${W}" height="${H}" fill="${BG}"/>`;
     s += `<defs><clipPath id="bcclip"><rect x="${X0}" y="${Y0}" width="${PW}" height="${PH}"/></clipPath></defs>`;
     s += `<text x="${X0 + PW / 2}" y="34" text-anchor="middle" font-size="19" font-weight="600" fill="${INK}">${esc('Box-Cox Plot of ' + name)}</text>`;
     for (let v = yMin; v <= yMax + stp / 2; v += stp) {
       const py = ys(v);
-      s += `<line x1="${X0}" x2="${X0 + PW}" y1="${py.toFixed(1)}" y2="${py.toFixed(1)}" stroke="#E4E4E4"/>`;
+      if (gridH) s += `<line x1="${X0}" x2="${X0 + PW}" y1="${py.toFixed(1)}" y2="${py.toFixed(1)}" stroke="${GRIDC}"/>`;
       s += `<text x="${X0 - 8}" y="${(py + 4).toFixed(1)}" text-anchor="end" font-size="12" font-weight="600" fill="${INK}">${+v.toFixed(6)}</text>`;
     }
     [-5, -2.5, 0, 2.5, 5].forEach((l) => {
-      s += `<line x1="${xs(l)}" x2="${xs(l)}" y1="${Y0}" y2="${Y0 + PH}" stroke="#E4E4E4"/>`;
+      if (gridV) s += `<line x1="${xs(l)}" x2="${xs(l)}" y1="${Y0}" y2="${Y0 + PH}" stroke="${GRIDC}"/>`;
       s += `<text x="${xs(l)}" y="${Y0 + PH + 18}" text-anchor="middle" font-size="12" font-weight="600" fill="${INK}">${l.toFixed(1)}</text>`;
     });
     s += `<rect x="${X0}" y="${Y0}" width="${PW}" height="${PH}" fill="none" stroke="#9A9A9A"/>`;
@@ -426,12 +455,21 @@
     const ly = ys(bc.limit);
     s += `<line x1="${X0}" x2="${X0 + PW + 6}" y1="${ly.toFixed(1)}" y2="${ly.toFixed(1)}" stroke="#8C8C8C" stroke-dasharray="6 4"/>`;
     s += `<text x="${X0 + PW + 10}" y="${(ly + 4).toFixed(1)}" font-size="12.5" font-weight="600" fill="${SOFT}">Limit</text>`;
-    /* kurva & titik */
-    s += `<path d="${bc.curve.map((p, i) => (i ? 'L' : 'M') + xs(p.l).toFixed(1) + ' ' + ys(p.sd).toFixed(1)).join(' ')}" fill="none" stroke="${BLUE}" stroke-width="1.3" stroke-linejoin="round" clip-path="url(#bcclip)"/>`;
-    bc.marks.forEach((p) => { if (p.sd > yMax) return; s += `<circle cx="${xs(p.l).toFixed(1)}" cy="${ys(p.sd).toFixed(1)}" r="4.2" fill="${BLUE}"/>`; });
+    /* kurva & titik. 'line' = garis lurus antar titik \u03BB (gaya Minitab, rapat di sekitar optimum); 'smooth' = kurva halus */
+    let pts;
+    if (V.style === 'line') {
+      const set = [-5, -2.5, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2.5, 5, bc.est];
+      if (!bc.loOpen) set.push(bc.lo);
+      if (!bc.hiOpen) set.push(bc.hi);
+      set.push((bc.lo + bc.est) / 2, (bc.est + bc.hi) / 2);
+      pts = set.filter((l) => l >= BC_MIN - 1e-9 && l <= BC_MAX + 1e-9).sort((a, b) => a - b)
+        .filter((l, i, arr) => i === 0 || l - arr[i - 1] > 1e-6).map((l) => ({ l, sd: bc.sdAt(l) }));
+    } else pts = bc.curve;
+    s += `<path d="${pts.map((p, i) => (i ? 'L' : 'M') + xs(p.l).toFixed(1) + ' ' + ys(p.sd).toFixed(1)).join(' ')}" fill="none" stroke="${BLUE}" stroke-width="1.3" stroke-linejoin="round" clip-path="url(#bcclip)"/>`;
+    (V.style === 'line' ? pts : bc.marks).forEach((p) => { if (p.sd > yMax) return; s += `<circle cx="${xs(p.l).toFixed(1)}" cy="${ys(p.sd).toFixed(1)}" r="4.2" fill="${BLUE}"/>`; });
     const ex = xs(bc.est), ey = ys(bc.sdMin);
-    s += `<circle cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="5.2" fill="#BD7E1F" stroke="#fff" stroke-width="1.2"/>`;
-    s += `<text x="${(X0 - 44)}" y="${Y0 + PH / 2}" transform="rotate(-90 ${X0 - 44} ${Y0 + PH / 2})" text-anchor="middle" font-size="14" font-weight="600" fill="${INK}">StDev</text>`;
+    s += `<circle cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="5.2" fill="${COL2}" stroke="#fff" stroke-width="1.2"/>`;
+    s += `<text x="${(X0 - 66)}" y="${Y0 + PH / 2}" transform="rotate(-90 ${X0 - 66} ${Y0 + PH / 2})" text-anchor="middle" font-size="14" font-weight="600" fill="${INK}">StDev</text>`;
     s += `<text x="${X0 + PW / 2}" y="${H - 22}" text-anchor="middle" font-size="19" fill="${INK}">\u03BB</text>`;
     /* panel ringkasan kanan */
     const px = 540, pr = 712, cx = (px + pr) / 2 + 4;
@@ -537,7 +575,7 @@
 
   /* ----------------------------- Orkestrasi dua tahap ----------------------------- */
   function runAll(raw, cfg) {
-    const bc = boxcox(raw);
+    const bc = boxcox(raw, cfg.sigma);
     let lam = null;
     if (cfg.boxMode === 'auto') lam = bc.needTransform ? bc.rounded : null;
     else if (cfg.boxMode === 'manual') lam = cfg.lambda;
@@ -599,11 +637,58 @@
   const levels3 = ['1%', '5%', '10%'];
 
   /* ---------- Tahap 1: Box-Cox ---------- */
-  function renderVar(R) {
-    const bc = R.bc;
-    el.varChartWrap.innerHTML = boxcoxSvg(bc, 'Y');
+  /* Kontrol tampilan grafik Box-Cox (gaya garis, sumbu Y, warna). Dibuat sekali, diletakkan di atas grafik. */
+  function drawBoxcoxChart() {
+    if (!lastR) return;
+    el.varChartWrap.innerHTML = boxcoxSvg(lastR.bc, 'Y');
     const svg = el.varChartWrap.querySelector('svg');
     if (svg) { svg.style.cssText = 'width:100%;height:auto;max-width:720px;display:block;margin:0 auto 12px;'; }
+  }
+  function mountBoxcoxControls() {
+    if (document.getElementById('stBcCtl')) return;
+    const box = document.createElement('div');
+    box.id = 'stBcCtl';
+    box.style.cssText = 'display:flex;flex-wrap:wrap;gap:10px 16px;align-items:flex-end;margin:0 0 12px;padding:10px 12px;border:1px solid var(--rule,#E6E0CC);border-radius:10px;background:var(--paper,#FAF8F1);';
+    const fld = 'display:flex;flex-direction:column;gap:3px;font-size:12.5px;font-weight:600;color:var(--ink-soft,#52565F);';
+    box.innerHTML = `
+      <label style="${fld}">Gaya garis
+        <select id="stBcStyle" class="select-input">
+          <option value="smooth">Kurva halus</option>
+          <option value="line">Garis lurus antar titik (gaya Minitab)</option>
+        </select></label>
+      <label style="${fld}">Sumbu Y
+        <select id="stBcClip" class="select-input">
+          <option value="clip">Dipotong (fokus ke minimum)</option>
+          <option value="full">Skala penuh (gaya Minitab)</option>
+        </select></label>
+      <label style="${fld}">Warna kurva &amp; titik
+        <input type="color" id="stBcC1" value="${BC_VIEW_DEF.c1}" style="width:54px;height:32px;padding:0;border:1px solid #ccc;border-radius:6px;background:none;"></label>
+      <label style="${fld}">Warna titik &lambda; estimasi
+        <input type="color" id="stBcC2" value="${BC_VIEW_DEF.c2}" style="width:54px;height:32px;padding:0;border:1px solid #ccc;border-radius:6px;background:none;"></label>
+      <button type="button" class="btn-ghost" id="stBcReset" style="height:34px;padding:0 14px;">Setel ulang</button>
+      <span style="flex-basis:100%;font-size:12px;color:var(--ink-soft,#52565F);">Pengaturan ini juga dipakai pada grafik di panel unduhan dan berkas .docx. Pita Warna di panel unduhan, bila diubah, menimpa warna di sini.</span>`;
+    el.varChartWrap.parentNode.insertBefore(box, el.varChartWrap);
+    const apply = () => {
+      bcView.style = $('#stBcStyle').value;
+      bcView.clip = $('#stBcClip').value === 'clip';
+      bcView.c1 = $('#stBcC1').value;
+      bcView.c2 = $('#stBcC2').value;
+      drawBoxcoxChart();
+      if (lastR) exportStasioner(lastR);
+    };
+    ['stBcStyle', 'stBcClip', 'stBcC1', 'stBcC2'].forEach((id) => $('#' + id).addEventListener('input', apply));
+    $('#stBcReset').addEventListener('click', () => {
+      $('#stBcStyle').value = BC_VIEW_DEF.style; $('#stBcClip').value = 'clip';
+      $('#stBcC1').value = BC_VIEW_DEF.c1; $('#stBcC2').value = BC_VIEW_DEF.c2;
+      apply();
+    });
+  }
+
+  function renderVar(R) {
+    const bc = R.bc;
+    lastR = R;
+    mountBoxcoxControls();
+    drawBoxcoxChart();
 
     const loTxt = (bc.loOpen ? '\u2264 ' : '') + fmt(bc.lo, 3), hiTxt = (bc.hiOpen ? '\u2265 ' : '') + fmt(bc.hi, 3);
     const verdictCls = bc.needTransform ? 'bad' : 'ok';
@@ -624,7 +709,7 @@
 
     el.varWrap.innerHTML = `<div class="test-block">
       <h4>Tahap 1 &mdash; Stasioner dalam Varians (Transformasi Box-Cox)</h4>
-      <p class="test-sub">Grafik di atas memplot simpangan baku (StDev) data hasil transformasi untuk berbagai \u03BB. \u03BB terbaik adalah titik terendah kurva; garis putus-putus menandai selang kepercayaan 95%.</p>
+      <p class="test-sub">Grafik di atas memplot ${R.bc.sigma === 'mr' ? 'sigma within (moving range, MR\u0304/1,128)' : 'simpangan baku (StDev)'} data hasil transformasi untuk berbagai \u03BB. \u03BB terbaik adalah titik terendah kurva; garis putus-putus menandai selang kepercayaan 95%.</p>
       <div class="hyp-box">
         <div class="hyp-row"><span class="hyp-tag">H0:</span><span class="hyp-text">\u03BB = 1 &mdash; ragam sudah stabil, tidak perlu transformasi.</span></div>
         <div class="hyp-row"><span class="hyp-tag">H1:</span><span class="hyp-text">\u03BB &ne; 1 &mdash; ragam tidak stabil, data perlu ditransformasi.</span></div>
@@ -651,7 +736,9 @@
           <tr><td><strong>${fmt(bc.est, 3)}</strong></td><td>\u03BB estimasi (StDev minimum)</td><td>${fmt(bc.sdMin, 4)}</td><td class="ok">Dalam selang</td></tr>
         </tbody>
       </table></div>
-      <p class="test-note">Box-Cox menilai bentuk sebaran seluruh deret. Bila data memiliki tren yang kuat, tren ikut memengaruhi StDev; periksa juga grafik data asli di tab Grafik.</p>
+      <p class="test-note">${bc.sigma === 'mr'
+        ? 'Estimator: moving range, \u03C3 = MR\u0304 / 1,128 (gaya Minitab untuk data individual). Estimator ini hanya melihat selisih antar data berurutan, sehingga pengaruh tren diminimalkan. Selang kepercayaan memakai rumus likelihood yang sama dengan opsi StDev biasa, sehingga batasnya bisa sedikit berbeda dari Minitab.'
+        : 'Estimator: simpangan baku sampel biasa. Bila data memiliki tren yang kuat, tren ikut memengaruhi StDev; pilih estimator moving range (gaya Minitab) untuk mengurangi pengaruh tren, dan periksa juga grafik data asli di tab Grafik.'}</p>
     </div>`;
   }
 
@@ -868,12 +955,14 @@
     st.push({
       title: 'Transformasi Box-Cox terskala untuk setiap \u03BB',
       formula: 'W(\u03BB) = (Y^\u03BB \u2212 1) / (\u03BB \u00B7 GM^(\u03BB\u22121))      untuk \u03BB \u2260 0\nW(0) = GM \u00B7 ln(Y)                          untuk \u03BB = 0',
-      note: 'Untuk setiap \u03BB di rentang \u22125 sampai 5, hitung simpangan baku W(\u03BB). Hasilnya adalah kurva StDev terhadap \u03BB pada grafik.',
+      note: bc.sigma === 'mr'
+        ? 'Untuk setiap \u03BB di rentang \u22125 sampai 5, hitung sigma within W(\u03BB) dengan moving range: \u03C3 = MR\u0304 / 1,128, di mana MR\u0304 = rata-rata |W[t] \u2212 W[t\u22121]|. Hasilnya adalah kurva StDev terhadap \u03BB pada grafik (gaya Minitab).'
+        : 'Untuk setiap \u03BB di rentang \u22125 sampai 5, hitung simpangan baku W(\u03BB). Hasilnya adalah kurva StDev terhadap \u03BB pada grafik.',
     });
     st.push({
       title: 'Cari \u03BB dengan StDev minimum',
       matrix: ['\u03BB          StDev', ...bc.table.map((r) => `${lamTxt(r.l).padEnd(6)}  ${fmt(r.sd, 4).padStart(10)}`), `${fmt(bc.est, 3).padEnd(6)}  ${fmt(bc.sdMin, 4).padStart(10)}   \u2190 minimum`].join('\n'),
-      note: `StDev terkecil terjadi pada \u03BB = ${fmt(bc.est, 4)} (StDev = ${fmt(bc.sdMin, 4)}). Meminimalkan StDev ini sama dengan memaksimalkan likelihood Box-Cox.`,
+      note: `StDev terkecil terjadi pada \u03BB = ${fmt(bc.est, 4)} (StDev = ${fmt(bc.sdMin, 4)}). ${bc.sigma === 'mr' ? 'Estimator moving range meminimalkan sigma within, bukan likelihood normal biasa.' : 'Meminimalkan StDev ini sama dengan memaksimalkan likelihood Box-Cox.'}`,
     });
     st.push({
       title: 'Hitung selang kepercayaan 95% untuk \u03BB',
@@ -1138,7 +1227,7 @@
       const cfg = R.cfg, d = cfg.d, bc = R.bc, t0 = R.tests[0], z = t0.z;
       const mean0 = (a) => a.reduce((s, v) => s + v, 0) / a.length;
       const charts = [
-        { title: 'Box-Cox Plot (stasioner dalam varians)', caption: 'StDev data hasil transformasi menurut \u03BB. Titik oranye = \u03BB estimasi; garis putus-putus tegak = batas bawah/atas selang 95%; garis datar = Limit. Bila selang memuat 1, varians dianggap stabil.', build: () => boxcoxSvg(bc, 'Y') },
+        { title: 'Box-Cox Plot (stasioner dalam varians)', caption: 'StDev data hasil transformasi menurut \u03BB. Titik berwarna sorotan = \u03BB estimasi; garis putus-putus tegak = batas bawah/atas selang 95%; garis datar = Limit. Bila selang memuat 1, varians dianggap stabil.', build: () => boxcoxSvg(bc, 'Y') },
         { title: 'Deret data asli', caption: 'Deret stasioner berfluktuasi di sekitar rata-rata tetap tanpa tren naik/turun yang jelas. Garis putus-putus = rata-rata.', build: () => SC.line({ title: 'Data Asli (Y)', xLabel: 'Periode', yLabel: 'Nilai', labels: R.raw.map((_, i) => i + 1), series: [{ name: 'Data asli', values: R.raw }], hlines: [{ y: mean0(R.raw), label: 'rata-rata', color: '#BD7E1F' }] }) },
       ];
       if (R.lam !== null) charts.push({ title: 'Data setelah transformasi Box-Cox', caption: 'Deret setelah transformasi \u03BB = ' + lamTxt(R.lam) + '. Sebaran yang lebih seragam menandakan varians lebih stabil.', build: () => SC.line({ title: 'Data Hasil Transformasi (\u03BB = ' + lamTxt(R.lam) + ')', xLabel: 'Periode', yLabel: 'Nilai', labels: R.base.map((_, i) => i + 1), series: [{ name: 'Transformasi', values: R.base }], hlines: [{ y: mean0(R.base), label: 'rata-rata', color: '#BD7E1F' }] }) });
@@ -1151,6 +1240,7 @@
       });
       const meta = [
         ['Jenis analisis', 'Uji stasioneritas dua tahap (varians: Box-Cox; mean: ' + R.tests.map((t) => TEST_SHORT[t.kind]).join(' + ') + ')'],
+        ['Estimator StDev Box-Cox', bc.sigma === 'mr' ? 'Moving range (MR\u0304/1,128, gaya Minitab)' : 'Simpangan baku sampel'],
         ['\u03BB Box-Cox (estimasi)', fmt(bc.est, 4)],
         ['Selang kepercayaan 95% \u03BB', '[' + fmt(bc.lo, 3) + '; ' + fmt(bc.hi, 3) + ']'],
         ['\u03BB pembulatan', lamTxt(bc.rounded)],
