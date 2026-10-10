@@ -254,6 +254,7 @@
 
   /* ----------------------------- Pembuat halaman graph ----------------------------- */
   let clipCounter = 0;
+  const registry = {};
   function add(cfg) {
     const id = cfg.id, P = 'gr-' + id + '-';
     const minRows = cfg.minRows || 2;
@@ -266,6 +267,7 @@
     }
     (cfg.options || []).forEach((o) => opts.push(o));
 
+    registry[id] = { cfg, opts };
     const useRibbon = !!window.StatRibbon;
     function optHTML(o) {
       const oid = P + 'o-' + o.key;
@@ -642,8 +644,54 @@
     }
   }
 
+  /* ---- API untuk pemakai luar (tab Grafik di Calc) ----
+     info(id)    -> {id, title, types, columns, minRows, wide, opts, style}
+     defaults(id)-> nilai bawaan semua opsi grafik
+     render(id, data, o, st) -> {svg, summary}
+        data = {wide:false, d:{cols, n}} atau {wide:true, d:{names, series, n}}
+        o    = opsi grafik (judul, label, opsi khusus); st = gaya {c1,c2,pal,bg,h,v,gc} (opsional) */
+  function styleOf(id) {
+    const r = registry[id];
+    return Object.assign({ grid: { h: 1, v: 0 }, c1: 'Warna utama', pal: true }, GRAPH_STYLE[id] || {}, (r && r.cfg.style) || {});
+  }
+  function info(id) {
+    const r = registry[id];
+    if (!r) return null;
+    const c = r.cfg;
+    return { id, title: c.title, types: c.types || [], columns: c.columns, minRows: c.minRows || 2, wide: c.wide || null, opts: r.opts, style: styleOf(id) };
+  }
+  function defaults(id) {
+    const r = registry[id], o = {};
+    if (!r) return o;
+    r.opts.forEach((d) => {
+      if (d.type === 'checkbox') o[d.key] = !!d.def;
+      else if (d.type === 'select') o[d.key] = d.def !== undefined ? d.def : d.choices[0][0];
+      else if (d.type === 'number') o[d.key] = d.def !== undefined && Number.isFinite(+d.def) ? +d.def : null;
+      else o[d.key] = d.def !== undefined ? String(d.def) : '';
+    });
+    return o;
+  }
+  function render(id, data, o, st) {
+    const r = registry[id];
+    if (!r) throw new Error('Jenis grafik tidak dikenal: ' + id);
+    const c = r.cfg, S0 = styleOf(id);
+    resetST();
+    ST.on = true;
+    st = st || {};
+    ST.c1 = st.c1 || PAL[0];
+    ST.c2 = st.c2 || ST0.c2;
+    ST.pal = (typeof st.pal === 'string' ? PALETTES[st.pal] : st.pal) || PAL;
+    ST.bg = st.bg || ST0.bg;
+    ST.h = st.h === undefined ? !!(S0.grid && S0.grid.h) : !!st.h;
+    ST.v = st.v === undefined ? !!(S0.grid && S0.grid.v) : !!st.v;
+    ST.gc = st.gc || GRID;
+    try { return data.wide ? c.wide.draw(data.d, o || {}) : c.draw(data.d, o || {}); } finally { resetST(); }
+  }
+
   window.GraphCore = {
-    add,
+    add, info, defaults, render, registry,
+    downloadSVG, downloadPNG, exportSvg, parseNum, saveBlob,
+    PALETTES, PALETTE_LABEL, PAL, GRID,
     u: {
       esc, fmt, parseNum, PAL, INK, SOFT, GRID, AXIS, ST, ST0, PALETTES, PALETTE_LABEL, resetST,
       sum, mean, min, max, sd, sortedAsc, quantile, linreg, invNorm,

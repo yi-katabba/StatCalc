@@ -11,6 +11,7 @@
   - Seleksi rentang (seret mouse / Shift+klik / Shift+panah / klik kolom-baris / kotak nama),
     Salin-Potong-Tempel, Isi ke bawah-kanan, serta sisip & hapus baris/kolom di posisi sel
     terpilih (rumus ikut menyesuaikan). Lembar digambar memenuhi lebar & tinggi area kerja.
+  - Tab Grafik / Edit Grafik: isinya dibuat oleh Method/Calc/sheet-graph.js (grafik langsung dari data sheet).
    Halaman dibuat otomatis (#view-metode-calc); tidak ada markup di index.html.
    ========================================================================= */
 (function () {
@@ -66,7 +67,8 @@
   let valCache = new Map();
   let aggCache = new Map();
   const evaluating = new Set();
-  function invalidate() { valCache = new Map(); aggCache = new Map(); }
+  const changeListeners = [];
+  function invalidate() { valCache = new Map(); aggCache = new Map(); changeListeners.forEach((fn) => { try { fn(); } catch (e) { /* pendengar tidak boleh mengganggu lembar */ } }); }
 
   /* Tokenizer + parser (recursive descent) */
   function tokenize(src) {
@@ -505,7 +507,9 @@
             <button type="button" class="sc-tab" role="tab" data-tab="file" aria-selected="true">File</button>
             <button type="button" class="sc-tab" role="tab" data-tab="edit" aria-selected="false">Edit</button>
             <button type="button" class="sc-tab" role="tab" data-tab="fungsi" aria-selected="false">Fungsi</button>
+            <button type="button" class="sc-tab" role="tab" data-tab="grafik" aria-selected="false">Grafik</button>
             <button type="button" class="sc-tab" role="tab" data-tab="kirim" aria-selected="false">Statistik</button>
+            <button type="button" class="sc-tab sc-tab-ctx" role="tab" data-tab="editgrafik" aria-selected="false" hidden>Edit Grafik</button>
           </div>
 
           <!-- ============ TAB FILE ============ -->
@@ -627,6 +631,10 @@
             </div>
           </div>
 
+          <!-- ============ TAB GRAFIK (diisi Method/Calc/sheet-graph.js) ============ -->
+          <div class="sc-rpanel" data-panel="grafik" role="tabpanel"><div class="sc-rbody" id="sgInsertBody"></div></div>
+          <div class="sc-rpanel" data-panel="editgrafik" role="tabpanel"><div class="sc-rbody" id="sgEditBody"></div></div>
+
           <!-- ============ TAB KIRIM ============ -->
           <div class="sc-rpanel" data-panel="kirim" role="tabpanel">
             <div class="sc-rbody">
@@ -690,6 +698,7 @@
             <p class="sc-tip" data-tip="file">Tempel blok sel dari Excel, unggah .xlsx / .csv, atau buat tabel baru lalu isi langsung di lembar kerja.</p>
             <p class="sc-tip" data-tip="edit" hidden>Pilih rentang dengan menyeret mouse, Shift+klik, Shift+panah, klik huruf kolom / nomor baris, atau ketik alamat (mis. A1:C10) di kotak nama. Delete mengosongkan rentang; Ctrl+C / X / V menyalin, memotong, menempel; Ctrl+D / R mengisi ke bawah / kanan. Awali dengan = untuk rumus.</p>
             <p class="sc-tip" data-tip="fungsi" hidden>Hasil berupa rumus yang diisi ke bawah, jadi ikut berubah bila data sumber diedit. Rumus bebas: tulis huruf kolom saja, mis. LOG10(A), (A-B)^2, IF(A&gt;100,A,0).</p>
+            <p class="sc-tip" data-tip="grafik" hidden>Pilih sel data (atau biarkan satu sel agar seluruh tabel dipakai), lalu klik ikon grafik. Grafik muncul di atas lembar kerja: seret untuk memindahkan, tarik pegangan di tepi/sudut untuk mengubah ukuran. Klik grafik untuk membuka tab <strong>Edit Grafik</strong> (data, label, warna, garis kisi, tampilan). Pilih <em>Di bawah lembar kerja</em> bila ingin mengunduh PNG / SVG.</p>
             <p class="sc-tip" data-tip="kirim" hidden>Data (termasuk kolom hasil rumus) dibawa ke metode terpilih; tombol kembali membawa Anda ke lembar ini dengan data utuh. ANOVA belum menerima data dari Calc: salin kolom lalu tempel ke tabel ANOVA.</p>
           </div>
         </div>
@@ -1036,7 +1045,9 @@
       return fmtRef(Object.assign({}, a, { [key]: lowFirst ? ns : ne })) + ':' + fmtRef(Object.assign({}, b, { [key]: lowFirst ? ne : ns }));
     });
   }
+  const structureListeners = [];
   function adjustAll(axis, kind, at, n) {
+    structureListeners.forEach((fn) => { try { fn(axis, kind, at, n); } catch (e) { /* abaikan */ } });
     S.cells.forEach((row) => { for (let i = 0; i < row.length; i++) if (row[i].charAt(0) === '=') row[i] = adjustFormula(row[i], axis, kind, at, n); });
   }
 
@@ -1195,7 +1206,8 @@
     b.addEventListener('click', () => showTab(b.dataset.tab));
     b.addEventListener('keydown', (e) => {
       if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
-      const n = all[(i + (e.key === 'ArrowRight' ? 1 : all.length - 1)) % all.length];
+      const vis = all.filter((x) => !x.hidden), k = vis.indexOf(b);
+      const n = vis[(k + (e.key === 'ArrowRight' ? 1 : vis.length - 1)) % vis.length];
       n.focus(); showTab(n.dataset.tab);
     });
   });
@@ -1603,5 +1615,12 @@
   window.addEventListener('resize', () => { if (section.classList.contains('active')) refit(); });
   if (window.ResizeObserver) new ResizeObserver(() => { if (section.classList.contains('active')) refit(); }).observe(elScroll);
   layout(); buildHead(); updateSelects(); updateInfo(); updateSelUI();
-  window.StatCalcSheet = { state: S, cellVal, display, loadGrid };
+  window.StatCalcSheet = {
+    state: S, cellVal, display, loadGrid,
+    /* dipakai Method/Calc/sheet-graph.js (tab Grafik) */
+    raw, colName, colIndex, isErr, parseNum, usedBounds, lastDataRow,
+    selection: () => ({ multi: isMulti(), rect: rect() }),
+    firstDataRow, showTab, onChange: (fn) => { changeListeners.push(fn); }, onStructure: (fn) => { structureListeners.push(fn); },
+    els: { section, scroll: elScroll, inner: elInner, rows: elRows },
+  };
 })();

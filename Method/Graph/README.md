@@ -92,3 +92,20 @@ Untuk modul Stat baru: cukup beri tiap grafik fungsi `build` (bukan `svg` jadi) 
 Di `stat-charts.js`, ambil warna lewat `ST.c1` / `ST.c2` / `palAt(i)`, bukan kode warna permanen. Warna bawaan
 `#22384A`, `#BD7E1F`, `#2F7F79` yang ditulis modul diterjemahkan otomatis oleh `tone()`; warna status
 (hijau/merah/abu-abu) tetap.
+
+
+## Tab Grafik di Calc (`Method/Calc/sheet-graph.js`)
+
+Pita Calc punya tab **Grafik**: grafik digambar langsung dari data lembar kerja lewat `GraphCore.render()`,
+tanpa membuka halaman Graph. Dimuat **setelah** `Method/Calc/sheet.js`.
+
+- `GraphCore.info(id)`, `GraphCore.defaults(id)`, `GraphCore.render(id, data, opsi, gaya)` adalah API-nya
+  (lihat komentar di `graph-core.js`). Grafik baru yang didaftarkan lewat `GraphCore.add` otomatis bisa dipakai;
+  tinggal menambah entri di `CATALOG` (dan ikon di `ICON`) pada `sheet-graph.js`.
+- Peran kolom (label, nilai, X, Y) dibaca dari `columns` tiap grafik. Entri katalog berflag `dialog: true`
+  (Bar, Pie, Time Series, Boxplot Kelompok) menanyakan kolom label dulu sebelum grafik dibuat.
+- Tampilan **di atas lembar kerja**: melayang, bisa diseret dan diubah ukurannya. **Di bawah lembar kerja**:
+  panel dengan tombol Unduh PNG / SVG dan ringkasan.
+- Klik grafik membuka tab **Edit Grafik** (data, teks, opsi, warna, garis kisi, tampilan).
+- `StatCalcSheet` menyediakan kait `onChange` dan `onStructure` agar grafik ikut berubah saat data diedit
+  atau kolom/baris disisip dan dihapus.
