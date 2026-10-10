@@ -31,6 +31,10 @@
   const ext = { r: 0, c: 0 };
   let clip = null, keepRange = false;
   let undoStack = [], redoStack = [];
+  /* Kait untuk modul tambahan (Method/Calc/sheet-data.js): status ekstra ikut undo/redo, info tambahan, reset, dan tab. */
+  let extraGet = null, extraSet = null, infoHook = null;
+  const resetHooks = [], tabHooks = {};
+  const resetExtra = () => resetHooks.forEach((fn) => { try { fn(); } catch (e) { /* abaikan */ } });
 
   function emptyCells(R, C) { return Array.from({ length: R }, () => new Array(C).fill('')); }
   S.cells = emptyCells(S.R, S.C);
@@ -46,9 +50,9 @@
     S.R = Math.max(S.R, R);
   }
   function lastDataRow() { for (let r = S.R - 1; r >= 0; r--) for (let c = 0; c < S.C; c++) if (raw(r, c) !== '') return r; return -1; }
-  function snapshot() { return JSON.stringify({ R: S.R, C: S.C, header: S.header, cells: S.cells }); }
+  function snapshot() { return JSON.stringify({ R: S.R, C: S.C, header: S.header, cells: S.cells, x: extraGet ? extraGet() : undefined }); }
   function pushUndo() { undoStack.push(snapshot()); if (undoStack.length > UNDO_MAX) undoStack.shift(); redoStack = []; updateUndoBtn(); }
-  function restore(js) { const o = JSON.parse(js); S.R = o.R; S.C = o.C; S.header = o.header; S.cells = o.cells; }
+  function restore(js) { const o = JSON.parse(js); S.R = o.R; S.C = o.C; S.header = o.header; S.cells = o.cells; if (extraSet) extraSet(o.x === undefined ? null : o.x); }
 
   const NUM_RE = /^[-+]?(\d+\.?\d*|\.\d+)(e[-+]?\d+)?$/i;
   function parseNum(t) {
@@ -506,6 +510,7 @@
           <div class="sc-tabs" role="tablist" aria-label="Pita perintah">
             <button type="button" class="sc-tab" role="tab" data-tab="file" aria-selected="true">File</button>
             <button type="button" class="sc-tab" role="tab" data-tab="edit" aria-selected="false">Edit</button>
+            <button type="button" class="sc-tab" role="tab" data-tab="data" aria-selected="false">Data</button>
             <button type="button" class="sc-tab" role="tab" data-tab="fungsi" aria-selected="false">Fungsi</button>
             <button type="button" class="sc-tab" role="tab" data-tab="grafik" aria-selected="false">Grafik</button>
             <button type="button" class="sc-tab" role="tab" data-tab="kirim" aria-selected="false">Statistik</button>
@@ -595,6 +600,9 @@
               </div>
             </div>
           </div>
+
+          <!-- ============ TAB DATA (diisi Method/Calc/sheet-data.js) ============ -->
+          <div class="sc-rpanel" data-panel="data" role="tabpanel"><div class="sc-rbody" id="sdBody"></div></div>
 
           <!-- ============ TAB FUNGSI ============ -->
           <div class="sc-rpanel" data-panel="fungsi" role="tabpanel">
@@ -807,7 +815,8 @@
 
   function updateInfo() {
     const last = lastDataRow(), ub = usedBounds();
-    elInfo.textContent = last < 0 ? `Lembar masih kosong. Batas lembar: ${MAX_R} baris × ${MAX_C} kolom.` : `Data terisi: ${last + 1} baris × ${ub.C} kolom. Batas lembar: ${MAX_R} baris × ${MAX_C} kolom.`;
+    let extra = ''; try { extra = infoHook ? infoHook() : ''; } catch (e) { extra = ''; }
+    elInfo.textContent = (last < 0 ? `Lembar masih kosong. Batas lembar: ${MAX_R} baris × ${MAX_C} kolom.` : `Data terisi: ${last + 1} baris × ${ub.C} kolom. Batas lembar: ${MAX_R} baris × ${MAX_C} kolom.`) + extra;
   }
   function updateUndoBtn() { q('scUndo').disabled = undoStack.length === 0; q('scRedo').disabled = redoStack.length === 0; }
 
@@ -1201,6 +1210,7 @@
     $$('.sc-rpanel', section).forEach((p) => p.classList.toggle('on', p.dataset.panel === name));
     $$('.sc-tip', section).forEach((p) => { p.hidden = p.dataset.tip !== name; });
     if (name === 'fungsi') updateSelects();
+    if (tabHooks[name]) { try { tabHooks[name](); } catch (e) { /* abaikan */ } }
   }
   $$('.sc-tab', section).forEach((b, i, all) => {
     b.addEventListener('click', () => showTab(b.dataset.tab));
@@ -1265,7 +1275,7 @@
     applySnapshot(redoStack.pop());
   });
   q('scClear').addEventListener('click', () => {
-    pushUndo(); S.cells = emptyCells(S.R, S.C); invalidate(); fullRender(true);
+    pushUndo(); resetExtra(); S.cells = emptyCells(S.R, S.C); invalidate(); fullRender(true);
     flash('scOk', 'Seluruh sel dikosongkan. Klik “Urungkan” bila salah.', 4000);
   });
   q('scHeader').addEventListener('change', (e) => { pushUndo(); S.header = e.target.checked; invalidate(); fullRender(true); });
@@ -1273,7 +1283,7 @@
     const C = parseInt(q('scNewC').value, 10), R = parseInt(q('scNewR').value, 10);
     if (!(C >= 1 && C <= MAX_C) || !(R >= 1 && R < MAX_R)) { flash('scErr', `Jumlah kolom 1-${MAX_C} dan jumlah baris data 1-${MAX_R - 1}.`, 6000); return; }
     hide('scErr');
-    pushUndo();
+    pushUndo(); resetExtra();
     S.C = C; S.R = R + 1; S.header = true; q('scHeader').checked = true;
     S.cells = emptyCells(S.R, S.C);
     for (let c = 0; c < C; c++) S.cells[0][c] = 'Variabel ' + (c + 1);
@@ -1330,7 +1340,7 @@
     const maxC = Math.min(MAX_C, Math.max.apply(null, rows.map((r) => r.length)));
     const clipped = rows.length > MAX_R || Math.max.apply(null, rows.map((r) => r.length)) > MAX_C;
     rows = rows.slice(0, MAX_R);
-    pushUndo();
+    pushUndo(); resetExtra();
     S.R = Math.max(rows.length, 20); S.C = Math.max(maxC, 6);
     S.cells = emptyCells(S.R, S.C);
     rows.forEach((row, r) => row.slice(0, MAX_C).forEach((v, c) => { S.cells[r][c] = normalizeInput(v); }));
@@ -1626,6 +1636,16 @@
     raw, colName, colIndex, isErr, parseNum, usedBounds, lastDataRow,
     selection: () => ({ multi: isMulti(), rect: rect() }),
     firstDataRow, showTab, onChange: (fn) => { changeListeners.push(fn); }, onStructure: (fn) => { structureListeners.push(fn); },
+    /* dipakai Method/Calc/sheet-data.js (tab Data) */
+    api: {
+      MAX_R, MAX_C, ensure, pushUndo, invalidate, fullRender, flash, hide, normalizeInput,
+      shiftFormula, adjustFormula, adjustAll,
+      registerState: (get, set) => { extraGet = get; extraSet = set; },
+      setInfoHook: (fn) => { infoHook = fn; },
+      onReset: (fn) => { resetHooks.push(fn); },
+      onTab: (name, fn) => { tabHooks[name] = fn; },
+      refreshInfo: () => updateInfo(),
+    },
     els: { section, scroll: elScroll, inner: elInner, rows: elRows },
   };
 })();
