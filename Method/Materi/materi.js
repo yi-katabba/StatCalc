@@ -390,7 +390,7 @@
     { view: 'regresi',    topic: 'regresi',    label: 'Regresi Linear' },
     { view: 'smoothing',  topic: 'smoothing',  label: 'Metode Smoothing' },
     { view: 'anova',      topic: 'anova',      label: 'ANOVA' },
-    { view: 'stasioner',  topic: 'stasioner',  label: 'Uji Stasioneritas (ADF)' },
+    { view: 'stasioner',  topic: 'stasioner',  label: 'Uji Stasioneritas' },
     { view: 'deskriptif', topic: 'deskriptif', label: 'Statistika Deskriptif' },
   ];
   // Judul hasil uji (<h4>) -> bagian materi
@@ -418,6 +418,9 @@
     ],
     smoothing: [[/Ukuran Error/i, 'error']],
     stasioner: [
+      [/Box-Cox/i, 'boxcox'],
+      [/Phillips-Perron/i, 'pp'],
+      [/KPSS/i, 'kpss'],
       [/Dickey-Fuller/i, 'adf'],
       [/Nilai Kritis/i, 'kritis'],
       [/Hasil Regresi Uji ADF/i, 'adf'],

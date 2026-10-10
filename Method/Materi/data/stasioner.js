@@ -1,11 +1,11 @@
-/* Materi: Uji Stasioneritas ADF (terhubung ke Method/Stat/stasioner.js). Rumus ditulis dengan LaTeX. */
+/* Materi: Uji Stasioneritas — Box-Cox (varians) + ADF / Phillips-Perron / KPSS (mean) (terhubung ke Method/Stat/stasioner.js). Rumus ditulis dengan LaTeX. */
 (function () {
   if (!window.StatCalcMateri) return;
   window.StatCalcMateri.register({
     id: 'stasioner', order: 6, method: 'stasioner', tone: 'gold',
-    title: 'Uji Stasioneritas', subtitle: 'Augmented Dickey-Fuller (ADF)',
-    desc: 'Konsep stasioneritas dan akar unit, persamaan uji ADF, nilai kritis MacKinnon, pemilihan lag dengan AIC, dan diferensiasi.',
-    keywords: ['stasioner', 'stasioneritas', 'akar unit', 'unit root', 'ADF', 'Dickey-Fuller', 'MacKinnon', 'tau', 'diferensiasi', 'differencing', 'random walk', 'lag', 'AIC', 'nilai kritis', 'integrasi', 'deret waktu', 'tren', 'konstanta'],
+    title: 'Uji Stasioneritas', subtitle: 'Box-Cox, ADF, Phillips-Perron & KPSS',
+    desc: 'Stasioner dalam varians (transformasi Box-Cox) dan dalam mean (uji akar unit ADF, Phillips-Perron, KPSS), nilai kritis MacKinnon, pemilihan lag, dan diferensiasi.',
+    keywords: ['stasioner', 'stasioneritas', 'akar unit', 'unit root', 'ADF', 'Phillips-Perron', 'PP', 'KPSS', 'Box-Cox', 'transformasi', 'varians', 'lambda', 'Dickey-Fuller', 'MacKinnon', 'tau', 'diferensiasi', 'differencing', 'random walk', 'lag', 'AIC', 'nilai kritis', 'integrasi', 'deret waktu', 'tren', 'konstanta'],
     icon: '<path d="M3 12c2-6 4-6 6 0s4 6 6 0 4-6 6 0"/><path d="M3 20h18" stroke-dasharray="2 3"/>',
     sections: [
       {
@@ -28,6 +28,63 @@
 </ul>
 <div class="mt-box note" data-label="Cek visual dulu">
   <p>Grafik data dan grafik <strong>ACF</strong> (autokorelasi) di tab Grafik membantu. ACF yang meluruh sangat lambat menandakan data belum stasioner, sedangkan ACF yang cepat turun mendekati nol menandakan stasioner. Uji ADF memberi keputusan yang formal.</p>
+</div>`
+      },
+      {
+        id: 'dua-tahap', title: 'Stasioner dalam varians dan dalam mean',
+        html: String.raw`
+<p>Stasioneritas lemah punya dua sisi yang diperiksa dengan alat berbeda, dan urutannya penting:</p>
+<div class="mt-tw"><table>
+<thead><tr><th>Tahap</th><th>Yang diperiksa</th><th>Alat di aplikasi</th><th>Bila tidak terpenuhi</th></tr></thead>
+<tbody>
+<tr><td><strong>1</strong></td><td>Varians konstan, $\mathrm{Var}(Y_t)=\sigma^2$</td><td>Grafik &amp; selang kepercayaan Box-Cox</td><td>Transformasi (log, akar kuadrat, kebalikan, dst.)</td></tr>
+<tr><td><strong>2</strong></td><td>Rata-rata konstan, $E(Y_t)=\mu$</td><td>Uji akar unit: ADF, Phillips-Perron, KPSS</td><td>Diferensiasi</td></tr>
+</tbody></table></div>
+<div class="mt-box key" data-label="Mengapa varians dulu?">
+  <p>Diferensiasi mengubah skala data (selisih, bukan nilai asli) dan tidak bisa mengambil logaritma dari nilai negatif. Karena itu data distabilkan variansnya terlebih dahulu dengan Box-Cox, baru dibuat stasioner dalam mean dengan diferensiasi.</p>
+</div>
+<p>Data dinyatakan <strong>stasioner penuh</strong> bila kedua tahap terpenuhi.</p>`
+      },
+      {
+        id: 'boxcox', title: 'Tahap 1: Transformasi Box-Cox (varians)',
+        html: String.raw`
+<p>Transformasi Box-Cox menstabilkan varians dengan keluarga transformasi berparameter $\lambda$:</p>
+$$Y^{(\lambda)} = \begin{cases} \dfrac{Y^{\lambda}-1}{\lambda}, & \lambda \ne 0 \\[2mm] \ln Y, & \lambda = 0 \end{cases}\qquad (Y\gt 0)$$
+<div class="mt-tw"><table>
+<thead><tr><th>$\lambda$</th><th>Transformasi</th></tr></thead>
+<tbody>
+<tr><td>$-1$</td><td>Kebalikan, $1/Y$</td></tr>
+<tr><td>$-0{,}5$</td><td>Kebalikan akar kuadrat, $1/\sqrt{Y}$</td></tr>
+<tr><td>$0$</td><td>Logaritma natural, $\ln Y$</td></tr>
+<tr><td>$0{,}5$</td><td>Akar kuadrat, $\sqrt{Y}$</td></tr>
+<tr><td>$1$</td><td>Tanpa transformasi (hanya digeser)</td></tr>
+<tr><td>$2$</td><td>Kuadrat, $Y^2$</td></tr>
+</tbody></table></div>
+<h3>Cara membaca grafik Box-Cox</h3>
+<p>Aplikasi menghitung simpangan baku data hasil transformasi yang diskalakan dengan rata-rata geometrik $GM$ agar sebanding antar-$\lambda$:</p>
+$$W(\lambda)=\frac{Y^{\lambda}-1}{\lambda\,GM^{\lambda-1}}\quad(\lambda\neq 0),\qquad W(0)=GM\cdot\ln Y$$
+<ul>
+  <li><strong>Sumbu x</strong>: nilai $\lambda$. <strong>Sumbu y</strong>: StDev dari $W(\lambda)$.</li>
+  <li><strong>Estimate</strong>: $\hat\lambda$, yaitu $\lambda$ pada titik terendah kurva (meminimalkan StDev sama dengan memaksimalkan likelihood).</li>
+  <li><strong>Limit</strong> (garis datar putus-putus): batas selang kepercayaan 95%.
+    $$\text{Limit}=SD_{\min}\cdot\exp\!\left(\frac{\chi^2_{0{,}95;1}}{2n}\right),\qquad \chi^2_{0{,}95;1}=3{,}841$$</li>
+  <li><strong>Lower CL / Upper CL</strong> (garis tegak putus-putus): $\lambda$ di kiri dan kanan estimasi tempat kurva memotong Limit.</li>
+  <li><strong>Rounded value</strong>: $\lambda$ bulat (mis. $-1; -0{,}5; 0; 0{,}5; 1; 2$) yang masih berada dalam selang dan paling dekat dengan estimasi. Nilai ini lebih mudah ditafsirkan.</li>
+</ul>
+<div class="mt-box key" data-label="Aturan keputusan">
+  <p>Bila selang kepercayaan 95% <strong>memuat 1</strong> (kurva di $\lambda=1$ berada di bawah Limit), varians sudah stabil dan data <strong>tidak perlu</strong> ditransformasi. Bila tidak memuat 1, gunakan $\lambda$ bulat.</p>
+  <p>Ini setara uji rasio likelihood $H_0:\lambda=1$ dengan statistik $\chi^2 = 2n\ln(SD_{1}/SD_{\min})$, db = 1.</p>
+</div>
+<div class="mt-box ex" data-label="Contoh membaca">
+  <p>Estimasi $\hat\lambda=-0{,}06$, selang $[-1{,}59;\,1{,}23]$, rounded value $0{,}00$. Karena selang memuat 1, varians dianggap stabil. Seandainya selang adalah $[-1{,}59;\,0{,}80]$, selang tidak memuat 1 sehingga data ditransformasi dengan $\lambda=0$, yaitu $\ln Y$.</p>
+  <p class="mt-hint-copy">Angka di atas hanya ilustrasi cara membaca grafik.</p>
+</div>
+<div class="mt-box warn" data-label="Perhatian">
+  <ul>
+    <li>Box-Cox mensyaratkan data positif. Bila ada nilai $\le 0$, aplikasi menambahkan konstanta ke seluruh data lebih dulu.</li>
+    <li>Pada data bertren kuat, tren ikut memengaruhi StDev sehingga $\hat\lambda$ bisa kurang tegas. Periksa juga grafik data asli.</li>
+    <li>Selang yang sangat lebar berarti data kurang informatif untuk memilih $\lambda$.</li>
+  </ul>
 </div>`
       },
       {
@@ -96,6 +153,62 @@ $$C(\alpha, N) = \beta_\infty + \frac{\beta_1}{N} + \frac{\beta_2}{N^2} + \frac{
 </div>`
       },
       {
+        id: 'pp', title: 'Uji Phillips-Perron (PP)',
+        html: String.raw`
+<p>Phillips-Perron adalah alternatif ADF dengan hipotesis yang sama. Perbedaannya hanya cara menangani autokorelasi (dan heteroskedastisitas) pada galat:</p>
+<ul>
+  <li><strong>ADF</strong> menambahkan suku $\Delta z_{t-i}$ ke regresi (parametrik).</li>
+  <li><strong>PP</strong> memakai regresi Dickey-Fuller <em>tanpa lag</em>, lalu mengoreksi statistik $\tau$ secara <strong>nonparametrik</strong> memakai ragam jangka panjang Newey-West.</li>
+</ul>
+<p>Regresinya: $\Delta z_t = \alpha + \delta t + \gamma z_{t-1} + u_t$, dengan $H_0:\gamma=0$ (akar unit) dan $H_1:\gamma\lt 0$ (stasioner).</p>
+<h3>Statistik $Z(\tau)$</h3>
+$$Z_\tau=\sqrt{\frac{\hat\gamma_0}{\hat\lambda^2}}\;\tau\;-\;\frac12\,\frac{\hat\lambda^2-\hat\gamma_0}{\hat\lambda}\cdot\frac{n\,SE(\hat\gamma)}{s}$$
+<p>dengan $\hat\gamma_0=SSE/n$, $s^2=SSE/(n-k)$, dan ragam jangka panjang (bobot Bartlett, bandwidth $l$):</p>
+$$\hat\lambda^2=\hat\gamma_0+2\sum_{j=1}^{l}\left(1-\frac{j}{l+1}\right)\hat\gamma_j,\qquad \hat\gamma_j=\frac1n\sum_{t=j+1}^{n}u_t u_{t-j}$$
+<p>Aplikasi memakai bandwidth otomatis $l=\lfloor 4\,(n/100)^{1/4}\rfloor$, atau nilai manual 0&ndash;12.</p>
+<div class="mt-box key" data-label="Keputusan">
+  <p>$Z_\tau$ memiliki distribusi asimtotik yang sama dengan $\tau$ Dickey-Fuller, sehingga memakai nilai kritis MacKinnon yang sama: $Z_\tau\lt C_{5\%}\Rightarrow$ tolak $H_0$ (stasioner). Bila galat tidak berautokorelasi ($\hat\lambda^2=\hat\gamma_0$), $Z_\tau=\tau$.</p>
+</div>
+<h3>ADF atau PP?</h3>
+<ul>
+  <li>PP tidak perlu memilih jumlah lag, dan tahan terhadap heteroskedastisitas pada galat.</li>
+  <li>PP bisa kurang andal pada sampel kecil atau bila ada galat dengan autokorelasi negatif kuat (distorsi ukuran uji). ADF lebih umum dipakai sebagai uji utama.</li>
+  <li>Praktik yang baik: jalankan keduanya. Bila keduanya sepakat, kesimpulan lebih meyakinkan.</li>
+</ul>`
+      },
+      {
+        id: 'kpss', title: 'Uji KPSS (hipotesis nol stasioner)',
+        html: String.raw`
+<p>KPSS membalik hipotesis ADF dan PP:</p>
+<div class="mt-box def" data-label="Hipotesis KPSS">
+  <p>$H_0$: deret <strong>stasioner</strong> (di sekitar level atau tren deterministik).</p>
+  <p>$H_1$: deret mengandung akar unit (<strong>tidak stasioner</strong>).</p>
+</div>
+<p>Langkahnya: regresikan $z_t$ pada konstanta (model <em>level</em>) atau konstanta dan tren, ambil galat $e_t$, lalu hitung jumlah parsialnya $S_t=\sum_{i=1}^{t}e_i$.</p>
+$$\eta=\frac{\sum_{t=1}^{n}S_t^{2}}{n^{2}\,\hat\sigma^{2}(l)},\qquad \hat\sigma^{2}(l)=\hat\gamma_0+2\sum_{j=1}^{l}\left(1-\frac{j}{l+1}\right)\hat\gamma_j$$
+<p>Bila deret stasioner, $S_t$ tidak menyimpang jauh dari nol sehingga $\eta$ kecil. Pada akar unit, $S_t$ membesar dan $\eta$ besar.</p>
+<div class="mt-tw"><table>
+<thead><tr><th>Model</th><th class="c">10%</th><th class="c">5%</th><th class="c">2,5%</th><th class="c">1%</th></tr></thead>
+<tbody>
+<tr><td>Level (konstanta)</td><td class="c">$0{,}347$</td><td class="c">$0{,}463$</td><td class="c">$0{,}574$</td><td class="c">$0{,}739$</td></tr>
+<tr><td>Tren (konstanta &amp; tren)</td><td class="c">$0{,}119$</td><td class="c">$0{,}146$</td><td class="c">$0{,}176$</td><td class="c">$0{,}216$</td></tr>
+</tbody></table></div>
+<div class="mt-box key" data-label="Arah keputusan kebalikan ADF/PP">
+  <p>$\eta\lt C_{5\%}\Rightarrow$ gagal tolak $H_0$ (stasioner). $\eta\gt C_{5\%}\Rightarrow$ tolak $H_0$ (tidak stasioner).</p>
+</div>
+<h3>Menggabungkan ADF/PP dengan KPSS</h3>
+<div class="mt-tw"><table>
+<thead><tr><th>ADF / PP</th><th>KPSS</th><th>Kesimpulan</th></tr></thead>
+<tbody>
+<tr><td>Tolak $H_0$</td><td>Gagal tolak $H_0$</td><td>Stasioner (kedua uji sepakat)</td></tr>
+<tr><td>Gagal tolak $H_0$</td><td>Tolak $H_0$</td><td>Tidak stasioner (kedua uji sepakat)</td></tr>
+<tr><td>Tolak $H_0$</td><td>Tolak $H_0$</td><td>Tidak pasti; mungkin stasioner-tren atau ada perubahan struktural. Coba model tren atau diferensiasi.</td></tr>
+<tr><td>Gagal tolak $H_0$</td><td>Gagal tolak $H_0$</td><td>Tidak pasti; data kurang informatif (sampel kecil).</td></tr>
+</tbody></table></div>
+<p>Pilihan &ldquo;Bandingkan ketiganya&rdquo; di aplikasi menjalankan ADF, PP, dan KPSS sekaligus pada data yang sama.</p>
+<p><strong>Catatan:</strong> p-value KPSS diperoleh dengan interpolasi tabel titik kritis, sehingga hanya berkisar 0,01 sampai 0,10.</p>`
+      },
+      {
         id: 'lag', title: 'Memilih jumlah lag (AIC)',
         html: String.raw`
 <p>Suku $\Delta z_{t-i}$ dalam ADF menyerap autokorelasi pada galat. Terlalu sedikit lag membuat galat masih berautokorelasi (uji bias), sedangkan terlalu banyak lag menurunkan daya uji.</p>
@@ -136,8 +249,9 @@ $$\Delta Y_t = Y_t - Y_{t-1}\qquad\qquad \Delta^2 Y_t = \Delta Y_t - \Delta Y_{t
         html: String.raw`
 <ol class="mt-steps">
   <li><strong>Lihat grafik</strong> data asli dan ACF. Tentukan apakah ada tren (untuk memilih model).</li>
-  <li><strong>Jalankan ADF pada level</strong> (tanpa diferensiasi) dengan model yang sesuai dan lag otomatis (AIC).</li>
-  <li>Bandingkan $\tau$ dengan nilai kritis 5%.
+  <li><strong>Tahap 1, periksa varians</strong> dengan grafik Box-Cox. Bila selang $\lambda$ tidak memuat 1, transformasi data (aplikasi melakukannya otomatis pada mode &ldquo;otomatis&rdquo;).</li>
+  <li><strong>Tahap 2, jalankan uji akar unit</strong> (ADF, PP, atau ketiganya) pada level (tanpa diferensiasi) dengan model yang sesuai dan lag otomatis.</li>
+  <li>Bandingkan statistik uji dengan nilai kritis 5% (untuk KPSS arahnya kebalikan).
     <ul>
       <li>$\tau \lt C_{5\%}$: stasioner pada level, $I(0)$. Selesai.</li>
       <li>Selain itu: lanjut ke langkah 4.</li>

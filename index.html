@@ -1903,20 +1903,48 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
   </div>
 </section>
 
-<!-- ===================== HALAMAN METODE: UJI STASIONERITAS (ADF) ===================== -->
+<!-- ===================== HALAMAN METODE: UJI STASIONERITAS (Box-Cox + ADF / PP / KPSS) ===================== -->
 <section class="view" id="view-stasioner">
   <div class="chapter-inner">
 
     <div class="chapter-head">
       <span class="eyebrow">Metode Statistik</span>
       <h1>Uji Stasioneritas</h1>
-      <p class="lede">Uji akar unit Augmented Dickey-Fuller (ADF) untuk data deret waktu: pilih diferensiasi, model uji, dan lag, lalu lihat hipotesis, tabel regresi, nilai kritis, p-value, grafik, dan kesimpulan stasioner atau tidak.</p>
+      <p class="lede">Uji stasioneritas data deret waktu dalam dua tahap: (1) stasioner dalam <strong>varians</strong> dengan transformasi Box-Cox dan grafiknya, lalu (2) stasioner dalam <strong>mean</strong> dengan uji akar unit ADF, Phillips-Perron, atau KPSS. Lihat hipotesis, nilai kritis, p-value, grafik, dan kesimpulan akhir.</p>
     </div>
 
     <section class="card step-card" id="st-setup-card">
       <div class="step-tag">Langkah 1</div>
       <h2>Pilih pengaturan uji</h2>
-      <p class="hint">Uji ADF berupa regresi &Delta;z[t] terhadap z[t&minus;1] (dan beberapa lag &Delta;z). Data dinyatakan stasioner bila H0 (ada akar unit) ditolak.</p>
+      <p class="hint">Stasioneritas diperiksa berurutan: <strong>varians dahulu</strong> (Box-Cox), baru <strong>mean</strong> (uji akar unit, dengan diferensiasi bila perlu). Data dinyatakan stasioner penuh bila kedua tahap terpenuhi.</p>
+
+      <h3 class="st-group-title" style="font-size:14.5px;margin:14px 0 8px;color:var(--accent);">Tahap 1 &mdash; Stasioner dalam varians (Box-Cox)</h3>
+      <div class="control-row">
+        <label for="stBoxMode">Transformasi Box-Cox</label>
+        <select id="stBoxMode" class="select-input">
+          <option value="auto">Otomatis: transformasi bila selang &lambda; tidak memuat 1</option>
+          <option value="none">Hanya lihat grafik (tanpa transformasi)</option>
+          <option value="manual">&lambda; ditentukan manual</option>
+        </select>
+        <p class="field-note">Grafik Box-Cox selalu ditampilkan. Bila selang kepercayaan 95% untuk &lambda; memuat 1, varians sudah stabil dan data tidak perlu ditransformasi. Data bernilai &le; 0 otomatis digeser agar positif.</p>
+      </div>
+      <div class="control-row" id="stLambdaRow" hidden>
+        <label for="stLambda">Nilai &lambda;</label>
+        <input type="text" id="stLambda" class="plain-input" value="0" inputmode="decimal">
+        <p class="field-note">Angka antara &minus;5 dan 5. &lambda; = 0 berarti logaritma natural, 0,5 akar kuadrat, &minus;1 kebalikan.</p>
+      </div>
+
+      <h3 class="st-group-title" style="font-size:14.5px;margin:18px 0 8px;color:var(--accent);">Tahap 2 &mdash; Stasioner dalam mean (uji akar unit)</h3>
+      <div class="control-row">
+        <label for="stTest">Jenis uji</label>
+        <select id="stTest" class="select-input">
+          <option value="adf">Augmented Dickey-Fuller (ADF)</option>
+          <option value="pp">Phillips-Perron (PP)</option>
+          <option value="kpss">KPSS</option>
+          <option value="all">Bandingkan ketiganya (ADF + PP + KPSS)</option>
+        </select>
+        <p class="field-note">ADF dan PP berhipotesis nol <em>tidak stasioner</em> (ada akar unit); KPSS berhipotesis nol <em>stasioner</em>. PP mengoreksi autokorelasi secara nonparametrik, sedangkan ADF menambahkan lag.</p>
+      </div>
       <div class="control-row">
         <label for="stDiff">Data yang diuji</label>
         <select id="stDiff" class="select-input">
@@ -1932,19 +1960,19 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
           <option value="ct">Dengan konstanta &amp; tren</option>
           <option value="nc">Tanpa konstanta &amp; tren (none)</option>
         </select>
-        <p class="field-note">Gunakan &ldquo;konstanta &amp; tren&rdquo; bila grafik data terlihat naik/turun mengikuti garis tren; &ldquo;konstanta&rdquo; bila data berfluktuasi di sekitar nilai rata-rata tertentu.</p>
+        <p class="field-note">Gunakan &ldquo;konstanta &amp; tren&rdquo; bila grafik data terlihat naik/turun mengikuti garis tren; &ldquo;konstanta&rdquo; bila data berfluktuasi di sekitar nilai rata-rata tertentu. KPSS hanya mengenal model konstanta atau konstanta &amp; tren (pilihan &ldquo;none&rdquo; dibaca sebagai konstanta).</p>
       </div>
       <div class="control-row">
-        <label for="stLagMode">Jumlah lag</label>
+        <label for="stLagMode">Jumlah lag / bandwidth</label>
         <select id="stLagMode" class="select-input">
-          <option value="auto">Otomatis (kriteria AIC)</option>
+          <option value="auto">Otomatis (AIC untuk ADF; Newey-West untuk PP &amp; KPSS)</option>
           <option value="manual">Manual</option>
         </select>
       </div>
       <div class="control-row" id="stLagRow" hidden>
         <label for="stLag">Lag (p)</label>
         <input type="number" id="stLag" class="plain-input" min="0" max="12" step="1" value="1" inputmode="numeric">
-        <p class="field-note">Lag adalah banyaknya suku &Delta;z masa lalu yang ditambahkan agar galat tidak berautokorelasi. Bilangan bulat 0&ndash;12 (0 = uji Dickey-Fuller biasa).</p>
+        <p class="field-note">Pada ADF: banyaknya suku &Delta;z masa lalu (0 = Dickey-Fuller biasa). Pada PP dan KPSS: bandwidth (lag) Newey-West untuk ragam jangka panjang. Bilangan bulat 0&ndash;12.</p>
       </div>
       <div class="control-row">
         <button type="button" class="btn-primary" id="stBuildTableBtn">Buat Tabel Input &rarr;</button>
@@ -1969,7 +1997,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
       </div>
       <div class="btn-grid btn-grid-1">
         <button type="button" class="btn-ghost" id="stFillSampleBtn">Isi contoh data</button>
-        <button type="button" class="btn-primary" id="stCalcBtn">Hitung Uji ADF &rarr;</button>
+        <button type="button" class="btn-primary" id="stCalcBtn">Hitung Uji Stasioneritas &rarr;</button>
       </div>
       <p class="error-msg" id="stDataError" hidden></p>
     </section>
@@ -1978,12 +2006,14 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
       <div class="step-tag">Langkah 3</div>
       <h2>Hasil Uji</h2>
       <nav class="tabs" id="stResultTabs">
-        <button type="button" class="tab-btn active" data-tab="st-tab-test">Hasil Uji ADF</button>
+        <button type="button" class="tab-btn active" data-tab="st-tab-var">Tahap 1: Varians</button>
+        <button type="button" class="tab-btn" data-tab="st-tab-test">Tahap 2: Mean</button>
         <button type="button" class="tab-btn" data-tab="st-tab-table">Tabel Data</button>
         <button type="button" class="tab-btn" data-tab="st-tab-steps">Langkah Perhitungan</button>
         <button type="button" class="tab-btn" data-tab="st-tab-chart">Grafik</button>
       </nav>
-      <div class="tab-panel active" id="st-tab-test"><div id="stTestWrap" class="equation-wrap"></div></div>
+      <div class="tab-panel active" id="st-tab-var"><div id="stVarChartWrap" class="chart-wrap"></div><div id="stVarWrap" class="equation-wrap"></div></div>
+      <div class="tab-panel" id="st-tab-test"><div id="stTestWrap" class="equation-wrap"></div></div>
       <div class="tab-panel" id="st-tab-table"><div id="stTableWrap" class="table-scroll"></div></div>
       <div class="tab-panel" id="st-tab-steps"><div id="stStepsWrap" class="steps-wrap"></div></div>
       <div class="tab-panel" id="st-tab-chart"><div id="stChartWrap" class="chart-wrap"></div></div>
@@ -1992,7 +2022,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
     <section class="card step-card" id="st-conclusion-card" hidden>
       <div class="step-tag">Langkah 4</div>
       <h2>Kesimpulan</h2>
-      <p class="hint">Keputusan pada taraf signifikansi 5% (&alpha; = 0.05) dan saran langkah selanjutnya.</p>
+      <p class="hint">Keputusan pada taraf signifikansi 5% (&alpha; = 0.05) untuk varians dan mean, serta saran langkah selanjutnya.</p>
       <div id="stConclusionWrap" class="equation-wrap"></div>
     </section>
 
@@ -2092,7 +2122,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
       icon: '<path d="M4 19 10 9l4 5 6-10"/><circle cx="10" cy="9" r="1.4" fill="currentColor" stroke="none"/><circle cx="14" cy="14" r="1.4" fill="currentColor" stroke="none"/>' },
     { id: 'anova',       title: 'ANOVA Lengkap',          subtitle: 'Satu Arah & Dua Arah', desc: 'Bandingkan rata-rata dari lebih dari dua kelompok data sekaligus, satu faktor maupun dua faktor sekaligus (dengan interaksi).', status: 'available', tone: 'plum',
       icon: '<path d="M4 20V10M10 20V4M16 20v7M4 20h16"/>' },
-    { id: 'stasioner',   title: 'Uji Stasioneritas',      subtitle: 'Augmented Dickey-Fuller (ADF)', desc: 'Uji akar unit untuk memastikan data deret waktu stasioner, lengkap dengan diferensiasi, pemilihan lag (AIC), nilai kritis, dan p-value MacKinnon.', status: 'available', tone: 'gold',
+    { id: 'stasioner',   title: 'Uji Stasioneritas',      subtitle: 'Box-Cox, ADF, Phillips-Perron & KPSS', desc: 'Dua tahap: stasioner dalam varians (grafik Box-Cox) dan stasioner dalam mean (uji akar unit ADF, Phillips-Perron, atau KPSS), lengkap dengan diferensiasi, nilai kritis, dan p-value.', status: 'available', tone: 'gold',
       icon: '<path d="M3 12c2-6 4-6 6 0s4 6 6 0 4-6 6 0"/><path d="M3 20h18" stroke-dasharray="2 3"/>' },
     { id: 'uji-t',       title: 'Uji t',                  subtitle: 'Satu & Dua Sampel', desc: 'Bandingkan rata-rata satu kelompok terhadap nilai acuan, atau antar dua kelompok.', status: 'soon', tone: 'gold',
       icon: '<path d="M12 4v16M6 4h12M8 20h8"/>' },
@@ -2647,7 +2677,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 <!-- ===================== METODE: ANOVA LENGKAP (logika di Method/Stat/anova.js) ===================== -->
 <script src="Method/Stat/anova.js"></script>
 
-<!-- ===================== METODE: UJI STASIONERITAS / ADF (logika di Method/Stat/stasioner.js; butuh regresi.js) ===================== -->
+<!-- ===================== METODE: UJI STASIONERITAS / Box-Cox + ADF/PP/KPSS (logika di Method/Stat/stasioner.js; butuh regresi.js) ===================== -->
 <script src="Method/Stat/stasioner.js"></script>
 
 <!-- ===================== IMPOR DATA: tempel dari Excel & unggah file (Method/Shared/impor-data.js; dipakai Stat & Graph; muat SETELAH semua file Method/Stat/, SEBELUM file Method/Graph/) ===================== -->
