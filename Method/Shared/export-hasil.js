@@ -18,7 +18,7 @@
      });
 
    Panel grafik punya pita (Warna, Garis kisi) lewat StatRibbon.mount(host); gaya disimpan per metode
-   (STYLE) dan dipakai saat grafik dibangun ulang, juga untuk .docx. Tombol "Setel ulang" mengembalikan bawaan.
+   (STYLE) dan dipakai saat grafik dibangun ulang, juga untuk .docx. Pemilih "Terapkan ke" memilih Semua grafik atau satu grafik. Tombol Setel ulang (ikon panah putar) ada di tiap tab pita.
 
    Isi sections diambil dari DOM halaman (tabel, rumus, hipotesis, kesimpulan),
    sehingga dokumen selalu sama dengan yang tampil di layar.
@@ -351,10 +351,13 @@
   /* Gaya grafik (pita Warna / Garis kisi) disimpan per metode. Selama belum diubah (dirty=false) grafik
      digambar dengan tampilan bawaan. Gaya diterapkan ke GraphCore.u.ST hanya selama grafik dibangun,
      lalu dikembalikan, sehingga halaman Graph tidak terpengaruh. Berlaku juga untuk grafik di .docx. */
+  /* STYLE[id] = { target: 'all' | indeks grafik, all: gaya untuk semua grafik, per: { indeks: gaya khusus satu grafik } } */
   const STYLE = {};
   const DEF_STYLE = () => ({ dirty: false, c1: '#22384A', c2: '#BD7E1F', pal: 'bawaan', bg: '#ffffff', h: true, v: 'auto', gc: '#E6E0CC' });
-  function withStyle(id, fn) {
-    const gu = window.GraphCore && window.GraphCore.u, st = STYLE[id];
+  const newState = () => ({ target: 'all', all: DEF_STYLE(), per: {} });
+  const styleFor = (id, i) => { const S = STYLE[id]; return (S && (S.per[i] || S.all)) || null; };
+  function withStyle(id, i, fn) {
+    const gu = window.GraphCore && window.GraphCore.u, st = styleFor(id, i);
     if (!gu || !st || !st.dirty) return fn();
     Object.assign(gu.ST, {
       on: true, h: st.h, v: st.v === 'auto' ? null : st.v === 'on',
@@ -364,9 +367,9 @@
   }
   function resolveCharts(list, id) {
     const out = [];
-    (list || []).forEach((c) => {
+    (list || []).forEach((c, i) => {
       try {
-        const svg = c.svg || (c.build ? withStyle(id, c.build) : null);
+        const svg = c.svg || (c.build ? withStyle(id, i, c.build) : null);
         if (svg) out.push({ title: c.title, caption: c.caption || '', svg });
       } catch (e) { console.warn('Grafik dilewati:', c.title, e); }
     });
@@ -439,39 +442,59 @@
 
   /* ---- pita Warna / Garis kisi untuk grafik pendukung ---- */
   const sid = (id, k) => 'exs-' + id + '-' + k;
+  function curStyle(id) { const S = STYLE[id]; return S.target === 'all' ? S.all : (S.per[S.target] || S.all); }
   function mountRibbon(id, panel) {
     const slot = $('[data-rib-slot]', panel);
     if (!slot || !window.StatRibbon || !window.GraphCore) return;
-    const gu = window.GraphCore.u, st = STYLE[id];
+    const gu = window.GraphCore.u, S = STYLE[id], spec = STORE[id];
+    if (S.target !== 'all' && !spec.resolved[S.target]) S.target = 'all';
+    const st = curStyle(id);
+    const opts = [['all', 'Semua grafik']].concat(spec.charts.map((c, i) => [String(i), (i + 1) + '. ' + c.title]));
+    const tgt = (k) => ({ label: 'Terapkan ke', cols: 1, items: [{ type: 'select', id: sid(id, k), label: 'Grafik yang diubah', options: opts, selected: String(S.target) }] });
     const tabs = [
       { id: 'warna', label: 'Warna', groups: [
+        tgt('tw'),
         { label: 'Warna data', cols: 1, items: [
           { type: 'color', id: sid(id, 'c1'), label: 'Warna utama (titik, batang, histogram)', def: st.c1 },
           { type: 'color', id: sid(id, 'c2'), label: 'Warna garis sorotan (regresi, kurva, rata-rata)', def: st.c2 },
         ] },
         { label: 'Palet warna', cols: 1, items: [{ type: 'select', id: sid(id, 'pal'), label: 'Palet (grafik banyak warna)', options: Object.keys(gu.PALETTES).map((k) => [k, gu.PALETTE_LABEL[k]]), selected: st.pal }] },
         { label: 'Latar', cols: 1, items: [{ type: 'color', id: sid(id, 'bg'), label: 'Warna latar grafik', def: st.bg }] },
-      ], tip: 'Perubahan langsung diterapkan ke semua grafik di bawah, dan ikut terbawa ke berkas .docx serta unduhan PNG/SVG/ZIP.' },
+        { label: 'Setel ulang', cols: 1, items: [{ type: 'button', act: 'warna', icon: 'reset', label: 'Setel ulang warna' }] },
+      ], tip: 'Pilih &ldquo;Semua grafik&rdquo; untuk mengubah semuanya sekaligus (pengaturan khusus per grafik ikut ditimpa), atau satu grafik saja. Perubahan ikut ke PNG/SVG/ZIP dan berkas .docx.' },
       { id: 'kisi', label: 'Garis kisi', groups: [
+        tgt('tk'),
         { label: 'Tampilkan', cols: 1, items: [
           { type: 'select', id: sid(id, 'gh'), label: 'Garis horizontal', options: [['on', 'Tampil'], ['off', 'Sembunyi']], selected: st.h ? 'on' : 'off' },
           { type: 'select', id: sid(id, 'gv'), label: 'Garis vertikal', options: [['auto', 'Otomatis (sesuai jenis grafik)'], ['on', 'Tampil'], ['off', 'Sembunyi']], selected: st.v },
         ] },
         { label: 'Gaya', cols: 1, items: [{ type: 'color', id: sid(id, 'gc'), label: 'Warna garis kisi', def: st.gc }] },
-      ], tip: 'Garis vertikal hanya berlaku untuk grafik dengan sumbu angka atau kategori; histogram dan diagram batang tetap mengikuti pilihan Anda.' },
+        { label: 'Setel ulang', cols: 1, items: [{ type: 'button', act: 'kisi', icon: 'reset', label: 'Setel ulang kisi' }] },
+      ], tip: 'Garis vertikal &ldquo;Otomatis&rdquo; mengikuti bawaan tiap jenis grafik (scatter &amp; Q-Q berkisi vertikal; histogram dan batang tidak).' },
     ];
-    window.StatRibbon.mount({ view: '#ex-panel-' + id, key: 'ex-' + id, host: slot, tabs, onChange: () => onRibbon(id) });
+    window.StatRibbon.mount({ view: '#ex-panel-' + id, key: 'ex-' + id, host: slot, tabs, onChange: (e) => onRibbon(id, e), onAction: (act) => resetPart(id, act) });
   }
   const rTimers = {};
-  function readRibbon(id) {
-    const st = STYLE[id], g = (k) => document.getElementById(sid(id, k));
-    if (!g('c1')) return;
-    st.c1 = g('c1').value; st.c2 = g('c2').value; st.pal = g('pal').value; st.bg = g('bg').value;
-    st.h = g('gh').value === 'on'; st.v = g('gv').value; st.gc = g('gc').value;
+  const gEl = (id, k) => document.getElementById(sid(id, k));
+  function loadInputs(id) {
+    const st = curStyle(id), set = (k, v) => { const el = gEl(id, k); if (el) el.value = v; };
+    set('c1', st.c1); set('c2', st.c2); set('pal', st.pal); set('bg', st.bg); set('gh', st.h ? 'on' : 'off'); set('gv', st.v); set('gc', st.gc);
   }
-  function onRibbon(id) {
+  function onRibbon(id, e) {
+    const S = STYLE[id], tid = e && e.target && e.target.id;
+    if (tid === sid(id, 'tw') || tid === sid(id, 'tk')) {            /* ganti grafik yang diubah: muat nilainya, tanpa menggambar ulang */
+      S.target = e.target.value;
+      ['tw', 'tk'].forEach((k) => { const el = gEl(id, k); if (el) el.value = S.target; });
+      loadInputs(id);
+      return;
+    }
     clearTimeout(rTimers[id]);
-    rTimers[id] = setTimeout(() => { readRibbon(id); STYLE[id].dirty = true; redraw(id); }, 40);
+    rTimers[id] = setTimeout(() => {
+      if (!gEl(id, 'c1')) return;
+      const v = { dirty: true, c1: gEl(id, 'c1').value, c2: gEl(id, 'c2').value, pal: gEl(id, 'pal').value, bg: gEl(id, 'bg').value, h: gEl(id, 'gh').value === 'on', v: gEl(id, 'gv').value, gc: gEl(id, 'gc').value };
+      if (S.target === 'all') { S.all = v; S.per = {}; } else S.per[S.target] = v;
+      redraw(id);
+    }, 40);
   }
   function redraw(id) {
     const spec = STORE[id], panel = $('#ex-panel-' + id);
@@ -481,16 +504,21 @@
     if (holders.length !== spec.resolved.length) { publish(spec); return; }
     holders.forEach((h, i) => { h.innerHTML = spec.resolved[i].svg; });
   }
-  function resetStyle(id) {
-    STYLE[id] = DEF_STYLE();
-    const st = STYLE[id], set = (k, v) => { const el = document.getElementById(sid(id, k)); if (el) el.value = v; };
-    set('c1', st.c1); set('c2', st.c2); set('pal', st.pal); set('bg', st.bg); set('gh', 'on'); set('gv', 'auto'); set('gc', st.gc);
+  /* Setel ulang satu bagian (warna atau kisi) pada grafik yang sedang dipilih di pemilih "Terapkan ke" */
+  const PART = { warna: ['c1', 'c2', 'pal', 'bg'], kisi: ['h', 'v', 'gc'] };
+  function resetPart(id, part) {
+    const S = STYLE[id], d = DEF_STYLE(), keys = PART[part];
+    if (!keys) return;
+    const apply = (st) => { keys.forEach((k) => { st[k] = d[k]; }); return st; };
+    if (S.target === 'all') { apply(S.all); Object.keys(S.per).forEach((i) => apply(S.per[i])); }
+    else S.per[S.target] = apply(Object.assign({}, S.per[S.target] || S.all, { dirty: true }));
+    loadInputs(id);
     redraw(id);
   }
 
   function publish(spec) {
     const id = spec.id;
-    if (!STYLE[id]) STYLE[id] = DEF_STYLE();
+    if (!STYLE[id]) STYLE[id] = newState();
     spec.resolved = resolveCharts(spec.charts, id);
     STORE[id] = spec;
     const anchor = $(spec.anchor);
@@ -506,7 +534,6 @@
         const k = b.dataset.ex;
         if (k === 'docx') doDocx(id);
         else if (k === 'zip') doZip(id);
-        else if (k === 'reset') resetStyle(id);
         else if (k === 'png' || k === 'svg') doFig(id, +b.dataset.i, k);
       });
       panel.innerHTML = '<div class="ex-dyn"></div>';
@@ -529,7 +556,7 @@
       <p class="hint">Grafik dibuat dari data yang baru dihitung. Unduh tiap grafik sebagai PNG/SVG, atau unduh <strong>seluruh hasil</strong> (pengaturan, tabel, uji, kesimpulan, grafik, dan data input) dalam satu dokumen Word.</p>
       <div class="control-row">
         <button type="button" class="btn-primary" data-ex="docx" data-ex-id="${id}">Unduh Hasil (.docx)</button>
-        ${spec.resolved.length ? '<button type="button" class="btn-ghost" data-ex="zip">Unduh semua grafik (.zip)</button><button type="button" class="btn-ghost" data-ex="reset">Setel ulang warna &amp; kisi</button>' : ''}
+        ${spec.resolved.length ? '<button type="button" class="btn-ghost" data-ex="zip">Unduh semua grafik (.zip)</button>' : ''}
       </div>
       <p class="ex-status" hidden></p>
       ${spec.resolved.length ? '<div class="ex-rib" data-rib-slot></div>' : ''}

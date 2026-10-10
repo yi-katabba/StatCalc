@@ -24,6 +24,8 @@
    { type:'color', id, label, def }, { type:'check', id, label, def }. Opsi cfg.onChange dipanggil
    tiap ada perubahan nilai di pita.
 
+   Jenis item tombol: { type:'button', act:'reset', icon:'reset', label:'Setel ulang' } -> cfg.onAction(act) dipanggil saat diklik.
+
    Opsi cfg.host (elemen DOM): pita ditempatkan di dalam elemen itu, bukan di bawah .chapter-head
    (dipakai StatExport untuk pita Warna/Garis kisi pada grafik pendukung).
 
@@ -57,6 +59,9 @@
 .rb-main .plain-input{ width:160px; min-width:0; height:40px; border-radius:10px; font-size:14px; padding:0 10px; text-align:left; font-family:var(--font-body); }
 .rb-color{ display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:13px; font-weight:600; padding:6px 10px; border:1px solid var(--rule); border-radius:12px; background:var(--paper-2); cursor:pointer; line-height:1.2; white-space:nowrap; }
 .rb-color input{ width:36px; height:30px; padding:0; border:1px solid var(--rule-strong); border-radius:8px; background:#fff; cursor:pointer; flex-shrink:0; }
+.rb-btn{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; min-width:92px; padding:8px 12px; border:1px solid var(--rule); border-radius:12px; background:var(--paper-2); color:var(--ink); font-family:var(--font-body); font-size:12.5px; font-weight:600; line-height:1.2; cursor:pointer; text-align:center; }
+.rb-btn:hover{ background:#fff; border-color:var(--rule-strong); color:var(--accent); }
+.rb-btn svg{ width:22px; height:22px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
 .rb-tip{ margin:0; padding:6px 16px 12px; font-size:12.5px; color:var(--ink-soft); border-bottom:1px solid var(--rule); }
 `;
   function injectCSS() {
@@ -76,6 +81,10 @@
       }
       if (it.type === 'color') {
         return `<label class="rb-color" for="${it.id}">${esc(it.label)}<input type="color" id="${it.id}" value="${esc(it.def || '#000000')}"></label>`;
+      }
+      if (it.type === 'button') {
+        const ICON = { reset: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>' };
+        return `<button type="button" class="rb-btn" data-rb-act="${esc(it.act)}"${it.id ? ` id="${it.id}"` : ''}>${ICON[it.icon] || ''}<span>${esc(it.label)}</span></button>`;
       }
       if (it.type === 'check') {
         return `<label class="rb-chk" for="${it.id}"><input type="checkbox" id="${it.id}"${it.def ? ' checked' : ''}> ${esc(it.label)}</label>`;
@@ -130,6 +139,7 @@
       fixActive();
     }
     sec.addEventListener('change', (e) => { if (e.target.matches('[data-rb]')) apply(); });
+    if (cfg.onAction) sec.addEventListener('click', (e) => { const b = e.target.closest('[data-rb-act]'); if (b) cfg.onAction(b.dataset.rbAct, e); });
     if (cfg.onChange) { sec.addEventListener('input', cfg.onChange); sec.addEventListener('change', cfg.onChange); }
     /* hasil baru menyetel ulang tab aktif -> periksa lagi */
     let t = null;

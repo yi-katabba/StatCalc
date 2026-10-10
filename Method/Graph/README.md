@@ -83,8 +83,9 @@ Panel **Grafik Pendukung & Unduh Hasil** (histogram, boxplot, Q-Q plot, dst.) ju
 - **Warna**: warna utama, warna garis sorotan (regresi / kurva normal / rata-rata), palet, dan latar.
 - **Garis kisi**: horizontal (tampil/sembunyi), vertikal (**otomatis** / tampil / sembunyi), dan warna kisi.
   "Otomatis" mempertahankan bawaan tiap grafik (mis. scatter & Q-Q memakai kisi vertikal, histogram tidak).
-- Perubahan langsung menggambar ulang semua grafik di panel, dan ikut ke unduhan PNG/SVG/ZIP serta berkas `.docx`.
-- Pilihan disimpan per metode dan bertahan saat data dihitung ulang. Tombol **Setel ulang warna & kisi** mengembalikan bawaan.
+- Pemilih **Terapkan ke** (di tab Warna dan Garis kisi): **Semua grafik** atau satu grafik tertentu. Memilih "Semua grafik" menimpa pengaturan khusus per grafik.
+- Perubahan langsung menggambar ulang grafik di panel, dan ikut ke unduhan PNG/SVG/ZIP serta berkas `.docx`.
+- Pilihan disimpan per metode dan bertahan saat data dihitung ulang. Tombol **Setel ulang warna** (tab Warna) dan **Setel ulang kisi** (tab Garis kisi), berikon panah putar, mengembalikan bagian itu ke bawaan untuk grafik yang dipilih di "Terapkan ke".
 - Selama pita belum disentuh, grafik tampil persis seperti sebelumnya.
 
 Untuk modul Stat baru: cukup beri tiap grafik fungsi `build` (bukan `svg` jadi) agar bisa digambar ulang.
