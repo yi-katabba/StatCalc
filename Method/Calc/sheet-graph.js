@@ -756,4 +756,103 @@
       charts.forEach((ch) => { ch.r1 = mvr(ch.r1, false); ch.r2 = mvr(ch.r2, true); if (ch.r1 && ch.r2 && ch.r1 > ch.r2) { ch.r1 = null; ch.r2 = null; } });
     }
   });
+
+  /* ------------- Ekspor .xlsx: grafik "di atas lembar kerja" -> gambar PNG ------------- */
+  /* Dipanggil tombol .xlsx di sheet.js. Tiap grafik melayang diubah jadi PNG lalu disisipkan
+     ke berkas xlsx (xl/media + xl/drawings) pada sel yang sama dengan posisinya di layar. */
+  const EMU = 9525;                                   // 1 piksel = 9525 EMU
+  const G = SH.geom || { CW: 104, RH: 38, GUT: GUT, TOP: 32 };
+  const xmlEsc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+  function svgToPng(ch) {
+    return new Promise((resolve, reject) => {
+      const W = Math.max(1, Math.round(ch.w * 2)), H = Math.max(1, Math.round(ch.h * 2));
+      const str = GC.exportSvg(ch._svg).str.replace(/^<svg\s+width="\d+"\s+height="\d+"\s+/, '<svg ').replace('<svg ', `<svg width="${W}" height="${H}" `);
+      const url = URL.createObjectURL(new Blob([str], { type: 'image/svg+xml;charset=utf-8' }));
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement('canvas'); c.width = W; c.height = H;
+        const x = c.getContext('2d');
+        x.fillStyle = ch.style.bg || '#fff'; x.fillRect(0, 0, W, H);
+        x.drawImage(img, 0, 0, W, H);
+        URL.revokeObjectURL(url);
+        c.toBlob((b) => {
+          if (!b) { reject(new Error('png')); return; }
+          b.arrayBuffer().then((ab) => resolve(new Uint8Array(ab)), reject);
+        }, 'image/png');
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('png')); };
+      img.src = url;
+    });
+  }
+
+  function anchorOf(ch) {
+    const xi = Math.max(0, ch.x - G.GUT), yi = Math.max(0, ch.y - G.TOP);
+    const col = Math.floor(xi / G.CW), row = Math.floor(yi / G.RH);
+    return { col, row, colOff: Math.round((xi - col * G.CW) * EMU), rowOff: Math.round((yi - row * G.RH) * EMU) };
+  }
+
+  async function embedInXlsx(X, out) {
+    const list = charts.filter((c) => c.place === 'above' && !c._err && c._svg && c.w && c.h);
+    if (!list.length || !X.CFB) return out;
+    const pics = [];
+    for (const ch of list) {
+      try { pics.push({ ch, png: await svgToPng(ch) }); } catch (e) { /* grafik ini dilewati */ }
+    }
+    if (!pics.length) return out;
+
+    const cfb = X.CFB.read(new Uint8Array(out), { type: 'array' });
+    const text = (name) => { const f = X.CFB.find(cfb, '/' + name); return f ? new TextDecoder().decode(f.content) : null; };
+    const put = (name, data) => {
+      const f = X.CFB.find(cfb, '/' + name);
+      const bytes = typeof data === 'string' ? new TextEncoder().encode(data) : data;
+      if (f) f.content = bytes; else X.CFB.utils.cfb_add(cfb, '/' + name, bytes);
+    };
+
+    const sheetPath = 'xl/worksheets/sheet1.xml';
+    let sheet = text(sheetPath);
+    if (sheet === null) return out;
+
+    // gambar + drawing
+    let anchors = '', rels = '';
+    pics.forEach((p, i) => {
+      const n = i + 1, a = anchorOf(p.ch), name = xmlEsc('Grafik ' + n + ' - ' + titleOf(p.ch));
+      put(`xl/media/grafik${n}.png`, p.png);
+      rels += `<Relationship Id="rId${n}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/grafik${n}.png"/>`;
+      anchors += `<xdr:oneCellAnchor><xdr:from><xdr:col>${a.col}</xdr:col><xdr:colOff>${a.colOff}</xdr:colOff><xdr:row>${a.row}</xdr:row><xdr:rowOff>${a.rowOff}</xdr:rowOff></xdr:from>`
+        + `<xdr:ext cx="${Math.round(p.ch.w * EMU)}" cy="${Math.round(p.ch.h * EMU)}"/>`
+        + `<xdr:pic><xdr:nvPicPr><xdr:cNvPr id="${n + 1}" name="${name}" descr="${name}"/><xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr></xdr:nvPicPr>`
+        + `<xdr:blipFill><a:blip r:embed="rId${n}"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill>`
+        + `<xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${Math.round(p.ch.w * EMU)}" cy="${Math.round(p.ch.h * EMU)}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor>`;
+    });
+    put('xl/drawings/drawing1.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n'
+      + '<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' + anchors + '</xdr:wsDr>');
+    put('xl/drawings/_rels/drawing1.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' + rels + '</Relationships>');
+
+    // relasi lembar -> drawing (gabung bila sudah ada)
+    const relPath = 'xl/worksheets/_rels/sheet1.xml.rels';
+    const drel = '<Relationship Id="rIdGrafik1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/>';
+    const oldRel = text(relPath);
+    put(relPath, oldRel ? oldRel.replace('</Relationships>', drel + '</Relationships>')
+      : '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' + drel + '</Relationships>');
+
+    // lembar: tinggi baris & lebar kolom bawaan = ukuran di layar, lalu tag <drawing>
+    if (!/xmlns:r=/.test(sheet)) sheet = sheet.replace('<worksheet ', '<worksheet xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" ');
+    sheet = sheet.replace(/<sheetFormatPr[^>]*\/>/, '');
+    const fmt = `<sheetFormatPr defaultColWidth="${((G.CW - 5) / 7).toFixed(2)}" defaultRowHeight="${(G.RH * 0.75).toFixed(2)}" customHeight="1"/>`;
+    sheet = /<cols>/.test(sheet) ? sheet.replace('<cols>', fmt + '<cols>') : sheet.replace('<sheetData', fmt + '<sheetData');
+    const tag = '<drawing r:id="rIdGrafik1"/>';
+    sheet = /<(legacyDrawing|tableParts|extLst)/.test(sheet) ? sheet.replace(/<(legacyDrawing|tableParts|extLst)/, tag + '<$1') : sheet.replace('</worksheet>', tag + '</worksheet>');
+    put(sheetPath, sheet);
+
+    // daftar tipe konten
+    let ct = text('[Content_Types].xml');
+    if (ct) {
+      if (!/Extension="png"/.test(ct)) ct = ct.replace('<Default ', '<Default Extension="png" ContentType="image/png"/><Default ');
+      ct = ct.replace('</Types>', '<Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/></Types>');
+      put('[Content_Types].xml', ct);
+    }
+    return X.CFB.write(cfb, { type: 'array', fileType: 'zip' });
+  }
+  window.StatCalcGraph = { embedInXlsx, count: () => charts.filter((c) => c.place === 'above').length };
 })();

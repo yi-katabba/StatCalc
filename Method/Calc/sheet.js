@@ -1598,10 +1598,14 @@
         ws[addr] = cell;
       }
       ws['!ref'] = `A1:${colName(b.C - 1)}${b.R}`;
-      ws['!cols'] = Array.from({ length: b.C }, () => ({ wch: 14 }));
+      ws['!cols'] = Array.from({ length: b.C }, () => ({ wpx: CW }));   // = lebar kolom di layar (agar posisi gambar sama)
       const wb = X.utils.book_new();
       X.utils.book_append_sheet(wb, ws, 'Data');
-      const out = X.write(wb, { bookType: 'xlsx', type: 'array' });
+      let out = X.write(wb, { bookType: 'xlsx', type: 'array' });
+      /* grafik "di atas lembar kerja" ikut tersimpan sebagai gambar PNG (sheet-graph.js) */
+      if (window.StatCalcGraph && window.StatCalcGraph.embedInXlsx) {
+        try { out = await window.StatCalcGraph.embedInXlsx(X, out); } catch (e) { /* tetap unduh data tanpa gambar */ }
+      }
       download(new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), fileBase() + '.xlsx');
     } catch (err) {
       flash('scErr3', 'Pustaka Excel gagal dimuat (perlu internet saat pertama kali). Coba unduh .csv sebagai alternatif.', 8000);
@@ -1617,6 +1621,7 @@
   layout(); buildHead(); updateSelects(); updateInfo(); updateSelUI();
   window.StatCalcSheet = {
     state: S, cellVal, display, loadGrid,
+    geom: { CW, RH, GUT, TOP: 32 },
     /* dipakai Method/Calc/sheet-graph.js (tab Grafik) */
     raw, colName, colIndex, isErr, parseNum, usedBounds, lastDataRow,
     selection: () => ({ multi: isMulti(), rect: rect() }),
