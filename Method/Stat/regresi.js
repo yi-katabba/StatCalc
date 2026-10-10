@@ -4,6 +4,47 @@
 (function () {
   'use strict';
 
+  /* Pita pengaturan (uji asumsi & tampilan hasil) — harus dipasang sebelum elemen dicari */
+  if (window.StatRibbon) window.StatRibbon.mount({
+    view: '#view-regresi', key: 'regresi',
+    tabs: [
+      { id: 'uji', label: 'Uji Asumsi', groups: [
+        { label: 'Normalitas', items: [{ type: 'select', id: 'asmNormTest', label: 'Normalitas residual', selected: 'jb', options: [['jb', 'Jarque-Bera'], ['sw', 'Shapiro-Wilk'], ['ks', 'Kolmogorov-Smirnov (Lilliefors)']] }] },
+        { label: 'Antar variabel X', items: [{ type: 'select', id: 'asmMultiTest', label: 'Multikolinearitas', selected: 'vif', options: [['vif', 'VIF'], ['corr', 'Korelasi antar X'], ['ci', 'Condition Index']] }] },
+        { label: 'Ragam residual', items: [{ type: 'select', id: 'asmHeteroTest', label: 'Heteroskedastisitas', selected: 'glejser', options: [['glejser', 'Glejser'], ['bp', 'Breusch-Pagan'], ['white', 'White']] }] },
+        { label: 'Residual berurutan', items: [{ type: 'select', id: 'asmAutoTest', label: 'Autokorelasi', selected: 'dw', options: [['dw', 'Durbin-Watson'], ['bg', 'Breusch-Godfrey'], ['runs', 'Runs']] }] },
+      ], tipId: 'asmTestHint', tip: '<strong>Jarque-Bera</strong>: berbasis skewness &amp; kurtosis, cocok untuk sampel besar (pendekatan asimtotik). <strong>Glejser</strong>: meregresikan |residual| terhadap tiap X. <strong>VIF</strong>: meregresikan tiap X terhadap X lain (VIF &gt; 10 = bermasalah). <strong>Durbin-Watson</strong>: korelasi residual berurutan, rentang praktis 1,5&ndash;2,5.' },
+      { id: 'hasil', label: 'Hasil', groups: [
+        { label: 'Tab hasil (Langkah 3)', cols: 2, items: [
+          { type: 'toggle', key: 'tbl', label: 'Tabel Bantu', tab: 'tab-table' },
+          { type: 'toggle', key: 'stp', label: 'Langkah Perhitungan', tab: 'tab-steps' },
+          { type: 'toggle', key: 'eq', label: 'Persamaan & Uji', tab: 'tab-equation' },
+        ] },
+        { label: 'Blok uji asumsi', cols: 2, items: [
+          { type: 'toggle', key: 'a1', label: '1. Normalitas', hide: ['[data-asm="1"]'] },
+          { type: 'toggle', key: 'a2', label: '2. Multikolinearitas', hide: ['[data-asm="2"]'] },
+          { type: 'toggle', key: 'a3', label: '3. Heteroskedastisitas', hide: ['[data-asm="3"]'] },
+          { type: 'toggle', key: 'a4', label: '4. Autokorelasi', hide: ['[data-asm="4"]'] },
+        ] },
+        { label: 'Rincian', cols: 2, items: [
+          { type: 'toggle', key: 'asm', label: 'Langkah 4 Uji Asumsi', hide: ['#assumptions-card'] },
+          { type: 'toggle', key: 'concl', label: 'Langkah 5 Kesimpulan', hide: ['#conclusion-card'] },
+          { type: 'toggle', key: 'hyp', label: 'Hipotesis H0/H1', hide: ['.hyp-box'] },
+          { type: 'toggle', key: 'note', label: 'Catatan & penjelasan', hide: ['.test-note', '.test-sub'] },
+        ] },
+      ], tip: 'Pengaturan di tab ini hanya menyembunyikan atau menampilkan bagian hasil. Perhitungan regresi dan Kesimpulan Model tetap memakai seluruh uji.' },
+      { id: 'grafik', label: 'Grafik & Ekspor', groups: [
+        { label: 'Grafik', items: [
+          { type: 'toggle', key: 'chart', label: 'Tab Grafik', tab: 'tab-chart' },
+          { type: 'toggle', key: 'figs', label: 'Grafik pendukung', hide: ['.ex-grid', '.ex-bar a'] },
+        ] },
+        { label: 'Unduhan', items: [
+          { type: 'toggle', key: 'dl', label: 'Panel unduhan (.docx/.zip)', hide: ['.ex-panel', '.ex-bar'] },
+        ] },
+      ] },
+    ],
+  });
+
   const state = { k: 1, minRows: 3, normTest: 'jb', heteroTest: 'glejser', multiTest: 'vif', autoTest: 'dw', last: null };
   const NORM_NAMES = { jb: 'Jarque-Bera', sw: 'Shapiro-Wilk', ks: 'Kolmogorov-Smirnov' };
   const HETERO_NAMES = { glejser: 'Glejser', bp: 'Breusch-Pagan', white: 'White' };
@@ -535,14 +576,6 @@
     renderConclusion(state.last.result, state.last.data);
     exportRegresi(state.last.result, state.last.data);
   }
-  /* ---------- Pita pengaturan: ganti tab & atur tampilan (tidak menyentuh perhitungan) ---------- */
-  $$('.rg-tab').forEach((t) => t.addEventListener('click', () => {
-    $$('.rg-tab').forEach((x) => x.setAttribute('aria-selected', String(x === t)));
-    $$('.rg-rpanel').forEach((pnl) => pnl.classList.toggle('on', pnl.dataset.rgpanel === t.dataset.rgtab));
-  }));
-  $$('[data-rgshow]').forEach((c) => c.addEventListener('change', () => {
-    $('#view-regresi').classList.toggle('rg-hide-' + c.dataset.rgshow, !c.checked);
-  }));
   if (el.normSel) el.normSel.addEventListener('change', onTestChange);
   if (el.heteroSel) el.heteroSel.addEventListener('change', onTestChange);
   if (el.multiSel) el.multiSel.addEventListener('change', onTestChange);

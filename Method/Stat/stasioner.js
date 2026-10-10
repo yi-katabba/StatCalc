@@ -12,6 +12,32 @@
 (function () {
   'use strict';
 
+  /* Pita pengaturan tampilan hasil */
+  if (window.StatRibbon) window.StatRibbon.mount({
+    view: '#view-stasioner', key: 'stasioner',
+    tabs: [
+      { id: 'hasil', label: 'Hasil', groups: [
+        { label: 'Tab hasil', cols: 2, items: [
+          { type: 'toggle', key: 'test', label: 'Hasil Uji ADF', tab: 'st-tab-test' },
+          { type: 'toggle', key: 'tbl', label: 'Tabel Data', tab: 'st-tab-table' },
+          { type: 'toggle', key: 'stp', label: 'Langkah Perhitungan', tab: 'st-tab-steps' },
+        ] },
+        { label: 'Bagian lain', items: [
+          { type: 'toggle', key: 'concl', label: 'Langkah 4 Kesimpulan', hide: ['#st-conclusion-card'] },
+        ] },
+      ], tip: 'Pengaturan pita hanya menyembunyikan atau menampilkan bagian hasil; perhitungan dan langkah-langkah tidak berubah.' },
+      { id: 'grafik', label: 'Grafik & Ekspor', groups: [
+        { label: 'Grafik', items: [
+          { type: 'toggle', key: 'chart', label: 'Tab Grafik', tab: 'st-tab-chart' },
+          { type: 'toggle', key: 'figs', label: 'Grafik pendukung', hide: ['.ex-grid', '.ex-bar a'] },
+        ] },
+        { label: 'Unduhan', items: [
+          { type: 'toggle', key: 'dl', label: 'Panel unduhan (.docx/.zip)', hide: ['.ex-panel', '.ex-bar'] },
+        ] },
+      ] },
+    ],
+  });
+
   const $ = (sel, ctx = document) => ctx.querySelector(sel);
   const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
   /* Mesin matriks & distribusi t (salinan dari regresi.js) — file ini mandiri,

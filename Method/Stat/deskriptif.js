@@ -165,6 +165,26 @@
       </section>
     </div>`;
   document.body.insertBefore(section, $('#profileOverlay'));
+  if (window.StatRibbon) window.StatRibbon.mount({
+    view: '#view-deskriptif', key: 'deskriptif',
+    tabs: [
+      { id: 'hasil', label: 'Hasil', groups: [
+        { label: 'Tab hasil', cols: 2, items: [
+          { type: 'toggle', key: 'sum', label: 'Ringkasan', tab: 'ds-tab-sum' },
+          { type: 'toggle', key: 'stp', label: 'Langkah Perhitungan', tab: 'ds-tab-steps' },
+          { type: 'toggle', key: 'int', label: 'Interpretasi', tab: 'ds-tab-interp' },
+        ] },
+      ], tip: 'Pengaturan pita hanya menyembunyikan atau menampilkan bagian hasil; perhitungan tidak berubah.' },
+      { id: 'grafik', label: 'Grafik & Ekspor', groups: [
+        { label: 'Grafik', items: [
+          { type: 'toggle', key: 'figs', label: 'Grafik pendukung', hide: ['.ex-grid', '.ex-bar a'] },
+        ] },
+        { label: 'Unduhan', items: [
+          { type: 'toggle', key: 'dl', label: 'Panel unduhan (.docx/.zip)', hide: ['.ex-panel', '.ex-bar'] },
+        ] },
+      ] },
+    ],
+  });
 
   const q = (id) => $('#' + id, section);
   const head = q('dsHead'), body = q('dsBody');

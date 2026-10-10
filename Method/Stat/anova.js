@@ -4,6 +4,31 @@
 (function () {
   'use strict';
 
+  /* Pita pengaturan tampilan hasil */
+  if (window.StatRibbon) window.StatRibbon.mount({
+    view: '#view-anova', key: 'anova',
+    tabs: [
+      { id: 'hasil', label: 'Hasil', groups: [
+        { label: 'Tab hasil', cols: 2, items: [
+          { type: 'toggle', key: 'desc', label: 'Statistik Kelompok', tab: 'an-tab-desc' },
+          { type: 'toggle', key: 'anv', label: 'Tabel ANOVA', tab: 'an-tab-anova' },
+          { type: 'toggle', key: 'stp', label: 'Langkah Perhitungan', tab: 'an-tab-steps' },
+        ] },
+        { label: 'Bagian lain', items: [
+          { type: 'toggle', key: 'concl', label: 'Langkah 4 Kesimpulan', hide: ['#an-conclusion-card'] },
+        ] },
+      ], tip: 'Pengaturan pita hanya menyembunyikan atau menampilkan bagian hasil; perhitungan dan langkah-langkah tidak berubah.' },
+      { id: 'grafik', label: 'Grafik & Ekspor', groups: [
+        { label: 'Grafik', items: [
+          { type: 'toggle', key: 'figs', label: 'Grafik pendukung', hide: ['.ex-grid', '.ex-bar a'] },
+        ] },
+        { label: 'Unduhan', items: [
+          { type: 'toggle', key: 'dl', label: 'Panel unduhan (.docx/.zip)', hide: ['.ex-panel', '.ex-bar'] },
+        ] },
+      ] },
+    ],
+  });
+
   const state = { mode: 'one', k: 3, rowsA: 2, colsB: 2, replic: 2 };
   const $ = (sel, ctx = document) => ctx.querySelector(sel);
   const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
