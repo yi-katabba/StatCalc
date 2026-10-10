@@ -1,5 +1,5 @@
 /* =========================================================================
-     KUIS STATISTIKA — logika menu Kuis (soal diambil dari kuis.js)
+     KUIS STATISTIKA - logika menu Kuis (soal diambil dari kuis.js)
      ========================================================================= */ 
 (function () {
   'use strict';

@@ -1,5 +1,5 @@
 /* =========================================================================
-   IMPOR DATA — tempel dari Excel & unggah file (.xlsx, .xls, .csv, .tsv, .txt)
+   IMPOR DATA - tempel dari Excel & unggah file (.xlsx, .xls, .csv, .tsv, .txt)
    -------------------------------------------------------------------------
    Modul bersama: menambahkan toolbar "Impor data" di atas tabel input tiap
    metode, lalu mengisi tabel tersebut. Alur:
@@ -264,7 +264,7 @@
       const map = parsed.map && parsed.map.length === t.n ? parsed.map : autoMap(cols, t.n);
       parsed.map = map;
       const used = new Set(map);
-      const opt = (c, sel) => `<option value="${c.j}" ${sel ? 'selected' : ''}>${colLetter(c.j)} \u2014 ${esc(c.name)}${c.numeric ? '' : ' (bukan angka)'}</option>`;
+      const opt = (c, sel) => `<option value="${c.j}" ${sel ? 'selected' : ''}>${colLetter(c.j)} - ${esc(c.name)}${c.numeric ? '' : ' (bukan angka)'}</option>`;
       const selects = t.labels.map((lab, i) => `<label>${esc(lab)} \u2190 kolom<select class="select-input" data-target="${i}">${cols.map((c) => opt(c, c.j === map[i])).join('')}</select></label>`).join('');
       const head = cols.map((c) => `<th class="${used.has(c.j) ? '' : 'skip'}">${colLetter(c.j)}<br>${esc(c.name)}</th>`).join('');
       const prevRows = data.slice(0, 5).map((r) => `<tr>${cols.map((c) => `<td class="${used.has(c.j) ? '' : 'skip'}">${esc(r[c.j])}</td>`).join('')}</tr>`).join('');

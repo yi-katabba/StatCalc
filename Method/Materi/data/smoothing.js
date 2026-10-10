@@ -72,7 +72,7 @@ $$F_{t+1} = \alpha Y_t + \alpha(1-\alpha)Y_{t-1} + \alpha(1-\alpha)^2 Y_{t-2} + 
 <tr><td>Mendekati 1</td><td>Sangat responsif pada data terbaru, ramalan kurang mulus.</td></tr>
 <tr><td>Mendekati 0</td><td>Sangat mulus, tetapi lambat mengikuti perubahan.</td></tr>
 </tbody></table></div>
-<p>Nilai $\alpha$ umumnya dipilih dengan mencoba beberapa nilai (misal 0,1&ndash;0,9) dan memilih yang MSE atau MAPE-nya terkecil. Seperti SMA, SES tidak cocok untuk data bertren.</p>`
+<p>Nilai $\alpha$ umumnya dipilih dengan mencoba beberapa nilai (misal 0,1-0,9) dan memilih yang MSE atau MAPE-nya terkecil. Seperti SMA, SES tidak cocok untuk data bertren.</p>`
       },
       {
         id: 'des', title: 'Double Exponential Smoothing (Holt)',
@@ -120,8 +120,8 @@ $$MSE = \frac{\sum_{t}(Y_t - F_t)^2}{m}\qquad\qquad MAPE = \frac{\sum_{t}\left|\
 <thead><tr><th>MAPE</th><th>Kemampuan peramalan</th></tr></thead>
 <tbody>
 <tr><td>$\lt 10\%$</td><td>Sangat akurat</td></tr>
-<tr><td>$10\%$ &ndash; $20\%$</td><td>Akurat</td></tr>
-<tr><td>$20\%$ &ndash; $50\%$</td><td>Cukup akurat</td></tr>
+<tr><td>$10\%$ - $20\%$</td><td>Akurat</td></tr>
+<tr><td>$20\%$ - $50\%$</td><td>Cukup akurat</td></tr>
 <tr><td>$> 50\%$</td><td>Tidak akurat</td></tr>
 </tbody></table></div>
 <div class="mt-box key" data-label="Memilih metode dan parameter">
@@ -151,7 +151,7 @@ $$MSE = \frac{\sum_{t}(Y_t - F_t)^2}{m}\qquad\qquad MAPE = \frac{\sum_{t}\left|\
 <div class="mt-tw"><table>
 <thead><tr><th class="c">$t$</th><th class="c">1</th><th class="c">2</th><th class="c">3</th><th class="c">4</th><th class="c">5</th><th class="c">6</th><th class="c">7</th></tr></thead>
 <tbody>
-<tr><td class="c">$Y_t$</td><td class="c">10</td><td class="c">12</td><td class="c">13</td><td class="c">12</td><td class="c">15</td><td class="c">16</td><td class="c">&mdash;</td></tr>
+<tr><td class="c">$Y_t$</td><td class="c">10</td><td class="c">12</td><td class="c">13</td><td class="c">12</td><td class="c">15</td><td class="c">16</td><td class="c">-</td></tr>
 <tr><td class="c">$F_t$</td><td class="c">10</td><td class="c">10</td><td class="c">10,6</td><td class="c">11,32</td><td class="c">11,524</td><td class="c">12,567</td><td class="c">13,597</td></tr>
 </tbody></table></div>
 <p>Contoh: $F_3 = 0{,}3(12) + 0{,}7(10) = 10{,}6$ dan $F_4 = 0{,}3(13) + 0{,}7(10{,}6) = 11{,}32$. Ramalan periode 7 adalah $13{,}597$. Perhatikan SES selalu tertinggal dari data yang naik.</p>

@@ -1,5 +1,5 @@
 /* =========================================================================
-   RIBBON METODE — pita bertab di atas halaman metode Stat (gaya pita Calc)
+   RIBBON METODE - pita bertab di atas halaman metode Stat (gaya pita Calc)
    -------------------------------------------------------------------------
    Pita hanya MENGATUR TAMPILAN / PILIHAN UJI; langkah-langkah perhitungan
    di halaman tidak berubah. Muat SEBELUM Method/Stat/*.js.

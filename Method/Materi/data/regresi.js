@@ -81,11 +81,11 @@ $$S_e = \sqrt{\frac{SSE}{n-k-1}}$$
 <div class="mt-tw"><table>
 <thead><tr><th>$|r|$</th><th>Kekuatan hubungan (pedoman umum)</th></tr></thead>
 <tbody>
-<tr><td>0,00 &ndash; 0,19</td><td>Sangat lemah</td></tr>
-<tr><td>0,20 &ndash; 0,39</td><td>Lemah</td></tr>
-<tr><td>0,40 &ndash; 0,59</td><td>Sedang</td></tr>
-<tr><td>0,60 &ndash; 0,79</td><td>Kuat</td></tr>
-<tr><td>0,80 &ndash; 1,00</td><td>Sangat kuat</td></tr>
+<tr><td>0,00 - 0,19</td><td>Sangat lemah</td></tr>
+<tr><td>0,20 - 0,39</td><td>Lemah</td></tr>
+<tr><td>0,40 - 0,59</td><td>Sedang</td></tr>
+<tr><td>0,60 - 0,79</td><td>Kuat</td></tr>
+<tr><td>0,80 - 1,00</td><td>Sangat kuat</td></tr>
 </tbody></table></div>
 <div class="mt-box warn" data-label="Korelasi bukan sebab-akibat">
   <p>$R^2$ yang tinggi hanya menunjukkan hubungan statistik yang kuat, bukan bukti bahwa $X$ menyebabkan $Y$.</p>
@@ -411,7 +411,7 @@ $$d = \frac{\sum_{t=2}^{n}(e_t - e_{t-1})^2}{\sum_{t=1}^{n} e_t^2} \;\approx\; 2
 <tr><td>$d > 2{,}5$</td><td>Indikasi autokorelasi negatif</td></tr>
 </tbody></table></div>
 <div class="mt-box note" data-label="Aturan praktis">
-  <p>Rentang 1,5&ndash;2,5 di atas adalah aturan praktis. Uji formal memakai tabel batas bawah $d_L$ dan batas atas $d_U$ yang bergantung pada $n$ dan $k$, dengan daerah ragu-ragu di antaranya. Untuk data deret waktu yang jelas bermasalah, lihat materi <strong>Uji Stasioneritas</strong>.</p>
+  <p>Rentang 1,5-2,5 di atas adalah aturan praktis. Uji formal memakai tabel batas bawah $d_L$ dan batas atas $d_U$ yang bergantung pada $n$ dan $k$, dengan daerah ragu-ragu di antaranya. Untuk data deret waktu yang jelas bermasalah, lihat materi <strong>Uji Stasioneritas</strong>.</p>
 </div>`
       },
       {

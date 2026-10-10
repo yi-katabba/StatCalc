@@ -1,5 +1,5 @@
 /* =========================================================================
-     3. METODE — SMOOTHING (SMA & SES) — logika kalkulator
+     3. METODE - SMOOTHING (SMA & SES) - logika kalkulator
      ========================================================================= */
 (function () {
   'use strict';
@@ -339,23 +339,23 @@
     if (state.method === 'sma') return `Single Moving Average (n = ${state.n})`;
     if (state.method === 'dma') return `Double Moving Average (n = ${state.n})`;
     if (state.method === 'ses') return `Single Exponential Smoothing (\u03B1 = ${state.alpha})`;
-    if (state.method === 'des') return `Double Exponential Smoothing \u2013 Holt (\u03B1 = ${state.alpha}, \u03B2 = ${state.beta})`;
-    return `Triple Exponential Smoothing \u2013 Winter (\u03B1 = ${state.alpha}, \u03B2 = ${state.beta}, \u03B3 = ${state.gamma}, L = ${state.L})`;
+    if (state.method === 'des') return `Double Exponential Smoothing - Holt (\u03B1 = ${state.alpha}, \u03B2 = ${state.beta})`;
+    return `Triple Exponential Smoothing - Winter (\u03B1 = ${state.alpha}, \u03B2 = ${state.beta}, \u03B3 = ${state.gamma}, L = ${state.L})`;
   }
 
   function renderTable(Y, sm, ev) {
     const N = Y.length;
-    let html = `<table class="result-table"><caption>Tabel Data Aktual vs Hasil Smoothing &mdash; ${methodLabel()}</caption>` +
+    let html = `<table class="result-table"><caption>Tabel Data Aktual vs Hasil Smoothing - ${methodLabel()}</caption>` +
       `<thead><tr><th>Periode</th><th>Data Aktual (Y)</th><th>Hasil Smoothing (F)</th><th>Error (Y &minus; F)</th><th>|Error|</th><th>Error %</th></tr></thead><tbody>`;
     for (let i = 0; i < N; i++) {
       const f = sm.forecast[i], e = ev.errors[i], ae = ev.absErrors[i], pe = ev.pctErrors[i];
       html += `<tr><td>${i + 1}</td><td>${fmt(Y[i], 2)}</td>` +
-        `<td>${f === null ? '&mdash;' : fmt(f, 3)}</td>` +
-        `<td>${e === null ? '&mdash;' : fmt(e, 3)}</td>` +
-        `<td>${ae === null ? '&mdash;' : fmt(ae, 3)}</td>` +
-        `<td>${pe === null ? '&mdash;' : fmt(pe, 2) + '%'}</td></tr>`;
+        `<td>${f === null ? '-' : fmt(f, 3)}</td>` +
+        `<td>${e === null ? '-' : fmt(e, 3)}</td>` +
+        `<td>${ae === null ? '-' : fmt(ae, 3)}</td>` +
+        `<td>${pe === null ? '-' : fmt(pe, 2) + '%'}</td></tr>`;
     }
-    html += `</tbody><tfoot><tr><td>${N + 1} (Ramalan)</td><td>&mdash;</td><td>${fmt(sm.nextForecast, 3)}</td><td colspan="3">Ramalan untuk periode berikutnya, di luar data historis.</td></tr></tfoot></table>`;
+    html += `</tbody><tfoot><tr><td>${N + 1} (Ramalan)</td><td>-</td><td>${fmt(sm.nextForecast, 3)}</td><td colspan="3">Ramalan untuk periode berikutnya, di luar data historis.</td></tr></tfoot></table>`;
     el.tableWrap.innerHTML = html;
   }
 
@@ -364,7 +364,7 @@
     const steps = [];
     if (state.method === 'sma') {
       const n = state.n;
-      steps.push({ title: 'Rumus Single Moving Average', formula: `F(t+1) = (Y(t) + Y(t-1) + \u2026 + Y(t-n+1)) / n`, note: `n = ${n} \u2014 banyaknya data terbaru yang dirata-ratakan untuk membentuk satu nilai ramalan.` });
+      steps.push({ title: 'Rumus Single Moving Average', formula: `F(t+1) = (Y(t) + Y(t-1) + \u2026 + Y(t-n+1)) / n`, note: `n = ${n} - banyaknya data terbaru yang dirata-ratakan untuk membentuk satu nilai ramalan.` });
       const i = sm.firstIdx;
       const terms = [];
       for (let j = i - n; j < i; j++) terms.push(fmt(Y[j], 2));
@@ -376,14 +376,14 @@
       const n = state.n;
       const i = sm.firstIdx; // indeks periode pertama yang punya nilai forecast (0-indexed)
       const j = i - 1; // indeks a,b yang dipakai untuk forecast periode i+1
-      steps.push({ title: 'Rumus Double Moving Average', formula: `M't = (Yt + Yt-1 + \u2026 + Yt-n+1) / n\nM''t = (M't + M't-1 + \u2026 + M't-n+1) / n\nat = 2\u00B7M't \u2212 M''t\nbt = [2 / (n \u2212 1)]\u00B7(M't \u2212 M''t)\nFt+m = at + bt\u00B7m`, note: `n = ${n} \u2014 panjang rata-rata bergerak, dipakai dua kali berturut-turut (M' = rata-rata bergerak pertama, M'' = rata-rata bergerak dari M').` });
+      steps.push({ title: 'Rumus Double Moving Average', formula: `M't = (Yt + Yt-1 + \u2026 + Yt-n+1) / n\nM''t = (M't + M't-1 + \u2026 + M't-n+1) / n\nat = 2\u00B7M't \u2212 M''t\nbt = [2 / (n \u2212 1)]\u00B7(M't \u2212 M''t)\nFt+m = at + bt\u00B7m`, note: `n = ${n} - panjang rata-rata bergerak, dipakai dua kali berturut-turut (M' = rata-rata bergerak pertama, M'' = rata-rata bergerak dari M').` });
       steps.push({ title: `Hitung M' dan M'' pada periode ke-${j + 1}`, formula: `M'(${j + 1}) = ${fmt(sm.Mp[j], 3)}\nM''(${j + 1}) = ${fmt(sm.Mpp[j], 3)}\na(${j + 1}) = 2\u00B7${fmt(sm.Mp[j], 3)} \u2212 ${fmt(sm.Mpp[j], 3)} = ${fmt(sm.a[j], 3)}\nb(${j + 1}) = [2/(${n}\u22121)]\u00B7(${fmt(sm.Mp[j], 3)} \u2212 ${fmt(sm.Mpp[j], 3)}) = ${fmt(sm.b[j], 4)}`, note: 'M\'\' baru bisa dihitung setelah tersedia n nilai M\' berturut-turut, sehingga forecast pertama baru muncul mulai periode ke-2n.' });
       steps.push({ title: `Contoh perhitungan periode ke-${i + 1}`, formula: `F(${i + 1}) = a(${j + 1}) + b(${j + 1})\u00B71\n     = ${fmt(sm.a[j], 3)} + ${fmt(sm.b[j], 4)}\n     = ${fmt(sm.forecast[i], 3)}`, note: `Nilai ini dibandingkan dengan data aktual Y(${i + 1}) = ${fmt(Y[i], 2)} untuk mendapatkan error pada periode tersebut.` });
       steps.push({ title: `Ramalan periode ke-${N + 1} (di luar data)`, formula: `F(${N + 1}) = a(${N}) + b(${N})\u00B71\n     = ${fmt(sm.a[N - 1], 3)} + ${fmt(sm.b[N - 1], 4)}\n     = ${fmt(sm.nextForecast, 3)}`, note: 'a dan b dari periode terakhir yang tersedia dipakai untuk memproyeksikan tren secara linear ke periode berikutnya.' });
     } else if (state.method === 'ses') {
       const a = state.alpha;
       steps.push({ title: 'Inisialisasi nilai smoothing pertama', formula: `F(1) = Y(1) = ${fmt(Y[0], 2)}`, note: 'Konvensi umum: nilai smoothing pada periode pertama diinisialisasi sama dengan data aktual pertama.' });
-      steps.push({ title: 'Rumus Single Exponential Smoothing', formula: `F(t) = \u03B1\u00B7Y(t-1) + (1 \u2212 \u03B1)\u00B7F(t-1)`, note: `\u03B1 = ${a} \u2014 bobot pemulusan yang dipilih pada Langkah 1.` });
+      steps.push({ title: 'Rumus Single Exponential Smoothing', formula: `F(t) = \u03B1\u00B7Y(t-1) + (1 \u2212 \u03B1)\u00B7F(t-1)`, note: `\u03B1 = ${a} - bobot pemulusan yang dipilih pada Langkah 1.` });
       if (N > 1) {
         steps.push({ title: 'Contoh perhitungan periode ke-2', formula: `F(2) = ${a}\u00B7Y(1) + (1 \u2212 ${a})\u00B7F(1)\n     = ${a}\u00B7${fmt(Y[0], 2)} + ${fmt(1 - a, 2)}\u00B7${fmt(sm.forecast[0], 2)}\n     = ${fmt(sm.forecast[1], 3)}` });
       }
@@ -391,7 +391,7 @@
     } else if (state.method === 'des') {
       const a = state.alpha, b = state.beta;
       steps.push({ title: 'Inisialisasi level & tren awal (metode Holt)', formula: `L(1) = Y(1) = ${fmt(Y[0], 2)}\nT(1) = Y(2) \u2212 Y(1) = ${fmt(Y[1], 2)} \u2212 ${fmt(Y[0], 2)} = ${fmt(sm.trend[0], 3)}`, note: 'L = komponen level (nilai dasar data), T = komponen tren (kecenderungan naik/turun antar periode).' });
-      steps.push({ title: 'Rumus Double Exponential Smoothing \u2013 Holt', formula: `L(t) = \u03B1\u00B7Y(t) + (1 \u2212 \u03B1)\u00B7[L(t-1) + T(t-1)]\nT(t) = \u03B2\u00B7[L(t) \u2212 L(t-1)] + (1 \u2212 \u03B2)\u00B7T(t-1)\nF(t+1) = L(t) + T(t)`, note: `\u03B1 = ${a} (bobot level), \u03B2 = ${b} (bobot tren) \u2014 dipilih pada Langkah 1.` });
+      steps.push({ title: 'Rumus Double Exponential Smoothing - Holt', formula: `L(t) = \u03B1\u00B7Y(t) + (1 \u2212 \u03B1)\u00B7[L(t-1) + T(t-1)]\nT(t) = \u03B2\u00B7[L(t) \u2212 L(t-1)] + (1 \u2212 \u03B2)\u00B7T(t-1)\nF(t+1) = L(t) + T(t)`, note: `\u03B1 = ${a} (bobot level), \u03B2 = ${b} (bobot tren) - dipilih pada Langkah 1.` });
       if (N > 1) {
         steps.push({ title: 'Contoh perhitungan periode ke-2', formula: `F(2) = L(1) + T(1) = ${fmt(sm.level[0], 2)} + ${fmt(sm.trend[0], 3)} = ${fmt(sm.forecast[1], 3)}\nL(2) = ${a}\u00B7Y(2) + (1 \u2212 ${a})\u00B7[L(1)+T(1)]\n     = ${a}\u00B7${fmt(Y[1], 2)} + ${fmt(1 - a, 2)}\u00B7${fmt(sm.forecast[1], 3)} = ${fmt(sm.level[1], 3)}\nT(2) = ${b}\u00B7[L(2) \u2212 L(1)] + (1 \u2212 ${b})\u00B7T(1)\n     = ${b}\u00B7${fmt(sm.level[1] - sm.level[0], 3)} + ${fmt(1 - b, 2)}\u00B7${fmt(sm.trend[0], 3)} = ${fmt(sm.trend[1], 3)}` });
       }
@@ -399,15 +399,15 @@
     } else { // tes
       const a = state.alpha, b = state.beta, g = state.gamma, L = state.L;
       const season1 = Y.slice(0, L).map((v) => fmt(v, 2)).join(', ');
-      steps.push({ title: 'Inisialisasi level, tren, & indeks musiman awal (metode Winter)', formula: `Rata-rata musim 1 (periode 1\u2013${L}) = ${fmt(sm.level[L - 1], 3)}\nRata-rata musim 2 (periode ${L + 1}\u2013${2 * L}) dipakai untuk T awal\nT(${L}) = (rata2 musim2 \u2212 rata2 musim1) / L = ${fmt(sm.trend[L - 1], 4)}\nS(i) = Y(i) / rata2 musim1, untuk i = 1..${L}: [${season1}] \u2192 indeks musiman awal`, note: 'L = level, T = tren, S = indeks musiman (rasio nilai aktual terhadap rata-rata musim). Indeks musiman awal dihitung dari musim pertama.' });
-      steps.push({ title: 'Rumus Triple Exponential Smoothing \u2013 Winter (multiplikatif)', formula: `L(t) = \u03B1\u00B7[Y(t) / S(t-L)] + (1 \u2212 \u03B1)\u00B7[L(t-1) + T(t-1)]\nT(t) = \u03B2\u00B7[L(t) \u2212 L(t-1)] + (1 \u2212 \u03B2)\u00B7T(t-1)\nS(t) = \u03B3\u00B7[Y(t) / L(t)] + (1 \u2212 \u03B3)\u00B7S(t-L)\nF(t+1) = [L(t) + T(t)]\u00B7S(t+1-L)`, note: `\u03B1 = ${a} (level), \u03B2 = ${b} (tren), \u03B3 = ${g} (musiman), L = ${L} (panjang musim) \u2014 dipilih pada Langkah 1.` });
+      steps.push({ title: 'Inisialisasi level, tren, & indeks musiman awal (metode Winter)', formula: `Rata-rata musim 1 (periode 1-${L}) = ${fmt(sm.level[L - 1], 3)}\nRata-rata musim 2 (periode ${L + 1}-${2 * L}) dipakai untuk T awal\nT(${L}) = (rata2 musim2 \u2212 rata2 musim1) / L = ${fmt(sm.trend[L - 1], 4)}\nS(i) = Y(i) / rata2 musim1, untuk i = 1..${L}: [${season1}] \u2192 indeks musiman awal`, note: 'L = level, T = tren, S = indeks musiman (rasio nilai aktual terhadap rata-rata musim). Indeks musiman awal dihitung dari musim pertama.' });
+      steps.push({ title: 'Rumus Triple Exponential Smoothing - Winter (multiplikatif)', formula: `L(t) = \u03B1\u00B7[Y(t) / S(t-L)] + (1 \u2212 \u03B1)\u00B7[L(t-1) + T(t-1)]\nT(t) = \u03B2\u00B7[L(t) \u2212 L(t-1)] + (1 \u2212 \u03B2)\u00B7T(t-1)\nS(t) = \u03B3\u00B7[Y(t) / L(t)] + (1 \u2212 \u03B3)\u00B7S(t-L)\nF(t+1) = [L(t) + T(t)]\u00B7S(t+1-L)`, note: `\u03B1 = ${a} (level), \u03B2 = ${b} (tren), \u03B3 = ${g} (musiman), L = ${L} (panjang musim) - dipilih pada Langkah 1.` });
       if (N > L) {
         const i = L;
         steps.push({ title: `Contoh perhitungan periode ke-${i + 1}`, formula: `F(${i + 1}) = [L(${i}) + T(${i})]\u00B7S(${i}-${L}+1)\n     = [${fmt(sm.level[i - 1], 3)} + ${fmt(sm.trend[i - 1], 3)}]\u00B7${fmt(sm.seasonal[i - L], 3)}\n     = ${fmt(sm.forecast[i], 3)}`, note: `Dibandingkan dengan data aktual Y(${i + 1}) = ${fmt(Y[i], 2)} untuk mendapatkan error pada periode tersebut.` });
       }
       steps.push({ title: `Ramalan periode ke-${N + 1} (di luar data)`, formula: `F(${N + 1}) = [L(${N}) + T(${N})]\u00B7S(${N + 1 - L})\n     = [${fmt(sm.level[N - 1], 3)} + ${fmt(sm.trend[N - 1], 3)}]\u00B7${fmt(sm.seasonal[N - L], 3)}\n     = ${fmt(sm.nextForecast, 3)}`, note: 'Indeks musiman dari siklus musim terakhir yang tersedia dipakai kembali untuk meramalkan periode berikutnya.' });
     }
-    steps.push({ title: 'Hitung ukuran error (MSE &amp; MAPE)', formula: `MSE = \u03A3(Y \u2212 F)\u00B2 / m = ${fmt(ev.mse)}\nMAPE = \u03A3|((Y \u2212 F)/Y)| \u00D7 100% / m = ${fmt(ev.mape, 2)}%`, note: `m = ${ev.m} \u2014 banyaknya periode yang memiliki nilai ramalan (periode tanpa ramalan tidak diikutsertakan dalam perhitungan error).` });
+    steps.push({ title: 'Hitung ukuran error (MSE &amp; MAPE)', formula: `MSE = \u03A3(Y \u2212 F)\u00B2 / m = ${fmt(ev.mse)}\nMAPE = \u03A3|((Y \u2212 F)/Y)| \u00D7 100% / m = ${fmt(ev.mape, 2)}%`, note: `m = ${ev.m} - banyaknya periode yang memiliki nilai ramalan (periode tanpa ramalan tidak diikutsertakan dalam perhitungan error).` });
     el.stepsWrap.innerHTML = steps.map((s, i) => {
       const parts = [`<h4>${escapeHTML(s.title)}</h4>`];
       if (s.formula) parts.push(`<span class="formula">${escapeHTML(s.formula)}</span>`);
@@ -493,7 +493,7 @@
       </div>
       <div class="test-verdict ${verdict.cls}">${verdict.text} (MAPE ${fmt(ev.mape, 2)}%)</div>
       <p class="test-conclusion">Semakin kecil nilai MSE dan MAPE, semakin akurat model smoothing ini dalam mengikuti pola data historis. Berdasarkan MAPE, tingkat akurasi model ${methodLabel()} pada data ini tergolong <strong>${verdict.text.toLowerCase()}</strong>.</p>
-      <p class="test-note">Kriteria MAPE yang umum dipakai (Lewis, 1982): &lt;10% sangat akurat, 10&ndash;20% akurat, 20&ndash;50% cukup akurat, &gt;50% tidak akurat. MSE tidak memiliki satuan persen sehingga lebih berguna untuk membandingkan beberapa model pada data yang sama (mis. mencoba beberapa nilai n atau &alpha; lalu memilih yang MSE-nya terkecil).</p>
+      <p class="test-note">Kriteria MAPE yang umum dipakai (Lewis, 1982): &lt;10% sangat akurat, 10-20% akurat, 20-50% cukup akurat, &gt;50% tidak akurat. MSE tidak memiliki satuan persen sehingga lebih berguna untuk membandingkan beberapa model pada data yang sama (mis. mencoba beberapa nilai n atau &alpha; lalu memilih yang MSE-nya terkecil).</p>
     </div>`;
     el.evalWrap.innerHTML = html;
   }
@@ -527,7 +527,7 @@
 
   function statCard(label, value) { return `<div class="stat-card"><div class="k">${escapeHTML(label)}</div><div class="v">${escapeHTML(String(value))}</div></div>`; }
   function fmt(x, d = 4) {
-    if (x === null || x === undefined || Number.isNaN(x) || !Number.isFinite(x)) return '\u2014';
+    if (x === null || x === undefined || Number.isNaN(x) || !Number.isFinite(x)) return '-';
     return Number(x).toFixed(d);
   }
   function showError(node, msg) { node.textContent = msg; node.hidden = false; }

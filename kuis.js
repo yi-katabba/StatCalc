@@ -1,5 +1,5 @@
 /* =========================================================================
-   KUIS.JS — Bank soal untuk menu "Kuis Statistika" pada StatCalc
+   KUIS.JS - Bank soal untuk menu "Kuis Statistika" pada StatCalc
    -------------------------------------------------------------------------
    Setiap soal berupa objek dengan struktur: 
    {
@@ -128,7 +128,7 @@ window.KUIS_STATISTIK = [
       'Data harus berdistribusi normal'
     ],
     answer: 1,
-    pembahasan: 'Ceteris paribus berarti "hal-hal lain dianggap tetap" \u2014 variabel bebas lain diasumsikan konstan saat menginterpretasikan pengaruh satu variabel X.'
+    pembahasan: 'Ceteris paribus berarti "hal-hal lain dianggap tetap" - variabel bebas lain diasumsikan konstan saat menginterpretasikan pengaruh satu variabel X.'
   },
   {
     question: 'Manakah pasangan variabel yang paling mungkin memiliki korelasi positif kuat?',

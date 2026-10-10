@@ -1,4 +1,4 @@
-/* Probability Plot (Q-Q normal) — memeriksa apakah data mendekati sebaran normal */
+/* Probability Plot (Q-Q normal) - memeriksa apakah data mendekati sebaran normal */
 (function () {
   'use strict';
   const u = GraphCore.u;

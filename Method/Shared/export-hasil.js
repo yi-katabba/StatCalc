@@ -1,5 +1,5 @@
 /* =========================================================================
-   EXPORT HASIL — unduh hasil metode Stat sebagai .docx + grafik pendukung
+   EXPORT HASIL - unduh hasil metode Stat sebagai .docx + grafik pendukung
    -------------------------------------------------------------------------
    Muat SETELAH graph-core.js dan stat-charts.js. Tanpa pustaka luar:
    berkas .docx (OOXML) dan .zip dibuat langsung di peramban.
@@ -184,7 +184,7 @@
     const bd = (n) => `<w:${n} w:val="single" w:sz="4" w:space="0" w:color="B8B29C"/>`;
     return `<w:tbl><w:tblPr><w:tblW w:w="${PAGE_W}" w:type="dxa"/><w:tblBorders>${bd('top')}${bd('left')}${bd('bottom')}${bd('right')}${bd('insideH')}${bd('insideV')}</w:tblBorders><w:tblLayout w:type="fixed"/><w:tblCellMar><w:left w:w="70" w:type="dxa"/><w:right w:w="70" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>${Array.from({ length: cols }, () => `<w:gridCol w:w="${gw}"/>`).join('')}</w:tblGrid>${x}</w:tbl>` + para('', { after: 80 });
   }
-  const NUMRE = /^[\s+\-\u2212\u2013]?[\d.,]+(e[+-]?\d+)?\s*%?$/i;
+  const NUMRE = /^[\s+\-\u2212-]?[\d.,]+(e[+-]?\d+)?\s*%?$/i;
   function domTable(t) {
     const cap = t.querySelector('caption');
     const rows = [];
@@ -282,7 +282,7 @@
 </w:styles>`;
   const CT = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>`;
   const RELS = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>`;
-  const FOOTER = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr ${NS}><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:color w:val="948C77"/><w:sz w:val="18"/></w:rPr><w:t xml:space="preserve">StatCalc \u2014 halaman </w:t></w:r><w:r><w:rPr><w:color w:val="948C77"/><w:sz w:val="18"/></w:rPr><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:rPr><w:color w:val="948C77"/><w:sz w:val="18"/></w:rPr><w:instrText xml:space="preserve"> PAGE </w:instrText></w:r><w:r><w:rPr><w:color w:val="948C77"/><w:sz w:val="18"/></w:rPr><w:fldChar w:fldCharType="separate"/></w:r><w:r><w:rPr><w:color w:val="948C77"/><w:sz w:val="18"/></w:rPr><w:t>1</w:t></w:r><w:r><w:rPr><w:color w:val="948C77"/><w:sz w:val="18"/></w:rPr><w:fldChar w:fldCharType="end"/></w:r></w:p></w:ftr>`;
+  const FOOTER = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr ${NS}><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:color w:val="948C77"/><w:sz w:val="18"/></w:rPr><w:t xml:space="preserve">StatCalc - halaman </w:t></w:r><w:r><w:rPr><w:color w:val="948C77"/><w:sz w:val="18"/></w:rPr><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:rPr><w:color w:val="948C77"/><w:sz w:val="18"/></w:rPr><w:instrText xml:space="preserve"> PAGE </w:instrText></w:r><w:r><w:rPr><w:color w:val="948C77"/><w:sz w:val="18"/></w:rPr><w:fldChar w:fldCharType="separate"/></w:r><w:r><w:rPr><w:color w:val="948C77"/><w:sz w:val="18"/></w:rPr><w:t>1</w:t></w:r><w:r><w:rPr><w:color w:val="948C77"/><w:sz w:val="18"/></w:rPr><w:fldChar w:fldCharType="end"/></w:r></w:p></w:ftr>`;
 
   const TGL = () => new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) + ', ' + new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
   const stamp = () => { const d = new Date(), p = (n) => String(n).padStart(2, '0'); return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '-' + p(d.getHours()) + p(d.getMinutes()); };
@@ -580,7 +580,7 @@
   }
 
   /* Bantu modul: bangun daftar grafik dengan penanganan galat per grafik */
-  const fmtN = (v, d) => (v === null || v === undefined || !Number.isFinite(v) ? '\u2013' : String(+Number(v).toPrecision(d || 5)));
+  const fmtN = (v, d) => (v === null || v === undefined || !Number.isFinite(v) ? '-' : String(+Number(v).toPrecision(d || 5)));
 
   window.StatExport = { publish, buildDocx, zip, svgToPng, fmtN, _blocks: blocks };
 })();

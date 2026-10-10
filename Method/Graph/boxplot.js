@@ -1,4 +1,4 @@
-/* Boxplot — per variabel (kolom = variabel, seperti Excel) atau per kelompok.
+/* Boxplot - per variabel (kolom = variabel, seperti Excel) atau per kelompok.
    boxSvg() juga dipakai ulang oleh Method/Shared/stat-charts.js (grafik pendukung ANOVA). */
 (function () {
   'use strict';
@@ -68,13 +68,13 @@
   function summaryTable(st, qmethod) {
     const rows = st.map((x) => [
       u.esc(x.g), x.n, u.fmt(x.min), u.fmt(x.q1), u.fmt(x.med), u.fmt(x.q3), u.fmt(x.max),
-      u.fmt(x.mean), u.fmt(x.sd), u.fmt(x.iqr), x.out.length ? x.out.map(u.fmt).join('; ') : '\u2013',
+      u.fmt(x.mean), u.fmt(x.sd), u.fmt(x.iqr), x.out.length ? x.out.map(u.fmt).join('; ') : '-',
     ]);
     return u.grid(['Variabel / Kelompok', 'n', 'Min', 'Q1', 'Median', 'Q3', 'Maks', 'Rata-rata', 'S. baku', 'IQR', 'Pencilan'], rows,
       'Ringkasan lima angka ' + (qmethod === 'exc' ? '(kuartil eksklusif, QUARTILE.EXC)' : '(kuartil inklusif, QUARTILE.INC)'));
   }
   function interpretation(multi) {
-    return u.note('<strong>Cara membaca:</strong> kotak = 50% data di tengah (Q1&ndash;Q3), garis tebal = median, belah ketupat = rata-rata, kumis = data terjauh dalam 1,5&times;IQR dari kotak, lingkaran kosong = pencilan. ' +
+    return u.note('<strong>Cara membaca:</strong> kotak = 50% data di tengah (Q1-Q3), garis tebal = median, belah ketupat = rata-rata, kumis = data terjauh dalam 1,5&times;IQR dari kotak, lingkaran kosong = pencilan. ' +
       (multi ? 'Jika kotak antar variabel/kelompok hampir tidak tumpang tindih, kemungkinan ada perbedaan nyata; ujilah dengan <em>Metode &rsaquo; Stat &rsaquo; ANOVA</em>.' : 'Median yang tidak di tengah kotak atau kumis yang tidak simetris menandakan sebaran yang miring.'));
   }
 
@@ -87,7 +87,7 @@
 
   GraphCore.add({
     id: 'boxplot', title: 'Boxplot', types: ['numerik1', 'kelompok'],
-    lede: 'Tampilkan sebaran data lewat median, kuartil, rentang, dan pencilan &mdash; untuk <strong>satu variabel</strong> atau <strong>beberapa variabel sekaligus</strong> (satu kotak per kolom, seperti Box &amp; Whisker di Excel). Cocok sebagai pemeriksaan awal sebelum ANOVA.',
+    lede: 'Tampilkan sebaran data lewat median, kuartil, rentang, dan pencilan - untuk <strong>satu variabel</strong> atau <strong>beberapa variabel sekaligus</strong> (satu kotak per kolom, seperti Box &amp; Whisker di Excel). Cocok sebagai pemeriksaan awal sebelum ANOVA.',
     format: 'Dua kolom: <strong>Kelompok</strong> (teks, mis. Metode A) dan <strong>Nilai</strong> (angka). Kolom kelompok boleh dikosongkan bila hanya ada satu kelompok.',
     columns: [{ label: 'Kelompok', placeholder: 'Kelompok', text: true, optional: true, fallback: 'Data' }, { label: 'Nilai', placeholder: 'Nilai' }],
     minRows: 4, defaultRows: 8,

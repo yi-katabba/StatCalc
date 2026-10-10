@@ -1,4 +1,4 @@
-/* Histogram — satu variabel numerik, distribusi frekuensi */
+/* Histogram - satu variabel numerik, distribusi frekuensi */
 (function () {
   'use strict';
   const u = GraphCore.u;
@@ -60,7 +60,7 @@
       const rows = counts.map((c, i) => {
         cum += c;
         const a = u.fmt(edges[i]), b = u.fmt(edges[i + 1]);
-        return [`${a} \u2013 ${b}`, c, u.fmt(c / n * 100) + '%', u.fmt(cum / n * 100) + '%'];
+        return [`${a} - ${b}`, c, u.fmt(c / n * 100) + '%', u.fmt(cum / n * 100) + '%'];
       });
       const stat = u.kv([
         ['Banyak data (n)', n], ['Rata-rata', u.fmt(m)], ['Median', u.fmt(u.quantile(sorted, 0.5))],

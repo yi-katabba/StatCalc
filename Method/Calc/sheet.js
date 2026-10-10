@@ -1,5 +1,5 @@
 /* =========================================================================
-   CALC — lembar kerja ala Excel (Method > Calc)
+   CALC - lembar kerja ala Excel (Method > Calc)
    -------------------------------------------------------------------------
    - Impor data: tempel dari Excel / unggah .xlsx, .csv (memakai pustaka
      SheetJS yang sama dengan Method/Shared/impor-data.js).
@@ -1166,7 +1166,7 @@
       for (let r = from; r <= R.r2; r++) S.cells[r][c] = base.charAt(0) === '=' ? shiftFormula(base, r - src, 0) : base;
     }
     invalidate(); fullRender(true);
-    flash('scOk', `Diisi ke bawah: ${colName(R.c1)}${from + 1}\u2013${colName(R.c2)}${R.r2 + 1} dari baris ${src + 1}.`, 4000);
+    flash('scOk', `Diisi ke bawah: ${colName(R.c1)}${from + 1}-${colName(R.c2)}${R.r2 + 1} dari baris ${src + 1}.`, 4000);
   }
   function fillRight() {
     const R = rect();
@@ -1178,7 +1178,7 @@
       for (let c = from; c <= R.c2; c++) S.cells[r][c] = base.charAt(0) === '=' ? shiftFormula(base, 0, c - src) : base;
     }
     invalidate(); fullRender(true);
-    flash('scOk', `Diisi ke kanan: ${colName(from)}${R.r1 + 1}\u2013${colName(R.c2)}${R.r2 + 1} dari kolom ${colName(src)}.`, 4000);
+    flash('scOk', `Diisi ke kanan: ${colName(from)}${R.r1 + 1}-${colName(R.c2)}${R.r2 + 1} dari kolom ${colName(src)}.`, 4000);
   }
   q('scFillDown').addEventListener('click', fillDown);
   q('scFillRight').addEventListener('click', fillRight);
@@ -1229,7 +1229,7 @@
     if (isR && S.header && a === 0) { S.header = false; q('scHeader').checked = false; note = ' Baris judul ikut terhapus, jadi opsi “Baris 1 judul kolom” dimatikan.'; }
     if (isR) { sel.r = ext.r = Math.min(a, vR() - 1); ext.c = sel.c; } else { sel.c = ext.c = Math.min(a, vC() - 1); ext.r = sel.r; }
     invalidate(); fullRender(true);
-    flash('scOk', `${n} ${nm} dihapus (${isR ? 'baris ' + (a + 1) + (n > 1 ? '\u2013' + (b + 1) : '') : 'kolom ' + colName(a) + (n > 1 ? '\u2013' + colName(b) : '')}). Rumus ikut menyesuaikan; klik “Urungkan” bila salah.${note}`, 6000);
+    flash('scOk', `${n} ${nm} dihapus (${isR ? 'baris ' + (a + 1) + (n > 1 ? '-' + (b + 1) : '') : 'kolom ' + colName(a) + (n > 1 ? '-' + colName(b) : '')}). Rumus ikut menyesuaikan; klik “Urungkan” bila salah.${note}`, 6000);
   }
   q('scInsRowUp').addEventListener('click', () => { const R = rect(); insertLines('r', R.r1, R.r2 - R.r1 + 1); });
   q('scInsRowDown').addEventListener('click', () => { const R = rect(); insertLines('r', R.r2 + 1, R.r2 - R.r1 + 1); });
@@ -1259,7 +1259,7 @@
   q('scHeader').addEventListener('change', (e) => { pushUndo(); S.header = e.target.checked; invalidate(); fullRender(true); });
   q('scNewBtn').addEventListener('click', () => {
     const C = parseInt(q('scNewC').value, 10), R = parseInt(q('scNewR').value, 10);
-    if (!(C >= 1 && C <= MAX_C) || !(R >= 1 && R < MAX_R)) { flash('scErr', `Jumlah kolom 1\u2013${MAX_C} dan jumlah baris data 1\u2013${MAX_R - 1}.`, 6000); return; }
+    if (!(C >= 1 && C <= MAX_C) || !(R >= 1 && R < MAX_R)) { flash('scErr', `Jumlah kolom 1-${MAX_C} dan jumlah baris data 1-${MAX_R - 1}.`, 6000); return; }
     hide('scErr');
     pushUndo();
     S.C = C; S.R = R + 1; S.header = true; q('scHeader').checked = true;
@@ -1374,23 +1374,23 @@
 
   /* --------------------------- Rumus kolom (tab Fungsi) -------------------- */
   const OPS = [
-    { id: 'log10', label: 'Log basis 10  —  LOG10(x)', f: (s) => `LOG10(${s})` },
-    { id: 'ln', label: 'Logaritma natural  —  LN(x)', f: (s) => `LN(${s})` },
-    { id: 'logb', label: 'Log basis tertentu  —  LOG(x, b)', par: 'Basis (b)', def: '2', f: (s, p) => `LOG(${s},${p})` },
-    { id: 'sqrt', label: 'Akar kuadrat  —  SQRT(x)', f: (s) => `SQRT(${s})` },
-    { id: 'sq', label: 'Kuadrat  —  x²', f: (s) => `${s}^2` },
-    { id: 'pow', label: 'Pangkat n  —  x^n', par: 'Pangkat (n)', def: '3', f: (s, p) => `${s}^${p}` },
-    { id: 'exp', label: 'Eksponen  —  EXP(x)', f: (s) => `EXP(${s})` },
-    { id: 'recip', label: 'Kebalikan  —  1/x', f: (s) => `1/${s}` },
-    { id: 'abs', label: 'Nilai mutlak  —  ABS(x)', f: (s) => `ABS(${s})` },
-    { id: 'round', label: 'Pembulatan  —  ROUND(x, d)', par: 'Desimal (d)', def: '2', f: (s, p) => `ROUND(${s},${p})` },
-    { id: 'add', label: 'Tambah konstanta  —  x + k', par: 'Konstanta (k)', def: '1', f: (s, p) => `${s}+${p}` },
-    { id: 'sub', label: 'Kurang konstanta  —  x − k', par: 'Konstanta (k)', def: '1', f: (s, p) => `${s}-${p}` },
-    { id: 'mul', label: 'Kali konstanta  —  x × k', par: 'Konstanta (k)', def: '2', f: (s, p) => `${s}*${p}` },
-    { id: 'div', label: 'Bagi konstanta  —  x ÷ k', par: 'Konstanta (k)', def: '2', f: (s, p) => `${s}/${p}` },
+    { id: 'log10', label: 'Log basis 10 - LOG10(x)', f: (s) => `LOG10(${s})` },
+    { id: 'ln', label: 'Logaritma natural - LN(x)', f: (s) => `LN(${s})` },
+    { id: 'logb', label: 'Log basis tertentu - LOG(x, b)', par: 'Basis (b)', def: '2', f: (s, p) => `LOG(${s},${p})` },
+    { id: 'sqrt', label: 'Akar kuadrat - SQRT(x)', f: (s) => `SQRT(${s})` },
+    { id: 'sq', label: 'Kuadrat - x²', f: (s) => `${s}^2` },
+    { id: 'pow', label: 'Pangkat n - x^n', par: 'Pangkat (n)', def: '3', f: (s, p) => `${s}^${p}` },
+    { id: 'exp', label: 'Eksponen - EXP(x)', f: (s) => `EXP(${s})` },
+    { id: 'recip', label: 'Kebalikan - 1/x', f: (s) => `1/${s}` },
+    { id: 'abs', label: 'Nilai mutlak - ABS(x)', f: (s) => `ABS(${s})` },
+    { id: 'round', label: 'Pembulatan - ROUND(x, d)', par: 'Desimal (d)', def: '2', f: (s, p) => `ROUND(${s},${p})` },
+    { id: 'add', label: 'Tambah konstanta - x + k', par: 'Konstanta (k)', def: '1', f: (s, p) => `${s}+${p}` },
+    { id: 'sub', label: 'Kurang konstanta - x − k', par: 'Konstanta (k)', def: '1', f: (s, p) => `${s}-${p}` },
+    { id: 'mul', label: 'Kali konstanta - x × k', par: 'Konstanta (k)', def: '2', f: (s, p) => `${s}*${p}` },
+    { id: 'div', label: 'Bagi konstanta - x ÷ k', par: 'Konstanta (k)', def: '2', f: (s, p) => `${s}/${p}` },
     { id: 'z', label: 'Standarisasi (z-score)', rng: true, f: (s, p, R) => `(${s}-AVERAGE(${R}))/STDEV(${R})` },
     { id: 'center', label: 'Pusatkan (kurangi rata-rata)', rng: true, f: (s, p, R) => `${s}-AVERAGE(${R})` },
-    { id: 'minmax', label: 'Normalisasi min–maks (0–1)', rng: true, f: (s, p, R) => `(${s}-MIN(${R}))/(MAX(${R})-MIN(${R}))` },
+    { id: 'minmax', label: 'Normalisasi min-maks (0-1)', rng: true, f: (s, p, R) => `(${s}-MIN(${R}))/(MAX(${R})-MIN(${R}))` },
     { id: 'pct', label: 'Persen dari total', rng: true, f: (s, p, R) => `${s}/SUM(${R})*100` },
     { id: 'cum', label: 'Kumulatif (jumlah berjalan)', cum: true },
     { id: 'diff', label: 'Selisih dengan baris sebelumnya (diferensiasi)', prev: true, f: (s, p, R, sp) => `${s}-${sp}` },
@@ -1413,7 +1413,7 @@
 
   function updateSelects() {
     const keepS = srcSel.value, keepD = dstSel.value, keepD2 = dstSel2.value;
-    const hdr = (c) => { const t = S.header ? raw(0, c) : ''; return t && t.charAt(0) !== '=' ? ` — ${t.length > 18 ? t.slice(0, 17) + '…' : t}` : ''; };
+    const hdr = (c) => { const t = S.header ? raw(0, c) : ''; return t && t.charAt(0) !== '=' ? ` - ${t.length > 18 ? t.slice(0, 17) + '…' : t}` : ''; };
     let cols = '';
     for (let c = 0; c < S.C; c++) cols += `<option value="${c}">Kolom ${colName(c)}${esc(hdr(c))}</option>`;
     srcSel.innerHTML = cols;
@@ -1461,7 +1461,7 @@
       return o.f(s, par, rngTxt, '');
     });
     if (typeof res === 'string') { flash('scErr2', res, 7000); return; }
-    flash('scOk2', `Selesai: rumus diisikan ke kolom ${colName(res.dc)} baris ${res.f + 1}–${res.last + 1}.${res.overwrite ? ' Isi lama kolom itu ditimpa (bisa diurungkan).' : ''}`, 9000);
+    flash('scOk2', `Selesai: rumus diisikan ke kolom ${colName(res.dc)} baris ${res.f + 1}-${res.last + 1}.${res.overwrite ? ' Isi lama kolom itu ditimpa (bisa diurungkan).' : ''}`, 9000);
     q('scTitle').value = '';
     goTo(res.f, res.dc, { noSelect: true }); const a = document.activeElement; if (a && a.blur) a.blur();
   });
@@ -1474,7 +1474,7 @@
     const dc = targetCol(dstSel2.value);
     const res = applyFormulas(dc, 'hasil', (r) => ex.replace(/(^|[^A-Za-z0-9_$.])\$?([A-Za-z]{1,2})(?![A-Za-z0-9_($])/g, (m, pre, L) => (pre + L.toUpperCase() + (r + 1))));
     if (typeof res === 'string') { flash('scErr2', res, 7000); return; }
-    flash('scOk2', `Selesai: rumus diisikan ke kolom ${colName(res.dc)} baris ${res.f + 1}–${res.last + 1}.${res.overwrite ? ' Isi lama kolom itu ditimpa (bisa diurungkan).' : ''}`, 9000);
+    flash('scOk2', `Selesai: rumus diisikan ke kolom ${colName(res.dc)} baris ${res.f + 1}-${res.last + 1}.${res.overwrite ? ' Isi lama kolom itu ditimpa (bisa diurungkan).' : ''}`, 9000);
     goTo(res.f, res.dc, { noSelect: true }); const a = document.activeElement; if (a && a.blur) a.blur();
   });
   q('scToVal').addEventListener('click', () => {

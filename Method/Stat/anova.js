@@ -1,5 +1,5 @@
 /* =========================================================================
-     METODE: ANOVA LENGKAP — logika ANOVA satu arah (one-way) & dua arah (two-way)
+     METODE: ANOVA LENGKAP - logika ANOVA satu arah (one-way) & dua arah (two-way)
      ========================================================================= */ 
 (function () {
   'use strict';
@@ -110,7 +110,7 @@
     tr.appendChild(rowNumTd);
     for (let j = 0; j < k; j++) {
       const td = document.createElement('td');
-      td.innerHTML = `<input type="text" inputmode="decimal" data-role="grp" data-col="${j}" placeholder="&mdash;">`;
+      td.innerHTML = `<input type="text" inputmode="decimal" data-role="grp" data-col="${j}" placeholder="-">`;
       tr.appendChild(td);
     }
     el.tableBody.appendChild(tr);
@@ -429,8 +429,8 @@
         <thead><tr><th>Sumber Variasi</th><th>JK (SS)</th><th>db (df)</th><th>KT (MS)</th><th>F hitung</th><th>Sig.</th></tr></thead>
         <tbody>
           <tr><td>Antar Kelompok</td><td>${fmt(res.SSB)}</td><td>${res.dfB}</td><td>${fmt(res.MSB)}</td><td>${fmt(res.F)}</td><td>${fmt(res.p, 4)}</td></tr>
-          <tr><td>Dalam Kelompok</td><td>${fmt(res.SSW)}</td><td>${res.dfW}</td><td>${fmt(res.MSW)}</td><td>&mdash;</td><td>&mdash;</td></tr>
-          <tr><td>Total</td><td>${fmt(res.SST)}</td><td>${res.dfT}</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td>Dalam Kelompok</td><td>${fmt(res.SSW)}</td><td>${res.dfW}</td><td>${fmt(res.MSW)}</td><td>-</td><td>-</td></tr>
+          <tr><td>Total</td><td>${fmt(res.SST)}</td><td>${res.dfT}</td><td>-</td><td>-</td><td>-</td></tr>
         </tbody>
       </table></div>
       <p class="test-note">JK Antar Kelompok (SSB) = variasi karena perbedaan rata-rata antar kelompok; JK Dalam Kelompok (SSW) = variasi acak di dalam tiap kelompok (galat); JK Total (SST) = SSB + SSW. F hitung = KT Antar &divide; KT Dalam.</p>
@@ -440,8 +440,8 @@
       <h4>Uji F (ANOVA Satu Arah)</h4>
       <p class="test-sub">Menguji apakah terdapat perbedaan rata-rata yang signifikan di antara ${res.k} kelompok data.</p>
       <div class="hyp-box">
-        <div class="hyp-row"><span class="hyp-tag">H0:</span><span class="hyp-text">&mu;1 = &mu;2 = ... = &mu;${res.k} &mdash; tidak ada perbedaan rata-rata yang signifikan di antara seluruh kelompok.</span></div>
-        <div class="hyp-row"><span class="hyp-tag">H1:</span><span class="hyp-text">minimal ada satu pasang &mu; yang berbeda &mdash; terdapat perbedaan rata-rata yang signifikan di antara kelompok.</span></div>
+        <div class="hyp-row"><span class="hyp-tag">H0:</span><span class="hyp-text">&mu;1 = &mu;2 = ... = &mu;${res.k} - tidak ada perbedaan rata-rata yang signifikan di antara seluruh kelompok.</span></div>
+        <div class="hyp-row"><span class="hyp-tag">H1:</span><span class="hyp-text">minimal ada satu pasang &mu; yang berbeda - terdapat perbedaan rata-rata yang signifikan di antara kelompok.</span></div>
       </div>
       <div class="test-stat-row">
         ${statCard('F hitung', fmt(res.F))}
@@ -506,7 +506,7 @@
       bodyRows += `<tr><td>A${i + 1}</td>` + Array.from({ length: res.b }, (_, j) => `<td>${fmt(res.cellMeans[i][j])}</td>`).join('') + `<td>${fmt(res.rowMeans[i])}</td></tr>`;
     }
     let footRow = '<tr><td>Rata-rata Kolom</td>' + res.colMeans.map((m) => `<td>${fmt(m)}</td>`).join('') + `<td>${fmt(res.grandMean)}</td></tr>`;
-    el.descWrap.innerHTML = `<table class="result-table"><caption>Rata-rata tiap sel, baris (Faktor A), dan kolom (Faktor B) &mdash; N total = ${res.N}, r = ${res.r} replikasi/sel</caption>
+    el.descWrap.innerHTML = `<table class="result-table"><caption>Rata-rata tiap sel, baris (Faktor A), dan kolom (Faktor B) - N total = ${res.N}, r = ${res.r} replikasi/sel</caption>
       <thead>${head}</thead><tbody>${bodyRows}</tbody><tfoot>${footRow}</tfoot></table>`;
 
     // ---- Tab: Tabel ANOVA ----
@@ -519,8 +519,8 @@
           <tr><td>Faktor A</td><td>${fmt(res.SS_A)}</td><td>${res.dfA}</td><td>${fmt(res.MS_A)}</td><td>${fmt(res.F_A)}</td><td>${fmt(res.p_A, 4)}</td></tr>
           <tr><td>Faktor B</td><td>${fmt(res.SS_B)}</td><td>${res.dfB}</td><td>${fmt(res.MS_B)}</td><td>${fmt(res.F_B)}</td><td>${fmt(res.p_B, 4)}</td></tr>
           <tr><td>Interaksi A&times;B</td><td>${fmt(res.SS_AB)}</td><td>${res.dfAB}</td><td>${fmt(res.MS_AB)}</td><td>${fmt(res.F_AB)}</td><td>${fmt(res.p_AB, 4)}</td></tr>
-          <tr><td>Galat (Error)</td><td>${fmt(res.SS_error)}</td><td>${res.dfE}</td><td>${fmt(res.MS_E)}</td><td>&mdash;</td><td>&mdash;</td></tr>
-          <tr><td>Total</td><td>${fmt(res.SS_total)}</td><td>${res.dfT}</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td>Galat (Error)</td><td>${fmt(res.SS_error)}</td><td>${res.dfE}</td><td>${fmt(res.MS_E)}</td><td>-</td><td>-</td></tr>
+          <tr><td>Total</td><td>${fmt(res.SS_total)}</td><td>${res.dfT}</td><td>-</td><td>-</td><td>-</td></tr>
         </tbody>
       </table></div>
       <p class="test-note">F hitung tiap sumber = KT sumber tersebut &divide; KT Galat. Baris Total (SS_total) seharusnya sama dengan jumlah SS_A + SS_B + SS_AB + SS_error.</p>
@@ -536,7 +536,7 @@
     ];
     tests.forEach((t) => {
       html += `<div class="test-block">
-        <h4>Uji F &mdash; ${t.label}</h4>
+        <h4>Uji F - ${t.label}</h4>
         <div class="hyp-box">
           <div class="hyp-row"><span class="hyp-tag">H0:</span><span class="hyp-text">${t.h0}</span></div>
           <div class="hyp-row"><span class="hyp-tag">H1:</span><span class="hyp-text">${t.h1}</span></div>
@@ -673,7 +673,7 @@
 
   function statCard(label, value) { return `<div class="stat-card"><div class="k">${escapeHTML(label)}</div><div class="v">${escapeHTML(String(value))}</div></div>`; }
   function fmt(x, d = 4) {
-    if (x === null || x === undefined || Number.isNaN(x) || !Number.isFinite(x)) return '\u2014';
+    if (x === null || x === undefined || Number.isNaN(x) || !Number.isFinite(x)) return '-';
     return Number(x).toFixed(d);
   }
   function showError(node, msg) { node.textContent = msg; node.hidden = false; }

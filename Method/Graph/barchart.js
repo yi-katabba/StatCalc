@@ -1,4 +1,4 @@
-/* Bar Chart — data kategorik dengan nilai/frekuensi tiap kategori */
+/* Bar Chart - data kategorik dengan nilai/frekuensi tiap kategori */
 (function () {
   'use strict';
   const u = GraphCore.u;
@@ -64,7 +64,7 @@
       }
 
       const total = u.sum(vals), allPos = vals.every((x) => x >= 0);
-      const rows = items.map((it) => [u.esc(it.k), u.fmt(it.v), allPos && total > 0 ? u.fmt(it.v / total * 100) + '%' : '\u2013']);
+      const rows = items.map((it) => [u.esc(it.k), u.fmt(it.v), allPos && total > 0 ? u.fmt(it.v / total * 100) + '%' : '-']);
       const top = items.reduce((a, b) => (b.v > a.v ? b : a)), bot = items.reduce((a, b) => (b.v < a.v ? b : a));
       const interp = u.note(`<strong>Interpretasi:</strong> kategori tertinggi adalah <strong>${u.esc(top.k)}</strong> (${u.fmt(top.v)}) dan terendah <strong>${u.esc(bot.k)}</strong> (${u.fmt(bot.v)}). Pada diagram batang, bandingkan <em>tinggi/panjang</em> batang; sumbu nilai dimulai dari 0 agar perbandingannya tidak menyesatkan.`);
       return { svg: s, summary: u.grid(['Kategori', 'Nilai', 'Persentase'], rows, `Ringkasan (total = ${u.fmt(total)})`) + interp };

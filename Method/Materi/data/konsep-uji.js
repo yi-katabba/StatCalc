@@ -93,7 +93,7 @@ $$\text{statistik uji} = \frac{\text{taksiran} - \text{nilai di } H_0}{\text{gal
 <div class="mt-tw"><table>
 <thead><tr><th>Distribusi</th><th>Parameter</th><th>Dipakai pada</th></tr></thead>
 <tbody>
-<tr><td><strong>Normal baku</strong> $Z$</td><td>&mdash;</td><td>Dasar teori; pendekatan untuk sampel besar.</td></tr>
+<tr><td><strong>Normal baku</strong> $Z$</td><td>-</td><td>Dasar teori; pendekatan untuk sampel besar.</td></tr>
 <tr><td><strong>$t$</strong></td><td>db $= v$</td><td>Uji koefisien regresi, CI rata-rata. Mirip normal tetapi ekor lebih tebal; mendekati normal bila $v$ besar.</td></tr>
 <tr><td><strong>$F$</strong></td><td>db $= (v_1, v_2)$</td><td>Uji F regresi dan ANOVA. Nilainya selalu $\ge 0$ dan menceng kanan; uji selalu satu sisi (ekor kanan).</td></tr>
 <tr><td><strong>$\chi^2$</strong></td><td>db $= v$</td><td>Uji Jarque-Bera (db 2), Breusch-Pagan dan White (db = banyak regresor bantu), uji kesesuaian dan independensi.</td></tr>

@@ -1,5 +1,5 @@
 /* =========================================================================
-   STATISTIKA DESKRIPTIF — ringkasan data per variabel (Method > Stat)
+   STATISTIKA DESKRIPTIF - ringkasan data per variabel (Method > Stat)
    -------------------------------------------------------------------------
    Input: satu atau banyak variabel (satu kolom = satu variabel, panjang tiap
    kolom boleh berbeda; sel kosong diabaikan). Bisa diketik, ditempel dari
@@ -86,7 +86,7 @@
   }
 
   function fmt(v, d) {
-    if (v === null || v === undefined || !Number.isFinite(v)) return '–';
+    if (v === null || v === undefined || !Number.isFinite(v)) return '-';
     d = d === undefined ? 4 : d;
     if (Math.abs(v) >= 1e9 || (v !== 0 && Math.abs(v) < 1e-4)) return v.toExponential(3);
     return String(Number(v.toFixed(d))).replace('.', ',');
@@ -308,7 +308,7 @@
     let h = `<table class="result-table ds-res"><caption>Ringkasan statistik deskriptif</caption><thead><tr><th class="lbl">Statistik</th>${used.map((u) => `<th>${esc(u.name)}</th>`).join('')}</tr></thead><tbody>`;
     ROWS.forEach((r) => { h += `<tr><td class="lbl">${r[0]}</td>${used.map((u) => `<td>${r[1](u.d)}</td>`).join('')}</tr>`; });
     h += '</tbody></table>';
-    h += '<p class="ds-note">Ragam dan simpangan baku memakai pembagi (n − 1) seperti VAR.S dan STDEV.S di Excel. Kuartil memakai interpolasi linear (QUARTILE.INC). Skewness dan kurtosis memakai rumus sampel seperti SKEW dan KURT di Excel (kurtosis dinyatakan sebagai excess, normal = 0). Tanda &ldquo;–&rdquo; berarti belum dapat dihitung karena datanya terlalu sedikit.</p>';
+    h += '<p class="ds-note">Ragam dan simpangan baku memakai pembagi (n − 1) seperti VAR.S dan STDEV.S di Excel. Kuartil memakai interpolasi linear (QUARTILE.INC). Skewness dan kurtosis memakai rumus sampel seperti SKEW dan KURT di Excel (kurtosis dinyatakan sebagai excess, normal = 0). Tanda &ldquo;-&rdquo; berarti belum dapat dihitung karena datanya terlalu sedikit.</p>';
     q('dsSumWrap').innerHTML = h;
   }
 

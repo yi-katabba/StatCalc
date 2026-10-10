@@ -1,5 +1,5 @@
 /* =========================================================================
-   GRAPH CORE — modul bersama untuk semua halaman Graph
+   GRAPH CORE - modul bersama untuk semua halaman Graph
    -------------------------------------------------------------------------
    Muat file ini SEBELUM file graph lain (scatter.js, histogram.js, dst) dan
    SETELAH Method/Shared/impor-data.js.
@@ -52,7 +52,7 @@
   /* ----------------------------- Utilitas umum ----------------------------- */
   function esc(s) { return String(s === undefined || s === null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   function fmt(v) {
-    if (v === null || v === undefined || !Number.isFinite(v)) return '\u2013';
+    if (v === null || v === undefined || !Number.isFinite(v)) return '-';
     if (v === 0) return '0';
     const a = Math.abs(v);
     if (a >= 1e9 || a < 1e-4) return v.toExponential(2);
@@ -282,8 +282,8 @@
           <div class="gr-modebar">
             <label for="${P}mode">Bagaimana data Anda tersusun?</label>
             <select class="select-input" id="${P}mode">
-              <option value="wide" selected>Per variabel &mdash; satu kolom = satu variabel (seperti di Excel)</option>
-              <option value="long">Per kelompok &mdash; kolom Kelompok + kolom Nilai</option>
+              <option value="wide" selected>Per variabel - satu kolom = satu variabel (seperti di Excel)</option>
+              <option value="long">Per kelompok - kolom Kelompok + kolom Nilai</option>
             </select>
           </div>
           <p class="hint gr-note">Pilih <strong>Per variabel</strong> bila tiap variabel/kelompok sudah berada di kolomnya sendiri (boleh hanya 1 variabel). Pilih <strong>Per kelompok</strong> bila semua nilai ada di satu kolom dan kelompoknya ditulis di kolom lain.</p>

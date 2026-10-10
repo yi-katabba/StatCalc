@@ -1,5 +1,5 @@
 /* =========================================================================
-   MATERI STATISTIK — menu utama untuk belajar konsep & rumus tiap metode
+   MATERI STATISTIK - menu utama untuk belajar konsep & rumus tiap metode
    -------------------------------------------------------------------------
    Fitur:
    - Daftar topik (kartu) + pencarian ke seluruh isi materi.
@@ -414,7 +414,7 @@
     ],
     anova: [
       [/Satu Arah/i, 'satu-arah'],
-      [/Dua Arah|Uji F\s*(&mdash;|—)/i, 'dua-arah'],
+      [/Dua Arah|Uji F\s*(-|-)/i, 'dua-arah'],
     ],
     smoothing: [[/Ukuran Error/i, 'error']],
     stasioner: [

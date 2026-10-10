@@ -3,9 +3,9 @@
 Menu utama **Materi** (penjelasan konsep + rumus LaTeX untuk metode di menu Stat).
 
 ## Struktur
-- `materi.js` — mesin halaman (daftar, pencarian, halaman baca, tautan "Lihat materi untuk pemahaman").
-- `data/*.js` — isi materi, satu file per topik.
-- `katex/` — KaTeX 0.16.11 lokal (tanpa internet), lisensi MIT.
+- `materi.js` - mesin halaman (daftar, pencarian, halaman baca, tautan "Lihat materi untuk pemahaman").
+- `data/*.js` - isi materi, satu file per topik.
+- `katex/` - KaTeX 0.16.11 lokal (tanpa internet), lisensi MIT.
 
 ## Menambah / mengubah materi
 Edit file di `data/`, atau buat file baru lalu muat di `index.html` **setelah** `materi.js`:

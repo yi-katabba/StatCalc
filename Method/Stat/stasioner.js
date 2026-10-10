@@ -1,5 +1,5 @@
 /* =========================================================================
-   METODE — UJI STASIONERITAS (2 tahap)
+   METODE - UJI STASIONERITAS (2 tahap)
    -------------------------------------------------------------------------
    TAHAP 1  Stasioner dalam VARIANS  → transformasi Box-Cox (grafik StDev vs λ,
             estimasi λ, selang kepercayaan 95% dengan batas likelihood, nilai λ bulat).
@@ -49,7 +49,7 @@
   const $ = (sel, ctx = document) => ctx.querySelector(sel);
   const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
 
-  /* Mesin matriks & distribusi t (salinan dari regresi.js) — file ini mandiri,
+  /* Mesin matriks & distribusi t (salinan dari regresi.js) - file ini mandiri,
      tidak bergantung pada urutan/versi regresi.js. */
   function logGamma(x) {
     const g = 7;
@@ -114,7 +114,7 @@
       let pivotRow = col;
       for (let r = col + 1; r < n; r++) if (Math.abs(A[r][col]) > Math.abs(A[pivotRow][col])) pivotRow = r;
       if (Math.abs(A[pivotRow][col]) < 1e-9) {
-        throw new Error('Matriks (X\u1D40X) bersifat singular \u2014 kemungkinan ada variabel X yang saling berkorelasi sempurna (multikolinearitas total) atau jumlah data terlalu sedikit.');
+        throw new Error('Matriks (X\u1D40X) bersifat singular - kemungkinan ada variabel X yang saling berkorelasi sempurna (multikolinearitas total) atau jumlah data terlalu sedikit.');
       }
       if (pivotRow !== col) [A[col], A[pivotRow]] = [A[pivotRow], A[col]];
       const pivot = A[col][col];
@@ -609,7 +609,7 @@
     try { R = runAll(data.y, state); }
     catch (err) {
       showError(el.dataError, /singular/i.test(err.message)
-        ? 'Perhitungan regresi gagal (matriks singular) \u2014 data terlalu seragam/linear untuk model dan jumlah lag ini. Coba kurangi jumlah lag atau ganti model.'
+        ? 'Perhitungan regresi gagal (matriks singular) - data terlalu seragam/linear untuk model dan jumlah lag ini. Coba kurangi jumlah lag atau ganti model.'
         : err.message);
       return;
     }
@@ -749,11 +749,11 @@
     const rows = bc.table.map((r) => `<tr><td>${lamTxt(r.l)}</td><td>${escapeHTML(lamName(r.l))}</td><td>${fmt(r.sd, 4)}</td><td class="${r.sd <= bc.limit ? 'ok' : 'bad'}">${r.sd <= bc.limit ? 'Dalam selang' : 'Di luar selang'}</td></tr>`).join('');
 
     el.varWrap.innerHTML = `<div class="test-block">
-      <h4>Tahap 1 &mdash; Stasioner dalam Varians (Transformasi Box-Cox)</h4>
+      <h4>Tahap 1 - Stasioner dalam Varians (Transformasi Box-Cox)</h4>
       <p class="test-sub">Grafik di atas memplot ${R.bc.sigma === 'mr' ? 'sigma within (moving range, MR\u0304/1,128)' : 'simpangan baku (StDev)'} data hasil transformasi untuk berbagai \u03BB. \u03BB terbaik adalah titik terendah kurva; garis putus-putus menandai selang kepercayaan 95%.</p>
       <div class="hyp-box">
-        <div class="hyp-row"><span class="hyp-tag">H0:</span><span class="hyp-text">\u03BB = 1 &mdash; ragam sudah stabil, tidak perlu transformasi.</span></div>
-        <div class="hyp-row"><span class="hyp-tag">H1:</span><span class="hyp-text">\u03BB &ne; 1 &mdash; ragam tidak stabil, data perlu ditransformasi.</span></div>
+        <div class="hyp-row"><span class="hyp-tag">H0:</span><span class="hyp-text">\u03BB = 1 - ragam sudah stabil, tidak perlu transformasi.</span></div>
+        <div class="hyp-row"><span class="hyp-tag">H1:</span><span class="hyp-text">\u03BB &ne; 1 - ragam tidak stabil, data perlu ditransformasi.</span></div>
       </div>
       <div class="test-stat-row">
         ${statCard('\u03BB estimasi', fmt(bc.est, 3))}
@@ -796,11 +796,11 @@
     for (let i = 0; i < raw.length; i++) {
       let row = `<td>${i + 1}</td><td>${fmt(raw[i], 3)}</td>`;
       if (tr) row += `<td>${fmt(R.base[i], 4)}</td>`;
-      for (let k = 1; k <= d; k++) { const v = t0.series[k][i - k]; row += `<td>${i - k >= 0 ? fmt(v, 3) : '\u2014'}</td>`; }
+      for (let k = 1; k <= d; k++) { const v = t0.series[k][i - k]; row += `<td>${i - k >= 0 ? fmt(v, 3) : '-'}</td>`; }
       const zi = i - d;
-      row += `<td>${zi >= 0 ? fmt(t0.z[zi], 3) : '\u2014'}</td>`;
-      row += `<td>${zi >= 1 ? fmt(t0.z[zi - 1], 3) : '\u2014'}</td>`;
-      row += `<td>${zi >= 1 ? fmt(t0.z[zi] - t0.z[zi - 1], 3) : '\u2014'}</td>`;
+      row += `<td>${zi >= 0 ? fmt(t0.z[zi], 3) : '-'}</td>`;
+      row += `<td>${zi >= 1 ? fmt(t0.z[zi - 1], 3) : '-'}</td>`;
+      row += `<td>${zi >= 1 ? fmt(t0.z[zi] - t0.z[zi - 1], 3) : '-'}</td>`;
       body += `<tr>${row}</tr>`;
     }
     el.tableWrap.innerHTML = `<table class="result-table"><caption>Data asli${tr ? ', hasil transformasi Box-Cox' : ''}, diferensiasi, dan variabel regresi (n = ${raw.length}; data yang diuji N = ${N})</caption><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
@@ -847,8 +847,8 @@
       <h4>Uji ${nm}</h4>
       <p class="test-sub">Data yang diuji: <strong>${dLabel(cfg.d)}</strong> dari ${escapeHTML(baseLabel(R))} &middot; Model: ${MODEL_LABEL[cfg.model]} &middot; ${lagInfo}.</p>
       <div class="hyp-box">
-        <div class="hyp-row"><span class="hyp-tag">H0:</span><span class="hyp-text">&gamma; = 0 &mdash; data mengandung akar unit (tidak stasioner dalam mean).</span></div>
-        <div class="hyp-row"><span class="hyp-tag">H1:</span><span class="hyp-text">&gamma; &lt; 0 &mdash; data tidak mengandung akar unit (stasioner dalam mean).</span></div>
+        <div class="hyp-row"><span class="hyp-tag">H0:</span><span class="hyp-text">&gamma; = 0 - data mengandung akar unit (tidak stasioner dalam mean).</span></div>
+        <div class="hyp-row"><span class="hyp-tag">H1:</span><span class="hyp-text">&gamma; &lt; 0 - data tidak mengandung akar unit (stasioner dalam mean).</span></div>
       </div>
       <div class="test-stat-row">${cards}</div>
       <div class="test-verdict ${res.stationary ? 'ok' : 'bad'}">${res.stationary ? `Stasioner (${sh} &lt; nilai kritis 5%)` : `Tidak Stasioner (${sh} &ge; nilai kritis 5%)`}</div>
@@ -859,7 +859,7 @@
     </div>`;
 
     html += `<div class="test-block">
-      <h4>Perbandingan dengan Nilai Kritis (MacKinnon) &mdash; ${sh}</h4>
+      <h4>Perbandingan dengan Nilai Kritis (MacKinnon) - ${sh}</h4>
       <p class="test-sub">Data stasioner jika statistik ${sh} <em>lebih kecil</em> (lebih negatif) daripada nilai kritis.</p>
       <div class="table-scroll"><table class="mini-table">
         <thead><tr><th>Taraf</th><th>Nilai kritis</th><th>Keputusan (${sh} = ${fmt(res.stat, 4)})</th></tr></thead>
@@ -930,13 +930,13 @@
         <thead><tr><th>Taraf</th><th>Titik kritis</th><th>Keputusan (KPSS = ${fmt(res.stat, 4)})</th></tr></thead>
         <tbody>${critRows}</tbody>
       </table></div>
-      <p class="test-note">p-value diperoleh dengan interpolasi linear pada tabel titik kritis KPSS sehingga hanya berkisar 0.01&ndash;0.10; di luar rentang itu ditampilkan sebagai batas (&gt; 0.10 atau &lt; 0.01).</p>
+      <p class="test-note">p-value diperoleh dengan interpolasi linear pada tabel titik kritis KPSS sehingga hanya berkisar 0.01-0.10; di luar rentang itu ditampilkan sebagai batas (&gt; 0.10 atau &lt; 0.01).</p>
     </div>`;
   }
 
   function renderTest(R) {
     const mix = R.tests.length > 1;
-    let html = `<div class="test-block"><h4>Tahap 2 &mdash; Stasioner dalam Mean (Uji Akar Unit)</h4>
+    let html = `<div class="test-block"><h4>Tahap 2 - Stasioner dalam Mean (Uji Akar Unit)</h4>
       <p class="test-sub">Data diuji: <strong>${dLabel(R.cfg.d)}</strong> dari ${escapeHTML(baseLabel(R))}. ${mix ? 'Tiga uji dijalankan bersamaan agar hasilnya dapat dibandingkan.' : `Uji yang dipakai: ${TEST_LABEL[R.tests[0].kind]}.`}</p>`;
     if (mix) {
       const rows = R.tests.map((t) => `<tr><td>${TEST_LABEL[t.kind]}</td><td>${t.kind === 'kpss' ? 'Stasioner' : 'Ada akar unit'}</td><td>${fmt(t.stat, 4)}</td><td>${fmt(t.crit[1], 4)}</td><td class="${t.stationary ? 'ok' : 'bad'}">${t.stationary ? 'Stasioner' : 'Tidak stasioner'}</td></tr>`).join('');
@@ -1113,10 +1113,10 @@
 
   function renderSteps(R) {
     let steps = [];
-    steps.push({ section: 'Tahap 1 \u2014 Stasioner dalam Varians (Box-Cox)' });
+    steps.push({ section: 'Tahap 1 - Stasioner dalam Varians (Box-Cox)' });
     steps = steps.concat(stepsBoxCox(R));
     R.tests.forEach((t) => {
-      steps.push({ section: `Tahap 2 \u2014 Stasioner dalam Mean: uji ${TEST_SHORT[t.kind]}` });
+      steps.push({ section: `Tahap 2 - Stasioner dalam Mean: uji ${TEST_SHORT[t.kind]}` });
       if (R.lam !== null && t === R.tests[0]) {
         steps.push({
           title: 'Terapkan transformasi Box-Cox pada data',
@@ -1290,9 +1290,9 @@
         ['Model', MODEL_LABEL[cfg.model]],
       ];
       R.tests.forEach((t) => {
-        meta.push([TEST_SHORT[t.kind] + ' \u2014 statistik', fmt(t.stat, 4)]);
-        meta.push([TEST_SHORT[t.kind] + ' \u2014 nilai kritis 5%', fmt(t.crit[1], 4)]);
-        meta.push([TEST_SHORT[t.kind] + ' \u2014 keputusan', t.stationary ? 'Stasioner' : 'Tidak stasioner']);
+        meta.push([TEST_SHORT[t.kind] + ' - statistik', fmt(t.stat, 4)]);
+        meta.push([TEST_SHORT[t.kind] + ' - nilai kritis 5%', fmt(t.crit[1], 4)]);
+        meta.push([TEST_SHORT[t.kind] + ' - keputusan', t.stationary ? 'Stasioner' : 'Tidak stasioner']);
       });
       meta.push(['Kesimpulan akhir', R.overall ? 'Data stasioner (varians & mean)' : 'Data belum stasioner penuh']);
       SE.publish({
@@ -1307,7 +1307,7 @@
 
   function statCard(label, value) { return `<div class="stat-card"><div class="k">${escapeHTML(label)}</div><div class="v">${escapeHTML(String(value))}</div></div>`; }
   function fmt(x, d = 4) {
-    if (x === null || x === undefined || Number.isNaN(x) || !Number.isFinite(x)) return '\u2014';
+    if (x === null || x === undefined || Number.isNaN(x) || !Number.isFinite(x)) return '-';
     return Number(x).toFixed(d);
   }
   function showError(node, msg) { node.textContent = msg; node.hidden = false; }

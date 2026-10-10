@@ -1,4 +1,4 @@
-/* Materi: Uji Stasioneritas — Box-Cox (varians) + ADF / Phillips-Perron / KPSS (mean) (terhubung ke Method/Stat/stasioner.js). Rumus ditulis dengan LaTeX. */
+/* Materi: Uji Stasioneritas - Box-Cox (varians) + ADF / Phillips-Perron / KPSS (mean) (terhubung ke Method/Stat/stasioner.js). Rumus ditulis dengan LaTeX. */
 (function () {
   if (!window.StatCalcMateri) return;
   window.StatCalcMateri.register({
@@ -165,7 +165,7 @@ $$C(\alpha, N) = \beta_\infty + \frac{\beta_1}{N} + \frac{\beta_2}{N^2} + \frac{
 $$Z_\tau=\sqrt{\frac{\hat\gamma_0}{\hat\lambda^2}}\;\tau\;-\;\frac12\,\frac{\hat\lambda^2-\hat\gamma_0}{\hat\lambda}\cdot\frac{n\,SE(\hat\gamma)}{s}$$
 <p>dengan $\hat\gamma_0=SSE/n$, $s^2=SSE/(n-k)$, dan ragam jangka panjang (bobot Bartlett, bandwidth $l$):</p>
 $$\hat\lambda^2=\hat\gamma_0+2\sum_{j=1}^{l}\left(1-\frac{j}{l+1}\right)\hat\gamma_j,\qquad \hat\gamma_j=\frac1n\sum_{t=j+1}^{n}u_t u_{t-j}$$
-<p>Aplikasi memakai bandwidth otomatis $l=\lfloor 4\,(n/100)^{1/4}\rfloor$, atau nilai manual 0&ndash;12.</p>
+<p>Aplikasi memakai bandwidth otomatis $l=\lfloor 4\,(n/100)^{1/4}\rfloor$, atau nilai manual 0-12.</p>
 <div class="mt-box key" data-label="Keputusan">
   <p>$Z_\tau$ memiliki distribusi asimtotik yang sama dengan $\tau$ Dickey-Fuller, sehingga memakai nilai kritis MacKinnon yang sama: $Z_\tau\lt C_{5\%}\Rightarrow$ tolak $H_0$ (stasioner). Bila galat tidak berautokorelasi ($\hat\lambda^2=\hat\gamma_0$), $Z_\tau=\tau$.</p>
 </div>

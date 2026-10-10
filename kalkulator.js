@@ -1,5 +1,5 @@
 /* =========================================================================
-   KALKULATOR ILMIAH v2 — editor ekspresi berkursor + tampilan LaTeX (KaTeX)
+   KALKULATOR ILMIAH v2 - editor ekspresi berkursor + tampilan LaTeX (KaTeX)
    - Ketuk di mana saja pada ekspresi untuk memindahkan kursor, lalu sisipkan /
      hapus di posisi itu (tidak harus dari kanan).
    - Pecahan, akar, dan pangkat tampil sebagai LaTeX sungguhan.

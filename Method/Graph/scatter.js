@@ -1,4 +1,4 @@
-/* Scatter Plot — dua variabel numerik (X, Y), garis regresi & korelasi */
+/* Scatter Plot - dua variabel numerik (X, Y), garis regresi & korelasi */
 (function () {
   'use strict';
   const u = GraphCore.u;
@@ -42,7 +42,7 @@
         ['Banyak data (n)', d.n],
         ['Rata-rata X / Y', `${u.fmt(u.mean(x))} / ${u.fmt(u.mean(y))}`],
         ['Simpangan baku X / Y', `${u.fmt(u.sd(x))} / ${u.fmt(u.sd(y))}`],
-        ['Korelasi Pearson (r)', rOk ? u.fmt(reg.r) : '\u2013'],
+        ['Korelasi Pearson (r)', rOk ? u.fmt(reg.r) : '-'],
       ];
       if (sxxOk) {
         rows.push(['Persamaan garis', `Y = ${u.fmt(reg.a)} ${reg.b >= 0 ? '+' : '\u2212'} ${u.fmt(Math.abs(reg.b))}X`]);

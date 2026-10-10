@@ -1,10 +1,10 @@
 /* =========================================================================
-   2. METODE — REGRESI LINEAR (logika kalkulator)
+   2. METODE - REGRESI LINEAR (logika kalkulator)
    ========================================================================= */
 (function () {
   'use strict';
 
-  /* Pita pengaturan (uji asumsi & tampilan hasil) — harus dipasang sebelum elemen dicari */
+  /* Pita pengaturan (uji asumsi & tampilan hasil) - harus dipasang sebelum elemen dicari */
   if (window.StatRibbon) window.StatRibbon.mount({
     view: '#view-regresi', key: 'regresi',
     tabs: [
@@ -13,7 +13,7 @@
         { label: 'Antar variabel X', items: [{ type: 'select', id: 'asmMultiTest', label: 'Multikolinearitas', selected: 'vif', options: [['vif', 'VIF'], ['corr', 'Korelasi antar X'], ['ci', 'Condition Index']] }] },
         { label: 'Ragam residual', items: [{ type: 'select', id: 'asmHeteroTest', label: 'Heteroskedastisitas', selected: 'glejser', options: [['glejser', 'Glejser'], ['bp', 'Breusch-Pagan'], ['white', 'White']] }] },
         { label: 'Residual berurutan', items: [{ type: 'select', id: 'asmAutoTest', label: 'Autokorelasi', selected: 'dw', options: [['dw', 'Durbin-Watson'], ['bg', 'Breusch-Godfrey'], ['runs', 'Runs']] }] },
-      ], tipId: 'asmTestHint', tip: '<strong>Jarque-Bera</strong>: berbasis skewness &amp; kurtosis, cocok untuk sampel besar (pendekatan asimtotik). <strong>Glejser</strong>: meregresikan |residual| terhadap tiap X. <strong>VIF</strong>: meregresikan tiap X terhadap X lain (VIF &gt; 10 = bermasalah). <strong>Durbin-Watson</strong>: korelasi residual berurutan, rentang praktis 1,5&ndash;2,5.' },
+      ], tipId: 'asmTestHint', tip: '<strong>Jarque-Bera</strong>: berbasis skewness &amp; kurtosis, cocok untuk sampel besar (pendekatan asimtotik). <strong>Glejser</strong>: meregresikan |residual| terhadap tiap X. <strong>VIF</strong>: meregresikan tiap X terhadap X lain (VIF &gt; 10 = bermasalah). <strong>Durbin-Watson</strong>: korelasi residual berurutan, rentang praktis 1,5-2,5.' },
       { id: 'hasil', label: 'Hasil', groups: [
         { label: 'Tab hasil (Langkah 3)', cols: 2, items: [
           { type: 'toggle', key: 'tbl', label: 'Tabel Bantu', tab: 'tab-table' },
@@ -405,7 +405,7 @@
       let pivotRow = col;
       for (let r = col + 1; r < n; r++) if (Math.abs(A[r][col]) > Math.abs(A[pivotRow][col])) pivotRow = r;
       if (Math.abs(A[pivotRow][col]) < 1e-9) {
-        throw new Error('Matriks (X\u1D40X) bersifat singular \u2014 kemungkinan ada variabel X yang saling berkorelasi sempurna (multikolinearitas total) atau jumlah data terlalu sedikit.');
+        throw new Error('Matriks (X\u1D40X) bersifat singular - kemungkinan ada variabel X yang saling berkorelasi sempurna (multikolinearitas total) atau jumlah data terlalu sedikit.');
       }
       if (pivotRow !== col) [A[col], A[pivotRow]] = [A[pivotRow], A[col]];
       const pivot = A[col][col];
@@ -499,7 +499,7 @@
     const steps = [];
     steps.push({ title: 'Susun matriks desain X (+ kolom 1 untuk intercept) dan vektor Y', matrix: `X (${v.n}\u00D7${v.k + 1}) =\n${matToText(v.Xd, 2)}\n\nY (${v.n}\u00D71) =\n${matToText(v.Yc, 2)}`, note: 'Kolom pertama matriks X berisi angka 1 untuk mewakili koefisien konstanta (b0).' });
     steps.push({ title: 'Hitung X\u1D40X dan X\u1D40Y', matrix: `X\u1D40X =\n${matToText(v.XtX, 3)}\n\nX\u1D40Y =\n${matToText(v.XtY, 3)}` });
-    steps.push({ title: 'Hitung invers (X\u1D40X)\u207B\u00B9 dengan eliminasi Gauss-Jordan', matrix: `(X\u1D40X)\u207B\u00B9 =\n${matToText(v.XtXinv, 5)}`, note: 'Matriks identitas dipasang di sisi kanan X\u1D40X, lalu operasi baris dilakukan hingga sisi kiri menjadi identitas \u2014 sisi kanan yang tersisa adalah inversnya.' });
+    steps.push({ title: 'Hitung invers (X\u1D40X)\u207B\u00B9 dengan eliminasi Gauss-Jordan', matrix: `(X\u1D40X)\u207B\u00B9 =\n${matToText(v.XtXinv, 5)}`, note: 'Matriks identitas dipasang di sisi kanan X\u1D40X, lalu operasi baris dilakukan hingga sisi kiri menjadi identitas - sisi kanan yang tersisa adalah inversnya.' });
     steps.push({ title: 'Hitung koefisien \u03B2 = (X\u1D40X)\u207B\u00B9 \u00B7 X\u1D40Y', formula: v.beta.map((b, i) => `b${i} = ${fmt(b, 5)}`).join('\n') });
     steps.push({ title: 'Susun persamaan regresi', formula: buildEquationString(v.beta) });
     steps.push({ title: 'Hitung SST, SSE, SSR, R\u00B2, dan Se', formula: `SST = \u03A3(Y \u2212 \u0232)\u00B2 = ${fmt(v.SST)}\nSSE = \u03A3(Y \u2212 \u0176)\u00B2 = ${fmt(v.SSE)}\nSSR = SST \u2212 SSE = ${fmt(v.SSR)}\nR\u00B2 = SSR / SST = ${fmt(v.R2)}  (\u2248 ${fmt(v.R2 * 100, 2)}%)\nSe = \u221A[SSE / (n \u2212 k \u2212 1)] = \u221A[${fmt(v.SSE)} / ${v.df}] = ${fmt(v.Se)}`, note: `Sekitar ${fmt(v.R2 * 100, 2)}% variasi Y dijelaskan bersama-sama oleh seluruh variabel X dalam model.` });
@@ -662,7 +662,7 @@
 
   function renderSignificanceTests(res, data) {
     if (!(res.df > 0)) {
-      return `<div class="test-block"><h4>Uji Signifikansi</h4><p class="test-note">Derajat bebas tidak mencukupi untuk melakukan uji signifikansi &mdash; tambahkan lebih banyak data.</p></div>`;
+      return `<div class="test-block"><h4>Uji Signifikansi</h4><p class="test-note">Derajat bebas tidak mencukupi untuk melakukan uji signifikansi - tambahkan lebih banyak data.</p></div>`;
     }
     const { fTest, tTests } = computeSignificanceTests(res, data);
     let html = '';
@@ -677,8 +677,8 @@
         <thead><tr><th>Sumber Variasi</th><th>JK (SS)</th><th>db (df)</th><th>KT (MS)</th><th>F hitung</th><th>Sig.</th></tr></thead>
         <tbody>
           <tr><td>Regresi</td><td>${fmt(res.SSR)}</td><td>${fTest.df1}</td><td>${fmt(MSR)}</td><td>${fmt(fTest.F)}</td><td>${fmt(fTest.p, 4)}</td></tr>
-          <tr><td>Residual</td><td>${fmt(res.SSE)}</td><td>${fTest.df2}</td><td>${fmt(MSE)}</td><td>&mdash;</td><td>&mdash;</td></tr>
-          <tr><td>Total</td><td>${fmt(res.SST)}</td><td>${fTest.df1 + fTest.df2}</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td>Residual</td><td>${fmt(res.SSE)}</td><td>${fTest.df2}</td><td>${fmt(MSE)}</td><td>-</td><td>-</td></tr>
+          <tr><td>Total</td><td>${fmt(res.SST)}</td><td>${fTest.df1 + fTest.df2}</td><td>-</td><td>-</td><td>-</td></tr>
         </tbody>
       </table></div>
       <p class="test-note">JK Regresi (SSR) = variasi Y yang dijelaskan model; JK Residual (SSE) = variasi Y yang tidak dijelaskan model (galat); JK Total (SST) = SSR + SSE. F hitung = KT Regresi &divide; KT Residual.</p>
@@ -689,8 +689,8 @@
       <h4>Uji F (Simultan)</h4>
       <p class="test-sub">Menguji apakah seluruh variabel X secara bersama-sama berpengaruh signifikan terhadap Y.</p>
       <div class="hyp-box">
-        <div class="hyp-row"><span class="hyp-tag">H0:</span><span class="hyp-text">b1 = b2 = ... = b${res.k} = 0 &mdash; secara bersama-sama, variabel X tidak berpengaruh signifikan terhadap Y.</span></div>
-        <div class="hyp-row"><span class="hyp-tag">H1:</span><span class="hyp-text">minimal ada satu bj &ne; 0 &mdash; secara bersama-sama, variabel X berpengaruh signifikan terhadap Y.</span></div>
+        <div class="hyp-row"><span class="hyp-tag">H0:</span><span class="hyp-text">b1 = b2 = ... = b${res.k} = 0 - secara bersama-sama, variabel X tidak berpengaruh signifikan terhadap Y.</span></div>
+        <div class="hyp-row"><span class="hyp-tag">H1:</span><span class="hyp-text">minimal ada satu bj &ne; 0 - secara bersama-sama, variabel X berpengaruh signifikan terhadap Y.</span></div>
       </div>
       <div class="test-stat-row">
         ${statCard('F hitung', fmt(fTest.F))}
@@ -718,16 +718,16 @@
       <h4>Uji t (Parsial)</h4>
       <p class="test-sub">Menguji apakah tiap variabel X secara individu (parsial) berpengaruh signifikan terhadap Y, dengan variabel lain dianggap tetap.</p>
       <div class="hyp-box">
-        <div class="hyp-row"><span class="hyp-tag">H0:</span><span class="hyp-text">bj = 0 &mdash; variabel Xj secara parsial tidak berpengaruh signifikan terhadap Y.</span></div>
-        <div class="hyp-row"><span class="hyp-tag">H1:</span><span class="hyp-text">bj &ne; 0 &mdash; variabel Xj secara parsial berpengaruh signifikan terhadap Y.</span></div>
+        <div class="hyp-row"><span class="hyp-tag">H0:</span><span class="hyp-text">bj = 0 - variabel Xj secara parsial tidak berpengaruh signifikan terhadap Y.</span></div>
+        <div class="hyp-row"><span class="hyp-tag">H1:</span><span class="hyp-text">bj &ne; 0 - variabel Xj secara parsial berpengaruh signifikan terhadap Y.</span></div>
       </div>
       <div class="table-scroll"><table class="mini-table">
         <thead><tr><th>Koefisien</th><th>b</th><th>Se(b)</th><th>t hitung</th><th>Sig.</th><th>Keputusan</th></tr></thead>
         <tbody>${rows}</tbody>
       </table></div>
       <p class="test-conclusion">${anySig
-        ? 'Pada taraf signifikansi 5% (p &lt; 0.05), koefisien dengan status "Signifikan" pada tabel di atas menunjukkan H0 ditolak &mdash; variabel tersebut terbukti berpengaruh secara parsial terhadap Y. Koefisien dengan status "Tidak Sig." berarti H0 gagal ditolak untuk variabel tersebut.'
-        : 'Pada taraf signifikansi 5% (p &ge; 0.05), seluruh koefisien memiliki status "Tidak Sig.", sehingga H0 gagal ditolak untuk semua variabel &mdash; belum ada variabel X yang terbukti berpengaruh signifikan secara parsial terhadap Y.'}</p>
+        ? 'Pada taraf signifikansi 5% (p &lt; 0.05), koefisien dengan status "Signifikan" pada tabel di atas menunjukkan H0 ditolak - variabel tersebut terbukti berpengaruh secara parsial terhadap Y. Koefisien dengan status "Tidak Sig." berarti H0 gagal ditolak untuk variabel tersebut.'
+        : 'Pada taraf signifikansi 5% (p &ge; 0.05), seluruh koefisien memiliki status "Tidak Sig.", sehingga H0 gagal ditolak untuk semua variabel - belum ada variabel X yang terbukti berpengaruh signifikan secara parsial terhadap Y.'}</p>
       <p class="test-note">Kolom "b" untuk baris konstanta biasanya tidak diinterpretasikan sebagai pengaruh suatu variabel, karena mewakili nilai Y saat seluruh X = 0.</p>
     </div>`;
 
@@ -793,7 +793,7 @@
       paras.push(`<p><strong>Konstanta (b0 = ${fmt(res.beta[0])})</strong> adalah nilai Y yang diprediksi apabila seluruh variabel X bernilai 0.</p>`);
       for (let j = 1; j < res.beta.length; j++) {
         const b = res.beta[j];
-        paras.push(`<p><strong>b${j} = ${fmt(b)}</strong> \u2014 setiap kenaikan 1 satuan pada X${j}, dengan variabel X lainnya dianggap tetap (ceteris paribus), akan ${b >= 0 ? 'menaikkan' : 'menurunkan'} Y rata-rata sebesar ${fmt(Math.abs(b))} satuan.</p>`);
+        paras.push(`<p><strong>b${j} = ${fmt(b)}</strong> - setiap kenaikan 1 satuan pada X${j}, dengan variabel X lainnya dianggap tetap (ceteris paribus), akan ${b >= 0 ? 'menaikkan' : 'menurunkan'} Y rata-rata sebesar ${fmt(Math.abs(b))} satuan.</p>`);
       }
       paras.push(`<p>Koefisien determinasi R\u00B2 = ${fmt(res.R2)} menunjukkan bahwa ${fmt(res.R2 * 100, 2)}% variasi Y dapat dijelaskan secara bersama-sama oleh seluruh variabel X dalam model, sedangkan Adjusted R\u00B2 = ${fmt(res.adjR2)} sudah memperhitungkan jumlah variabel bebas yang digunakan.</p>`);
     }
@@ -802,7 +802,7 @@
 
   /* =========================================================================
      UJI ASUMSI KLASIK (Langkah 4): Normalitas, Multikolinearitas,
-     Heteroskedastisitas, Autokorelasi — lengkap dengan hipotesis H0/H1.
+     Heteroskedastisitas, Autokorelasi - lengkap dengan hipotesis H0/H1.
      ========================================================================= */
 
   function computeJarqueBera(res) {
@@ -1029,7 +1029,7 @@
     ci: '<strong>Condition Index</strong>: dari nilai eigen matriks korelasi X (CI &gt; 30 = bermasalah).',
   };
   const TEST_HINTS_AUTO = {
-    dw: '<strong>Durbin-Watson</strong>: korelasi residual berurutan, rentang praktis 1,5&ndash;2,5.',
+    dw: '<strong>Durbin-Watson</strong>: korelasi residual berurutan, rentang praktis 1,5-2,5.',
     bg: '<strong>Breusch-Godfrey</strong>: uji LM (orde 1) dari regresi residual terhadap X dan residual sebelumnya.',
     runs: '<strong>Runs</strong>: menghitung pergantian tanda residual (+/&minus;), tanpa asumsi apa pun tentang model.',
   };
@@ -1037,7 +1037,7 @@
   /* ---------- Tampilan blok uji normalitas & heteroskedastisitas (mengikuti pilihan pengguna) ---------- */
   const TEST_HINTS_NORM = {
     jb: '<strong>Jarque-Bera</strong>: berbasis skewness &amp; kurtosis, cocok untuk sampel besar (pendekatan asimtotik).',
-    sw: '<strong>Shapiro-Wilk</strong>: umumnya paling kuat untuk sampel kecil&ndash;sedang (n 3&ndash;5000).',
+    sw: '<strong>Shapiro-Wilk</strong>: umumnya paling kuat untuk sampel kecil-sedang (n 3-5000).',
     ks: '<strong>Kolmogorov-Smirnov</strong> (koreksi Lilliefors): membandingkan sebaran kumulatif residual dengan normal; butuh n &ge; 4.',
   };
   const TEST_HINTS_HETERO = {
@@ -1055,7 +1055,7 @@
 
   function normalityBlockHTML(norm) {
     const title = `1. Uji Normalitas Residual (${norm.name})`;
-    const sub = '<p class="test-sub">Menguji apakah residual (galat) model regresi berdistribusi normal &mdash; syarat agar uji t dan uji F valid.</p>';
+    const sub = '<p class="test-sub">Menguji apakah residual (galat) model regresi berdistribusi normal - syarat agar uji t dan uji F valid.</p>';
     if (norm.unavailable) {
       return `<div class="test-block"><h4>${title}</h4>${sub}<p class="test-note">${escapeHTML(norm.reason)} Pilih uji normalitas lain atau tambahkan data.</p></div>`;
     }
@@ -1078,7 +1078,7 @@
       <div class="test-verdict ${norm.normal ? 'ok' : 'bad'}">${norm.normal ? 'Normal (p &ge; 0.05)' : 'Tidak Normal (p &lt; 0.05)'}</div>
       <p class="test-conclusion">${norm.normal
         ? 'Karena nilai signifikansi &ge; 0.05, H0 gagal ditolak. Artinya, residual model regresi berdistribusi normal sehingga asumsi normalitas terpenuhi.'
-        : 'Karena nilai signifikansi &lt; 0.05, H0 ditolak. Artinya, residual model regresi belum terbukti berdistribusi normal sehingga asumsi normalitas belum terpenuhi &mdash; pertimbangkan menambah data atau mentransformasi variabel.'}</p>
+        : 'Karena nilai signifikansi &lt; 0.05, H0 ditolak. Artinya, residual model regresi belum terbukti berdistribusi normal sehingga asumsi normalitas belum terpenuhi - pertimbangkan menambah data atau mentransformasi variabel.'}</p>
       <p class="test-note">${note}</p>
     </div>`;
   }
@@ -1108,8 +1108,8 @@
         </table></div>
         ${verdict}
         <p class="test-conclusion">${h.anyProblem
-          ? 'Ada variabel yang berpengaruh signifikan terhadap |residual| (p &lt; 0.05), sehingga H0 ditolak &mdash; terindikasi terjadi heteroskedastisitas pada model ini.'
-          : 'Tidak ada variabel yang berpengaruh signifikan terhadap |residual| (p &ge; 0.05 untuk semua), sehingga H0 gagal ditolak &mdash; varians residual cenderung homogen (tidak terjadi heteroskedastisitas).'}</p>
+          ? 'Ada variabel yang berpengaruh signifikan terhadap |residual| (p &lt; 0.05), sehingga H0 ditolak - terindikasi terjadi heteroskedastisitas pada model ini.'
+          : 'Tidak ada variabel yang berpengaruh signifikan terhadap |residual| (p &ge; 0.05 untuk semua), sehingga H0 gagal ditolak - varians residual cenderung homogen (tidak terjadi heteroskedastisitas).'}</p>
       </div>`;
     }
     const isWhite = h.kind === 'white';
@@ -1142,8 +1142,8 @@
       </div>
       ${verdict}
       <p class="test-conclusion">${h.anyProblem
-        ? 'Karena nilai signifikansi (p-value LM) &lt; 0.05, H0 ditolak &mdash; terindikasi terjadi heteroskedastisitas pada model ini.'
-        : 'Karena nilai signifikansi (p-value LM) &ge; 0.05, H0 gagal ditolak &mdash; ragam residual cenderung konstan (tidak terjadi heteroskedastisitas).'}</p>
+        ? 'Karena nilai signifikansi (p-value LM) &lt; 0.05, H0 ditolak - terindikasi terjadi heteroskedastisitas pada model ini.'
+        : 'Karena nilai signifikansi (p-value LM) &ge; 0.05, H0 gagal ditolak - ragam residual cenderung konstan (tidak terjadi heteroskedastisitas).'}</p>
       <p class="test-note">${note}</p>
     </div>`;
   }
@@ -1162,7 +1162,7 @@
     const verdict = `<div class="test-verdict ${m.anyProblem ? 'bad' : 'ok'}">${m.anyProblem ? 'Terjadi Multikolinearitas' : 'Tidak Terjadi Multikolinearitas'}</div>`;
     if (m.kind === 'corr') {
       const rows = m.pairs.map((q) => `<tr>
-          <td>${q.a} &ndash; ${q.b}</td><td>${fmt(q.r, 4)}</td><td>${fmt(q.p, 4)}</td>
+          <td>${q.a} - ${q.b}</td><td>${fmt(q.r, 4)}</td><td>${fmt(q.p, 4)}</td>
           <td class="${q.problematic ? 'bad' : 'ok'}">${q.problematic ? '|r| > 0,8' : 'Aman'}</td></tr>`).join('');
       return `<div class="test-block">
         <h4>${title}</h4>
@@ -1174,8 +1174,8 @@
         </table></div>
         ${verdict}
         <p class="test-conclusion">${m.anyProblem
-          ? 'Ada pasangan variabel X dengan |r| &gt; 0,8, sehingga H0 ditolak &mdash; terindikasi multikolinearitas antar variabel X.'
-          : 'Seluruh pasangan variabel X memiliki |r| &le; 0,8, sehingga H0 gagal ditolak &mdash; tidak terindikasi multikolinearitas.'}</p>
+          ? 'Ada pasangan variabel X dengan |r| &gt; 0,8, sehingga H0 ditolak - terindikasi multikolinearitas antar variabel X.'
+          : 'Seluruh pasangan variabel X memiliki |r| &le; 0,8, sehingga H0 gagal ditolak - tidak terindikasi multikolinearitas.'}</p>
         <p class="test-note">Batas |r| &gt; 0,8 adalah aturan praktis (sebagian buku memakai 0,9). Uji ini hanya melihat hubungan <em>berpasangan</em>, sehingga tidak menangkap multikolinearitas yang melibatkan tiga variabel atau lebih; untuk itu gunakan VIF atau Condition Index.</p>
       </div>`;
     }
@@ -1195,9 +1195,9 @@
         <div class="test-stat-row">${statCard('CI maksimum', Number.isFinite(m.maxCI) ? fmt(m.maxCI, 3) : '∞')}</div>
         ${verdict}
         <p class="test-conclusion">${m.anyProblem
-          ? 'Condition Index maksimum &gt; 30, sehingga H0 ditolak &mdash; terdapat multikolinearitas yang serius antar variabel X.'
-          : 'Condition Index maksimum &le; 30, sehingga H0 gagal ditolak &mdash; tidak terjadi multikolinearitas yang serius antar variabel X.'}</p>
-        <p class="test-note">CI = &radic;(&lambda;maks / &lambda;i). Patokan umum: CI &lt; 10 aman, 10&ndash;30 sedang, &gt; 30 serius. Perhitungan memakai matriks korelasi X (variabel sudah dibakukan, tanpa konstanta), sehingga nilainya dapat berbeda dari keluaran SPSS yang menyertakan konstanta.</p>
+          ? 'Condition Index maksimum &gt; 30, sehingga H0 ditolak - terdapat multikolinearitas yang serius antar variabel X.'
+          : 'Condition Index maksimum &le; 30, sehingga H0 gagal ditolak - tidak terjadi multikolinearitas yang serius antar variabel X.'}</p>
+        <p class="test-note">CI = &radic;(&lambda;maks / &lambda;i). Patokan umum: CI &lt; 10 aman, 10-30 sedang, &gt; 30 serius. Perhitungan memakai matriks korelasi X (variabel sudah dibakukan, tanpa konstanta), sehingga nilainya dapat berbeda dari keluaran SPSS yang menyertakan konstanta.</p>
       </div>`;
     }
     const rows = m.rows.map((v) => `<tr>
@@ -1216,8 +1216,8 @@
         </table></div>
         ${verdict}
         <p class="test-conclusion">${m.anyProblem
-          ? 'Ada variabel dengan VIF &gt; 10 (Tolerance &lt; 0.1), sehingga H0 ditolak &mdash; terdapat multikolinearitas yang cukup serius antar variabel X pada model ini.'
-          : 'Seluruh variabel memiliki VIF &le; 10 (Tolerance &ge; 0.1), sehingga H0 gagal ditolak &mdash; tidak terjadi multikolinearitas yang serius antar variabel X pada model ini.'}</p>
+          ? 'Ada variabel dengan VIF &gt; 10 (Tolerance &lt; 0.1), sehingga H0 ditolak - terdapat multikolinearitas yang cukup serius antar variabel X pada model ini.'
+          : 'Seluruh variabel memiliki VIF &le; 10 (Tolerance &ge; 0.1), sehingga H0 gagal ditolak - tidak terjadi multikolinearitas yang serius antar variabel X pada model ini.'}</p>
       </div>`;
   }
 
@@ -1239,8 +1239,8 @@
       </div>
       ${verdict}
       <p class="test-conclusion">${a.anyProblem
-        ? 'Karena nilai signifikansi (p-value LM) &lt; 0.05, H0 ditolak &mdash; terindikasi autokorelasi antar residual.'
-        : 'Karena nilai signifikansi (p-value LM) &ge; 0.05, H0 gagal ditolak &mdash; tidak terindikasi autokorelasi antar residual.'}</p>
+        ? 'Karena nilai signifikansi (p-value LM) &lt; 0.05, H0 ditolak - terindikasi autokorelasi antar residual.'
+        : 'Karena nilai signifikansi (p-value LM) &ge; 0.05, H0 gagal ditolak - tidak terindikasi autokorelasi antar residual.'}</p>
       <p class="test-note">Statistik LM = n &times; R&sup2; dari regresi bantu dan mengikuti Chi-Square dengan db = 1 (orde 1; residual awal diisi 0, seperti bgtest() di R). Keputusan memakai p-value. ${orderNote}</p>
     </div>`;
     }
@@ -1258,8 +1258,8 @@
       </div>
       ${verdict}
       <p class="test-conclusion">${a.anyProblem
-        ? `Karena nilai signifikansi &lt; 0.05, H0 ditolak &mdash; urutan residual tidak acak (${a.few ? 'runs terlalu sedikit, mengarah ke autokorelasi positif' : 'runs terlalu banyak, mengarah ke autokorelasi negatif'}).`
-        : 'Karena nilai signifikansi &ge; 0.05, H0 gagal ditolak &mdash; urutan residual cukup acak (tidak terindikasi autokorelasi).'}</p>
+        ? `Karena nilai signifikansi &lt; 0.05, H0 ditolak - urutan residual tidak acak (${a.few ? 'runs terlalu sedikit, mengarah ke autokorelasi positif' : 'runs terlalu banyak, mengarah ke autokorelasi negatif'}).`
+        : 'Karena nilai signifikansi &ge; 0.05, H0 gagal ditolak - urutan residual cukup acak (tidak terindikasi autokorelasi).'}</p>
       <p class="test-note">Statistik Z memakai aproksimasi normal: Z = (R &minus; &mu;)/&sigma;, dengan &mu; = 2n&#8321;n&#8322;/n + 1. Aproksimasi kurang akurat bila n kecil (di bawah sekitar 20). ${orderNote}</p>
     </div>`;
     }
@@ -1271,17 +1271,17 @@
       <div class="test-stat-row">${statCard('Durbin-Watson (d)', fmt(a.DW))}</div>
       ${verdict}
       <p class="test-conclusion">${dwOk
-        ? 'Nilai d berada di sekitar 2 (antara 1,5 dan 2,5), sehingga H0 gagal ditolak &mdash; tidak terindikasi autokorelasi antar residual.'
+        ? 'Nilai d berada di sekitar 2 (antara 1,5 dan 2,5), sehingga H0 gagal ditolak - tidak terindikasi autokorelasi antar residual.'
         : a.verdict === 'positive'
-          ? 'Nilai d di bawah 1,5, sehingga H0 ditolak &mdash; terindikasi adanya autokorelasi positif antar residual.'
-          : 'Nilai d di atas 2,5, sehingga H0 ditolak &mdash; terindikasi adanya autokorelasi negatif antar residual.'}</p>
-      <p class="test-note">Rentang keputusan di atas (&lt;1,5 / 1,5&ndash;2,5 / &gt;2,5) adalah aturan praktis (rule of thumb) yang umum dipakai, karena nilai kritis dL dan dU yang tepat bergantung pada tabel Durbin-Watson khusus (n dan jumlah variabel X). ${orderNote}</p>
+          ? 'Nilai d di bawah 1,5, sehingga H0 ditolak - terindikasi adanya autokorelasi positif antar residual.'
+          : 'Nilai d di atas 2,5, sehingga H0 ditolak - terindikasi adanya autokorelasi negatif antar residual.'}</p>
+      <p class="test-note">Rentang keputusan di atas (&lt;1,5 / 1,5-2,5 / &gt;2,5) adalah aturan praktis (rule of thumb) yang umum dipakai, karena nilai kritis dL dan dU yang tepat bergantung pada tabel Durbin-Watson khusus (n dan jumlah variabel X). ${orderNote}</p>
     </div>`;
   }
 
   function renderAssumptions(res, data) {
     if (!(res.df > 0)) {
-      el.assumptionsWrap.innerHTML = `<div class="test-block"><h4>Uji Asumsi Regresi</h4><p class="test-note">Derajat bebas tidak mencukupi untuk melakukan uji asumsi &mdash; tambahkan lebih banyak data.</p></div>`;
+      el.assumptionsWrap.innerHTML = `<div class="test-block"><h4>Uji Asumsi Regresi</h4><p class="test-note">Derajat bebas tidak mencukupi untuk melakukan uji asumsi - tambahkan lebih banyak data.</p></div>`;
       return;
     }
     let html = '';
@@ -1309,7 +1309,7 @@
      ========================================================================= */
   function renderConclusion(res, data) {
     if (!(res.df > 0)) {
-      el.conclusionWrap.innerHTML = `<div class="test-block"><h4>Kesimpulan Model</h4><p class="test-note">Derajat bebas tidak mencukupi untuk menarik kesimpulan model &mdash; tambahkan lebih banyak data.</p></div>`;
+      el.conclusionWrap.innerHTML = `<div class="test-block"><h4>Kesimpulan Model</h4><p class="test-note">Derajat bebas tidak mencukupi untuk menarik kesimpulan model - tambahkan lebih banyak data.</p></div>`;
       return;
     }
 
@@ -1479,14 +1479,14 @@
   }
 
   /* Scatter Xj vs Y untuk tiap variabel X secara terpisah (bivariat, belum dikontrol
-     variabel X lainnya) — berguna untuk eksplorasi pola tiap variabel terhadap Y,
+     variabel X lainnya) - berguna untuk eksplorasi pola tiap variabel terhadap Y,
      namun garis/koefisien di sini BUKAN koefisien regresi berganda (b1..bk) yang
      sudah ceteris paribus; ini murni korelasi sederhana Xj-Y saja. */
   function renderPerVariableScatterGrid(res, data) {
     const heading = document.createElement('p');
     heading.className = 'chart-note';
     heading.style.marginTop = '18px';
-    heading.innerHTML = `<strong>Hubungan tiap variabel X terhadap Y (satu per satu)</strong><br>Grafik di bawah menunjukkan pola X\u2C7C terhadap Y secara sendiri-sendiri, <em>belum</em> memperhitungkan pengaruh variabel X lain. Garis pada tiap grafik adalah garis regresi sederhana Xj-Y (bukan koefisien b\u2C7C dari model berganda), jadi hanya untuk melihat kecenderungan pola \u2014 bukan pengaruh ceteris paribus.`;
+    heading.innerHTML = `<strong>Hubungan tiap variabel X terhadap Y (satu per satu)</strong><br>Grafik di bawah menunjukkan pola X\u2C7C terhadap Y secara sendiri-sendiri, <em>belum</em> memperhitungkan pengaruh variabel X lain. Garis pada tiap grafik adalah garis regresi sederhana Xj-Y (bukan koefisien b\u2C7C dari model berganda), jadi hanya untuk melihat kecenderungan pola - bukan pengaruh ceteris paribus.`;
     el.chartWrap.appendChild(heading);
 
     const grid = document.createElement('div');
@@ -1555,7 +1555,7 @@
   });
 
   function fmt(x, d = 4) {
-    if (x === null || x === undefined || Number.isNaN(x) || !Number.isFinite(x)) return '\u2014';
+    if (x === null || x === undefined || Number.isNaN(x) || !Number.isFinite(x)) return '-';
     return Number(x).toFixed(d);
   }
   function showError(node, msg) { node.textContent = msg; node.hidden = false; }

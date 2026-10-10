@@ -1,4 +1,4 @@
-/* Pie Chart — komposisi bagian terhadap keseluruhan */
+/* Pie Chart - komposisi bagian terhadap keseluruhan */
 (function () {
   'use strict';
   const u = GraphCore.u;

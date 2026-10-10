@@ -1,5 +1,5 @@
 /* =========================================================================
-   STAT CHARTS — pustaka grafik SVG untuk grafik pendukung tiap metode Stat
+   STAT CHARTS - pustaka grafik SVG untuk grafik pendukung tiap metode Stat
    -------------------------------------------------------------------------
    Muat SETELAH Method/Graph/graph-core.js dan boxplot.js (memakai GraphCore.u).
    Semua fungsi mengembalikan string SVG (viewBox 640 x H) yang bisa

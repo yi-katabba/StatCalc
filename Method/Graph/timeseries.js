@@ -1,4 +1,4 @@
-/* Time Series Plot — data berurutan menurut waktu */
+/* Time Series Plot - data berurutan menurut waktu */
 (function () {
   'use strict';
   const u = GraphCore.u;
