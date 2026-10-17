@@ -2110,6 +2110,17 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
         </div>
       </div>
 
+      <h3 class="st-group-title" style="font-size:14.5px;margin:18px 0 8px;color:var(--accent);">Metode estimasi parameter</h3>
+      <div class="control-row">
+        <label for="arMethod">Metode</label>
+        <select id="arMethod" class="select-input">
+          <option value="ols">OLS - kuadrat terkecil (CSS)</option>
+          <option value="mle">MLE - kemungkinan maksimum (likelihood eksak)</option>
+          <option value="moment">Metode Momen - Yule-Walker / pencocokan ACF</option>
+        </select>
+        <p class="field-note" id="arMethodHint"></p>
+      </div>
+
       <h3 class="st-group-title" style="font-size:14.5px;margin:18px 0 8px;color:var(--accent);">Pengaturan lain</h3>
       <div class="control-row">
         <label for="arConst">Konstanta</label>

@@ -11,10 +11,14 @@
      theta(B) = 1 + theta1 B + ... + thetaq B^q    Theta(B^s) = 1 + Theta1 B^s + ... + ThetaQ B^(sQ)
    (ARIMA = SARIMA dengan P = D = Q = 0.)
 
-   Estimasi : Conditional Sum of Squares (CSS) - meminimumkan jumlah kuadrat galat e(t) dengan
-              e(t) = 0 untuk t sebelum data pertama yang bisa dihitung - memakai Levenberg-Marquardt
-              dengan syarat stasioner (AR) dan invertibel (MA). Galat baku parameter dari
-              sigma^2 (J'J)^-1 (J = Jacobian galat, dihitung numerik).
+   Estimasi : tiga metode (dipilih di Langkah 2), semuanya pada deret diferensiasi w(t):
+              - OLS   : Conditional Sum of Squares (CSS); meminimumkan jumlah kuadrat galat e(t) dengan e(t) = 0
+                        sebelum data pertama yang bisa dihitung (AR murni = regresi OLS), Levenberg-Marquardt
+                        dengan syarat stasioner (AR) dan invertibel (MA). SE dari sigma^2 (J'J)^-1.
+              - MLE   : likelihood Gaussian eksak lewat filter Kalman (bentuk ruang-keadaan ARMA, keadaan awal
+                        stasioner). Titik awal dari OLS; SE dari Hessian numerik. Cocok dengan statsmodels.
+              - Momen : Yule-Walker (AR murni, solusi langsung) atau pencocokan ACF teoretis dengan ACF sampel
+                        pada lag 1..(p+q) dan kelipatan s (model campuran/musiman).
    Ramalan  : rekursif dari model, lalu "diintegralkan" kembali ke skala data asli.
               Selang 95% memakai bobot psi: Var(h) = sigma^2 * sum(psi_j^2, j < h).
    Diagnosis: Ljung-Box (autokorelasi residu), Jarque-Bera (normalitas residu), ACF residu.
@@ -120,9 +124,11 @@
 
   /* ---- spesifikasi model ---- */
   /* cfg: {p,d,q,P,D,Q,s,seasonal,constant:boolean}. Kembalikan orde yang sudah dinormalkan. */
+  const METHOD_KEYS = ['ols', 'mle', 'moment'];
+  const METHOD_NAME = { ols: 'OLS (kuadrat terkecil / CSS)', mle: 'MLE (likelihood Gaussian eksak)', moment: 'Metode Momen (Yule-Walker / pencocokan ACF)' };
   function normCfg(cfg) {
     const seasonal = !!cfg.seasonal;
-    const o = { p: cfg.p | 0, d: cfg.d | 0, q: cfg.q | 0, P: seasonal ? cfg.P | 0 : 0, D: seasonal ? cfg.D | 0 : 0, Q: seasonal ? cfg.Q | 0 : 0, s: seasonal ? cfg.s | 0 : 1, seasonal, constant: !!cfg.constant };
+    const o = { p: cfg.p | 0, d: cfg.d | 0, q: cfg.q | 0, P: seasonal ? cfg.P | 0 : 0, D: seasonal ? cfg.D | 0 : 0, Q: seasonal ? cfg.Q | 0 : 0, s: seasonal ? cfg.s | 0 : 1, seasonal, constant: !!cfg.constant, method: METHOD_KEYS.indexOf(cfg.method) >= 0 ? cfg.method : 'ols' };
     return o;
   }
   function paramNames(o) {
@@ -252,50 +258,224 @@
     const lost = o.d + o.s * o.D + o.p + o.s * o.P;
     return lost + k + 5;
   }
+  /* ---- Likelihood Gaussian eksak ARMA(pf, qf) stasioner lewat filter Kalman ----
+     Bentuk ruang-keadaan (Harvey): a(t+1) = T a(t) + R e(t), w(t) - c = a(t)[0],
+     T = matriks pendamping dengan kolom pertama phi_i = -A_i, R = [1, M1, ..., M(r-1)].
+     Varians galat dinormalkan sigma^2 = 1 (di-"konsentrasi-kan"); P0 dari P = T P T' + R R' (algoritma doubling). */
+  function tpt(P, phi, r) {
+    const X = new Array(r), Y2 = new Array(r);
+    for (let i = 0; i < r; i++) { X[i] = new Array(r); for (let j = 0; j < r; j++) X[i][j] = phi[i] * P[0][j] + (i + 1 < r ? P[i + 1][j] : 0); }
+    for (let i = 0; i < r; i++) { Y2[i] = new Array(r); for (let j = 0; j < r; j++) Y2[i][j] = phi[j] * X[i][0] + (j + 1 < r ? X[i][j + 1] : 0); }
+    return Y2;
+  }
+  function matMul(X, Y2, r) {
+    const Z = Array.from({ length: r }, () => new Array(r).fill(0));
+    for (let i = 0; i < r; i++) for (let k = 0; k < r; k++) { const v = X[i][k]; if (v === 0) continue; for (let j = 0; j < r; j++) Z[i][j] += v * Y2[k][j]; }
+    return Z;
+  }
+  function stationaryP0(phi, Rv, r) {
+    let Pk = Array.from({ length: r }, (_, i) => Rv.map((v) => Rv[i] * v));
+    let Ak = Array.from({ length: r }, (_, i) => { const row = new Array(r).fill(0); row[0] = phi[i]; if (i + 1 < r) row[i + 1] = 1; return row; });
+    for (let it = 0; it < 60; it++) {
+      const AP = matMul(Ak, Pk, r), AkT = Ak[0].map((_, j) => Ak.map((row) => row[j]));
+      const inc = matMul(AP, AkT, r);
+      let mx = 0;
+      for (let i = 0; i < r; i++) for (let j = 0; j < r; j++) { Pk[i][j] += inc[i][j]; mx = Math.max(mx, Math.abs(inc[i][j])); }
+      Ak = matMul(Ak, Ak, r);
+      if (mx < 1e-13) break;
+    }
+    return Pk;
+  }
+  function exactArma(w, A, M, c, pf, qf) {
+    const n = w.length, r = Math.max(pf, qf + 1, 1);
+    const phi = new Array(r).fill(0); for (let i = 1; i <= pf; i++) phi[i - 1] = -A[i];
+    const Rv = new Array(r).fill(0); Rv[0] = 1; for (let j = 1; j <= qf; j++) Rv[j] = M[j];
+    let P = stationaryP0(phi, Rv, r);
+    let a = new Array(r).fill(0);
+    const v = new Array(n), F = new Array(n);
+    let S = 0, sumLogF = 0;
+    const RR = Array.from({ length: r }, (_, i) => Rv.map((x) => Rv[i] * x));
+    for (let t = 0; t < n; t++) {
+      const vt = (w[t] - c) - a[0], Ft = P[0][0];
+      if (!(Ft > 1e-10) || !Number.isFinite(Ft) || !Number.isFinite(vt)) return null;
+      v[t] = vt; F[t] = Ft; S += vt * vt / Ft; sumLogF += Math.log(Ft);
+      const K = new Array(r);
+      for (let i = 0; i < r; i++) K[i] = (phi[i] * P[0][0] + (i + 1 < r ? P[i + 1][0] : 0)) / Ft;
+      const an = new Array(r);
+      for (let i = 0; i < r; i++) an[i] = phi[i] * a[0] + (i + 1 < r ? a[i + 1] : 0) + K[i] * vt;
+      const Pn = tpt(P, phi, r);
+      for (let i = 0; i < r; i++) for (let j = 0; j < r; j++) Pn[i][j] += RR[i][j] - Ft * K[i] * K[j];
+      a = an; P = Pn;
+    }
+    return { v, F, S, sumLogF, n };
+  }
+
+  /* ---- Bobot psi, ACF teoretis, dan ACF sampel (untuk Metode Momen) ---- */
+  function psiW(A, M, pf, qf, J) {
+    const psi = [1];
+    for (let j = 1; j < J; j++) { let x = j <= qf ? M[j] : 0; for (let i = 1; i <= Math.min(j, pf); i++) x -= A[i] * psi[j - i]; psi.push(x); }
+    return psi;
+  }
+  function theoryAcf(A, M, pf, qf, lags) {
+    const J = 500, psi = psiW(A, M, pf, qf, J);
+    let g0 = 0; for (let j = 0; j < J; j++) g0 += psi[j] * psi[j];
+    const rho = lags.map((k) => { let g = 0; for (let j = 0; j + k < J; j++) g += psi[j] * psi[j + k]; return g / g0; });
+    return { rho, g0 };
+  }
+  function sampleAcf(w, c, lags) {
+    const n = w.length; let g0 = 0; for (let t = 0; t < n; t++) g0 += (w[t] - c) * (w[t] - c);
+    g0 /= n;
+    return { g0, r: lags.map((k) => { let g = 0; for (let t = k; t < n; t++) g += (w[t] - c) * (w[t - k] - c); return g / n / g0; }) };
+  }
+  /* Lag yang dicocokkan: 1..(p+q) dan kelipatan s sebanyak (P+Q): jumlahnya sama dengan banyaknya parameter AR/MA. */
+  function momentLags(o) {
+    const lags = [];
+    for (let k = 1; k <= o.p + o.q; k++) lags.push(k);
+    for (let k = 1; k <= o.P + o.Q; k++) lags.push(k * o.s);
+    return lags;
+  }
+
   function fitModel(Y, cfg) {
-    const o = normCfg(cfg), N = Y.length;
+    const o = normCfg(cfg), N = Y.length, method = o.method;
     const dpoly = diffPoly(o.d, o.D, o.s), t0 = dpoly.length - 1;
     const w = applyDiff(Y, dpoly);
     const names = paramNames(o), k = names.length;
     const startX = new Array(k).fill(0);
     if (o.constant) startX[k - 1] = mean(w);
-    const pf0 = o.p + o.s * o.P, qf0 = o.q + o.s * o.Q;
+    const nArma = o.p + o.q + o.P + o.Q;
+    const pf0 = o.p + o.s * o.P;
     if (w.length - pf0 < k + 2) throw new Error('Data terlalu sedikit untuk orde yang dipilih.');
     const resFn = (x) => { const pl = polysOf(o, x); return cssResiduals(w, pl.A, pl.M, pl.sp.c, pl.pf, pl.qf); };
-    let x = startX, e, S, iter = 0, converged = true;
-    if (k > 0) {
-      const ok = (xx) => feasible(o, xx);
-      let r = levenberg(resFn, startX, ok);
-      /* Permukaan CSS model campuran AR-MA bisa punya beberapa minimum lokal: coba juga beberapa titik awal
-         acak yang tetap (deterministik) dan ambil CSS terkecil. */
-      const nArma = o.p + o.q + o.P + o.Q;
+    const ok = (xx) => feasible(o, xx);
+    const sq = (arr) => arr.reduce((s2, v) => s2 + v * v, 0);
+    /* titik awal acak deterministik (dipakai OLS dan Momen untuk menghindari minimum lokal) */
+    const multiStart = (fn, first) => {
+      let r = first;
       if (nArma >= 2) {
         let seed = 20240607;
         const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
         for (let trial = 0; trial < 6; trial++) {
           const x0 = startX.map((v, i) => (i < nArma ? (rnd() - 0.5) * 1.0 : v));
           if (!ok(x0)) continue;
-          const r2 = levenberg(resFn, x0, ok);
+          const r2 = fn(x0);
           if (r2.S < r.S - 1e-9 * Math.max(1, r.S)) r = r2;
         }
       }
-      x = r.x; e = r.e; S = r.S; iter = r.iter; converged = r.converged;
-    } else { e = resFn(x); S = e.reduce((s, v) => s + v * v, 0); }
+      return r;
+    };
+    /* --- OLS / CSS: jumlah kuadrat galat minimum --- */
+    const runOls = () => {
+      if (k === 0) { const e0 = resFn(startX); return { x: startX, e: e0, S: sq(e0), iter: 0, converged: true }; }
+      const fn = (x0) => levenberg(resFn, x0, ok);
+      return multiStart(fn, fn(startX));
+    };
+
+    let x, e, S, iter = 0, converged = true;
+    const extra = {};
+    let lik = null;                                   // hasil filter Kalman (MLE)
+    if (method === 'moment') {
+      const c = o.constant ? mean(w) : 0;
+      const lags = momentLags(o);
+      extra.momentLags = lags;
+      const tail = o.constant ? [c] : [];
+      let xa = new Array(nArma).fill(0);
+      if (nArma > 0) {
+        if (lags.some((L) => L >= w.length - 1)) throw new Error('Data terlalu sedikit untuk mencocokkan autokorelasi pada lag musiman.');
+        const sa = sampleAcf(w, c, lags);
+        extra.sampleR = sa.r; extra.gamma0 = sa.g0;
+        const ywDirect = o.q === 0 && o.P === 0 && o.Q === 0 && o.p > 0;
+        if (ywDirect) {
+          /* Yule-Walker: R phi = r (R Toeplitz dari autokorelasi sampel) */
+          const rr = [1].concat(sa.r), R = Array.from({ length: o.p }, (_, i) => Array.from({ length: o.p }, (_, j) => rr[Math.abs(i - j)]));
+          const sol = solveSym(R, sa.r.slice(0, o.p));
+          if (!sol) throw new Error('Persamaan Yule-Walker singular; kurangi orde AR.');
+          xa = sol; extra.yw = true; iter = 0;
+        } else {
+          const mFn = (xx) => { const pl = polysOf(o, xx.concat(tail)); return theoryAcf(pl.A, pl.M, pl.pf, pl.qf, lags).rho.map((rv, i) => rv - sa.r[i]); };
+          const okA = (xx) => feasible(o, xx.concat(tail));
+          const runM = (x0) => levenberg(mFn, x0, okA);
+          const first = runM(xa);
+          let best = first;
+          if (nArma >= 2) {
+            let seed = 20240607;
+            const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+            for (let trial = 0; trial < 6; trial++) {
+              const x0 = xa.map(() => (rnd() - 0.5) * 1.0);
+              if (!okA(x0)) continue;
+              const r2 = runM(x0);
+              if (r2.S < best.S - 1e-12) best = r2;
+            }
+          }
+          xa = best.x; iter = best.iter; converged = best.converged; extra.momentDist = best.S;
+        }
+        if (extra.yw) extra.momentDist = 0;
+      }
+      x = xa.concat(tail);
+      e = resFn(x); S = sq(e);
+      if (nArma > 0) { const pl = polysOf(o, x); const th = theoryAcf(pl.A, pl.M, pl.pf, pl.qf, []); extra.sigma2Moment = (extra.gamma0 || 0) / th.g0; }
+      else extra.sigma2Moment = sampleAcf(w, c, []).g0;
+    } else {
+      const r0 = runOls();
+      x = r0.x; e = r0.e; S = r0.S; iter = r0.iter; converged = r0.converged;
+      extra.css0 = S;
+      if (method === 'mle') {
+        const objU = (xx) => {
+          const pl = polysOf(o, xx), L = exactArma(w, pl.A, pl.M, pl.sp.c, pl.pf, pl.qf);
+          if (!L) return null;
+          const g = Math.exp(L.sumLogF / (2 * L.n));
+          return L.v.map((vt, i) => vt / Math.sqrt(L.F[i]) * g);
+        };
+        const uFn = (xx) => objU(xx) || new Array(w.length).fill(1e6);
+        const u0 = objU(x);
+        if (u0) {
+          let r = k > 0 ? levenberg(uFn, x, ok) : { x, S: sq(u0), iter: 0, converged: true };
+          x = r.x; iter = r.iter; converged = r.converged;
+          const pl = polysOf(o, x);
+          lik = exactArma(w, pl.A, pl.M, pl.sp.c, pl.pf, pl.qf);
+        }
+        if (!lik) extra.mleFallback = true;
+      }
+    }
     const pl = polysOf(o, x), pf = pl.pf, qf = pl.qf;
-    const nEff = e.length, sigma2 = S / nEff;
-    let cov = null, se = new Array(k).fill(NaN);
-    if (k > 0) {
-      const J = jacobian(resFn, x, e), inv = invert(jtj(J));
-      if (inv) { cov = inv.map((row) => row.map((v) => v * sigma2)); se = x.map((_, i) => (cov[i][i] > 0 ? Math.sqrt(cov[i][i]) : NaN)); }
+    let nEff, sigma2, loglik, nLik, cov = null, se = new Array(k).fill(NaN);
+    if (lik) {
+      /* MLE: galat = inovasi terstandarisasi v/sqrt(F) (varians sigma^2), mulai dari t = pf agar sejajar dengan metode lain */
+      const n = lik.n;
+      sigma2 = lik.S / n;
+      e = lik.v.map((vt, i) => vt / Math.sqrt(lik.F[i])).slice(pf);
+      nEff = e.length; nLik = n; S = sq(e);
+      loglik = -0.5 * (n * Math.log(2 * Math.PI * sigma2) + lik.sumLogF + n);
+      extra.mleS = lik.S; extra.sumLogF = lik.sumLogF;
+      if (k > 0) {
+        /* Hessian numerik dari -loglik terkonsentrasi: f(x) = (n/2) ln(S_u / n), S_u = S * exp(sumLogF / n) */
+        const f = (xx) => { const q = polysOf(o, xx), L = exactArma(w, q.A, q.M, q.sp.c, q.pf, q.qf); return L ? 0.5 * n * Math.log(L.S * Math.exp(L.sumLogF / n) / n) : NaN; };
+        const H = Array.from({ length: k }, () => new Array(k).fill(0));
+        const hs = x.map((v) => 1e-4 * Math.max(1, Math.abs(v)));
+        let good = true;
+        for (let i = 0; i < k && good; i++) for (let j = i; j < k; j++) {
+          const xs = (si, sj) => { const z = x.slice(); z[i] += si * hs[i]; z[j] += sj * hs[j]; return z; };
+          const val = (f(xs(1, 1)) - f(xs(1, -1)) - f(xs(-1, 1)) + f(xs(-1, -1))) / (4 * hs[i] * hs[j]);
+          if (!Number.isFinite(val)) { good = false; break; }
+          H[i][j] = val; H[j][i] = val;
+        }
+        const inv = good ? invert(H) : null;
+        if (inv) { cov = inv; se = x.map((_, i) => (cov[i][i] > 0 ? Math.sqrt(cov[i][i]) : NaN)); }
+      }
+    } else {
+      nEff = e.length; nLik = nEff; sigma2 = S / nEff;
+      loglik = -0.5 * nEff * (Math.log(2 * Math.PI * sigma2) + 1);
+      if (k > 0) {
+        const J = jacobian(resFn, x, e), inv = invert(jtj(J));
+        if (inv) { cov = inv.map((row) => row.map((v) => v * sigma2)); se = x.map((_, i) => (cov[i][i] > 0 ? Math.sqrt(cov[i][i]) : NaN)); }
+      }
     }
     const params = names.map((name, i) => {
       const z = x[i] / se[i];
       return { name, est: x[i], se: se[i], z, p: Number.isFinite(z) ? 2 * (1 - normCdf(Math.abs(z))) : NaN };
     });
     const nPar = k + 1; // + sigma^2
-    const loglik = -0.5 * nEff * (Math.log(2 * Math.PI * sigma2) + 1);
-    const aic = -2 * loglik + 2 * nPar, bic = -2 * loglik + Math.log(nEff) * nPar;
-    const aicc = nEff - nPar - 1 > 0 ? aic + (2 * nPar * (nPar + 1)) / (nEff - nPar - 1) : NaN;
+    const aic = -2 * loglik + 2 * nPar, bic = -2 * loglik + Math.log(nLik) * nPar;
+    const aicc = nLik - nPar - 1 > 0 ? aic + (2 * nPar * (nPar + 1)) / (nLik - nPar - 1) : NaN;
     // galat pada skala data asli: indeks data asli = t0 + pf + i
     const first = t0 + pf;
     const err = new Array(N).fill(null), fitted = new Array(N).fill(null);
@@ -303,8 +483,8 @@
     const sp = pl.sp;
     const refl = Math.max(maxReflection(sp.phi), maxReflection(sp.Phi), maxReflection(sp.theta.map((v) => -v)), maxReflection(sp.Theta.map((v) => -v)), 0);
     return {
-      cfg: o, Y, N, dpoly, t0, w, A: pl.A, M: pl.M, pf, qf, sp, x, names, params, k,
-      e, nEff, css: S, sigma2, loglik, aic, bic, aicc, iter, converged, cov, first, err, fitted,
+      cfg: o, method, extra, Y, N, dpoly, t0, w, A: pl.A, M: pl.M, pf, qf, sp, x, names, params, k,
+      e, nEff, nLik, css: sq(resFn(x)), sigma2, loglik, aic, bic, aicc, iter, converged, cov, first, err, fitted,
       stationary: arStable(sp.phi) && arStable(sp.Phi), invertible: arStable(sp.theta.map((v) => -v)) && arStable(sp.Theta.map((v) => -v)),
       nearBoundary: refl > 0.98,
     };
@@ -434,7 +614,7 @@
     return out;
   }
 
-  const core = { fitModel, forecast, acfOf, pacfFrom, ljungBox, jarqueBera, evaluate, detectSeasonality, searchOrders, minObservations, normCfg, diffPoly, applyDiff, polyMul, seasPoly, normCdf, chiSqUpperP, arStable };
+  const core = { METHOD_NAME, exactArma, theoryAcf, fitModel, forecast, acfOf, pacfFrom, ljungBox, jarqueBera, evaluate, detectSeasonality, searchOrders, minObservations, normCfg, diffPoly, applyDiff, polyMul, seasPoly, normCdf, chiSqUpperP, arStable };
   if (typeof module !== 'undefined' && module.exports) module.exports = core;
   if (typeof document === 'undefined') return;
   window.StatCalcArima = core;
@@ -477,12 +657,12 @@
   const view = $('#view-arima');
   if (!view) return;
 
-  const state = { seasonal: false, p: 1, d: 1, q: 0, P: 0, D: 1, Q: 1, s: 12, constant: false, h: 6, minRows: 10, last: null };
+  const state = { method: 'ols', seasonal: false, p: 1, d: 1, q: 0, P: 0, D: 1, Q: 1, s: 12, constant: false, h: 6, minRows: 10, last: null };
 
   const el = {
     mode: $('#arMode'), seasBox: $('#arSeasonalBox'), modeHint: $('#arModeHint'),
     p: $('#arP'), d: $('#arD'), q: $('#arQ'), P: $('#arSP'), D: $('#arSD'), Q: $('#arSQ'), s: $('#arS'),
-    constant: $('#arConst'), h: $('#arH'),
+    constant: $('#arConst'), h: $('#arH'), method: $('#arMethod'), methodHint: $('#arMethodHint'),
     setupError: $('#arSetupError'), needHint: $('#arNeedHint'), fillSampleSBtn: $('#arFillSampleSBtn'),
     dataCard: $('#ar-data-card'), minRowsHint: $('#arMinRowsHint'), tableBody: $('#arDataTableBody'),
     clearBtn: $('#arClearBtn'), addRowBtn: $('#arAddRowBtn'), removeRowBtn: $('#arRemoveRowBtn'),
@@ -500,6 +680,14 @@
       ? '<strong>SARIMA</strong> dipakai bila data memiliki <em>pola musiman</em>: pola naik-turun yang berulang pada selang tetap (mis. s = 12 untuk data bulanan, s = 4 untuk triwulanan, s = 7 untuk data harian dengan pola mingguan).'
       : '<strong>ARIMA</strong> dipakai bila data <em>tidak memiliki pola musiman</em> (hanya tren atau fluktuasi acak). Jika grafik data menunjukkan pola yang berulang tiap s periode, pilih SARIMA.';
   }
+  const METHOD_HINT = {
+    ols: '<strong>OLS (kuadrat terkecil)</strong> meminimumkan jumlah kuadrat galat &Sigma;e&sup2; (Conditional Sum of Squares). Untuk model AR murni hasilnya sama dengan regresi OLS biasa; untuk model dengan MA atau musiman dikerjakan iteratif (kuadrat terkecil nonlinear). Cepat dan stabil; cocok sebagai pilihan awal.',
+    mle: '<strong>MLE (kemungkinan maksimum)</strong> memaksimumkan likelihood normal <em>eksak</em> memakai filter Kalman, sehingga seluruh data (termasuk pengamatan awal) ikut terpakai tanpa pemotongan. Umumnya paling efisien dan standar di perangkat lunak statistik (R, Stata, statsmodels). Sedikit lebih lambat; AIC/BIC memakai log-likelihood eksak.',
+    moment: '<strong>Metode Momen</strong> mencocokkan autokorelasi teoretis model dengan autokorelasi sampel. Untuk AR murni berupa persamaan <em>Yule-Walker</em> (solusi langsung); untuk model dengan MA/musiman dipakai pencocokan ACF pada lag 1..(p+q) dan lag kelipatan s. Sederhana, tetapi kurang efisien dan bisa tidak stabil bila ada komponen MA.',
+  };
+  function syncMethod() { el.methodHint.innerHTML = METHOD_HINT[el.method.value] || ''; }
+  el.method.addEventListener('change', syncMethod);
+  syncMethod();
   el.mode.addEventListener('change', () => { syncMode(); updateMin(); });
   syncMode();
 
@@ -524,6 +712,7 @@
     }
     if (!seas) { next.P = 0; next.D = 0; next.Q = 0; next.s = 1; }
     next.seasonal = seas;
+    next.method = el.method.value;
     const cv = el.constant.value;
     next.constant = cv === 'yes' ? true : cv === 'no' ? false : (next.d + next.D === 0);
     Object.assign(state, next);
@@ -716,6 +905,19 @@
     fixSvg(box);
   }
 
+  /* ---------- Teks per metode estimasi ---------- */
+  function methodSub(fit) {
+    const nm = METHOD_NAME[fit.method];
+    if (fit.method === 'mle') return `Estimasi dengan <strong>${nm}</strong>: filter Kalman memakai seluruh ${fit.nLik} pengamatan deret diferensiasi, ${fit.iter} iterasi (titik awal dari OLS).`;
+    if (fit.method === 'moment') return `Estimasi dengan <strong>${nm}</strong>: ${fit.extra && fit.extra.yw ? 'persamaan Yule-Walker (solusi langsung)' : (fit.cfg.p + fit.cfg.q + fit.cfg.P + fit.cfg.Q ? 'pencocokan ACF teoretis dengan ACF sampel, ' + fit.iter + ' iterasi' : 'rata-rata sampel')}; galat dihitung dari parameter hasil estimasi, n efektif = ${fit.nEff}.`;
+    return `Estimasi dengan <strong>${nm}</strong>, n efektif = ${fit.nEff} galat, ${fit.iter} iterasi.`;
+  }
+  function methodNote(fit) {
+    if (fit.method === 'mle') return 'Galat baku dari kebalikan matriks Hessian numerik log-likelihood. AIC/BIC dihitung dari log-likelihood Gaussian eksak (n = ' + fit.nLik + '); hanya bermakna untuk membandingkan model dengan diferensiasi (d, D) yang sama pada data yang sama dan metode estimasi yang sama.';
+    if (fit.method === 'moment') return 'Galat baku dihitung dari σ²·(J′J)⁻¹ di titik estimasi (hampiran): untuk model dengan MA, estimator momen kurang efisien sehingga galat baku sebenarnya cenderung lebih besar. Log-likelihood/AIC/BIC memakai pendekatan normal dari jumlah kuadrat galat, dan tidak sebanding dengan hasil MLE.';
+    return 'AIC/BIC dihitung dari pendekatan likelihood normal berdasarkan CSS; hanya bermakna untuk membandingkan model dengan diferensiasi (d, D) yang sama pada data yang sama, dan berupa pendekatan karena jumlah galat efektif sedikit berbeda antar orde.';
+  }
+
   /* ---------- Tab Parameter Model ---------- */
   function eqFactorB(coefs, step, sign) {
     if (!coefs.length) return '';
@@ -747,17 +949,19 @@
     if (!fit.invertible) warn.push('Bagian MA tidak invertibel.');
     if (fit.nearBoundary) warn.push('Ada parameter yang mendekati batas stasioner/invertibel (|koefisien pantulan| &gt; 0,98). Ini sering menandakan model terlalu banyak parameter atau data sudah di-diferensiasi berlebihan; coba orde yang lebih kecil.');
     if (!fit.converged) warn.push('Optimasi belum konvergen sempurna dalam batas iterasi; hasil dapat sedikit berbeda dari optimum.');
+    if (fit.extra && fit.extra.mleFallback) warn.push('Likelihood eksak tidak dapat dihitung di titik awal; hasil memakai estimasi OLS.');
+    if (fit.method === 'moment' && !(fit.extra && fit.extra.yw) && fit.extra && fit.extra.momentDist > 1e-6) warn.push(`Autokorelasi sampel tidak dapat dicocokkan persis oleh model (jarak kuadrat = ${fmt(fit.extra.momentDist, 5)}). Estimator momen kurang andal untuk model campuran AR-MA; bandingkan dengan OLS atau MLE.`);
     if (fit.params.length && fit.params.some((p) => !Number.isFinite(p.se))) warn.push('Galat baku sebagian parameter tidak dapat dihitung (matriks informasi singular), biasanya karena ada parameter yang saling menggantikan. Kurangi orde p/q (atau P/Q).');
     el.modelWrap.innerHTML = `
       <div class="test-block">
         <h4>Model Terpilih: ${escapeHTML(modelLabel(o))}</h4>
-        <p class="test-sub">${o.seasonal ? 'Model musiman (SARIMA) dengan panjang musim s = ' + o.s + '.' : 'Model tanpa komponen musiman (ARIMA).'} Estimasi dengan Conditional Sum of Squares (CSS), n efektif = ${fit.nEff} galat, ${fit.iter} iterasi.</p>
+        <p class="test-sub">${o.seasonal ? 'Model musiman (SARIMA) dengan panjang musim s = ' + o.s + '.' : 'Model tanpa komponen musiman (ARIMA).'} ${methodSub(fit)}</p>
         <span class="formula">${escapeHTML(equationText(fit))}</span>
         ${fit.params.length ? `<div class="table-scroll"><table class="result-table"><caption>Estimasi parameter (galat baku dari matriks informasi)</caption>
           <thead><tr><th>Parameter</th><th>Estimasi</th><th>Galat baku</th><th>z</th><th>p-value</th><th>Keputusan (5%)</th></tr></thead><tbody>${rows}</tbody></table></div>`
         : '<p class="test-note">Model tanpa parameter AR/MA (hanya diferensiasi), mis. random walk.</p>'}
         <div class="test-stat-row">
-          ${statCard('σ² (CSS/n)', fmt(fit.sigma2, 4))}
+          ${statCard(fit.method === 'mle' ? 'σ² (MLE)' : fit.method === 'moment' ? 'σ² (galat/n)' : 'σ² (CSS/n)', fmt(fit.sigma2, 4))}
           ${statCard('Log-likelihood', fmt(fit.loglik, 2))}
           ${statCard('AIC', fmt(fit.aic, 2))}
           ${statCard('BIC', fmt(fit.bic, 2))}
@@ -767,7 +971,7 @@
           <div class="test-verdict ${fit.invertible ? 'ok' : 'bad'}">${fit.invertible ? 'MA invertibel' : 'MA tidak invertibel'}</div>
         </div>
         ${warn.length ? `<p class="test-note">${warn.join(' ')}</p>` : ''}
-        <p class="test-note">p-value memakai pendekatan normal (uji z) untuk setiap parameter dengan H<sub>0</sub>: parameter = 0. Parameter yang tidak signifikan dapat dipertimbangkan untuk dibuang. AIC/BIC dihitung dari pendekatan likelihood normal berdasarkan CSS; hanya bermakna untuk membandingkan model dengan diferensiasi (d, D) yang sama pada data yang sama, dan berupa pendekatan karena jumlah galat efektif sedikit berbeda antar orde.</p>
+        <p class="test-note">p-value memakai pendekatan normal (uji z) untuk setiap parameter dengan H<sub>0</sub>: parameter = 0. Parameter yang tidak signifikan dapat dipertimbangkan untuk dibuang. ${methodNote(fit)}</p>
       </div>`;
   }
 
@@ -974,7 +1178,7 @@
     el.compareWrap.innerHTML = `
       <div class="test-block">
         <h4>Bandingkan Beberapa Orde (AIC)</h4>
-        <p class="test-sub">Mencoba kombinasi p, q = 0&ndash;2${o.seasonal ? ' dan P, Q = 0&ndash;1' : ''} dengan d = ${o.d}${o.seasonal ? `, D = ${o.D}, s = ${o.s}` : ''} dan pilihan konstanta yang sama seperti model Anda, lalu mengurutkannya dari AIC terkecil. Orde dengan AIC terkecil umumnya terbaik, tetapi tetap periksa diagnostik residunya.</p>
+        <p class="test-sub">Mencoba kombinasi p, q = 0&ndash;2${o.seasonal ? ' dan P, Q = 0&ndash;1' : ''} dengan d = ${o.d}${o.seasonal ? `, D = ${o.D}, s = ${o.s}` : ''} pilihan konstanta, dan metode estimasi (${escapeHTML(METHOD_NAME[o.method])}) yang sama seperti model Anda, lalu mengurutkannya dari AIC terkecil. Orde dengan AIC terkecil umumnya terbaik, tetapi tetap periksa diagnostik residunya.</p>
         <div class="control-row"><button type="button" class="btn-primary" id="arCompareBtn">Jalankan Perbandingan</button></div>
         <div id="arCompareOut"></div>
       </div>`;
@@ -982,7 +1186,7 @@
       const out = $('#arCompareOut');
       out.innerHTML = '<p class="test-note">Menghitung…</p>';
       setTimeout(() => {
-        const list = searchOrders(R.Y, { p: 0, d: o.d, q: 0, P: 0, D: o.D, Q: 0, s: o.s, seasonal: o.seasonal, constant: o.constant });
+        const list = searchOrders(R.Y, { p: 0, d: o.d, q: 0, P: 0, D: o.D, Q: 0, s: o.s, seasonal: o.seasonal, constant: o.constant, method: o.method });
         if (!list.length) { out.innerHTML = '<p class="test-note">Data terlalu sedikit untuk membandingkan model.</p>'; return; }
         const top = list.slice(0, 12), best = list[0].aic;
         const rows = top.map((m, i) => {
@@ -1020,22 +1224,72 @@
         note: `Diferensiasi menghilangkan tren${o.D ? ' (d) dan pola musiman (D)' : ''} sehingga w(t) lebih stasioner. Data berkurang ${ex} titik, tersisa ${fit.w.length}.`,
       });
     }
-    steps.push({ section: 'C. Estimasi parameter (CSS)' });
-    steps.push({
-      title: 'Galat model dan kriteria CSS',
-      formula: `e(t) = Σ A(i)·[w(t−i) − c] − Σ M(j)·e(t−j)\nCSS = Σ e(t)²  (dari t = ${fit.pf + 1} sampai ${fit.w.length}, n efektif = ${fit.nEff})`,
-      note: 'A(B) = φ(B)·Φ(B^s) dan M(B) = θ(B)·Θ(B^s) adalah hasil kali polinomial AR dan MA. Galat sebelum data pertama yang dapat dihitung dianggap nol (conditional). Parameter dicari dengan meminimumkan CSS memakai algoritma Levenberg-Marquardt, dibatasi agar model stasioner dan invertibel.',
-    });
-    if (o.seasonal && (o.p || o.P)) steps.push({ title: 'Polinomial AR gabungan A(B)', formula: `A(B) = ${polyText(fit.A)}`, note: `Perkalian faktor non-musiman dan musiman memunculkan suku di lag kelipatan s dan interaksinya (derajat ${fit.pf}).` });
-    if (o.seasonal && (o.q || o.Q)) steps.push({ title: 'Polinomial MA gabungan M(B)', formula: `M(B) = ${polyText(fit.M)}`, note: `Derajat ${fit.qf}.` });
-    steps.push({
-      title: 'Hasil optimasi',
-      formula: fit.params.map((p) => `${p.name} = ${fmt(p.est, 4)}  (galat baku ${fmt(p.se, 4)})`).join('\n') + `\nCSS = ${fmt(fit.css, 4)}\nσ² = CSS / n = ${fmt(fit.css, 4)} / ${fit.nEff} = ${fmt(fit.sigma2, 4)}`,
-      note: `Konvergen setelah ${fit.iter} iterasi. Galat baku dari σ²·(J′J)⁻¹ dengan J = turunan galat terhadap parameter.`,
-    });
+    const parLines = fit.params.map((p) => `${p.name} = ${fmt(p.est, 4)}  (galat baku ${fmt(p.se, 4)})`).join('\n');
+    const polyNotes = () => {
+      if (o.seasonal && (o.p || o.P)) steps.push({ title: 'Polinomial AR gabungan A(B)', formula: `A(B) = ${polyText(fit.A)}`, note: `Perkalian faktor non-musiman dan musiman memunculkan suku di lag kelipatan s dan interaksinya (derajat ${fit.pf}).` });
+      if (o.seasonal && (o.q || o.Q)) steps.push({ title: 'Polinomial MA gabungan M(B)', formula: `M(B) = ${polyText(fit.M)}`, note: `Derajat ${fit.qf}.` });
+    };
+    if (fit.method === 'mle') {
+      steps.push({ section: 'C. Estimasi parameter (MLE)' });
+      steps.push({
+        title: 'Likelihood Gaussian eksak (filter Kalman)',
+        formula: `ln L = −½ [ n·ln(2πσ²) + Σ ln F(t) + (1/σ²)·Σ v(t)²/F(t) ]\nσ̂² = Σ v(t)²/F(t) / n     (dikonsentrasikan)\nn = ${fit.nLik},  Σ ln F(t) = ${fmt(fit.extra.sumLogF, 4)},  Σ v²/F = ${fmt(fit.extra.mleS, 4)}`,
+        note: 'v(t) adalah galat prediksi satu langkah dari filter Kalman dan F(t) variansnya (relatif terhadap σ²). Keadaan awal memakai distribusi stasioner model, sehingga seluruh pengamatan terpakai, tidak ada data awal yang dibuang seperti pada CSS. A(B) = φ(B)·Φ(B^s) dan M(B) = θ(B)·Θ(B^s).',
+      });
+      polyNotes();
+      steps.push({
+        title: 'Hasil optimasi likelihood',
+        formula: parLines + `\nσ̂² = ${fmt(fit.extra.mleS, 4)} / ${fit.nLik} = ${fmt(fit.sigma2, 4)}\nln L = ${fmt(fit.loglik, 3)}`,
+        note: `Titik awal dari estimasi OLS (CSS = ${fmt(fit.extra.css0, 4)}), lalu dioptimalkan dengan Levenberg-Marquardt pada galat terbobot sehingga setara memaksimumkan ln L; konvergen setelah ${fit.iter} iterasi. Galat baku dari kebalikan Hessian numerik. Galat model pada tabel hasil = v(t)/√F(t).`,
+      });
+    } else if (fit.method === 'moment') {
+      const lg = (fit.extra && fit.extra.momentLags) || [];
+      steps.push({ section: 'C. Estimasi parameter (Metode Momen)' });
+      if (lg.length) {
+        steps.push({
+          title: 'Autokorelasi sampel deret w(t)',
+          formula: `r(k) = Σ [w(t) − ${o.constant ? 'w̄' : '0'}]·[w(t−k) − ${o.constant ? 'w̄' : '0'}] / Σ [w(t) − ${o.constant ? 'w̄' : '0'}]²\n` + lg.map((L, i) => `r(${L}) = ${fmt(fit.extra.sampleR[i], 4)}`).join(',  '),
+          note: `Banyaknya persamaan sama dengan banyaknya parameter AR/MA (${lg.length}): lag ${lg.join(', ')}.${o.constant ? ' Konstanta diestimasi dengan rata-rata sampel w̄ = ' + fmt(fit.sp.c, 4) + '.' : ''}`,
+        });
+        if (fit.extra.yw) {
+          steps.push({
+            title: 'Persamaan Yule-Walker',
+            formula: `R·φ = r,   R(i,j) = r(|i − j|),  r(0) = 1\n` + fit.params.filter((p2) => /^φ/.test(p2.name)).map((p2) => `${p2.name} = ${fmt(p2.est, 4)}`).join(',  '),
+            note: 'Sistem linear dari autokorelasi sampel diselesaikan langsung (tanpa iterasi). Estimator Yule-Walker selalu menghasilkan model AR yang stasioner.',
+          });
+        } else {
+          steps.push({
+            title: 'Pencocokan autokorelasi teoretis',
+            formula: `ρ(k; parameter) = r(k)  untuk k = ${lg.join(', ')}\nρ(k) = Σ ψ(j)·ψ(j+k) / Σ ψ(j)²,  ψ dari A(B)·ψ(B) = M(B)\n` + parLines,
+            note: `Parameter dicari agar ACF teoretis model sama dengan ACF sampel pada lag tersebut (Levenberg-Marquardt, dibatasi stasioner dan invertibel; ${fit.iter} iterasi, jarak kuadrat sisa = ${fmt(fit.extra.momentDist, 6)}).`,
+          });
+          polyNotes();
+        }
+      } else {
+        steps.push({ title: 'Tanpa parameter AR/MA', formula: `μ̂ = w̄ = ${fmt(fit.sp.c, 4)}`, note: 'Tidak ada autokorelasi yang perlu dicocokkan.' });
+      }
+      steps.push({
+        title: 'Varians galat dan galat baku',
+        formula: `σ̂² (momen) = γ̂(0) / Σ ψ(j)² = ${fmt(fit.extra.sigma2Moment, 4)}\nσ̂² (dari galat) = Σ e² / n = ${fmt(fit.css, 4)} / ${fit.nEff} = ${fmt(fit.sigma2, 4)}`,
+        note: 'Aplikasi memakai σ̂² dari galat untuk selang ramalan dan ukuran akurasi agar sebanding dengan metode lain. Galat baku parameter dari σ²·(J′J)⁻¹ di titik estimasi (hampiran).',
+      });
+    } else {
+      steps.push({ section: 'C. Estimasi parameter (OLS / CSS)' });
+      steps.push({
+        title: 'Galat model dan kriteria kuadrat terkecil',
+        formula: `e(t) = Σ A(i)·[w(t−i) − c] − Σ M(j)·e(t−j)\nCSS = Σ e(t)²  (dari t = ${fit.pf + 1} sampai ${fit.w.length}, n efektif = ${fit.nEff})`,
+        note: 'A(B) = φ(B)·Φ(B^s) dan M(B) = θ(B)·Θ(B^s) adalah hasil kali polinomial AR dan MA. Galat sebelum data pertama yang dapat dihitung dianggap nol (conditional). Untuk AR murni ini sama dengan regresi OLS biasa; bila ada MA/musiman, parameter dicari dengan meminimumkan CSS memakai algoritma Levenberg-Marquardt, dibatasi agar model stasioner dan invertibel.',
+      });
+      polyNotes();
+      steps.push({
+        title: 'Hasil optimasi',
+        formula: parLines + `\nCSS = ${fmt(fit.css, 4)}\nσ² = CSS / n = ${fmt(fit.css, 4)} / ${fit.nEff} = ${fmt(fit.sigma2, 4)}`,
+        note: `Konvergen setelah ${fit.iter} iterasi. Galat baku dari σ²·(J′J)⁻¹ dengan J = turunan galat terhadap parameter.`,
+      });
+    }
     // contoh galat pertama
     const i0 = 0, t = fit.pf; // indeks w
-    if (fit.nEff > 0) {
+    if (fit.nEff > 0 && fit.method !== 'mle') {
       const parts = [];
       for (let i = 0; i <= fit.pf; i++) if (fit.A[i] !== 0) parts.push(`${fmt(fit.A[i], 4)}·(${fmt(fit.w[t - i], 3)}${fit.sp.c ? ' − ' + fmt(fit.sp.c, 3) : ''})`);
       steps.push({ title: `Contoh galat pertama e(${fit.first + 1})`, formula: `e = ${parts.join(' + ')}${fit.qf ? '  (suku MA = 0 karena galat awal dianggap nol)' : ''}\n  = ${fmt(fit.e[i0], 4)}`, note: 'Fit = Y − e. Galat pada data asli sama dengan galat pada deret diferensiasi, karena diferensiasi hanya menggeser nilai yang sudah diketahui.' });
@@ -1143,7 +1397,7 @@
       if (rl >= 2) charts.push({ title: 'ACF residual', caption: 'Batang di dalam batas ±1,96/√n menandakan residual white noise.', build: () => corrChart(acfOf(fit.e, rl), fit.nEff, 'ACF Residual', 'Autokorelasi', o.s) });
       SE.publish({
         id: 'arima', title: 'Hasil ' + L, anchor: '#ar-eval-card', resultsCard: '#ar-results-card',
-        meta: [['Model', L], ['Jenis', o.seasonal ? 'SARIMA (musiman)' : 'ARIMA (non-musiman)'], ['Jumlah data (N)', N], ['AIC', fmt(fit.aic, 2)], ['BIC', fmt(fit.bic, 2)], ['MSE', fmt(ev.mse)], ['MAPE', fmt(ev.mape, 2) + '%'], ['Ljung-Box p', fmtP(R.lb.p)], ['Ramalan periode ' + (N + 1), fmt(fc.mean[0], 3)]],
+        meta: [['Model', L], ['Metode estimasi', METHOD_NAME[o.method]], ['Jenis', o.seasonal ? 'SARIMA (musiman)' : 'ARIMA (non-musiman)'], ['Jumlah data (N)', N], ['AIC', fmt(fit.aic, 2)], ['BIC', fmt(fit.bic, 2)], ['MSE', fmt(ev.mse)], ['MAPE', fmt(ev.mape, 2) + '%'], ['Ljung-Box p', fmtP(R.lb.p)], ['Ramalan periode ' + (N + 1), fmt(fc.mean[0], 3)]],
         sections: [{ heading: 'Parameter Model', sel: '#arModelWrap' }, { heading: 'Data Aktual vs Fit', sel: '#arTableWrap' }, { heading: 'Ramalan', sel: '#arForecastWrap' }, { heading: 'Diagnostik Residu', sel: '#arDiagWrap' }, { heading: 'Langkah Perhitungan', sel: '#arStepsWrap' }, { heading: 'Evaluasi', sel: '#arEvalWrap' }],
         data: { head: ['Periode', 'Data aktual (Y)'], rows: Y.map((y, i) => [i + 1, y]), caption: 'Data deret waktu yang dipakai pada perhitungan.' },
         charts,

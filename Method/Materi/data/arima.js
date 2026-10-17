@@ -91,15 +91,27 @@ $$\Phi(B^s)=1-\Phi_1B^s-\dots-\Phi_PB^{sP},\qquad \Theta(B^s)=1+\Theta_1B^s+\dot
 </div>`
       },
       {
-        id: 'estimasi', title: 'Estimasi parameter (CSS)',
+        id: 'estimasi', title: 'Estimasi parameter (OLS, MLE, Momen)',
         html: String.raw`
-<p>Aplikasi memakai <strong>Conditional Sum of Squares</strong> (jumlah kuadrat galat bersyarat). Setelah diferensiasi menjadi $w_t$, galat dihitung berulang:</p>
+<p>Pada Langkah 2 Anda dapat memilih tiga metode estimasi: <strong>OLS</strong>, <strong>MLE</strong>, atau <strong>Metode Momen</strong>. Ketiganya bekerja pada deret yang sudah didiferensiasi $w_t$ dan memakai bentuk model yang sama; perbedaannya ada pada kriteria yang dioptimalkan.</p>
+<h3>1. OLS (kuadrat terkecil, CSS)</h3>
+<p>Metode ini memakai <strong>Conditional Sum of Squares</strong> (jumlah kuadrat galat bersyarat). Untuk model AR murni, meminimumkan jumlah kuadrat galat sama dengan regresi OLS biasa $w_t$ pada $w_{t-1},\dots,w_{t-p}$. Pada model dengan MA, galat bergantung pada galat sebelumnya sehingga masalahnya nonlinear dan dikerjakan secara iteratif. Setelah diferensiasi menjadi $w_t$, galat dihitung berulang:</p>
 $$e_t = \sum_{i=0}^{p^*} A_i\,(w_{t-i}-c) - \sum_{j=1}^{q^*} M_j\,e_{t-j}$$
 <p>dengan $A(B)=\phi(B)\Phi(B^s)$ dan $M(B)=\theta(B)\Theta(B^s)$ hasil kali polinomial AR dan MA, serta $e_t=0$ untuk $t$ sebelum data pertama yang dapat dihitung. Parameter dipilih untuk meminimumkan</p>
 $$\text{CSS}=\sum_t e_t^2$$
 <p>memakai algoritma Levenberg-Marquardt, dibatasi pada daerah stasioner dan invertibel. Lalu:</p>
 $$\hat\sigma^2 = \frac{\text{CSS}}{n_{\text{eff}}},\qquad \widehat{\text{Var}}(\hat\beta)=\hat\sigma^2\,(J^\top J)^{-1}$$
 <p>$J$ adalah turunan galat terhadap parameter. Uji parameter memakai $z=\hat\beta/\text{SE}(\hat\beta)$ dengan $H_0:\beta=0$. Parameter dengan $p \gt 0{,}05$ dapat dipertimbangkan untuk dibuang.</p>
+<h3>2. MLE (kemungkinan maksimum)</h3>
+<p>MLE memaksimumkan likelihood Gaussian <strong>eksak</strong>. Dengan filter Kalman, galat prediksi satu langkah $v_t$ dan variansnya $F_t$ (relatif terhadap $\sigma^2$) dihitung dari distribusi stasioner awal, sehingga <em>seluruh</em> pengamatan terpakai. Setelah $\sigma^2$ dikonsentrasikan:</p>
+$$\hat\sigma^2=\frac{1}{n}\sum_t \frac{v_t^2}{F_t},\qquad \ln L=-\tfrac12\Big[n\ln(2\pi\hat\sigma^2)+\sum_t \ln F_t+n\Big]$$
+<p>Galat baku diambil dari kebalikan matriks Hessian numerik. MLE umumnya paling efisien, terutama pada data pendek atau model dengan MA, dan merupakan bawaan di banyak perangkat lunak statistik.</p>
+<h3>3. Metode Momen</h3>
+<p>Metode momen mencocokkan autokorelasi teoretis model dengan autokorelasi sampel $r_k$. Untuk AR murni, hasilnya adalah persamaan <strong>Yule-Walker</strong> (sistem linear, solusi langsung):</p>
+$$\begin{bmatrix}1&r_1&\cdots&r_{p-1}\\ r_1&1&\cdots&r_{p-2}\\ \vdots&&\ddots&\vdots\\ r_{p-1}&r_{p-2}&\cdots&1\end{bmatrix}\begin{bmatrix}\phi_1\\ \phi_2\\ \vdots\\ \phi_p\end{bmatrix}=\begin{bmatrix}r_1\\ r_2\\ \vdots\\ r_p\end{bmatrix}$$
+<p>Untuk model dengan MA atau komponen musiman, parameter dicari agar $\rho_k(\text{parameter})=r_k$ pada lag $1,\dots,p+q$ dan pada kelipatan $s$. Metode ini sederhana, tetapi untuk model dengan MA kurang efisien dan kadang tidak punya solusi (misalnya MA(1) memerlukan $|r_1|\le 0{,}5$).</p>
+<p>Ketiga metode memberi hasil yang dekat pada data yang cukup panjang dan model sederhana. Bila hasilnya berbeda jauh, curigai data terlalu pendek atau model terlalu rumit. Untuk peramalan, MLE atau OLS biasanya lebih dapat diandalkan daripada momen.</p>
+<h3>Kriteria informasi</h3>
 <p>Kriteria informasi untuk membandingkan model:</p>
 $$\text{AIC}=-2\ln L + 2(k+1),\qquad \text{BIC}=-2\ln L + (k+1)\ln n_{\text{eff}}$$
 <p>Nilai lebih kecil lebih baik; BIC menghukum parameter lebih berat. Karena CSS memotong sejumlah data awal yang berbeda tergantung orde, AIC/BIC di aplikasi adalah <strong>pendekatan</strong>; selisih kecil (&lt; 2) jangan dianggap meyakinkan.</p>`
