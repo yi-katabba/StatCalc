@@ -2135,6 +2135,14 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
         <label for="arH">Jumlah periode ramalan (h)</label>
         <input type="number" id="arH" class="plain-input" min="1" max="60" step="1" value="6" inputmode="numeric">
       </div>
+      <div class="control-row">
+        <label for="arFcMode">Cara peramalan</label>
+        <select id="arFcMode" class="select-input">
+          <option value="recursive">Rekursif (satu-satu)</option>
+          <option value="direct">Rentang (langsung per horizon)</option>
+        </select>
+        <p class="field-note" id="arFcModeHint"></p>
+      </div>
       <p class="field-note" id="arNeedHint"></p>
       <div class="btn-grid btn-grid-1">
         <button type="button" class="btn-primary" id="arCalcBtn">Hitung Model &rarr;</button>

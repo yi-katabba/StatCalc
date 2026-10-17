@@ -135,8 +135,14 @@ $$Q = n(n+2)\sum_{k=1}^{m}\frac{r_k^2}{n-k}\ \sim\ \chi^2_{\,m-(p+q+P+Q)}$$
       {
         id: 'ramalan', title: 'Ramalan dan selang kepercayaan',
         html: String.raw`
-<p>Ramalan dihitung rekursif: nilai masa depan dihitung dari model dengan galat masa depan diganti nol, dan ramalan sebelumnya dipakai sebagai masukan untuk langkah berikutnya. Setelah itu deret hasil diferensiasi dikembalikan ke skala data asli.</p>
-<p>Galat baku ramalan $h$ langkah memakai bobot $\psi$ dari representasi MA tak hingga model ($\psi_0=1$):</p>
+<p>Pada Langkah 2 tersedia dua <strong>cara peramalan</strong>:</p>
+<h3>Rekursif (satu-satu)</h3>
+<p>Satu model diestimasi sekali. Nilai masa depan dihitung dari model dengan galat masa depan diganti nol, dan ramalan sebelumnya dipakai sebagai masukan untuk langkah berikutnya: $\hat w_{n+2}$ memakai $\hat w_{n+1}$, dan seterusnya. Setelah itu deret hasil diferensiasi dikembalikan ke skala data asli. Cara ini sederhana dan stabil, tetapi galat prediksi dapat menumpuk pada horizon jauh.</p>
+<h3>Rentang (langsung per horizon)</h3>
+<p>Untuk setiap horizon $h$, parameter diestimasi ulang dengan meminimumkan galat $h$ langkah ke depan:</p>
+$$\min_{\theta_h}\sum_t\big[w_{t+h}-\hat w_{t+h\mid t}(\theta_h)\big]^2$$
+<p>Tiap periode diramalkan langsung dari data aktual, tanpa memakai ramalan sebelumnya sebagai masukan, sehingga model tidak bergantung pada galat yang menumpuk dari langkah sebelumnya. Hasil tiap horizon baru dikembalikan ke skala data asli. Galat baku diambil dari RMSE galat $h$ langkah dalam sampel. Konsekuensinya: perhitungan lebih berat, butuh data lebih banyak (horizon yang asal datanya terlalu sedikit memakai model utama), dan galat baku pada horizon jauh kurang stabil.</p>
+<p>Untuk cara rekursif, galat baku ramalan $h$ langkah memakai bobot $\psi$ dari representasi MA tak hingga model ($\psi_0=1$):</p>
 $$\text{Var}(h)=\hat\sigma^2\sum_{j=0}^{h-1}\psi_j^2,\qquad \text{Selang 95\%}: \hat Y_{n+h}\pm 1{,}96\sqrt{\text{Var}(h)}$$
 <ul>
   <li>Selang <strong>melebar</strong> seiring $h$: makin jauh makin tidak pasti.</li>

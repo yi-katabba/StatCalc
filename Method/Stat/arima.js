@@ -526,6 +526,88 @@
     return { mean: mean_, se, lo, hi, psi };
   }
 
+  /* ---- Peramalan RENTANG (langsung per horizon) ----
+     Untuk tiap horizon h parameter diestimasi ulang dengan meminimumkan jumlah kuadrat galat h-langkah:
+       min  Sum_t [ w(t+h) - w^(t+h | t; theta_h) ]^2
+     w^(t+h|t) = prediksi h langkah dari data sampai t (galat masa depan = 0). Ramalan w tiap horizon baru
+     dikembalikan ke skala data asli. Galat baku = RMSE galat h-langkah dalam sampel (skala data asli). */
+  function fullE(w, A, M, c, pf, qf) {
+    const n = w.length, e = new Array(n).fill(0);
+    for (let t = pf; t < n; t++) {
+      let v = 0;
+      for (let i = 0; i <= pf; i++) v += A[i] * (w[t - i] - c);
+      for (let j = 1; j <= qf; j++) if (t - j >= 0) v -= M[j] * e[t - j];
+      e[t] = v;
+    }
+    return e;
+  }
+  function hstepAll(w, e, A, M, c, pf, qf, tau, H) {
+    const f = new Array(H);
+    for (let m = 1; m <= H; m++) {
+      let v = c;
+      for (let i = 1; i <= pf; i++) { const idx = tau + m - i; const wi = idx <= tau ? w[idx] : f[idx - tau - 1]; v -= A[i] * (wi - c); }
+      for (let j = 1; j <= qf; j++) { const idx = tau + m - j; if (idx <= tau && idx >= 0) v += M[j] * e[idx]; }
+      f[m - 1] = v;
+    }
+    return f;
+  }
+  function forecastDirect(fit, H, z) {
+    z = z || 1.959964;
+    const o = fit.cfg, { Y, dpoly, w, t0 } = fit, nw = w.length, L = dpoly.length - 1, k = fit.k, pf0 = fit.pf;
+    const rec = forecast(fit, H, z);
+    const nmin = Math.max(8, k + 3);
+    const deadline = Date.now() + 8000;
+    const okx = (xx) => feasible(o, xx);
+    const models = [];
+    let prev = fit.x.slice();
+    for (let h = 1; h <= H; h++) {
+      const nOrig = nw - h - pf0;
+      let x = fit.x.slice(), status = 'base', reason = nOrig < nmin ? 'data' : '', sse = NaN;
+      if (nOrig >= nmin && k === 0) status = 'direct';
+      else if (nOrig >= nmin && Date.now() >= deadline) reason = 'waktu';
+      else if (nOrig >= nmin) {
+        const resH = (xx) => {
+          const pl = polysOf(o, xx), e = fullE(w, pl.A, pl.M, pl.sp.c, pl.pf, pl.qf), r = [];
+          for (let tau = pf0; tau <= nw - 1 - h; tau++) r.push(w[tau + h] - hstepAll(w, e, pl.A, pl.M, pl.sp.c, pl.pf, pl.qf, tau, h)[h - 1]);
+          return r;
+        };
+        let r1 = null;
+        try { r1 = levenberg(resH, prev, okx); } catch (err) { r1 = null; }
+        if (r1 && Number.isFinite(r1.S)) { x = r1.x; sse = r1.S; status = 'direct'; prev = x.slice(); }
+        else reason = 'gagal';
+      }
+      const pl = polysOf(o, x);
+      models.push({ h, x, status, reason, nOrig, sse, pl, e: fullE(w, pl.A, pl.M, pl.sp.c, pl.pf, pl.qf) });
+    }
+    // ramalan pada asal terakhir
+    const yf = Y.slice(), mean_ = [];
+    models.forEach((m) => {
+      const f = hstepAll(w, m.e, m.pl.A, m.pl.M, m.pl.sp.c, m.pl.pf, m.pl.qf, nw - 1, m.h);
+      let y = f[m.h - 1]; for (let kk = 1; kk <= L; kk++) y -= dpoly[kk] * yf[yf.length - kk];
+      yf.push(y); mean_.push(y);
+    });
+    // galat h-langkah dalam sampel pada skala data asli
+    const W = models.map(() => []);
+    models.forEach((m) => { for (let tau = pf0; tau <= nw - 1 - m.h; tau++) W[m.h - 1][tau] = hstepAll(w, m.e, m.pl.A, m.pl.M, m.pl.sp.c, m.pl.pf, m.pl.qf, tau, m.h)[m.h - 1]; });
+    const errs = Array.from({ length: H }, () => []);
+    for (let tau = pf0; tau <= nw - 2; tau++) {
+      const base = tau + t0, hmax = Math.min(H, nw - 1 - tau), yh = [];
+      for (let h = 1; h <= hmax; h++) {
+        let y = W[h - 1][tau];
+        for (let kk = 1; kk <= L; kk++) { const idx = base + h - kk; y -= dpoly[kk] * (idx <= base ? Y[idx] : yh[idx - base - 1]); }
+        yh.push(y); errs[h - 1].push(Y[base + h] - y);
+      }
+    }
+    const se = [], lo = [], hi = [];
+    models.forEach((m, i) => {
+      let s2 = rec.se[i];
+      if (m.status === 'direct' && errs[i].length >= nmin) { const r = Math.sqrt(errs[i].reduce((a, v) => a + v * v, 0) / errs[i].length); if (Number.isFinite(r) && r > 0) s2 = r; }
+      else if (m.status === 'direct') m.status = 'base';
+      se.push(s2); lo.push(mean_[i] - z * s2); hi.push(mean_[i] + z * s2);
+    });
+    return { mean: mean_, se, lo, hi, psi: rec.psi, direct: true, nmin, models: models.map((m) => ({ h: m.h, status: m.status, reason: m.reason, nOrig: errs[m.h - 1].length, x: m.x, sse: m.sse })) };
+  }
+
   /* ---- ACF, PACF, uji residu ---- */
   function acfOf(x, maxLag) {
     const n = x.length, m = mean(x);
@@ -614,7 +696,7 @@
     return out;
   }
 
-  const core = { METHOD_NAME, exactArma, theoryAcf, fitModel, forecast, acfOf, pacfFrom, ljungBox, jarqueBera, evaluate, detectSeasonality, searchOrders, minObservations, normCfg, diffPoly, applyDiff, polyMul, seasPoly, normCdf, chiSqUpperP, arStable };
+  const core = { forecastDirect, METHOD_NAME, exactArma, theoryAcf, fitModel, forecast, acfOf, pacfFrom, ljungBox, jarqueBera, evaluate, detectSeasonality, searchOrders, minObservations, normCfg, diffPoly, applyDiff, polyMul, seasPoly, normCdf, chiSqUpperP, arStable };
   if (typeof module !== 'undefined' && module.exports) module.exports = core;
   if (typeof document === 'undefined') return;
   window.StatCalcArima = core;
@@ -657,12 +739,12 @@
   const view = $('#view-arima');
   if (!view) return;
 
-  const state = { method: 'ols', seasonal: false, p: 1, d: 1, q: 0, P: 0, D: 1, Q: 1, s: 12, constant: false, h: 6, minRows: 10, last: null };
+  const state = { fcMode: 'recursive', method: 'ols', seasonal: false, p: 1, d: 1, q: 0, P: 0, D: 1, Q: 1, s: 12, constant: false, h: 6, minRows: 10, last: null };
 
   const el = {
     mode: $('#arMode'), seasBox: $('#arSeasonalBox'), modeHint: $('#arModeHint'),
     p: $('#arP'), d: $('#arD'), q: $('#arQ'), P: $('#arSP'), D: $('#arSD'), Q: $('#arSQ'), s: $('#arS'),
-    constant: $('#arConst'), h: $('#arH'), method: $('#arMethod'), methodHint: $('#arMethodHint'),
+    constant: $('#arConst'), h: $('#arH'), method: $('#arMethod'), methodHint: $('#arMethodHint'), fcMode: $('#arFcMode'), fcModeHint: $('#arFcModeHint'),
     setupError: $('#arSetupError'), needHint: $('#arNeedHint'), fillSampleSBtn: $('#arFillSampleSBtn'),
     dataCard: $('#ar-data-card'), minRowsHint: $('#arMinRowsHint'), tableBody: $('#arDataTableBody'),
     clearBtn: $('#arClearBtn'), addRowBtn: $('#arAddRowBtn'), removeRowBtn: $('#arRemoveRowBtn'),
@@ -688,6 +770,13 @@
   function syncMethod() { el.methodHint.innerHTML = METHOD_HINT[el.method.value] || ''; }
   el.method.addEventListener('change', syncMethod);
   syncMethod();
+  const FCMODE_HINT = {
+    recursive: '<strong>Rekursif (satu-satu)</strong>: satu model diestimasi sekali; ramalan periode N+1 dipakai sebagai masukan untuk meramalkan N+2, dan seterusnya. Selang kepercayaan dari bobot &psi; model.',
+    direct: '<strong>Rentang (langsung per horizon)</strong>: parameter diestimasi ulang untuk tiap horizon h dengan meminimumkan galat h-langkah ke depan, sehingga setiap periode diramalkan langsung dari data aktual, tanpa memakai ramalan sebelumnya. Selang dari RMSE galat h-langkah dalam sampel. Lebih lambat dan butuh data lebih banyak; horizon yang datanya tidak cukup memakai model utama.',
+  };
+  function syncFcMode() { el.fcModeHint.innerHTML = FCMODE_HINT[el.fcMode.value] || ''; }
+  el.fcMode.addEventListener('change', syncFcMode);
+  syncFcMode();
   el.mode.addEventListener('change', () => { syncMode(); updateMin(); });
   syncMode();
 
@@ -713,6 +802,7 @@
     if (!seas) { next.P = 0; next.D = 0; next.Q = 0; next.s = 1; }
     next.seasonal = seas;
     next.method = el.method.value;
+    next.fcMode = el.fcMode.value;
     const cv = el.constant.value;
     next.constant = cv === 'yes' ? true : cv === 'no' ? false : (next.d + next.D === 0);
     Object.assign(state, next);
@@ -822,7 +912,9 @@
     try { fit = fitModel(Y, state); }
     catch (err) { showError(el.dataError, err.message || 'Model tidak dapat diestimasi.'); return; }
     if (!Number.isFinite(fit.sigma2) || fit.sigma2 <= 0) { showError(el.dataError, 'Model cocok sempurna atau tidak stabil (varians galat nol). Coba orde yang lebih kecil.'); return; }
-    const fc = forecast(fit, state.h);
+    let fc;
+    try { fc = state.fcMode === 'direct' ? forecastDirect(fit, state.h) : forecast(fit, state.h); }
+    catch (err) { fc = forecast(fit, state.h); }
     const ev = evaluate(Y, fit.err, fit.first);
     const o = fit.cfg;
     const lbm = ljungBox(fit.e, Math.max(state.seasonal ? Math.min(2 * o.s, Math.floor(fit.nEff / 3)) : Math.min(10, Math.floor(fit.nEff / 3)), 1), o.p + o.q + o.P + o.Q);
@@ -991,13 +1083,32 @@
   /* ---------- Tab Ramalan ---------- */
   function renderForecast(R) {
     const { Y, fc, fit } = R, N = Y.length, h = R.h;
+    const dir = !!fc.direct;
     let rows = '';
-    for (let m = 0; m < h; m++) rows += `<tr><td>${N + m + 1}</td><td><strong>${fmt(fc.mean[m], 3)}</strong></td><td>${fmt(fc.se[m], 3)}</td><td>${fmt(fc.lo[m], 3)}</td><td>${fmt(fc.hi[m], 3)}</td></tr>`;
+    for (let m = 0; m < h; m++) {
+      const md = dir ? fc.models[m] : null;
+      const basis = dir ? `<td>${md.status === 'direct' ? 'Langsung' : 'Rekursif*'}</td>` : '';
+      rows += `<tr><td>${N + m + 1}</td><td><strong>${fmt(fc.mean[m], 3)}</strong></td><td>${fmt(fc.se[m], 3)}</td><td>${fmt(fc.lo[m], 3)}</td><td>${fmt(fc.hi[m], 3)}</td>${basis}</tr>`;
+    }
+    const sub = dir
+      ? 'Cara peramalan: <strong>Rentang (langsung per horizon)</strong>. Parameter diestimasi ulang untuk setiap horizon dengan meminimumkan galat h-langkah ke depan, sehingga tiap periode diramalkan langsung dari data aktual tanpa memakai ramalan sebelumnya. Galat baku = RMSE galat h-langkah dalam sampel; selang kepercayaan 95% = ramalan &plusmn; 1,96 &times; galat baku. Karena dihitung dari data sampel, galat baku pada horizon jauh (asal data makin sedikit) bisa mendatar atau turun dan kurang stabil dibanding cara rekursif.'
+      : 'Cara peramalan: <strong>Rekursif (satu-satu)</strong>. Ramalan periode sebelumnya dipakai sebagai masukan untuk periode berikutnya. Selang kepercayaan 95% = ramalan &plusmn; 1,96 &times; galat baku ramalan. Selang melebar seiring horizon karena ketidakpastian menumpuk, terutama pada model dengan diferensiasi.';
+    let extra = '';
+    if (dir) {
+      const base = fc.models.filter((m) => m.status !== 'direct');
+      const why = { data: `data tidak cukup (kurang dari ${fc.nmin} asal pengamatan untuk menaksir galat h-langkah)`, waktu: 'batas waktu hitung tercapai', gagal: 'optimasi tidak konvergen' };
+      const reasons = Array.from(new Set(base.map((m) => why[m.reason] || 'data tidak cukup'))).join('; ');
+      if (base.length) extra += `<p class="test-note">* Horizon ${base.map((m) => m.h).join(', ')} memakai parameter model utama (rekursif) dan selang dari bobot &psi;: ${reasons}.</p>`;
+      const head = fit.names.map((n) => `<th>${escapeHTML(n)}</th>`).join('');
+      const prow = fc.models.map((m) => `<tr><td>${m.h}</td>${m.x.map((v) => `<td>${fmt(v, 4)}</td>`).join('')}<td>${m.nOrig}</td><td>${m.status === 'direct' ? 'Langsung' : 'Model utama'}</td></tr>`).join('');
+      extra += `<details class="ar-edit" style="margin:12px 0;"><summary>Parameter per horizon</summary><div class="ar-edit-body"><div class="table-scroll"><table class="result-table"><thead><tr><th>h</th>${head}<th>Asal data</th><th>Dasar</th></tr></thead><tbody>${prow}</tbody></table></div><p class="field-note">Parameter hasil estimasi h-langkah untuk tiap horizon. Metode estimasi yang dipilih (${escapeHTML(METHOD_NAME[fit.method])}) dipakai sebagai titik awal, sedangkan kriterianya adalah jumlah kuadrat galat h-langkah.</p></div></details>`;
+    }
     el.forecastWrap.innerHTML = `
       <div class="test-block">
         <h4>Ramalan ${h} Periode ke Depan</h4>
-        <p class="test-sub">Selang kepercayaan 95% = ramalan &plusmn; 1,96 &times; galat baku ramalan. Selang melebar seiring horizon karena ketidakpastian menumpuk, terutama pada model dengan diferensiasi.</p>
-        <div class="table-scroll"><table class="result-table"><thead><tr><th>Periode</th><th>Ramalan</th><th>Galat baku</th><th>Batas bawah 95%</th><th>Batas atas 95%</th></tr></thead><tbody>${rows}</tbody></table></div>
+        <p class="test-sub">${sub}</p>
+        <div class="table-scroll"><table class="result-table"><thead><tr><th>Periode</th><th>Ramalan</th><th>Galat baku</th><th>Batas bawah 95%</th><th>Batas atas 95%</th>${dir ? '<th>Dasar</th>' : ''}</tr></thead><tbody>${rows}</tbody></table></div>
+        ${extra}
         <div id="arFcEditHolder">${fcEditorHtml()}</div>
         <div id="arFcChart"></div>
       </div>`;
@@ -1299,17 +1410,32 @@
     const arTerms = [], maTerms = [];
     for (let i = 1; i <= fit.pf; i++) if (fit.A[i] !== 0) arTerms.push(`${fmt(-fit.A[i], 4)}·(${fmt(wt[nw - i], 3)}${c ? ' − ' + fmt(c, 3) : ''})`);
     for (let j = 1; j <= fit.qf; j++) if (fit.M[j] !== 0) maTerms.push(`${fmt(fit.M[j], 4)}·(${fmt(fit.e[fit.e.length - j] !== undefined ? fit.e[fit.e.length - j] : 0, 3)})`);
-    steps.push({
-      title: `Ramalan satu langkah: w(${nw + fit.t0 + 1})`,
-      formula: `ŵ = ${c ? fmt(c, 4) + ' + ' : ''}${[arTerms.join(' + '), maTerms.join(' + ')].filter(Boolean).join(' + ') || '0'}\nŶ(${N + 1}) = ŵ − Σ δ(k)·Y(${N + 1}−k)  →  ${fmt(fc.mean[0], 3)}`,
-      note: 'Galat masa depan diganti nol. Setelah w diramalkan, nilainya dikembalikan ke skala data asli dengan menjumlahkan kembali nilai yang sudah dibedakan (kebalikan diferensiasi). Ramalan berikutnya memakai ramalan sebelumnya secara rekursif.',
-    });
-    const psiShow = fc.psi.slice(0, Math.min(6, fc.psi.length)).map((v, j) => `ψ${j} = ${fmt(v, 4)}`).join(',  ');
-    steps.push({
-      title: 'Selang kepercayaan ramalan 95%',
-      formula: `Var(h) = σ²·Σ ψ(j)², j = 0 … h−1\n${psiShow}${fc.psi.length > 6 ? ', …' : ''}\nh = 1: galat baku = √(${fmt(fit.sigma2, 4)}) = ${fmt(fc.se[0], 4)}\nSelang = ramalan ± 1,96 × galat baku = [${fmt(fc.lo[0], 3)} ; ${fmt(fc.hi[0], 3)}]`,
-      note: 'ψ adalah bobot MA(∞) model, diperoleh dari [A(B)·δ(B)]·ψ(B) = M(B) dengan δ(B) polinomial diferensiasi. Selang melebar bila ada diferensiasi karena galat menumpuk.',
-    });
+    if (fc.direct) {
+      const m1 = fc.models[0], mLast = fc.models.filter((m) => m.status === 'direct').pop() || m1;
+      const pl = (m) => fit.names.map((n, i) => `${n} = ${fmt(m.x[i], 4)}`).join(', ') || '(tanpa parameter)';
+      steps.push({
+        title: 'Ramalan rentang (langsung per horizon)',
+        formula: `Untuk setiap h: minimumkan Σ [ w(t+h) − ŵ(t+h | t; θ_h) ]²\nŵ(t+h | t) = prediksi h langkah dari data sampai t (galat masa depan = 0)\nŶ(${N}+h) = ŵ_h − Σ δ(k)·Ŷ(${N}+h−k)\nh = 1: ${pl(m1)}\nh = ${mLast.h}: ${pl(mLast)}`,
+        note: `Berbeda dengan rekursif, parameter θ_h diestimasi sendiri untuk tiap horizon (titik awal dari estimasi metode terpilih), dan ŵ_h dihitung langsung dari data aktual. Hasil w tiap horizon baru dikembalikan ke skala data asli dengan kebalikan diferensiasi. Horizon yang asal datanya kurang dari ${fc.nmin} memakai parameter model utama.`,
+      });
+      steps.push({
+        title: 'Selang kepercayaan ramalan rentang 95%',
+        formula: `galat baku(h) = √( Σ [Y(t+h) − Ŷ(t+h | t)]² / m_h )\nh = 1: m = ${m1.nOrig}, galat baku = ${fmt(fc.se[0], 4)}\nSelang = ramalan ± 1,96 × galat baku = [${fmt(fc.lo[0], 3)} ; ${fmt(fc.hi[0], 3)}]`,
+        note: 'm_h adalah banyaknya asal pengamatan dalam sampel yang punya nilai aktual h langkah ke depan. Makin besar h, makin sedikit asal data sehingga galat baku makin kurang stabil.',
+      });
+    } else {
+      steps.push({
+        title: `Ramalan satu langkah: w(${nw + fit.t0 + 1})`,
+        formula: `ŵ = ${c ? fmt(c, 4) + ' + ' : ''}${[arTerms.join(' + '), maTerms.join(' + ')].filter(Boolean).join(' + ') || '0'}\nŶ(${N + 1}) = ŵ − Σ δ(k)·Y(${N + 1}−k)  →  ${fmt(fc.mean[0], 3)}`,
+        note: 'Galat masa depan diganti nol. Setelah w diramalkan, nilainya dikembalikan ke skala data asli dengan menjumlahkan kembali nilai yang sudah dibedakan (kebalikan diferensiasi). Ramalan berikutnya memakai ramalan sebelumnya secara rekursif.',
+      });
+      const psiShow = fc.psi.slice(0, Math.min(6, fc.psi.length)).map((v, j) => `ψ${j} = ${fmt(v, 4)}`).join(',  ');
+      steps.push({
+        title: 'Selang kepercayaan ramalan 95%',
+        formula: `Var(h) = σ²·Σ ψ(j)², j = 0 … h−1\n${psiShow}${fc.psi.length > 6 ? ', …' : ''}\nh = 1: galat baku = √(${fmt(fit.sigma2, 4)}) = ${fmt(fc.se[0], 4)}\nSelang = ramalan ± 1,96 × galat baku = [${fmt(fc.lo[0], 3)} ; ${fmt(fc.hi[0], 3)}]`,
+        note: 'ψ adalah bobot MA(∞) model, diperoleh dari [A(B)·δ(B)]·ψ(B) = M(B) dengan δ(B) polinomial diferensiasi. Selang melebar bila ada diferensiasi karena galat menumpuk.',
+      });
+    }
     steps.push({ section: 'E. Evaluasi' });
     steps.push({
       title: 'Ukuran akurasi (data asli vs fit)',
@@ -1397,7 +1523,7 @@
       if (rl >= 2) charts.push({ title: 'ACF residual', caption: 'Batang di dalam batas ±1,96/√n menandakan residual white noise.', build: () => corrChart(acfOf(fit.e, rl), fit.nEff, 'ACF Residual', 'Autokorelasi', o.s) });
       SE.publish({
         id: 'arima', title: 'Hasil ' + L, anchor: '#ar-eval-card', resultsCard: '#ar-results-card',
-        meta: [['Model', L], ['Metode estimasi', METHOD_NAME[o.method]], ['Jenis', o.seasonal ? 'SARIMA (musiman)' : 'ARIMA (non-musiman)'], ['Jumlah data (N)', N], ['AIC', fmt(fit.aic, 2)], ['BIC', fmt(fit.bic, 2)], ['MSE', fmt(ev.mse)], ['MAPE', fmt(ev.mape, 2) + '%'], ['Ljung-Box p', fmtP(R.lb.p)], ['Ramalan periode ' + (N + 1), fmt(fc.mean[0], 3)]],
+        meta: [['Model', L], ['Metode estimasi', METHOD_NAME[o.method]], ['Cara peramalan', R.fc && R.fc.direct ? 'Rentang (langsung per horizon)' : 'Rekursif (satu-satu)'], ['Jenis', o.seasonal ? 'SARIMA (musiman)' : 'ARIMA (non-musiman)'], ['Jumlah data (N)', N], ['AIC', fmt(fit.aic, 2)], ['BIC', fmt(fit.bic, 2)], ['MSE', fmt(ev.mse)], ['MAPE', fmt(ev.mape, 2) + '%'], ['Ljung-Box p', fmtP(R.lb.p)], ['Ramalan periode ' + (N + 1), fmt(fc.mean[0], 3)]],
         sections: [{ heading: 'Parameter Model', sel: '#arModelWrap' }, { heading: 'Data Aktual vs Fit', sel: '#arTableWrap' }, { heading: 'Ramalan', sel: '#arForecastWrap' }, { heading: 'Diagnostik Residu', sel: '#arDiagWrap' }, { heading: 'Langkah Perhitungan', sel: '#arStepsWrap' }, { heading: 'Evaluasi', sel: '#arEvalWrap' }],
         data: { head: ['Periode', 'Data aktual (Y)'], rows: Y.map((y, i) => [i + 1, y]), caption: 'Data deret waktu yang dipakai pada perhitungan.' },
         charts,
