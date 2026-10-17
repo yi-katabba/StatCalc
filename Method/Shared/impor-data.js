@@ -31,6 +31,7 @@
     { card: '#data-card',    body: '#dataTableBody',   add: '#addRowBtn',   remove: '#removeRowBtn',   minHint: '#minRowsHint' },   // Regresi
     { card: '#st-data-card', body: '#stDataTableBody', add: '#stAddRowBtn', remove: '#stRemoveRowBtn', minHint: '#stMinRowsHint' }, // Uji Stasioneritas
     { card: '#sm-data-card', body: '#smDataTableBody', add: '#smAddRowBtn', remove: '#smRemoveRowBtn', minHint: '#smMinRowsHint' }, // Smoothing
+    { card: '#ar-data-card', body: '#arDataTableBody', add: '#arAddRowBtn', remove: '#arRemoveRowBtn', minHint: '#arMinRowsHint' }, // ARIMA & SARIMA
   ];
 
   /* ------------------------------ Gaya ------------------------------ */

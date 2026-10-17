@@ -671,6 +671,7 @@
                         <option value="regresi">Regresi Linear</option>
                         <option value="smoothing">Metode Smoothing</option>
                         <option value="stasioner">Uji Stasioneritas (ADF)</option>
+                        <option value="arima">ARIMA &amp; SARIMA</option>
                       </optgroup>
                       <optgroup label="Graph">
                         <option value="histogram">Histogram</option>
@@ -1598,6 +1599,7 @@
     regresi: { title: 'Regresi Linear', card: '#data-card', build: '#buildTableBtn', k: true },
     smoothing: { title: 'Metode Smoothing', card: '#sm-data-card', build: '#smBuildTableBtn', onlyIfHidden: true },
     stasioner: { title: 'Uji Stasioneritas', card: '#st-data-card', build: '#stBuildTableBtn', onlyIfHidden: true },
+    arima: { title: 'ARIMA & SARIMA', card: '#ar-data-card', build: '#arBuildTableBtn', onlyIfHidden: true },
     histogram: { title: 'Histogram', card: '#gr-histogram-data-card' },
     boxplot: { title: 'Boxplot', card: '#gr-boxplot-wdata-card' },
     scatter: { title: 'Scatter Plot', card: '#gr-scatter-data-card' },

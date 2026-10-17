@@ -391,6 +391,7 @@
     { view: 'smoothing',  topic: 'smoothing',  label: 'Metode Smoothing' },
     { view: 'anova',      topic: 'anova',      label: 'ANOVA' },
     { view: 'stasioner',  topic: 'stasioner',  label: 'Uji Stasioneritas' },
+    { view: 'arima',      topic: 'arima',      label: 'ARIMA & SARIMA' },
     { view: 'deskriptif', topic: 'deskriptif', label: 'Statistika Deskriptif' },
   ];
   // Judul hasil uji (<h4>) -> bagian materi
@@ -417,6 +418,16 @@
       [/Dua Arah|Uji F\s*(-|-)/i, 'dua-arah'],
     ],
     smoothing: [[/Ukuran Error/i, 'error']],
+    arima: [
+      [/Petunjuk Musiman/i, 'konsep'],
+      [/ACF\s*&\s*PACF|ACF &amp; PACF/i, 'identifikasi'],
+      [/Model Terpilih/i, 'estimasi'],
+      [/Ljung-Box/i, 'diagnostik'],
+      [/Jarque-Bera/i, 'diagnostik'],
+      [/Ramalan/i, 'ramalan'],
+      [/Bandingkan/i, 'identifikasi'],
+      [/Ringkasan/i, 'langkah'],
+    ],
     stasioner: [
       [/Box-Cox/i, 'boxcox'],
       [/Phillips-Perron/i, 'pp'],

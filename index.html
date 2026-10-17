@@ -1422,7 +1422,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
     <button type="button" class="hub-card" data-cat="metode-stat">
       <span class="hc-icon tone-navy" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.3"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.3"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.3"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.3"/></svg></span>
       <div class="hc-title">Stat</div>
-      <div class="hc-desc">Regresi, smoothing, ANOVA, uji stasioneritas, dan metode statistik lainnya.</div>
+      <div class="hc-desc">Regresi, smoothing, ANOVA, uji stasioneritas, ARIMA/SARIMA, dan metode statistik lainnya.</div>
     </button>
     <button type="button" class="hub-card" data-cat="metode-graph">
       <span class="hc-icon tone-teal" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v16h16"/><rect x="7.5" y="12" width="3" height="5.5" rx=".6"/><rect x="12.5" y="8" width="3" height="9.5" rx=".6"/><path d="M17.5 7.5l2-2"/></svg></span>
@@ -2039,6 +2039,131 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
   </div>
 </section>
 
+<!-- ===================== HALAMAN METODE: ARIMA & SARIMA ===================== -->
+<section class="view" id="view-arima">
+  <div class="chapter-inner">
+
+    <div class="chapter-head ch-wide">
+      <span class="eyebrow">Metode Statistik</span>
+      <h1>ARIMA &amp; SARIMA</h1>
+      <p class="lede">Model peramalan deret waktu Box-Jenkins. Pilih <strong>ARIMA</strong> bila data tidak berpola musiman, atau <strong>SARIMA</strong> bila data memiliki pola musiman. Lengkap dengan ACF/PACF, estimasi parameter, ramalan beserta selang kepercayaan 95%, diagnostik residu, dan perbandingan model.</p>
+    </div>
+
+    <section class="card step-card" id="ar-setup-card">
+      <div class="step-tag">Langkah 1</div>
+      <h2>Pilih model &amp; orde</h2>
+      <p class="hint">Pilih jenis model sesuai ada-tidaknya pola musiman pada data, lalu tentukan orde. Bingung memilih orde? Isi dulu dengan nilai awal, lihat ACF/PACF dan tab <em>Bandingkan Model</em> pada hasil, lalu sesuaikan.</p>
+      <div class="control-row">
+        <label for="arMode">Jenis model</label>
+        <select id="arMode" class="select-input">
+          <option value="arima">ARIMA - data tanpa pola musiman</option>
+          <option value="sarima">SARIMA - data dengan pola musiman</option>
+        </select>
+        <p class="field-note" id="arModeHint"></p>
+      </div>
+
+      <h3 class="st-group-title" style="font-size:14.5px;margin:14px 0 8px;color:var(--accent);">Orde non-musiman (p, d, q)</h3>
+      <div class="control-row">
+        <label for="arP">AR (p)</label>
+        <input type="number" id="arP" class="plain-input" min="0" max="5" step="1" value="1" inputmode="numeric">
+        <label for="arD">Diferensiasi (d)</label>
+        <input type="number" id="arD" class="plain-input" min="0" max="2" step="1" value="1" inputmode="numeric">
+        <label for="arQ">MA (q)</label>
+        <input type="number" id="arQ" class="plain-input" min="0" max="5" step="1" value="0" inputmode="numeric">
+        <p class="field-note">p = banyaknya lag AR (nilai masa lalu), d = berapa kali data dibedakan agar stasioner (0 bila sudah stasioner; 1 untuk data bertren), q = banyaknya lag galat masa lalu (MA). Gunakan <em>Uji Stasioneritas</em> untuk menentukan d.</p>
+      </div>
+
+      <div id="arSeasonalBox" hidden>
+        <h3 class="st-group-title" style="font-size:14.5px;margin:18px 0 8px;color:var(--accent);">Orde musiman (P, D, Q) dan panjang musim (s)</h3>
+        <div class="control-row">
+          <label for="arSP">AR musiman (P)</label>
+          <input type="number" id="arSP" class="plain-input" min="0" max="2" step="1" value="0" inputmode="numeric">
+          <label for="arSD">Diferensiasi musiman (D)</label>
+          <input type="number" id="arSD" class="plain-input" min="0" max="1" step="1" value="1" inputmode="numeric">
+          <label for="arSQ">MA musiman (Q)</label>
+          <input type="number" id="arSQ" class="plain-input" min="0" max="2" step="1" value="1" inputmode="numeric">
+          <label for="arS">Panjang musim (s)</label>
+          <input type="number" id="arS" class="plain-input" min="2" max="52" step="1" value="12" inputmode="numeric">
+          <p class="field-note">s = banyaknya periode dalam satu siklus musim (12 untuk data bulanan, 4 untuk triwulanan, 7 untuk harian dengan pola mingguan). D = 1 membedakan data terhadap nilai s periode sebelumnya sehingga menghilangkan pola musiman. P dan Q bekerja pada lag kelipatan s. Pola awal yang umum dan sering cukup: (0,1,1)[s].</p>
+        </div>
+      </div>
+
+      <h3 class="st-group-title" style="font-size:14.5px;margin:18px 0 8px;color:var(--accent);">Pengaturan lain</h3>
+      <div class="control-row">
+        <label for="arConst">Konstanta</label>
+        <select id="arConst" class="select-input">
+          <option value="auto">Otomatis (ada hanya bila tanpa diferensiasi)</option>
+          <option value="yes">Ya (rata-rata bila d = D = 0, drift bila ada diferensiasi)</option>
+          <option value="no">Tidak</option>
+        </select>
+        <p class="field-note">Pada data yang sudah dibedakan, konstanta menjadi <em>drift</em> (kecenderungan naik/turun tetap per periode). Aktifkan hanya bila data bertren linear.</p>
+      </div>
+      <div class="control-row">
+        <label for="arH">Jumlah periode ramalan (h)</label>
+        <input type="number" id="arH" class="plain-input" min="1" max="60" step="1" value="6" inputmode="numeric">
+      </div>
+      <div class="control-row">
+        <button type="button" class="btn-primary" id="arBuildTableBtn">Buat Tabel Input &rarr;</button>
+      </div>
+      <p class="error-msg" id="arSetupError" hidden></p>
+    </section>
+
+    <section class="card step-card" id="ar-data-card" hidden>
+      <div class="step-tag">Langkah 2</div>
+      <h2>Masukkan data deret waktu</h2>
+      <p class="hint">Masukkan nilai secara berurutan dari periode paling lama ke paling baru. Minimal <strong><span id="arMinRowsHint">10</span> periode</strong> data diperlukan untuk orde yang dipilih; untuk hasil yang andal, makin banyak data makin baik (data musiman sebaiknya memuat minimal 3 siklus musim).</p>
+      <div class="table-scroll">
+        <table id="arDataTable" class="data-table">
+          <thead><tr><th>Periode</th><th>Nilai (Y)</th></tr></thead>
+          <tbody id="arDataTableBody"></tbody>
+        </table>
+      </div>
+      <div class="btn-grid btn-grid-3">
+        <button type="button" class="btn-ghost" id="arAddRowBtn">+ Tambah baris</button>
+        <button type="button" class="btn-ghost" id="arRemoveRowBtn">&minus; Hapus baris terakhir</button>
+        <button type="button" class="btn-ghost" id="arClearBtn">Kosongkan</button>
+      </div>
+      <div class="btn-grid btn-grid-1">
+        <button type="button" class="btn-ghost" id="arFillSampleBtn">Isi contoh data</button>
+        <button type="button" class="btn-primary" id="arCalcBtn">Hitung Model &rarr;</button>
+      </div>
+      <p class="field-note" id="arSampleNote" hidden></p>
+      <p class="error-msg" id="arDataError" hidden></p>
+    </section>
+
+    <section class="card step-card" id="ar-results-card" hidden>
+      <div class="step-tag">Langkah 3</div>
+      <h2>Hasil Model</h2>
+      <nav class="tabs" id="arResultTabs">
+        <button type="button" class="tab-btn active" data-tab="ar-tab-ident">Identifikasi</button>
+        <button type="button" class="tab-btn" data-tab="ar-tab-model">Parameter Model</button>
+        <button type="button" class="tab-btn" data-tab="ar-tab-table">Tabel Hasil</button>
+        <button type="button" class="tab-btn" data-tab="ar-tab-forecast">Ramalan</button>
+        <button type="button" class="tab-btn" data-tab="ar-tab-diag">Diagnostik</button>
+        <button type="button" class="tab-btn" data-tab="ar-tab-compare">Bandingkan Model</button>
+        <button type="button" class="tab-btn" data-tab="ar-tab-steps">Langkah Perhitungan</button>
+        <button type="button" class="tab-btn" data-tab="ar-tab-chart">Grafik</button>
+      </nav>
+      <div class="tab-panel active" id="ar-tab-ident"><div id="arIdentWrap" class="equation-wrap"></div></div>
+      <div class="tab-panel" id="ar-tab-model"><div id="arModelWrap" class="equation-wrap"></div></div>
+      <div class="tab-panel" id="ar-tab-table"><div id="arTableWrap" class="table-scroll"></div></div>
+      <div class="tab-panel" id="ar-tab-forecast"><div id="arForecastWrap" class="equation-wrap"></div></div>
+      <div class="tab-panel" id="ar-tab-diag"><div id="arDiagWrap" class="equation-wrap"></div></div>
+      <div class="tab-panel" id="ar-tab-compare"><div id="arCompareWrap" class="equation-wrap"></div></div>
+      <div class="tab-panel" id="ar-tab-steps"><div id="arStepsWrap" class="steps-wrap"></div></div>
+      <div class="tab-panel" id="ar-tab-chart"><div id="arChartWrap" class="chart-wrap"></div></div>
+    </section>
+
+    <section class="card step-card" id="ar-eval-card" hidden>
+      <div class="step-tag">Langkah 4</div>
+      <h2>Evaluasi &amp; Kesimpulan</h2>
+      <p class="hint">Akurasi (MSE, RMSE, MAE, MAPE), kriteria informasi (AIC/BIC), dan kecukupan model berdasarkan uji Ljung-Box pada residu.</p>
+      <div id="arEvalWrap" class="equation-wrap"></div>
+    </section>
+
+  </div>
+</section>
+
 <!-- ===================== PANEL PROFIL ===================== -->
 <div class="profile-overlay" id="profileOverlay"></div>
 <aside class="profile-panel" id="profilePanel">
@@ -2134,6 +2259,8 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
       icon: '<path d="M4 20V10M10 20V4M16 20v7M4 20h16"/>' },
     { id: 'stasioner',   title: 'Uji Stasioneritas',      subtitle: 'Box-Cox, ADF, Phillips-Perron & KPSS', desc: 'Dua tahap: stasioner dalam varians (grafik Box-Cox) dan stasioner dalam mean (uji akar unit ADF, Phillips-Perron, atau KPSS), lengkap dengan diferensiasi, nilai kritis, dan p-value.', status: 'available', tone: 'gold',
       icon: '<path d="M3 12c2-6 4-6 6 0s4 6 6 0 4-6 6 0"/><path d="M3 20h18" stroke-dasharray="2 3"/>' },
+    { id: 'arima',       title: 'ARIMA & SARIMA',         subtitle: 'Peramalan Box-Jenkins', desc: 'Ramalkan deret waktu dengan ARIMA bila data tanpa pola musiman, atau SARIMA bila data berpola musiman, lengkap dengan ACF/PACF, ramalan, selang kepercayaan, dan diagnostik residu.', status: 'available', tone: 'rust',
+      icon: '<path d="M3 15c2-4 3-7 5-7s2 6 4 6 3-8 5-8 2 6 4 6"/><path d="M15 17h6M18 14v6" />' },
     { id: 'uji-t',       title: 'Uji t',                  subtitle: 'Satu & Dua Sampel', desc: 'Bandingkan rata-rata satu kelompok terhadap nilai acuan, atau antar dua kelompok.', status: 'soon', tone: 'gold',
       icon: '<path d="M12 4v16M6 4h12M8 20h8"/>' },
     { id: 'chi-square',  title: 'Uji Chi-Square',         subtitle: null, desc: 'Uji independensi dan kesesuaian (goodness of fit) untuk data kategorik.', status: 'soon', tone: 'rust',
@@ -2707,6 +2834,9 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 <!-- ===================== METODE: UJI STASIONERITAS / Box-Cox + ADF/PP/KPSS (logika di Method/Stat/stasioner.js; butuh regresi.js) ===================== -->
 <script src="Method/Stat/stasioner.js"></script>
 
+<!-- ===================== METODE: ARIMA & SARIMA (logika di Method/Stat/arima.js; mandiri) ===================== -->
+<script src="Method/Stat/arima.js"></script>
+
 <!-- ===================== IMPOR DATA: tempel dari Excel & unggah file (Method/Shared/impor-data.js; dipakai Stat & Graph; muat SETELAH semua file Method/Stat/, SEBELUM file Method/Graph/) ===================== -->
 <script src="Method/Shared/impor-data.js"></script>
 
@@ -2748,6 +2878,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 <script src="Method/Materi/data/anova.js"></script>
 <script src="Method/Materi/data/smoothing.js"></script>
 <script src="Method/Materi/data/stasioner.js"></script>
+<script src="Method/Materi/data/arima.js"></script>
 
 
 <!-- =========================================================================
