@@ -2049,10 +2049,32 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
       <p class="lede">Model peramalan deret waktu Box-Jenkins. Pilih <strong>ARIMA</strong> bila data tidak berpola musiman, atau <strong>SARIMA</strong> bila data memiliki pola musiman. Lengkap dengan ACF/PACF, estimasi parameter, ramalan beserta selang kepercayaan 95%, diagnostik residu, dan perbandingan model.</p>
     </div>
 
-    <section class="card step-card" id="ar-setup-card">
+    <section class="card step-card" id="ar-data-card">
       <div class="step-tag">Langkah 1</div>
+      <h2>Masukkan data deret waktu</h2>
+      <p class="hint">Masukkan nilai secara berurutan dari periode paling lama ke paling baru, atau impor dari Excel/CSV. Lihat dulu pola datanya, lalu tentukan jenis model dan orde pada Langkah 2. Minimal <strong><span id="arMinRowsHint">10</span> periode</strong> data diperlukan untuk orde yang dipilih (angka ini menyesuaikan orde di Langkah 2); untuk hasil yang andal, makin banyak data makin baik (data musiman sebaiknya memuat minimal 3 siklus musim).</p>
+      <div class="table-scroll">
+        <table id="arDataTable" class="data-table">
+          <thead><tr><th>Periode</th><th>Nilai (Y)</th></tr></thead>
+          <tbody id="arDataTableBody"></tbody>
+        </table>
+      </div>
+      <div class="btn-grid btn-grid-3">
+        <button type="button" class="btn-ghost" id="arAddRowBtn">+ Tambah baris</button>
+        <button type="button" class="btn-ghost" id="arRemoveRowBtn">&minus; Hapus baris terakhir</button>
+        <button type="button" class="btn-ghost" id="arClearBtn">Kosongkan</button>
+      </div>
+      <div class="btn-grid btn-grid-2">
+        <button type="button" class="btn-ghost" id="arFillSampleBtn">Isi contoh data ARIMA</button>
+        <button type="button" class="btn-ghost" id="arFillSampleSBtn">Isi contoh data SARIMA</button>
+      </div>
+      <p class="field-note" id="arSampleNote" hidden></p>
+    </section>
+
+    <section class="card step-card" id="ar-setup-card">
+      <div class="step-tag">Langkah 2</div>
       <h2>Pilih model &amp; orde</h2>
-      <p class="hint">Pilih jenis model sesuai ada-tidaknya pola musiman pada data, lalu tentukan orde. Bingung memilih orde? Isi dulu dengan nilai awal, lihat ACF/PACF dan tab <em>Bandingkan Model</em> pada hasil, lalu sesuaikan.</p>
+      <p class="hint">Pilih jenis model sesuai ada-tidaknya pola musiman pada data, lalu tentukan orde. Bingung memilih orde? Isi dulu dengan nilai awal, klik <em>Hitung Model</em>, lihat ACF/PACF dan tab <em>Bandingkan Model</em> pada hasil, lalu sesuaikan ordenya dan hitung ulang.</p>
       <div class="control-row">
         <label for="arMode">Jenis model</label>
         <select id="arMode" class="select-input">
@@ -2102,32 +2124,11 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
         <label for="arH">Jumlah periode ramalan (h)</label>
         <input type="number" id="arH" class="plain-input" min="1" max="60" step="1" value="6" inputmode="numeric">
       </div>
-      <div class="control-row">
-        <button type="button" class="btn-primary" id="arBuildTableBtn">Buat Tabel Input &rarr;</button>
-      </div>
-      <p class="error-msg" id="arSetupError" hidden></p>
-    </section>
-
-    <section class="card step-card" id="ar-data-card" hidden>
-      <div class="step-tag">Langkah 2</div>
-      <h2>Masukkan data deret waktu</h2>
-      <p class="hint">Masukkan nilai secara berurutan dari periode paling lama ke paling baru. Minimal <strong><span id="arMinRowsHint">10</span> periode</strong> data diperlukan untuk orde yang dipilih; untuk hasil yang andal, makin banyak data makin baik (data musiman sebaiknya memuat minimal 3 siklus musim).</p>
-      <div class="table-scroll">
-        <table id="arDataTable" class="data-table">
-          <thead><tr><th>Periode</th><th>Nilai (Y)</th></tr></thead>
-          <tbody id="arDataTableBody"></tbody>
-        </table>
-      </div>
-      <div class="btn-grid btn-grid-3">
-        <button type="button" class="btn-ghost" id="arAddRowBtn">+ Tambah baris</button>
-        <button type="button" class="btn-ghost" id="arRemoveRowBtn">&minus; Hapus baris terakhir</button>
-        <button type="button" class="btn-ghost" id="arClearBtn">Kosongkan</button>
-      </div>
+      <p class="field-note" id="arNeedHint"></p>
       <div class="btn-grid btn-grid-1">
-        <button type="button" class="btn-ghost" id="arFillSampleBtn">Isi contoh data</button>
         <button type="button" class="btn-primary" id="arCalcBtn">Hitung Model &rarr;</button>
       </div>
-      <p class="field-note" id="arSampleNote" hidden></p>
+      <p class="error-msg" id="arSetupError" hidden></p>
       <p class="error-msg" id="arDataError" hidden></p>
     </section>
 

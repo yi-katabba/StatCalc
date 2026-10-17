@@ -483,7 +483,7 @@
     mode: $('#arMode'), seasBox: $('#arSeasonalBox'), modeHint: $('#arModeHint'),
     p: $('#arP'), d: $('#arD'), q: $('#arQ'), P: $('#arSP'), D: $('#arSD'), Q: $('#arSQ'), s: $('#arS'),
     constant: $('#arConst'), h: $('#arH'),
-    buildBtn: $('#arBuildTableBtn'), setupError: $('#arSetupError'),
+    setupError: $('#arSetupError'), needHint: $('#arNeedHint'), fillSampleSBtn: $('#arFillSampleSBtn'),
     dataCard: $('#ar-data-card'), minRowsHint: $('#arMinRowsHint'), tableBody: $('#arDataTableBody'),
     clearBtn: $('#arClearBtn'), addRowBtn: $('#arAddRowBtn'), removeRowBtn: $('#arRemoveRowBtn'),
     fillSampleBtn: $('#arFillSampleBtn'), sampleNote: $('#arSampleNote'), calcBtn: $('#arCalcBtn'), dataError: $('#arDataError'),
@@ -500,7 +500,7 @@
       ? '<strong>SARIMA</strong> dipakai bila data memiliki <em>pola musiman</em>: pola naik-turun yang berulang pada selang tetap (mis. s = 12 untuk data bulanan, s = 4 untuk triwulanan, s = 7 untuk data harian dengan pola mingguan).'
       : '<strong>ARIMA</strong> dipakai bila data <em>tidak memiliki pola musiman</em> (hanya tren atau fluktuasi acak). Jika grafik data menunjukkan pola yang berulang tiap s periode, pilih SARIMA.';
   }
-  el.mode.addEventListener('change', syncMode);
+  el.mode.addEventListener('change', () => { syncMode(); updateMin(); });
   syncMode();
 
   function intIn(input, lo, hi, label) {
@@ -509,7 +509,8 @@
     return { v };
   }
 
-  el.buildBtn.addEventListener('click', () => {
+  /* Baca & validasi pengaturan model (Langkah 2). Mengembalikan true bila valid dan mengisi state. */
+  function readSettings() {
     hideError(el.setupError);
     const seas = el.mode.value === 'sarima';
     const spec = [['p', el.p, 0, 5, 'Orde AR (p)'], ['d', el.d, 0, 2, 'Orde diferensiasi (d)'], ['q', el.q, 0, 5, 'Orde MA (q)']];
@@ -518,7 +519,7 @@
     const next = {};
     for (const [key, input, lo, hi, label] of spec) {
       const r = intIn(input, lo, hi, label);
-      if (r.err) { showError(el.setupError, r.err); return; }
+      if (r.err) { showError(el.setupError, r.err); return false; }
       next[key] = r.v;
     }
     if (!seas) { next.P = 0; next.D = 0; next.Q = 0; next.s = 1; }
@@ -526,16 +527,26 @@
     const cv = el.constant.value;
     next.constant = cv === 'yes' ? true : cv === 'no' ? false : (next.d + next.D === 0);
     Object.assign(state, next);
-    const o = normCfg(state);
-    state.minRows = Math.max(10, minObservations(o));
-    el.minRowsHint.textContent = state.minRows;
-    buildDataTable(Math.max(state.minRows, 12));
-    el.dataCard.hidden = false;
-    el.resultsCard.hidden = true;
-    el.evalCard.hidden = true;
-    el.sampleNote.hidden = true;
-    el.dataCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
+    updateMin();
+    return true;
+  }
+
+  /* Minimal jumlah periode menyesuaikan orde yang sedang diisi (tanpa menampilkan galat bila isian belum valid). */
+  function updateMin() {
+    const seas = el.mode.value === 'sarima';
+    const g = (input, lo, hi, def) => { const v = Number(String(input.value).trim()); return Number.isInteger(v) && v >= lo && v <= hi ? v : def; };
+    const cfg = { seasonal: seas, p: g(el.p, 0, 5, 1), d: g(el.d, 0, 2, 1), q: g(el.q, 0, 5, 0),
+      P: seas ? g(el.P, 0, 2, 0) : 0, D: seas ? g(el.D, 0, 1, 0) : 0, Q: seas ? g(el.Q, 0, 2, 0) : 0, s: seas ? g(el.s, 2, 52, 12) : 1, constant: false };
+    let need = 10;
+    try { need = Math.max(10, minObservations(normCfg(cfg))); } catch (e) { /* biarkan bawaan */ }
+    state.minRows = need;
+    el.minRowsHint.textContent = need;
+    const lbl = seas ? `SARIMA(${cfg.p},${cfg.d},${cfg.q})(${cfg.P},${cfg.D},${cfg.Q})[${cfg.s}]` : `ARIMA(${cfg.p},${cfg.d},${cfg.q})`;
+    if (el.needHint) el.needHint.innerHTML = `Dengan orde ini (<strong>${lbl}</strong>), data minimal <strong>${need} periode</strong>. Jumlah data saat ini: <strong>${filledCount()}</strong>.`;
+  }
+  function filledCount() { return $$('input[data-role="Y"]', el.tableBody).filter((i) => i.value.trim() !== '').length; }
+  [el.p, el.d, el.q, el.P, el.D, el.Q, el.s].forEach((inp) => inp.addEventListener('input', updateMin));
+  el.tableBody.addEventListener('input', () => { if (el.needHint) updateMin(); });
 
   /* ---------- Tabel data ---------- */
   function buildDataTable(rowCount) { el.tableBody.innerHTML = ''; for (let i = 0; i < rowCount; i++) addRow(); }
@@ -545,19 +556,27 @@
     tr.innerHTML = `<td class="rownum">${idx}</td><td><input type="text" inputmode="decimal" data-role="Y" placeholder="Nilai periode ${idx}"></td>`;
     el.tableBody.appendChild(tr);
   }
-  el.addRowBtn.addEventListener('click', addRow);
-  el.clearBtn.addEventListener('click', () => { $$('input', el.tableBody).forEach((inp) => { inp.value = ''; inp.classList.remove('invalid'); }); });
+  buildDataTable(12);
+  el.addRowBtn.addEventListener('click', () => { addRow(); updateMin(); });
+  el.clearBtn.addEventListener('click', () => { $$('input', el.tableBody).forEach((inp) => { inp.value = ''; inp.classList.remove('invalid'); }); el.sampleNote.hidden = true; updateMin(); });
   el.removeRowBtn.addEventListener('click', () => {
     const rows = $$('tr', el.tableBody);
     if (rows.length <= state.minRows) return;
     rows[rows.length - 1].remove();
+    updateMin();
   });
 
   /* Contoh data: ARIMA(1,1,0) dengan tren naik; SARIMA: data bulanan bertren dengan pola musiman s = 12. */
   const SAMPLE_ARIMA = [107.6, 111.2, 114.6, 114.8, 116, 117.1, 118.9, 118.7, 122.1, 127.6, 131.4, 131.3, 128.8, 129, 132.6, 138.8, 142.4, 147.4, 152.1, 154.1, 155.3, 155.5, 157.3, 159.2, 160.4, 161, 162.1, 164.2, 164.7, 167.4, 172.3, 176.9, 179.1, 181.9, 184.8, 183.4, 183, 183.4, 186.3, 187.6];
   const SAMPLE_SARIMA = [187.6, 194.4, 201.9, 208.9, 216.8, 222.1, 223.8, 223.8, 219.7, 212.2, 206.9, 202.6, 208.8, 213.8, 219.9, 231.3, 238.5, 246, 250, 248.3, 244.1, 238, 230.8, 228.5, 232.8, 235.4, 241.1, 250, 256.4, 263, 268, 266.1, 259, 253.3, 250.7, 243.6, 250.1, 254.1, 261.6, 272.5, 281.3, 290.4, 296.7, 293.9, 283.3, 279.8, 275.7, 270];
-  el.fillSampleBtn.addEventListener('click', () => {
-    const data = state.seasonal ? SAMPLE_SARIMA : SAMPLE_ARIMA;
+  function fillSample(seasonal) {
+    const data = seasonal ? SAMPLE_SARIMA : SAMPLE_ARIMA;
+    /* sesuaikan Langkah 2 dengan contoh agar langsung bisa dihitung */
+    el.mode.value = seasonal ? 'sarima' : 'arima';
+    el.p.value = 1; el.d.value = 1; el.q.value = 0;
+    if (seasonal) { el.P.value = 0; el.D.value = 1; el.Q.value = 1; el.s.value = 12; }
+    el.constant.value = 'auto';
+    syncMode(); updateMin();
     while (el.tableBody.children.length < data.length) addRow();
     while (el.tableBody.children.length > data.length && el.tableBody.children.length > state.minRows) el.tableBody.lastElementChild.remove();
     $$('tr', el.tableBody).forEach((tr, i) => {
@@ -565,11 +584,15 @@
       inp.value = i < data.length ? data[i] : '';
       inp.classList.remove('invalid');
     });
+    updateMin();
     el.sampleNote.hidden = false;
-    el.sampleNote.textContent = state.seasonal
-      ? `Contoh: ${data.length} data bulanan bertren dengan pola musiman. Cocok dengan SARIMA(1,1,0)(0,1,1)[12]; pastikan s = 12 pada Langkah 1.`
-      : `Contoh: ${data.length} data bertren tanpa pola musiman. Cocok dengan ARIMA(1,1,0); pilih Konstanta = Ya (drift) di Langkah 1 bila ingin memodelkan tren naik.`;
-  });
+    el.sampleNote.textContent = seasonal
+      ? `Contoh: ${data.length} data bulanan bertren dengan pola musiman. Langkah 2 sudah diisi SARIMA(1,1,0)(0,1,1)[12] (s = 12); ubah bila perlu lalu klik Hitung Model.`
+      : `Contoh: ${data.length} data bertren tanpa pola musiman. Langkah 2 sudah diisi ARIMA(1,1,0); pilih Konstanta = Ya (drift) bila ingin memodelkan tren naik, lalu klik Hitung Model.`;
+  }
+  el.fillSampleBtn.addEventListener('click', () => fillSample(false));
+  el.fillSampleSBtn.addEventListener('click', () => fillSample(true));
+  updateMin();
 
   function collectData() {
     const rows = $$('tr', el.tableBody), Y = [], problems = [];
@@ -582,7 +605,7 @@
       Y.push(val);
     });
     if (problems.length) return { error: problems.slice(0, 6).join(' ') + (problems.length > 6 ? ' …' : '') };
-    if (Y.length < state.minRows) return { error: `Minimal ${state.minRows} periode data diperlukan untuk orde model yang dipilih.` };
+    if (Y.length < state.minRows) return { error: `Minimal ${state.minRows} periode data diperlukan untuk orde model yang dipilih (Langkah 2). Tambah data di Langkah 1 atau kecilkan orde.` };
     if (Y.every((v) => v === Y[0])) return { error: 'Semua data bernilai sama, model tidak dapat diestimasi.' };
     return { Y };
   }
@@ -602,6 +625,7 @@
   /* ---------- Hitung ---------- */
   el.calcBtn.addEventListener('click', () => {
     hideError(el.dataError);
+    if (!readSettings()) return;
     const data = collectData();
     if (data.error) { showError(el.dataError, data.error); return; }
     const Y = data.Y;
@@ -770,23 +794,134 @@
         <h4>Ramalan ${h} Periode ke Depan</h4>
         <p class="test-sub">Selang kepercayaan 95% = ramalan &plusmn; 1,96 &times; galat baku ramalan. Selang melebar seiring horizon karena ketidakpastian menumpuk, terutama pada model dengan diferensiasi.</p>
         <div class="table-scroll"><table class="result-table"><thead><tr><th>Periode</th><th>Ramalan</th><th>Galat baku</th><th>Batas bawah 95%</th><th>Batas atas 95%</th></tr></thead><tbody>${rows}</tbody></table></div>
+        <div id="arFcEditHolder">${fcEditorHtml()}</div>
         <div id="arFcChart"></div>
       </div>`;
     const box = $('#arFcChart', el.forecastWrap);
     box.innerHTML = svgBox(fcChartSvg(R));
     fixSvg(box);
+    bindFcEditor();
   }
+  /* ---- Grafik Ramalan yang bisa diedit (judul, label, warna, seri, kisi, rentang) ---- */
+  const FC_DEF = () => ({ title: '', xLabel: 'Periode', yLabel: 'Nilai', cAct: '#22384A', cFit: '#2F7F79', cFc: '#BD7E1F', cBand: '#948C77',
+    showFit: true, showBand: true, markers: true, legend: true, gridH: true, gridV: false, gridOn: false, lastN: '', yMin: '', yMax: '', H: 380, lw: 2 });
+  let fcOpts = FC_DEF();
+  const numOrU = (v) => { const t = String(v === undefined || v === null ? '' : v).trim().replace(',', '.'); if (t === '') return undefined; const x = Number(t); return Number.isFinite(x) ? x : undefined; };
+
   function fcChartSvg(R) {
-    const { Y, fc, fit } = R, N = Y.length, h = R.h, labels = Array.from({ length: N + h }, (_, i) => i + 1);
+    const { Y, fc, fit } = R, N = Y.length, h = R.h, O = fcOpts;
+    let labels = Array.from({ length: N + h }, (_, i) => i + 1);
     const pad = (arr) => arr.concat(new Array(h).fill(null));
     const bridge = (arr) => { const a = new Array(N - 1).fill(null); a.push(Y[N - 1]); return a.concat(arr); };
-    return lines(`Data, Fit, dan Ramalan ${modelLabel(R.o)}`, labels, [
-      { name: 'Data aktual', values: pad(Y), color: '#22384A' },
-      { name: 'Fit', values: pad(fit.fitted), color: '#2F7F79', marker: false },
-      { name: 'Ramalan', values: bridge(fc.mean), color: '#BD7E1F' },
-      { name: 'Batas bawah 95%', values: bridge(fc.lo), color: '#948C77', dash: true, marker: false },
-      { name: 'Batas atas 95%', values: bridge(fc.hi), color: '#948C77', dash: true, marker: false },
-    ]);
+    const lw = Math.min(6, Math.max(1, numOrU(O.lw) || 2));
+    let series = [{ name: 'Data aktual', values: pad(Y), color: O.cAct, marker: O.markers, width: lw }];
+    if (O.showFit) series.push({ name: 'Fit', values: pad(fit.fitted), color: O.cFit, marker: false, width: lw });
+    series.push({ name: 'Ramalan', values: bridge(fc.mean), color: O.cFc, marker: O.markers, width: lw });
+    if (O.showBand) series.push({ name: 'Batas bawah 95%', values: bridge(fc.lo), color: O.cBand, dash: true, marker: false, width: lw }, { name: 'Batas atas 95%', values: bridge(fc.hi), color: O.cBand, dash: true, marker: false, width: lw });
+    const last = Math.floor(numOrU(O.lastN) || 0);
+    if (last >= 3 && last < labels.length) {
+      const from = labels.length - last;
+      labels = labels.slice(from);
+      series = series.map((se) => Object.assign({}, se, { values: se.values.slice(from) }));
+    }
+    const opt = { title: (O.title || '').trim() || `Data, Fit, dan Ramalan ${modelLabel(R.o)}`, xLabel: O.xLabel, yLabel: O.yLabel, labels, series, noLegend: !O.legend, H: Math.min(700, Math.max(240, numOrU(O.H) || 380)) };
+    const y0 = numOrU(O.yMin), y1 = numOrU(O.yMax);
+    if (y0 !== undefined) opt.yFixMin = y0;
+    if (y1 !== undefined) opt.yFixMax = y1;
+    const gu = window.GraphCore && window.GraphCore.u;
+    if (!gu || !O.gridOn) return lines(opt.title, labels, series, opt);
+    /* kisi diatur khusus untuk grafik ini; gaya bersama dipulihkan sesudah digambar */
+    const prev = Object.assign({}, gu.ST);
+    Object.assign(gu.ST, { on: true, h: !!O.gridH, v: !!O.gridV });
+    try { return lines(opt.title, labels, series, opt); } finally { Object.assign(gu.ST, prev); }
+  }
+
+  let fcExportTimer = null;
+  function refreshFcCharts() {
+    const R = state.last; if (!R) return;
+    const svg = fcChartSvg(R);
+    const a = $('#arFcChart', el.forecastWrap); if (a) { a.innerHTML = svgBox(svg); fixSvg(a); }
+    const b = $('#arChartFcBox', el.chartWrap); if (b) { b.innerHTML = svgBox(svg); fixSvg(b); }
+    clearTimeout(fcExportTimer);
+    fcExportTimer = setTimeout(() => { if (state.last === R) exportArima(R); }, 700);
+  }
+  function svgWithSize(svg) {
+    const m = svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/);
+    return m && !/<svg[^>]*\swidth=/.test(svg) ? svg.replace('<svg ', `<svg width="${Math.round(m[1] * 1.5)}" height="${Math.round(m[2] * 1.5)}" `) : svg;
+  }
+  function downloadBlob(blob, name) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+  }
+
+  function fcEditorHtml() {
+    const O = fcOpts, v = (x) => escapeHTML(String(x)).replace(/"/g, '&quot;');
+    const chk = (k, label) => `<label class="ar-chk"><input type="checkbox" data-fc="${k}"${O[k] ? ' checked' : ''}> ${label}</label>`;
+    const txt = (k, label, ph) => `<label class="ar-fld"><span>${label}</span><input type="text" class="plain-input" data-fc="${k}" value="${v(O[k])}" placeholder="${ph || ''}"></label>`;
+    const num = (k, label, ph) => `<label class="ar-fld"><span>${label}</span><input type="text" inputmode="decimal" class="plain-input" data-fc="${k}" value="${v(O[k])}" placeholder="${ph || ''}"></label>`;
+    const col = (k, label) => `<label class="ar-fld ar-col"><span>${label}</span><input type="color" data-fc="${k}" value="${O[k]}"></label>`;
+    return `
+      <style>
+        .ar-edit{border:1px solid var(--rule-strong);border-radius:var(--radius);background:var(--paper-2);margin:12px 0 14px;}
+        .ar-edit>summary{cursor:pointer;padding:10px 14px;font-weight:600;font-size:14px;}
+        .ar-edit-body{padding:4px 14px 14px;}
+        .ar-edit h5{margin:12px 0 6px;font-size:13px;color:var(--accent);font-family:var(--font-body);}
+        .ar-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px 12px;}
+        .ar-fld{display:flex;flex-direction:column;gap:3px;font-size:12.5px;}
+        .ar-fld .plain-input{width:100%;}
+        .ar-col input[type=color]{width:100%;height:34px;padding:2px;border:1px solid var(--rule-strong);border-radius:6px;background:#fff;}
+        .ar-chk{display:flex;align-items:center;gap:7px;font-size:13px;}
+        .ar-edit .ar-act{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
+        .ar-edit .ar-act .btn-ghost{flex:1 1 140px;}
+      </style>
+      <details class="ar-edit" id="arFcEdit" open>
+        <summary>Edit grafik (judul, warna, seri, kisi, rentang sumbu)</summary>
+        <div class="ar-edit-body">
+          <h5>Teks</h5>
+          <div class="ar-grid">${txt('title', 'Judul grafik', 'Kosong = judul otomatis')}${txt('xLabel', 'Label sumbu X')}${txt('yLabel', 'Label sumbu Y')}</div>
+          <h5>Warna garis</h5>
+          <div class="ar-grid">${col('cAct', 'Data aktual')}${col('cFit', 'Fit')}${col('cFc', 'Ramalan')}${col('cBand', 'Selang 95%')}</div>
+          <h5>Tampilkan</h5>
+          <div class="ar-grid">${chk('showFit', 'Garis fit')}${chk('showBand', 'Selang kepercayaan 95%')}${chk('markers', 'Titik pada garis')}${chk('legend', 'Legenda')}</div>
+          <h5>Garis kisi</h5>
+          <div class="ar-grid">${chk('gridOn', 'Atur kisi sendiri')}${chk('gridH', 'Kisi horizontal')}${chk('gridV', 'Kisi vertikal')}</div>
+          <h5>Rentang &amp; ukuran</h5>
+          <div class="ar-grid">${num('lastN', 'Tampilkan N periode terakhir', 'Kosong = semua')}${num('yMin', 'Sumbu Y minimum', 'Otomatis')}${num('yMax', 'Sumbu Y maksimum', 'Otomatis')}${num('H', 'Tinggi grafik (240-700)')}${num('lw', 'Tebal garis (1-6)')}</div>
+          <div class="ar-act">
+            <button type="button" class="btn-ghost" data-fc-act="reset">Setel ulang grafik</button>
+            <button type="button" class="btn-ghost" data-fc-act="png">Unduh PNG</button>
+            <button type="button" class="btn-ghost" data-fc-act="svg">Unduh SVG</button>
+          </div>
+          <p class="field-note">Perubahan langsung tampil dan ikut ke grafik di tab <em>Grafik</em>, unduhan PNG/SVG/ZIP, serta berkas .docx.</p>
+        </div>
+      </details>`;
+  }
+  function bindFcEditor() {
+    const root = $('#arFcEdit', el.forecastWrap); if (!root) return;
+    const onEdit = (e) => {
+      const t = e.target, k = t.getAttribute && t.getAttribute('data-fc'); if (!k) return;
+      fcOpts[k] = t.type === 'checkbox' ? t.checked : t.value;
+      if (k === 'gridH' || k === 'gridV') { fcOpts.gridOn = true; const g = $('[data-fc="gridOn"]', root); if (g) g.checked = true; }
+      refreshFcCharts();
+    };
+    root.addEventListener('input', onEdit);
+    root.addEventListener('change', onEdit);
+    root.addEventListener('click', async (e) => {
+      const b = e.target.closest('[data-fc-act]'); if (!b || !state.last) return;
+      const act = b.getAttribute('data-fc-act');
+      if (act === 'reset') {
+        fcOpts = FC_DEF();
+        const holder = $('#arFcEditHolder', el.forecastWrap);
+        if (holder) { holder.innerHTML = fcEditorHtml(); bindFcEditor(); }
+        refreshFcCharts();
+      } else if (act === 'svg') {
+        downloadBlob(new Blob([svgWithSize(fcChartSvg(state.last))], { type: 'image/svg+xml;charset=utf-8' }), 'StatCalc-arima-ramalan.svg');
+      } else if (act === 'png') {
+        try { const png = await window.StatExport.svgToPng(svgWithSize(fcChartSvg(state.last)), 2); downloadBlob(png.blob, 'StatCalc-arima-ramalan.png'); }
+        catch (err) { alert('Peramban ini tidak dapat membuat PNG. Gunakan Unduh SVG.'); }
+      }
+    });
   }
 
   /* ---------- Tab Diagnostik ---------- */
@@ -856,7 +991,7 @@
         }).join('');
         out.innerHTML = `<div class="table-scroll"><table class="result-table"><caption>${top.length} model terbaik menurut AIC (dari ${list.length} model yang berhasil diestimasi)</caption>
           <thead><tr><th>#</th><th>Model</th><th>AIC</th><th>&Delta;AIC</th><th>BIC</th><th>RMSE</th><th>MAPE</th></tr></thead><tbody>${rows}</tbody></table></div>
-          <p class="test-note">Model dengan &Delta;AIC &lt; 2 dari yang terbaik praktis setara; pilih yang paling sederhana. Untuk memakai model lain, ubah ordenya di Langkah 1 lalu hitung ulang.</p>`;
+          <p class="test-note">Model dengan &Delta;AIC &lt; 2 dari yang terbaik praktis setara; pilih yang paling sederhana. Untuk memakai model lain, ubah ordenya di Langkah 2 lalu hitung ulang.</p>`;
       }, 30);
     });
   }
@@ -947,7 +1082,7 @@
   function renderChart(R) {
     const { Y, fit } = R;
     const box = el.chartWrap;
-    box.innerHTML = svgBox(fcChartSvg(R)) + '<p class="chart-note">Biru tua = data aktual, hijau = nilai fit (ramalan satu langkah), kuning = ramalan ke depan, abu-abu putus-putus = selang 95%.</p>' +
+    box.innerHTML = '<div id="arChartFcBox">' + svgBox(fcChartSvg(R)) + '</div><p class="chart-note">Biru tua = data aktual, hijau = nilai fit (ramalan satu langkah), kuning = ramalan ke depan, abu-abu putus-putus = selang 95%.</p>' +
       svgBox(lines('Residual Menurut Periode', fit.e.map((_, i) => fit.first + i + 1), [{ name: 'Residual', values: fit.e }], { hlines: [{ y: 0, label: '0', color: '#BD7E1F' }] })) + '<p class="chart-note">Residual yang baik acak di sekitar nol tanpa pola.</p>';
     fixSvg(box);
   }

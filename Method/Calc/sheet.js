@@ -1599,7 +1599,7 @@
     regresi: { title: 'Regresi Linear', card: '#data-card', build: '#buildTableBtn', k: true },
     smoothing: { title: 'Metode Smoothing', card: '#sm-data-card', build: '#smBuildTableBtn', onlyIfHidden: true },
     stasioner: { title: 'Uji Stasioneritas', card: '#st-data-card', build: '#stBuildTableBtn', onlyIfHidden: true },
-    arima: { title: 'ARIMA & SARIMA', card: '#ar-data-card', build: '#arBuildTableBtn', onlyIfHidden: true },
+    arima: { title: 'ARIMA & SARIMA', card: '#ar-data-card' },
     histogram: { title: 'Histogram', card: '#gr-histogram-data-card' },
     boxplot: { title: 'Boxplot', card: '#gr-boxplot-wdata-card' },
     scatter: { title: 'Scatter Plot', card: '#gr-scatter-data-card' },

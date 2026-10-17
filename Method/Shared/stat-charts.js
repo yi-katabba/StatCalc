@@ -66,8 +66,13 @@
     let r = range(allv, 0.06);
     if (o.yMin !== undefined) r.lo = Math.min(r.lo, o.yMin);
     if (o.yMax !== undefined) r.hi = Math.max(r.hi, o.yMax);
+    /* rentang sumbu Y tetap (boleh menyempit); data di luar rentang dipotong */
+    const fixY = o.yFixMin !== undefined || o.yFixMax !== undefined;
+    if (o.yFixMin !== undefined) r.lo = o.yFixMin;
+    if (o.yFixMax !== undefined) r.hi = o.yFixMax;
+    if (!(r.hi > r.lo)) r.hi = r.lo + 1;
     const sys = u.niceTicks(r.lo, r.hi);
-    const showL = o.series.length > 1 || (o.series[0] && o.series[0].name && o.legend);
+    const showL = !o.noLegend && (o.series.length > 1 || (o.series[0] && o.series[0].name && o.legend));
     const step = Math.max(1, Math.ceil(n / 12));
     const shown = o.labels.filter((_, i) => i % step === 0).map(String);
     const rot = u.needRot(shown);
@@ -90,6 +95,8 @@
     if (o.xLabel) s += `<text x="${(L.m.l + L.pw / 2).toFixed(1)}" y="${L.H - 10}" text-anchor="middle" font-size="12" fill="${INK}">${esc(o.xLabel)}</text>`;
     (o.hlines || []).forEach((h) => { s += hline(L, sys, h.y, tone(h.color) || ST.c2, h.dash !== false, h.label); });
     const items = [];
+    const clipId = 'lnclip' + Math.random().toString(36).slice(2, 8);
+    if (fixY) s += `<clipPath id="${clipId}"><rect x="${L.m.l}" y="${L.m.t}" width="${L.pw}" height="${L.ph}"/></clipPath><g clip-path="url(#${clipId})">`;
     o.series.forEach((se, k) => {
       const col = tone(se.color) || palAt(k);
       let d = '', pen = false;
@@ -102,6 +109,7 @@
       if (se.marker !== false && n <= 60) se.values.forEach((v, i) => { if (finite(v)) s += `<circle cx="${px(i).toFixed(1)}" cy="${py(v).toFixed(1)}" r="${n > 30 ? 2.4 : 3.6}" fill="${col}" stroke="#fff" stroke-width="1"/>`; });
       items.push({ name: se.name || 'Seri ' + (k + 1), color: col, dash: se.dash, marker: se.marker });
     });
+    if (fixY) s += '</g>';
     if (showL) s += legendSvg(L, items, 46);
     return s + '</svg>';
   }
