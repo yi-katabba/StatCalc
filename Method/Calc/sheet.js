@@ -669,6 +669,7 @@
                       <optgroup label="Stat">
                         <option value="deskriptif">Statistika Deskriptif</option>
                         <option value="regresi">Regresi Linear</option>
+                        <option value="rsm">Response Surface (RSM)</option>
                         <option value="smoothing">Metode Smoothing</option>
                         <option value="stasioner">Uji Stasioneritas (ADF)</option>
                         <option value="arima">ARIMA &amp; SARIMA</option>
@@ -1600,6 +1601,7 @@
     smoothing: { title: 'Metode Smoothing', card: '#sm-data-card', build: '#smBuildTableBtn', onlyIfHidden: true },
     stasioner: { title: 'Uji Stasioneritas', card: '#st-data-card', build: '#stBuildTableBtn', onlyIfHidden: true },
     arima: { title: 'ARIMA & SARIMA', card: '#ar-data-card' },
+    rsm: { title: 'Response Surface (RSM)', card: '#rs-data-card', build: '#rsBuildTableBtn', kv: '#rsVarCount' },
     histogram: { title: 'Histogram', card: '#gr-histogram-data-card' },
     boxplot: { title: 'Boxplot', card: '#gr-boxplot-wdata-card' },
     scatter: { title: 'Scatter Plot', card: '#gr-scatter-data-card' },
@@ -1630,6 +1632,7 @@
     window.StatCalc.goToMethod(id, t.title, 'metode-calc');
     try {
       if (t.k) { const k = Math.max(1, Math.min(6, numCols - 1)); $('#varCount').value = k; $(t.build).click(); }
+      else if (t.kv) { $(t.kv).value = Math.max(2, Math.min(4, numCols - 1)); $(t.build).click(); }
       else if (t.build && (!t.onlyIfHidden || $(t.card).hidden)) $(t.build).click();
     } catch (e) { /* tabel tujuan tetap bisa dibuat manual */ }
     setTimeout(() => {
