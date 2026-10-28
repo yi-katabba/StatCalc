@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>StatCalc - APLIKASI Kerja Statistik</title>
-<meta name="theme-color" content="#22384A">
+<title>StatCalc — Statistical Analysis Made Simple</title>
+<meta name="theme-color" content="#2463EB">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -12,7 +12,7 @@
 <meta name="color-scheme" content="light">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* =========================================================================
    STATCALC - single-file webview app
@@ -1301,8 +1301,124 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
   .calc-math{ font-size:42px; }
   .calc-btn{ min-height:62px; }
 }
+
+/* =========================================================================
+   STATCALC REDESIGN 2026 — desktop-first statistical workspace
+   Layer visual baru; tidak mengubah ID, event handler, atau logika metode.
+   ========================================================================= */
+:root{
+  --paper:#f4f7fb !important;
+  --paper-2:#edf3fb !important;
+  --ink:#142b50 !important;
+  --ink-soft:#607493 !important;
+  --ink-faint:#8798b1 !important;
+  --rule:#dce6f4 !important;
+  --rule-strong:#c7d7ec !important;
+  --accent:#2463eb !important;
+  --accent-hi:#1d55d5 !important;
+  --accent-press:#1947b4 !important;
+  --accent-2:#2f80ed !important;
+  --accent-soft:#e8f1ff !important;
+  --font-body:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,system-ui,sans-serif !important;
+  --card-shadow:0 2px 10px rgba(35,75,130,.045),0 8px 24px rgba(35,75,130,.035) !important;
+}
+body{background:#f4f7fb !important;color:#142b50;}
+.sheet-bg{display:none !important;}
+.view.active{animation:scFade .18s ease-out;}
+@keyframes scFade{from{opacity:.7;transform:translateY(3px)}to{opacity:1;transform:none}}
+
+/* Navigasi desktop menjadi sidebar aplikasi */
+@media(min-width:1024px){
+  :root{--sidew:250px !important;--content:1440px !important;}
+  body:not(.pre-auth){padding-left:250px !important;}
+  body.side-off:not(.pre-auth){padding-left:0 !important;}
+  .bottom-nav{background:#fff !important;border-right:1px solid #dce6f4 !important;box-shadow:3px 0 18px rgba(32,72,130,.035) !important;padding:22px 14px 18px !important;gap:5px !important;}
+  .bottom-nav::before{content:'▥  StatCalc\A Statistical Analysis Made Simple' !important;white-space:pre-line;font-size:21px !important;line-height:1.35 !important;letter-spacing:-.035em !important;color:#12356b !important;padding:4px 12px 22px !important;margin-bottom:12px !important;border-bottom:1px solid #e4ebf5 !important;}
+  .nav-item{border-radius:10px !important;min-height:42px !important;padding:10px 12px !important;gap:12px !important;font-size:13.5px !important;}
+  .nav-item svg{width:20px !important;height:20px !important;}
+  .nav-item span{font-size:13.5px !important;font-weight:600 !important;}
+  .nav-item.active{background:#e8f1ff !important;color:#205fdb !important;}
+  .nav-item:not(.active):hover{background:#f4f7fc !important;}
+  .nav-item:last-child{margin-top:auto !important;}
+  .sky-banner{margin:22px 26px 0 !important;padding:26px 30px 24px !important;border-radius:18px !important;}
+  .cover,.toc-section,.menu-grid,.hub-grid,.home-cta-wrap,.cover-footer,.tentang-body,.gf-wrap{padding-left:28px !important;padding-right:28px !important;}
+  .hub-grid{padding-top:12px !important;}
+  #hubGrid{grid-template-columns:repeat(4,minmax(0,1fr)) !important;gap:14px !important;}
+  #hubGrid .hub-card,#hubGrid .hub-card:nth-child(n+4),#hubGrid .hub-card:last-child:nth-child(odd){grid-column:auto !important;min-height:168px !important;}
+  .cover-footer{padding-bottom:36px !important;}
+}
+
+/* Header beranda yang bersih, menggantikan kesan animasi/landing page */
+.sky-banner{position:relative !important;overflow:hidden;background:linear-gradient(115deg,#eaf3ff 0%,#f5f9ff 68%,#edf5ff 100%) !important;border:1px solid #dfebfb !important;box-shadow:none !important;}
+.sky-banner-bg,.sky-star-canvas,.sky-clouds,.sky-extras,.sky-orbit{display:none !important;}
+.sky-banner::after{content:'';position:absolute;right:-50px;top:-90px;width:260px;height:260px;border-radius:50%;background:rgba(65,133,245,.07);pointer-events:none;}
+.sky-header-row{position:relative;z-index:1;align-items:center !important;}
+.sky-user{cursor:pointer;}
+.sky-avatar{background:#2463eb !important;color:#fff !important;box-shadow:0 4px 12px rgba(36,99,235,.18) !important;}
+.sky-greet .g-hi{color:#617797 !important;}
+.sky-greet .g-name{color:#173766 !important;font-weight:750 !important;}
+.sky-clock{color:#204e91 !important;background:rgba(255,255,255,.72) !important;border:1px solid #dce8fa !important;border-radius:10px !important;padding:7px 11px !important;}
+.cover.on-sky{position:relative;z-index:1;}
+.cover.on-sky .eyebrow{background:#dceaff !important;color:#245bc1 !important;}
+.cover.on-sky h1{font-size:clamp(30px,3vw,42px) !important;color:#12356b !important;letter-spacing:-.04em !important;margin-bottom:8px !important;}
+.cover.on-sky .lede{font-size:15px !important;line-height:1.65 !important;color:#607493 !important;max-width:700px !important;text-align:left !important;}
+.quote-card{position:relative;z-index:1;background:rgba(255,255,255,.78) !important;border:1px solid #e0eafa !important;box-shadow:none !important;}
+.quote-card .q-text{color:#48658e !important;}
+.quote-card .q-author{color:#7a8eaa !important;}
+
+/* Judul bagian dan kartu fitur */
+.toc-section{padding-top:24px !important;padding-bottom:4px !important;}
+.toc-heading h2,.toc-section h2{color:#18365f !important;font-size:19px !important;letter-spacing:-.025em !important;}
+.hub-card,.menu-card,.card,.petunjuk-item,.profile-stat,.test-block,.stat-card{border:1px solid #e0e9f5 !important;box-shadow:0 2px 10px rgba(35,75,130,.035) !important;background:#fff !important;}
+.hub-card,.menu-card{border-radius:14px !important;transition:border-color .16s ease,box-shadow .16s ease,transform .16s ease !important;}
+.hub-card:hover,.menu-card:hover{border-color:#bfd5fa !important;box-shadow:0 8px 22px rgba(35,92,190,.08) !important;transform:translateY(-2px);}
+.hub-card .hc-icon,.menu-card .mc-icon{border-radius:12px !important;}
+.hub-card .hc-title,.menu-card .mc-title{color:#19375f !important;font-size:15px !important;font-weight:750 !important;}
+.hub-card .hc-desc,.menu-card .mc-desc{color:#687d9b !important;line-height:1.55 !important;}
+
+/* Metode, grafik, dan lembar kerja */
+.cover:not(.on-sky){padding-top:30px !important;}
+.cover:not(.on-sky) h1,.chapter-head h1{color:#16345f !important;letter-spacing:-.035em !important;}
+.eyebrow{background:#e8f1ff !important;color:#245fcf !important;border-radius:7px !important;}
+.card{border-radius:14px !important;padding:24px !important;}
+.card h2{color:#173760 !important;}
+.step-tag{background:#eaf2ff !important;color:#2b62c5 !important;}
+.select-input,.plain-input,.stepper,.login-field input{border:1px solid #cfdbeb !important;background:#fbfdff !important;border-radius:9px !important;}
+.select-input:focus,.plain-input:focus,.login-field input:focus{border-color:#4b8af4 !important;box-shadow:0 0 0 3px rgba(52,119,235,.12) !important;}
+.btn-primary,.btn-login{background:#2868e8 !important;border-color:#2868e8 !important;border-radius:9px !important;box-shadow:0 4px 10px rgba(40,104,232,.13) !important;}
+.btn-primary:hover,.btn-login:hover{background:#1f59d0 !important;}
+.btn-ghost{border:1px solid #d5e0ef !important;border-radius:9px !important;color:#2859a8 !important;}
+.tabs{background:#f0f4fa !important;border-radius:10px !important;}
+.tab-btn.active{color:#245fcf !important;border-radius:8px !important;}
+.step-block{background:#f5f8fd !important;border-color:#e1eaf6 !important;border-radius:10px !important;}
+.step-block::before{background:#2868e8 !important;}
+table.data-table thead th,table.result-table thead th{background:#edf3fc !important;color:#25436f !important;border-color:#dce6f4 !important;}
+table.data-table tbody td,table.result-table td,table.result-table th{border-color:#e3ebf5 !important;}
+table.result-table tfoot td{background:#eaf2ff !important;color:#204f9b !important;}
+.table-scroll{border:1px solid #e0e9f5 !important;border-radius:10px !important;overflow:auto;}
+.gf-chip{border-color:#d4e0f0 !important;color:#35547d !important;border-radius:9px !important;}
+.gf-chip.active{background:#2868e8 !important;color:white !important;}
+.gf-desc{background:#eff5ff !important;border-left-color:#4284f4 !important;border-radius:9px !important;}
+
+/* Profil, notifikasi, dan navigasi ponsel */
+.profile-panel{border:1px solid #dfe8f4 !important;background:#fff !important;}
+.profile-panel-head{background:#2868e8 !important;}
+.profile-action{border:1px solid #e1e9f4 !important;border-radius:10px !important;}
+.toast{background:#173760 !important;border-radius:10px !important;}
+.bottom-nav{border-color:#dce6f4 !important;}
+@media(max-width:1023.98px){
+  .sky-banner{margin:0 !important;border-radius:0 0 22px 22px !important;}
+  .hub-grid{gap:12px !important;}
+  .hub-card{border-radius:14px !important;}
+  .card{padding:18px 16px 22px !important;}
+}
+@media(max-width:699.98px){
+  .cover.on-sky h1{font-size:32px !important;}
+  .sky-banner{padding-bottom:22px !important;}
+  .quote-card{margin-top:14px !important;}
+}
+
 </style>
-<link rel="stylesheet" href="statcalc-theme.css">
 <link rel="stylesheet" href="Method/Materi/katex/katex.min.css">
 </head>
 <body class="pre-auth">
@@ -1334,7 +1450,6 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
     <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M9.5 4.5v15"/></svg>
   </button>
   <span class="page-title" id="pageTitle"></span>
-  <button type="button" class="top-avatar" id="topAvatar" aria-label="Profil">?</button>
 </header>
 
 <button type="button" class="side-fab" id="sideFab" aria-pressed="false" aria-label="Sembunyikan menu samping" title="Sembunyikan menu samping">
@@ -2321,15 +2436,27 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 
 <!-- ===================== BOTTOM NAVIGATION ===================== -->
 <nav class="bottom-nav" id="bottomNav">
-  <button type="button" class="nav-item active" data-tab="home"><svg viewBox="0 0 24 24"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9a1 1 0 0 0 1 1h3v-5h4v5h3a1 1 0 0 0 1-1v-9"/></svg><span>Beranda</span></button>
-  <button type="button" class="nav-item" data-tab="metode-calc"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 10h17M10 4.5v15"/></svg><span class="m-l">Lembar</span><span class="d-l">Data</span></button>
-  <button type="button" class="nav-item" data-tab="metode"><svg viewBox="0 0 24 24"><path d="M4 4v16h16M7 16l4-5 3 2 5-7"/></svg><span class="m-l">Analisis</span><span class="d-l">Stat</span></button>
-  <button type="button" class="nav-item desk-only" data-tab="metode-graph"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 15l3-4 2 2 3-5"/></svg><span>Grafik</span></button>
-  <button type="button" class="nav-item" data-tab="materi"><svg viewBox="0 0 24 24"><path d="M12 6.5C10.3 5.2 8 4.5 4.5 4.5v13c3.5 0 5.8.7 7.5 2 1.7-1.3 4-2 7.5-2v-13c-3.5 0-5.8.7-7.5 2ZM12 6.5v13"/></svg><span>Materi</span></button>
-  <button type="button" class="nav-item" data-tab="kalkulator"><svg viewBox="0 0 24 24"><rect x="5" y="2.5" width="14" height="19" rx="2.4"/><path d="M8 7h8M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01"/></svg><span class="m-l">Hitung</span><span class="d-l">Fungsi</span></button>
+  <button type="button" class="nav-item active" data-tab="home">
+    <svg viewBox="0 0 24 24"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9a1 1 0 0 0 1 1h3v-5h4v5h3a1 1 0 0 0 1-1v-9"/></svg>
+    <span>Beranda</span>
+  </button>
+  <button type="button" class="nav-item" data-tab="metode">
+    <svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg>
+    <span>Metode</span>
+  </button>
+  <button type="button" class="nav-item" data-tab="materi">
+    <svg viewBox="0 0 24 24"><path d="M12 6.5C10.3 5.2 8 4.5 4.5 4.5v13c3.5 0 5.8.7 7.5 2 1.7-1.3 4-2 7.5-2v-13c-3.5 0-5.8.7-7.5 2Z"/><path d="M12 6.5v13"/></svg>
+    <span>Materi</span>
+  </button>
+  <button type="button" class="nav-item" data-tab="kalkulator">
+    <svg viewBox="0 0 24 24"><rect x="4.5" y="2.5" width="15" height="19" rx="2.4"/><line x1="8" y1="7" x2="16" y2="7"/><circle cx="8.5" cy="12" r="0.6" fill="currentColor"/><circle cx="12" cy="12" r="0.6" fill="currentColor"/><circle cx="15.5" cy="12" r="0.6" fill="currentColor"/><circle cx="8.5" cy="16" r="0.6" fill="currentColor"/><circle cx="12" cy="16" r="0.6" fill="currentColor"/><circle cx="15.5" cy="16" r="0.6" fill="currentColor"/></svg>
+    <span>Hitung</span>
+  </button>
+  <button type="button" class="nav-item" data-tab="profil" id="navProfilBtn">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c1.2-4 4-6 7.5-6s6.3 2 7.5 6"/></svg>
+    <span>Profil</span>
+  </button>
 </nav>
-
-<footer class="status-bar" id="statusBar"><span id="sbUser">StatCalc</span><span class="sb-sp"></span><span>Offline &middot; data tetap di perangkat</span></footer>
 
 <div class="toast" id="toast"></div>
 
@@ -2547,7 +2674,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
     materi: 'view-materi', 'materi-detail': 'view-materi-detail',
   };
   const PAGE_TITLES = {
-    metode: 'Pilih Metode', 'metode-calc': 'Lembar', 'metode-stat': 'Metode Stat', 'metode-graph': 'Metode Graph', tentang: 'Tentang StatCalc',
+    metode: 'Pilih Metode', 'metode-calc': 'Metode Calc', 'metode-stat': 'Metode Stat', 'metode-graph': 'Metode Graph', tentang: 'Tentang StatCalc',
     matriks: 'Kalkulator Matriks', kalkulator: 'Kalkulator Ilmiah', petunjuk: 'Petunjuk', materi: 'Materi Statistik',
   };
   let backTarget = 'home';
@@ -2642,7 +2769,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
     if (!viewId) return;
     $$('.view').forEach((v) => v.classList.remove('active'));
     $('#' + viewId).classList.add('active');
-    const navTab = (pageId === 'metode-calc' || pageId === 'metode-graph') ? pageId : (pageId.indexOf('metode') === 0 || isMethod) ? 'metode' : pageId.indexOf('materi') === 0 ? 'materi' : pageId;
+    const navTab = (pageId.indexOf('metode') === 0 || isMethod) ? 'metode' : pageId.indexOf('materi') === 0 ? 'materi' : pageId;
     $$('.nav-item', bottomNav).forEach((b) => b.classList.toggle('active', b.dataset.tab === navTab));
     if (pageId === 'home') {
       topbar.classList.remove('visible');
@@ -2968,8 +3095,6 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 <script src="Method/Calc/sheet.js"></script>
 <script src="Method/Calc/sheet-graph.js"></script>
 <script src="Method/Calc/sheet-data.js"></script>
-<script src="Method/Calc/sheet-quick.js"></script>
-<script src="Method/Calc/sheet-vars.js"></script>
 
 <!-- ===================== EKSPOR HASIL STAT: grafik pendukung + unduh .docx (muat SETELAH semua file Method/Graph/) ===================== -->
 <script src="Method/Shared/stat-charts.js"></script>
@@ -2993,7 +3118,6 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 <script src="Method/Materi/data/stasioner.js"></script>
 <script src="Method/Materi/data/arima.js"></script>
 <script src="Method/Materi/data/rsm.js"></script>
-<script src="Method/Materi/materi-lembar.js"></script>
 
 
 <!-- =========================================================================
@@ -3074,17 +3198,6 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
   // Saat halaman dibuka / di-refresh
   if (!apply()) sync(true);
 })();
-</script>
-<script>
-(function(){var a=document.getElementById('topAvatar'),b=document.getElementById('skyAvatar'),o=document.getElementById('openProfileBtn');
-if(!a)return;function sync(){if(b)a.textContent=b.textContent||'?';}sync();
-if(b)new MutationObserver(sync).observe(b,{childList:true,characterData:true,subtree:true});
-a.addEventListener('click',function(){if(o)o.click();});})();
-</script>
-<script>
-(function(){var u=document.getElementById('sbUser'),n=document.getElementById('skyGreetName');
-function f(){if(u&&n&&n.textContent.trim()&&n.textContent.trim()!=='-')u.textContent='Tersimpan di perangkat \u00B7 '+n.textContent.trim();}
-f();if(n)new MutationObserver(f).observe(n,{childList:true,characterData:true,subtree:true});})();
 </script>
 </body>
 </html>
