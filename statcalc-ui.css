@@ -1,0 +1,51 @@
+/* =========================================================================
+   STATCALC - statcalc-ui.css  (tema "Ruang Kerja Statistik")
+   Dimuat SETELAH <style> utama di index.html. Hapus <link> tersebut untuk
+   kembali ke tampilan lama. Sebagian besar komponen memakai token :root,
+   jadi cukup mengganti token di bawah.
+   ========================================================================= */
+:root{
+  --paper:#F3F5F8; --paper-2:#E9EEF4;
+  --ink:#1B2430; --ink-soft:#4A5666; --ink-faint:#5F6B7A;
+  --rule:#D5DBE3; --rule-strong:#B3BDCA;
+  --accent:#22384A; --accent-hi:#2E4A61; --accent-press:#1A2C3A;
+  --accent-2:#1F5FA8;            /* aksen biru: tab aktif, fokus, seleksi */
+  --accent-soft:#E2EDF9;
+  --font-display:'Inter',system-ui,sans-serif;  /* tanpa serif */
+  --radius:8px;
+  --shadow:0 1px 2px rgba(27,36,48,.08);
+}
+.sheet-bg{ display:none; }                       /* garis buku tulis */
+body{ background:var(--paper); }
+
+/* Beranda: langit dekoratif -> panel biru tua rata */
+.sky-banner{ background:var(--accent) !important; }
+.sky-banner-bg, .sky-star-canvas, .sky-clouds, .sky-extras, .sky-orbit{ display:none !important; }
+
+/* Judul & teks */
+h1, h2, h3, .cover h1, .hub-card .hc-title{ font-family:var(--font-body); letter-spacing:-.01em; }
+.cover h1{ font-weight:700; }
+.hub-card .hc-title{ font-weight:600; font-size:15.5px; }
+.hub-card .hc-desc{ text-align:left; }
+
+/* Kartu & panel */
+.hub-card, .card, .step-card{
+  background:#fff; border:1px solid var(--rule); border-radius:var(--radius); box-shadow:none;
+}
+.hub-card:active{ background:var(--accent-soft); }
+.toc-row{ border-bottom:1px solid var(--rule); }
+.toc-row:hover:not(.is-soon){ background:var(--accent-soft); }
+
+/* Kontrol */
+.btn-primary, .btn-ghost, .select-input, .plain-input{ border-radius:var(--radius); }
+.tab-btn[aria-selected="true"], .tab-btn.active{ color:var(--accent); border-bottom-color:var(--accent-2); }
+
+/* Lembar & tabel data: angka monospace, kisi tipis */
+.data-table th{ background:var(--paper-2); color:var(--ink-soft); font-size:12px; }
+.data-table td, .data-table th{ border-color:var(--rule); }
+.data-table td input, .table-scroll td{ font-family:var(--font-mono); }
+.data-table td input:focus{ outline:2px solid var(--accent-2); outline-offset:-2px; background:var(--accent-soft); }
+
+/* Navigasi bawah: item aktif biru */
+.bottom-nav{ background:#fff; border-top:1px solid var(--rule); }
+.nav-item.active{ color:var(--accent-2); }
