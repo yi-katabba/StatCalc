@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>StatCalc — Statistical Analysis Made Simple</title>
-<meta name="theme-color" content="#2463EB">
+<title>StatCalc - APLIKASI Kerja Statistik</title>
+<meta name="theme-color" content="#22384A">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -1301,125 +1301,83 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
   .calc-math{ font-size:42px; }
   .calc-btn{ min-height:62px; }
 }
-
-/* =========================================================================
-   STATCALC REDESIGN 2026 — desktop-first statistical workspace
-   Layer visual baru; tidak mengubah ID, event handler, atau logika metode.
-   ========================================================================= */
-:root{
-  --paper:#f4f7fb !important;
-  --paper-2:#edf3fb !important;
-  --ink:#142b50 !important;
-  --ink-soft:#607493 !important;
-  --ink-faint:#8798b1 !important;
-  --rule:#dce6f4 !important;
-  --rule-strong:#c7d7ec !important;
-  --accent:#2463eb !important;
-  --accent-hi:#1d55d5 !important;
-  --accent-press:#1947b4 !important;
-  --accent-2:#2f80ed !important;
-  --accent-soft:#e8f1ff !important;
-  --font-body:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,system-ui,sans-serif !important;
-  --card-shadow:0 2px 10px rgba(35,75,130,.045),0 8px 24px rgba(35,75,130,.035) !important;
-}
-body{background:#f4f7fb !important;color:#142b50;}
-.sheet-bg{display:none !important;}
-.view.active{animation:scFade .18s ease-out;}
-@keyframes scFade{from{opacity:.7;transform:translateY(3px)}to{opacity:1;transform:none}}
-
-/* Navigasi desktop menjadi sidebar aplikasi */
-@media(min-width:1024px){
-  :root{--sidew:250px !important;--content:1440px !important;}
-  body:not(.pre-auth){padding-left:250px !important;}
-  body.side-off:not(.pre-auth){padding-left:0 !important;}
-  .bottom-nav{background:#fff !important;border-right:1px solid #dce6f4 !important;box-shadow:3px 0 18px rgba(32,72,130,.035) !important;padding:22px 14px 18px !important;gap:5px !important;}
-  .bottom-nav::before{content:'▥  StatCalc\A Statistical Analysis Made Simple' !important;white-space:pre-line;font-size:21px !important;line-height:1.35 !important;letter-spacing:-.035em !important;color:#12356b !important;padding:4px 12px 22px !important;margin-bottom:12px !important;border-bottom:1px solid #e4ebf5 !important;}
-  .nav-item{border-radius:10px !important;min-height:42px !important;padding:10px 12px !important;gap:12px !important;font-size:13.5px !important;}
-  .nav-item svg{width:20px !important;height:20px !important;}
-  .nav-item span{font-size:13.5px !important;font-weight:600 !important;}
-  .nav-item.active{background:#e8f1ff !important;color:#205fdb !important;}
-  .nav-item:not(.active):hover{background:#f4f7fc !important;}
-  .nav-item:last-child{margin-top:auto !important;}
-  .sky-banner{margin:22px 26px 0 !important;padding:26px 30px 24px !important;border-radius:18px !important;}
-  .cover,.toc-section,.menu-grid,.hub-grid,.home-cta-wrap,.cover-footer,.tentang-body,.gf-wrap{padding-left:28px !important;padding-right:28px !important;}
-  .hub-grid{padding-top:12px !important;}
-  #hubGrid{grid-template-columns:repeat(4,minmax(0,1fr)) !important;gap:14px !important;}
-  #hubGrid .hub-card,#hubGrid .hub-card:nth-child(n+4),#hubGrid .hub-card:last-child:nth-child(odd){grid-column:auto !important;min-height:168px !important;}
-  .cover-footer{padding-bottom:36px !important;}
-}
-
-/* Header beranda yang bersih, menggantikan kesan animasi/landing page */
-.sky-banner{position:relative !important;overflow:hidden;background:linear-gradient(115deg,#eaf3ff 0%,#f5f9ff 68%,#edf5ff 100%) !important;border:1px solid #dfebfb !important;box-shadow:none !important;}
-.sky-banner-bg,.sky-star-canvas,.sky-clouds,.sky-extras,.sky-orbit{display:none !important;}
-.sky-banner::after{content:'';position:absolute;right:-50px;top:-90px;width:260px;height:260px;border-radius:50%;background:rgba(65,133,245,.07);pointer-events:none;}
-.sky-header-row{position:relative;z-index:1;align-items:center !important;}
-.sky-user{cursor:pointer;}
-.sky-avatar{background:#2463eb !important;color:#fff !important;box-shadow:0 4px 12px rgba(36,99,235,.18) !important;}
-.sky-greet .g-hi{color:#617797 !important;}
-.sky-greet .g-name{color:#173766 !important;font-weight:750 !important;}
-.sky-clock{color:#204e91 !important;background:rgba(255,255,255,.72) !important;border:1px solid #dce8fa !important;border-radius:10px !important;padding:7px 11px !important;}
-.cover.on-sky{position:relative;z-index:1;}
-.cover.on-sky .eyebrow{background:#dceaff !important;color:#245bc1 !important;}
-.cover.on-sky h1{font-size:clamp(30px,3vw,42px) !important;color:#12356b !important;letter-spacing:-.04em !important;margin-bottom:8px !important;}
-.cover.on-sky .lede{font-size:15px !important;line-height:1.65 !important;color:#607493 !important;max-width:700px !important;text-align:left !important;}
-.quote-card{position:relative;z-index:1;background:rgba(255,255,255,.78) !important;border:1px solid #e0eafa !important;box-shadow:none !important;}
-.quote-card .q-text{color:#48658e !important;}
-.quote-card .q-author{color:#7a8eaa !important;}
-
-/* Judul bagian dan kartu fitur */
-.toc-section{padding-top:24px !important;padding-bottom:4px !important;}
-.toc-heading h2,.toc-section h2{color:#18365f !important;font-size:19px !important;letter-spacing:-.025em !important;}
-.hub-card,.menu-card,.card,.petunjuk-item,.profile-stat,.test-block,.stat-card{border:1px solid #e0e9f5 !important;box-shadow:0 2px 10px rgba(35,75,130,.035) !important;background:#fff !important;}
-.hub-card,.menu-card{border-radius:14px !important;transition:border-color .16s ease,box-shadow .16s ease,transform .16s ease !important;}
-.hub-card:hover,.menu-card:hover{border-color:#bfd5fa !important;box-shadow:0 8px 22px rgba(35,92,190,.08) !important;transform:translateY(-2px);}
-.hub-card .hc-icon,.menu-card .mc-icon{border-radius:12px !important;}
-.hub-card .hc-title,.menu-card .mc-title{color:#19375f !important;font-size:15px !important;font-weight:750 !important;}
-.hub-card .hc-desc,.menu-card .mc-desc{color:#687d9b !important;line-height:1.55 !important;}
-
-/* Metode, grafik, dan lembar kerja */
-.cover:not(.on-sky){padding-top:30px !important;}
-.cover:not(.on-sky) h1,.chapter-head h1{color:#16345f !important;letter-spacing:-.035em !important;}
-.eyebrow{background:#e8f1ff !important;color:#245fcf !important;border-radius:7px !important;}
-.card{border-radius:14px !important;padding:24px !important;}
-.card h2{color:#173760 !important;}
-.step-tag{background:#eaf2ff !important;color:#2b62c5 !important;}
-.select-input,.plain-input,.stepper,.login-field input{border:1px solid #cfdbeb !important;background:#fbfdff !important;border-radius:9px !important;}
-.select-input:focus,.plain-input:focus,.login-field input:focus{border-color:#4b8af4 !important;box-shadow:0 0 0 3px rgba(52,119,235,.12) !important;}
-.btn-primary,.btn-login{background:#2868e8 !important;border-color:#2868e8 !important;border-radius:9px !important;box-shadow:0 4px 10px rgba(40,104,232,.13) !important;}
-.btn-primary:hover,.btn-login:hover{background:#1f59d0 !important;}
-.btn-ghost{border:1px solid #d5e0ef !important;border-radius:9px !important;color:#2859a8 !important;}
-.tabs{background:#f0f4fa !important;border-radius:10px !important;}
-.tab-btn.active{color:#245fcf !important;border-radius:8px !important;}
-.step-block{background:#f5f8fd !important;border-color:#e1eaf6 !important;border-radius:10px !important;}
-.step-block::before{background:#2868e8 !important;}
-table.data-table thead th,table.result-table thead th{background:#edf3fc !important;color:#25436f !important;border-color:#dce6f4 !important;}
-table.data-table tbody td,table.result-table td,table.result-table th{border-color:#e3ebf5 !important;}
-table.result-table tfoot td{background:#eaf2ff !important;color:#204f9b !important;}
-.table-scroll{border:1px solid #e0e9f5 !important;border-radius:10px !important;overflow:auto;}
-.gf-chip{border-color:#d4e0f0 !important;color:#35547d !important;border-radius:9px !important;}
-.gf-chip.active{background:#2868e8 !important;color:white !important;}
-.gf-desc{background:#eff5ff !important;border-left-color:#4284f4 !important;border-radius:9px !important;}
-
-/* Profil, notifikasi, dan navigasi ponsel */
-.profile-panel{border:1px solid #dfe8f4 !important;background:#fff !important;}
-.profile-panel-head{background:#2868e8 !important;}
-.profile-action{border:1px solid #e1e9f4 !important;border-radius:10px !important;}
-.toast{background:#173760 !important;border-radius:10px !important;}
-.bottom-nav{border-color:#dce6f4 !important;}
-@media(max-width:1023.98px){
-  .sky-banner{margin:0 !important;border-radius:0 0 22px 22px !important;}
-  .hub-grid{gap:12px !important;}
-  .hub-card{border-radius:14px !important;}
-  .card{padding:18px 16px 22px !important;}
-}
-@media(max-width:699.98px){
-  .cover.on-sky h1{font-size:32px !important;}
-  .sky-banner{padding-bottom:22px !important;}
-  .quote-card{margin-top:14px !important;}
-}
-
 </style>
 <link rel="stylesheet" href="Method/Materi/katex/katex.min.css">
+<style id="statcalc-application-redesign">
+/* Redesain layout aplikasi desktop: bukan sekadar pergantian tema warna */
+:root{--sc-blue:#2463eb;--sc-blue-dark:#123575;--sc-blue-soft:#eaf2ff;--sc-border:#d9e5f5;--sc-muted:#64748b;--sc-bg:#f5f8fc;--sidew:250px;--content:1500px;--radius:12px;--card-shadow:0 2px 10px rgba(28,65,120,.045)}
+@media(min-width:900px){
+ html{background:#edf2f8!important}
+ body:not(.pre-auth){max-width:none!important;width:100%!important;margin:0!important;padding-left:var(--sidew)!important;background:#f7f9fc!important;box-shadow:none!important;color:#172b4d}
+ body:not(.pre-auth).side-off{padding-left:0!important}
+ body:not(.pre-auth) .bottom-nav{width:var(--sidew)!important;max-width:none!important;left:0!important;right:auto!important;transform:none!important;top:0!important;bottom:0!important;padding:20px 14px 18px!important;background:#fff!important;border-right:1px solid #dce6f3!important;box-shadow:3px 0 16px rgba(25,55,100,.035)!important;gap:4px!important;overflow-y:auto}
+ body:not(.pre-auth) .bottom-nav::before{content:'▥  StatCalc'!important;display:block!important;font-size:23px!important;font-weight:800!important;color:#102e63!important;letter-spacing:-.6px!important;padding:2px 12px 4px!important;margin:0!important;border:0!important}
+ body:not(.pre-auth) .bottom-nav::after{content:'Statistical Analysis Made Simple';display:block;font-size:10.5px;color:#7b8eaa;padding:0 12px 22px;border-bottom:1px solid #e5edf7;margin-bottom:12px}
+ body:not(.pre-auth) .nav-item{min-height:42px!important;padding:9px 12px!important;border-radius:8px!important;gap:12px!important;color:#344b70!important;font-weight:500!important}
+ body:not(.pre-auth) .nav-item svg{width:19px!important;height:19px!important;color:currentColor}
+ body:not(.pre-auth) .nav-item span{font-size:13px!important;font-weight:600!important}
+ body:not(.pre-auth) .nav-item.active{background:#e7f0ff!important;color:#1458cf!important}
+ body:not(.pre-auth) .nav-item:last-child{margin-top:auto!important}
+ body:not(.pre-auth) .sc-desktop-nav{display:flex!important}
+ body:not(.pre-auth) .topbar{display:flex!important;position:sticky!important;top:0!important;z-index:25!important;margin:0!important;padding:12px 30px!important;min-height:66px!important;background:#fff!important;border-bottom:1px solid #e1e9f4!important;box-shadow:none!important;color:#19345e!important}
+ body:not(.pre-auth) .topbar .page-title{color:#19345e!important;font-size:16px!important}
+ body:not(.pre-auth) .back-btn{background:#f0f5fc!important;color:#254d8d!important;border:1px solid #e0e9f5!important}
+ body:not(.pre-auth) .side-toggle{background:#f0f5fc!important;color:#254d8d!important;border:1px solid #e0e9f5!important}
+ body:not(.pre-auth) .side-fab{display:none!important}
+ body:not(.pre-auth) .view.active{min-height:calc(100vh - 66px);animation:none!important}
+ body:not(.pre-auth) .cover,body:not(.pre-auth) .toc-section,body:not(.pre-auth) .menu-grid,body:not(.pre-auth) .hub-grid,body:not(.pre-auth) .home-cta-wrap,body:not(.pre-auth) .cover-footer,body:not(.pre-auth) .tentang-body,body:not(.pre-auth) .gf-wrap{max-width:var(--content)!important;padding-left:30px!important;padding-right:30px!important}
+ body:not(.pre-auth) .cover{padding-top:28px!important}
+ body:not(.pre-auth) .cover h1{font-size:30px!important;color:#15356d!important}
+ body:not(.pre-auth) .cover .lede{font-size:14px!important;color:#657b9d!important;max-width:75ch!important}
+ body:not(.pre-auth) .eyebrow{background:transparent!important;color:#2463eb!important;padding:0!important;font-size:11px!important}
+ body:not(.pre-auth) .hub-card,body:not(.pre-auth) .menu-card,body:not(.pre-auth) .card{border:1px solid #e0e9f5!important;border-radius:12px!important;box-shadow:0 2px 8px rgba(31,75,140,.035)!important}
+ body:not(.pre-auth) .hub-card{min-height:150px!important;padding:18px!important}
+ body:not(.pre-auth) .hub-card .hc-title{font-size:15px!important;color:#19345e!important}
+ body:not(.pre-auth) .hub-card .hc-desc{font-size:12px!important;color:#7183a0!important}
+ body:not(.pre-auth) .card{padding:24px!important}
+ body:not(.pre-auth) .control-row{gap:12px!important}
+ body:not(.pre-auth) .btn-primary{background:#2463eb!important;border-radius:8px!important}
+ body:not(.pre-auth) .select-input,body:not(.pre-auth) .plain-input{border:1px solid #d6e2f2!important;border-radius:8px!important}
+ body:not(.pre-auth) .bottom-nav .nav-item[data-tab="metode"]{margin-bottom:6px!important}
+ body:not(.pre-auth) .bottom-nav .nav-item[data-sc-destination="stat"]::before{content:'STAT';position:absolute;left:26px;transform:translateY(-30px);font-size:9px;letter-spacing:1px;color:#8b9bb4}
+ #view-home.active{display:grid!important;grid-template-columns:minmax(0,1fr) 255px;grid-template-rows:auto auto 1fr;gap:0 24px;align-content:start;padding:24px 26px 40px!important;max-width:1700px;margin:0 auto}
+ #view-home .sky-banner{grid-column:1;grid-row:1;background:linear-gradient(115deg,#edf4ff,#f7faff)!important;border:1px solid #e1ebfb!important;border-radius:12px!important;padding:25px 28px 24px!important;min-height:130px!important;overflow:hidden;box-shadow:none!important}
+ #view-home .sky-banner-bg,#view-home .sky-star-canvas,#view-home .sky-clouds,#view-home .sky-extras,#view-home .sky-orbit,#view-home .quote-card{display:none!important}
+ #view-home .sky-header-row{display:flex!important;align-items:center!important;justify-content:flex-end!important;margin:0!important;min-height:0!important}
+ #view-home .sky-user{display:none!important}
+ #view-home .sky-clock{font-size:12px!important;color:#6780a6!important;background:#fff!important;border:1px solid #dfe9f7!important;border-radius:20px;padding:5px 10px}
+ #view-home .cover.on-sky{padding:0!important;margin-top:-22px!important;position:relative;max-width:none!important}
+ #view-home .eyebrow.on-sky{display:none!important}
+ #view-home .cover.on-sky h1{font-size:27px!important;margin:0 0 8px!important;color:#123575!important}
+ #view-home .cover.on-sky .lede{font-size:14px!important;max-width:650px!important;color:#647da5!important}
+ #view-home > .toc-section{grid-column:1;grid-row:2;padding:23px 0 7px!important;margin:0!important}
+ #view-home > .toc-section h2{font-size:17px!important;color:#19345e!important}
+ #view-home #hubGrid{display:none!important}
+ #view-home .sc-quick-section{grid-column:1;grid-row:3;min-width:0}
+ .sc-section-heading{display:flex;justify-content:space-between;align-items:end;margin:0 0 13px}
+ .sc-section-heading h2{margin:2px 0 3px;font-size:18px;color:#173666;letter-spacing:-.3px}
+ .sc-section-heading p{margin:0;color:#7b8ba5;font-size:12px}
+ .sc-eyebrow{font-size:10px;letter-spacing:1.1px;font-weight:800;color:#4d77bc}
+ .sc-quick-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+ .sc-quick-card{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:9px;min-height:178px;padding:17px 16px;background:#fff;border:1px solid #dfe8f5;border-radius:11px;cursor:pointer;color:#1a355e;transition:border-color .15s,transform .15s,box-shadow .15s}
+ .sc-quick-card:hover{border-color:#a9c8fa;transform:translateY(-2px);box-shadow:0 8px 18px rgba(35,85,165,.07)}
+ .sc-quick-icon{display:flex;align-items:center;justify-content:center;width:43px;height:43px;border-radius:12px}
+ .sc-quick-icon svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+ .sc-quick-icon.blue{background:#e7f0ff;color:#2463eb}.sc-quick-icon.teal{background:#e2f7f3;color:#168e82}.sc-quick-icon.violet{background:#eee9ff;color:#7957d5}.sc-quick-icon.orange{background:#fff0e3;color:#e88337}
+ .sc-quick-card strong{font-size:13.5px;font-weight:750}.sc-quick-card>span:not(.sc-quick-icon){font-size:11.5px;line-height:1.55;color:#7485a0}
+ .sc-quick-card i{font-size:11px;color:#2463eb;font-style:normal;font-weight:700;margin-top:auto}.sc-quick-card i b{font-size:15px;margin-left:4px}
+ #view-home .sc-info-panel{grid-column:2;grid-row:1/4;display:flex;flex-direction:column;gap:16px;min-width:0}
+ .sc-info-card{border:1px solid #dce7f6;border-radius:11px;background:#fff;overflow:hidden}
+ .sc-info-card h3{display:flex;align-items:center;gap:9px;margin:0;padding:14px 16px;background:#f5f9ff;border-bottom:1px solid #e6eef9;font-size:14px;color:#193967}
+ .sc-info-card h3 span{font-size:18px;color:#2463eb}
+ .sc-info-body{padding:16px;color:#667d9f;font-size:12px;line-height:1.7}.sc-info-body p{margin:7px 0 13px}.sc-info-body strong{color:#24436f;font-size:12px}.sc-info-label{font-size:11px;font-weight:700;color:#385780;margin-bottom:5px}.sc-info-divider{height:1px;background:#edf1f7;margin:15px 0}.sc-info-body ul{padding-left:18px;margin:7px 0 0}.sc-info-body li{padding:2px 0}.sc-tip{margin-top:12px;padding:12px;background:#f0f6ff;border-radius:9px;color:#59759d}.sc-tip b{color:#2463eb}.sc-version{font-size:10.5px;color:#92a1b7;padding:0 5px;margin-top:auto}
+ #view-metode.active #catGrid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+ #view-metode-stat.active .menu-grid,#view-metode-graph.active .menu-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+ .topbar.visible~#view-home{padding-top:24px!important}
+}
+@media(min-width:1400px){#view-home.active{grid-template-columns:minmax(0,1fr) 280px;gap:0 28px;padding:28px 32px 44px!important}.sc-quick-grid{gap:14px}.sc-quick-card{padding:19px;min-height:190px}}
+@media(max-width:899px){.sc-desktop-nav{display:none!important}.sc-quick-section,.sc-info-panel{display:none!important}#view-home .sky-banner{background:linear-gradient(120deg,#edf4ff,#f7faff)!important}#view-home .sky-banner-bg,#view-home .sky-star-canvas,#view-home .sky-clouds,#view-home .sky-extras,#view-home .sky-orbit{opacity:.08}}
+</style>
 </head>
 <body class="pre-auth">
 
@@ -1520,6 +1478,21 @@ table.result-table tfoot td{background:#eaf2ff !important;color:#204f9b !importa
       <div class="hc-desc">Panduan singkat cara menggunakan setiap fitur di aplikasi ini.</div>
     </button>
   </div>
+
+  <section class="sc-quick-section" aria-label="Akses cepat">
+    <div class="sc-section-heading"><div><span class="sc-eyebrow">RUANG KERJA</span><h2>Mulai Analisis</h2><p>Pilih aktivitas yang ingin Anda lakukan.</p></div></div>
+    <div class="sc-quick-grid">
+      <button type="button" class="sc-quick-card" data-sc-destination="stat"><span class="sc-quick-icon blue"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M7 15l4-4 3 2 5-7"/></svg></span><strong>Analisis Statistik</strong><span>Regresi, ANOVA, deskriptif, dan metode lainnya.</span><i>Jelajahi metode <b>→</b></i></button>
+      <button type="button" class="sc-quick-card" data-sc-destination="graph"><span class="sc-quick-icon teal"><svg viewBox="0 0 24 24"><path d="M4 20V4M4 20h16M7 15l4-5 3 3 5-8"/><circle cx="7" cy="15" r="1"/><circle cx="11" cy="10" r="1"/><circle cx="14" cy="13" r="1"/></svg></span><strong>Visualisasi Data</strong><span>Buat grafik untuk memahami pola dan distribusi data.</span><i>Buka Graph <b>→</b></i></button>
+      <button type="button" class="sc-quick-card" data-nav="kalkulator"><span class="sc-quick-icon violet"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01"/></svg></span><strong>Kalkulator Statistik</strong><span>Hitung angka dan operasi matematika dengan cepat.</span><i>Buka kalkulator <b>→</b></i></button>
+      <button type="button" class="sc-quick-card" data-nav="materi"><span class="sc-quick-icon orange"><svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v17H6.5A2.5 2.5 0 0 1 4 17.5zM4 17.5A2.5 2.5 0 0 1 6.5 15H20M8 7h8M8 10h6"/></svg></span><strong>Materi & Kuis</strong><span>Pelajari konsep, rumus, dan latihan statistik.</span><i>Belajar sekarang <b>→</b></i></button>
+    </div>
+  </section>
+  <aside class="sc-info-panel" aria-label="Informasi aplikasi">
+    <section class="sc-info-card"><h3><span>ⓘ</span> Informasi</h3><div class="sc-info-body"><div class="sc-info-label">Status data</div><strong id="scDataStatus">Belum ada dataset aktif</strong><p>Impor atau masukkan data melalui fitur yang tersedia untuk memulai analisis.</p><div class="sc-info-divider"></div><div class="sc-info-label">Fitur tersedia</div><ul><li>Metode statistik</li><li>Visualisasi data</li><li>Kalkulator dan matriks</li><li>Materi pembelajaran</li></ul></div></section>
+    <section class="sc-info-card"><h3><span>✦</span> Tips penggunaan</h3><div class="sc-info-body"><p>Pilih metode yang sesuai dengan jenis data dan tujuan analisis. Periksa format serta kelengkapan data sebelum menjalankan perhitungan.</p><div class="sc-tip"><b>Tips</b><br>Gunakan menu <strong>Stat</strong> untuk perhitungan dan <strong>Graph</strong> untuk visualisasi.</div></div></section>
+    <div class="sc-version">StatCalc · Statistical Analysis Made Simple</div>
+  </aside>
 </main>
 
 <!-- ===================== TAB: METODE (pilih kategori: Stat / Graph) ===================== -->
@@ -2444,6 +2417,12 @@ table.result-table tfoot td{background:#eaf2ff !important;color:#204f9b !importa
     <svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg>
     <span>Metode</span>
   </button>
+  <button type="button" class="nav-item sc-desktop-nav" data-sc-destination="stat" aria-label="Buka metode statistik">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16"/><path d="m7 15 4-4 3 2 5-7"/></svg><span>Stat</span>
+  </button>
+  <button type="button" class="nav-item sc-desktop-nav" data-sc-destination="graph" aria-label="Buka visualisasi grafik">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V4M4 20h16"/><rect x="7" y="12" width="3" height="6" rx=".5"/><rect x="12" y="8" width="3" height="10" rx=".5"/><rect x="17" y="5" width="3" height="13" rx=".5"/></svg><span>Graph</span>
+  </button>
   <button type="button" class="nav-item" data-tab="materi">
     <svg viewBox="0 0 24 24"><path d="M12 6.5C10.3 5.2 8 4.5 4.5 4.5v13c3.5 0 5.8.7 7.5 2 1.7-1.3 4-2 7.5-2v-13c-3.5 0-5.8.7-7.5 2Z"/><path d="M12 6.5v13"/></svg>
     <span>Materi</span>
@@ -3199,5 +3178,46 @@ table.result-table tfoot td{background:#eaf2ff !important;color:#204f9b !importa
   if (!apply()) sync(true);
 })();
 </script>
+
+
+<script>
+(function(){
+  'use strict';
+  function openDestination(dest){
+    var nav=document.querySelector('.nav-item[data-tab="metode"]');
+    if(dest==='stat'||dest==='graph'){
+      if(nav) nav.click();
+      var cat=document.querySelector('[data-cat="metode-'+dest+'"]');
+      if(cat) cat.click();
+      return;
+    }
+  }
+  document.querySelectorAll('[data-sc-destination]').forEach(function(el){
+    el.addEventListener('click',function(){openDestination(el.getAttribute('data-sc-destination'));});
+  });
+  // Dashboard quick links reuse the existing navigation API; no calculation logic is replaced.
+  document.querySelectorAll('#view-home .sc-quick-card[data-nav]').forEach(function(el){
+    el.addEventListener('click',function(){
+      var key=el.getAttribute('data-nav');
+      var original=document.querySelector('#hubGrid [data-nav="'+key+'"]');
+      if(original) original.click();
+    });
+  });
+  // Tampilkan judul halaman yang sesuai pada bar aplikasi.
+  var observer=new MutationObserver(function(){
+    var active=document.querySelector('.view.active');
+    var title=document.getElementById('pageTitle');
+    if(!active||!title)return;
+    var labels={'view-home':'Beranda','view-metode':'Metode','view-metode-stat':'Statistik','view-metode-graph':'Graph','view-materi':'Materi','view-kalkulator':'Kalkulator Statistik','view-matriks':'Kalkulator Matriks','view-tentang':'Tentang StatCalc','view-petunjuk':'Petunjuk'};
+    if(labels[active.id] && !document.getElementById('topbar').classList.contains('visible')) title.textContent=labels[active.id];
+    document.querySelectorAll('.sc-desktop-nav').forEach(function(btn){
+      var dest=btn.getAttribute('data-sc-destination');
+      btn.classList.toggle('active',(dest==='stat' && active.id==='view-metode-stat') || (dest==='graph' && active.id==='view-metode-graph'));
+    });
+  });
+  observer.observe(document.body,{subtree:true,attributes:true,attributeFilter:['class']});
+})();
+</script>
+
 </body>
 </html>
