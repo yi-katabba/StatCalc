@@ -1,0 +1,273 @@
+/* StatCalc V2 - tema sesuai "Rancangan Lengkap" (dimuat setelah gaya bawaan) */
+:root{
+  --paper:#F3F5F8; --paper-2:#E6EBF1; --ink:#1B2430; --ink-soft:#4A5666; --ink-faint:#5F6B7A;
+  --rule:#D5DBE3; --rule-strong:#C5CDD8;
+  --accent:#22384A; --accent-hi:#2E4A61; --accent-press:#1A2C3A;
+  --accent-2:#1F5FA8; --accent-soft:#E2EDF9;
+  --good:#2F6B45; --bad:#A5402C; --bad-bg:#F7E7E1;
+  --font-display:'Inter',system-ui,sans-serif;
+  --radius:10px;
+  --shadow:none; --shadow-bar:none;
+  --tap:44px; --navh:64px;
+}
+body{ background:var(--paper); color:var(--ink); }
+.sheet-bg{ display:none !important; }
+h1,h2,h3,.card h2,.tentang-item h3,.profile-panel-head .p-name{ font-family:var(--font-body); letter-spacing:0; }
+
+/* Bilah atas */
+.topbar{ background:var(--accent); box-shadow:none; min-height:calc(56px + var(--safe-t)); }
+.back-btn,.side-toggle{ background:transparent; border:0; border-radius:8px; }
+.back-btn::before{ font-family:var(--font-body); }
+.page-title{ font-weight:700; }
+
+/* Kartu, daftar, tombol */
+.card,.profile-stat,.hub-card,.calc-hist-card{ background:#fff; border:1px solid var(--rule); border-radius:10px; box-shadow:none; }
+.toc-row{ border-bottom:1px solid #E1E6EC; border-radius:0; }
+.toc-row:hover:not(.is-soon){ background:var(--accent-soft); }
+.toc-num{ font-family:var(--font-mono); }
+.btn-primary,.btn-login,.method-cta{ background:var(--accent); color:#fff; border:0; border-radius:10px; min-height:48px; font-weight:600; box-shadow:none; }
+.btn-primary:hover,.btn-login:hover,.method-cta:hover{ background:var(--accent-hi); }
+.btn-ghost{ background:#fff; color:var(--accent); border:1px solid var(--rule-strong); border-radius:10px; min-height:48px; font-weight:600; }
+.btn-ghost:hover{ background:var(--accent-soft); border-color:var(--accent-2); }
+
+/* Tab hasil: bentuk segmen/chip */
+.tabs{ gap:8px; border-bottom:0; padding:2px 0 10px; }
+.tab-btn{ margin:0; padding:0 16px; min-height:44px; border:1px solid var(--rule-strong); border-radius:100px; background:#fff; color:var(--accent); font-size:14px; }
+.tab-btn.active{ background:var(--accent-soft); border-color:var(--accent-2); color:var(--accent-2); }
+
+/* Tabel & data */
+table th{ background:#EEF2F6; color:var(--ink-soft); font-weight:600; font-size:12px; border:1px solid var(--rule); }
+table td{ border:1px solid #E1E6EC; }
+table td.n,.mono,td.num{ font-family:var(--font-mono); }
+input,select,textarea{ border-color:var(--rule-strong); border-radius:6px; }
+input:focus,select:focus,textarea:focus{ border-color:var(--accent-2); outline:2px solid #BBD2EC; outline-offset:0; }
+button:focus-visible,input:focus-visible,[tabindex]:focus-visible{ outline-color:var(--accent-2); }
+
+/* Navigasi bawah */
+.bottom-nav{ height:calc(64px + var(--safe-b)); padding:0 var(--safe-r) var(--safe-b) var(--safe-l); background:#fff; border-top:1px solid var(--rule); box-shadow:none; }
+.nav-item{ color:var(--ink-soft); border-radius:0; font-size:11px; }
+.nav-item svg{ width:24px; height:24px; stroke-width:1.7; }
+.nav-item.active{ color:var(--accent-2); }
+.nav-item:active{ background:var(--accent-soft); }
+
+/* Panel profil */
+.profile-panel-head{ background:var(--accent); }
+.profile-avatar-big{ background:#fff; color:var(--accent); font-weight:700; }
+.profile-stat .p-v{ color:var(--accent); }
+.profile-action.danger{ color:var(--bad); }
+
+/* Beranda: banner langit jadi bilah rata */
+.sky-banner{ background:var(--accent) !important; border-radius:0 !important; }
+.sky-banner-bg{ display:none; }
+
+/* Masuk */
+#view-login{ background:var(--accent); }
+.login-sky{ display:none; }
+.login-box{ background:#fff; border-radius:10px; box-shadow:none; }
+.mark-badge{ background:var(--accent); color:#fff; font-family:var(--font-body); }
+
+/* Desktop: tab atas bergaya pita */
+@media (min-width:1024px){
+  .bottom-nav{ height:auto; }
+  .nav-item.active{ box-shadow:inset 0 -3px 0 var(--accent-2); }
+}
+
+/* Avatar profil di bilah atas */
+.top-avatar{ margin-left:auto; width:36px; height:36px; min-height:36px; border-radius:50%; border:0; background:#fff; color:var(--accent); font-weight:700; font-size:13px; cursor:pointer; flex-shrink:0; }
+
+/* Desktop: sidebar jadi pita tab atas */
+@media (min-width:1024px){
+  :root{ --sidew:0px; }
+  body:not(.pre-auth){ padding-left:0; padding-top:48px; }
+  .side-toggle,.side-fab{ display:none !important; }
+  body:not(.pre-auth) .topbar{ top:48px; background:#fff; color:var(--ink); border-bottom:1px solid var(--rule); min-height:52px; padding-top:8px; padding-bottom:8px; }
+  .topbar .back-btn{ color:var(--accent); border:1px solid var(--rule-strong); }
+  .topbar .page-title{ color:var(--ink); }
+  .bottom-nav{ top:0; bottom:auto; left:0; right:0; width:auto; height:48px; flex-direction:row; align-items:stretch; gap:2px; padding:0 16px 0 0; background:var(--accent); border:0; }
+  .bottom-nav::before{ content:'StatCalc'; display:flex; align-items:center; padding:0 28px 0 18px; margin:0 8px 0 0; border:0; color:#fff; font-size:16px; font-weight:700; letter-spacing:0; }
+  .nav-item{ flex:none; flex-direction:row; align-items:center; gap:8px; min-height:0; margin:0; padding:0 18px; max-width:none; border-radius:0; color:#E6ECF2; }
+  .nav-item svg{ width:20px; height:20px; }
+  .nav-item span,.nav-item span{ font-size:13px; font-weight:600; }
+  .nav-item:not(.active):hover{ background:rgba(255,255,255,.12) !important; }
+  .nav-item.active{ background:#fff !important; color:var(--accent); box-shadow:inset 0 -3px 0 var(--accent-2); }
+  .nav-item:last-child{ margin-top:0; }
+  .top-avatar{ display:none; }
+}
+
+/* Label ganda: mobile (Lembar/Analisis/Hitung) vs desktop (Data/Stat/Fungsi) */
+.nav-item .d-l,.nav-item.desk-only{ display:none !important; }
+@media (min-width:1024px){
+  .nav-item .m-l{ display:none !important; }
+  .nav-item .d-l{ display:inline !important; }
+  .nav-item.desk-only{ display:flex !important; }
+  .nav-item[data-tab="home"]{ order:1; } .nav-item[data-tab="metode-calc"]{ order:2; }
+  .nav-item[data-tab="metode"]{ order:3; } .nav-item[data-tab="metode-graph"]{ order:4; }
+  .nav-item[data-tab="kalkulator"]{ order:5; } .nav-item[data-tab="materi"]{ order:6; }
+}
+
+/* Ubin hasil (R2, r, p) */
+.stat-grid{ gap:8px; }
+.stat-card{ background:#fff; border:1px solid var(--rule); border-radius:10px; padding:10px 12px; }
+.stat-card .k{ font-family:var(--font-body); font-size:11px; font-weight:600; text-transform:none; letter-spacing:0; color:var(--ink-faint); }
+.stat-card .v{ font-size:20px; color:var(--accent); }
+
+/* Tombol jalankan menempel di atas menu bawah (mobile) */
+@media (max-width:1023.98px){
+  #calcBtn,#smCalcBtn,#anCalcBtn,#rsCalcBtn,#stCalcBtn,#arCalcBtn{
+    position:sticky; bottom:calc(var(--navh) + var(--safe-b) + 8px); z-index:15;
+    box-shadow:0 6px 16px -6px rgba(27,36,48,.45);
+  }
+}
+
+/* Pita metode (ribbon): label grup di bawah, tab bergaya rancangan */
+.rb-main{ border-radius:10px; }
+.rb-main .rb-tabs{ background:var(--paper-2); border-bottom:1px solid var(--rule-strong); padding:6px 8px 0; }
+.rb-main .rb-tab{ border-radius:0; border:0; font-size:13px; font-weight:600; color:var(--ink-soft); min-height:36px; max-width:none; flex:0 0 auto; }
+.rb-main .rb-tab[aria-selected="true"]{ background:#fff; color:var(--accent); box-shadow:inset 0 -3px 0 var(--accent-2); border:0; }
+.rb-main .rb-grp{ flex-direction:column-reverse; border-right:1px solid var(--rule); }
+.rb-main .rb-glabel{ font-size:11px; font-weight:600; letter-spacing:0; color:var(--ink-faint); padding:4px 0 0; }
+.rb-main .rb-btn{ min-width:76px; border:0; border-radius:6px; background:none; color:var(--ink); font-size:12px; font-weight:500; }
+.rb-main .rb-btn:hover{ background:#EAF0F7; }
+.rb-main .rb-chk,.rb-main .rb-color{ background:#fff; border-radius:8px; }
+.rb-main .select-input,.rb-main .plain-input{ border-radius:6px; height:36px; }
+.rb-main .rb-tip{ background:var(--paper); color:var(--ink-soft); }
+
+/* Bilah status desktop */
+.status-bar{ display:none; }
+@media (min-width:1024px){
+  body:not(.pre-auth){ padding-bottom:28px; }
+  .status-bar{ position:fixed; left:0; right:0; bottom:0; z-index:25; height:28px; display:flex; align-items:center; gap:20px; padding:0 14px; background:var(--accent); color:#E6ECF2; font-size:12px; }
+  body.pre-auth .status-bar{ display:none; }
+  .status-bar .sb-sp{ flex:1; }
+}
+
+/* Halaman Grafik (desktop): data di kiri, pengaturan + grafik di kanan */
+@media (min-width:1100px){
+  .chapter-inner:has(.gr-chart){ display:grid; grid-template-columns:minmax(300px,380px) minmax(0,1fr); grid-auto-flow:dense; gap:20px 24px; align-items:start; max-width:1400px; }
+  .chapter-inner:has(.gr-chart) > *{ grid-column:2; min-width:0; }
+  .chapter-inner:has(.gr-chart) > .chapter-head{ grid-column:1 / -1; }
+  .chapter-inner:has(.gr-chart) > [id$="data-card"]{ grid-column:1; grid-row:2 / span 4; position:sticky; top:112px; max-height:calc(100vh - 140px); overflow:auto; }
+  .chapter-inner:has(.gr-chart) .card{ padding:20px 20px 24px; }
+  .gr-chart{ background:#fff; border:1px solid var(--rule); border-radius:10px; padding:8px; }
+}
+
+/* Materi: bentuk kartu mengikuti rancangan */
+#view-materi-detail .mt-toc,#view-materi .mt-hit,#view-materi-detail .mt-foot button{ border-radius:10px; box-shadow:none; }
+#view-materi .mt-search input{ border-radius:10px; }
+#view-materi-detail .mt-actions button{ border-radius:8px; min-height:44px; }
+#view-materi-detail .mt-head h1{ font-weight:700; letter-spacing:0; color:var(--accent); }
+#view-materi-detail .mt-sec > h2{ font-weight:700; letter-spacing:0; color:var(--accent); }
+#view-materi-detail .mt-sec p,#view-materi-detail .mt-sec li{ line-height:1.7; }
+
+/* Materi (desktop): daftar isi di kiri, bacaan di kanan */
+@media (min-width:1024px){
+  #view-materi-detail .mt-wrap{ max-width:1080px; display:grid; grid-template-columns:264px minmax(0,1fr); gap:0 40px; align-items:start; padding-bottom:56px; }
+  #view-materi-detail .mt-wrap > *{ grid-column:2; min-width:0; }
+  #view-materi-detail .mt-wrap > .mt-toc{ grid-column:1; grid-row:1 / span 60; position:sticky; top:112px; margin:16px 0 0; max-height:calc(100vh - 150px); overflow:auto; }
+  #view-materi-detail .mt-head h1{ font-size:30px; }
+  #view-materi-detail .mt-sec{ scroll-margin-top:112px; }
+}
+
+/* Lembar kerja (Method/Calc): gaya mengikuti rancangan. Spesifisitas dinaikkan karena sheet.js menyuntik gayanya sendiri. */
+html body #view-metode-calc .sc-main{ border-radius:10px; }
+html body #view-metode-calc .sc-tabs{ background:var(--paper-2); padding:6px 8px 0; }
+html body #view-metode-calc .sc-tab{ border:0; border-radius:0; flex:0 0 auto; max-width:none; min-height:36px; font-size:13px; font-weight:600; color:var(--ink-soft); }
+html body #view-metode-calc .sc-tab[aria-selected="true"]{ background:#fff; color:var(--accent); border:0; box-shadow:inset 0 -3px 0 var(--accent-2); }
+html body #view-metode-calc .sc-grp{ flex-direction:column-reverse; }
+html body #view-metode-calc .sc-glabel{ font-size:11px; font-weight:600; letter-spacing:0; padding:4px 0 0; }
+html body #view-metode-calc .sc-panel{ background:#fff; border:1px solid var(--rule); border-style:solid; border-radius:10px; }
+html body #view-metode-calc .sc-scroll{ border-radius:10px; border-color:var(--rule); background:#fff; }
+html body #view-metode-calc .sc-head,html body #view-metode-calc .sc-corner,html body #view-metode-calc .sc-gut{ background:#EEF2F6; color:var(--ink-faint); }
+html body #view-metode-calc .sc-ch.on,html body #view-metode-calc .sc-gut.on{ background:var(--accent-soft); color:var(--accent-2); }
+html body #view-metode-calc .sc-cell{ font-family:var(--font-mono); border-color:#E1E6EC; }
+html body #view-metode-calc .sc-cell.txt{ font-family:var(--font-body); }
+html body #view-metode-calc .sc-cell.fx{ background:#EAF0F7; }
+html body #view-metode-calc .sc-cell.hdr{ background:#EEF2F6; color:var(--ink-soft); font-family:var(--font-body); }
+html body #view-metode-calc .sc-cell.in{ background:var(--accent-soft); }
+html body #view-metode-calc .sc-cell:focus{ outline:2px solid var(--accent-2); }
+html body #view-metode-calc .sc-name,html body #view-metode-calc .sc-fx{ border-radius:6px; border-color:var(--rule-strong); }
+html body #view-metode-calc .sc-msg.ok{ background:#E3F0E8; }
+@media (min-width:1024px){
+  html body #view-metode-calc .chapter-inner{ max-width:1400px; }
+  html body #view-metode-calc .sc-scroll{ height:calc(clamp(320px,62vh,640px) / var(--scz,1)); }
+}
+
+/* Analisis cepat di Lembar */
+.sc-quick{ background:#F8FAFC; border:1px solid var(--rule); border-radius:10px; padding:12px 14px; }
+.sc-quick .sq-k{ font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:8px; }
+.sc-quick .sq-row{ display:flex; gap:8px; overflow-x:auto; scrollbar-width:none; }
+.sc-quick .sq-row::-webkit-scrollbar{ display:none; }
+.sc-quick .sq-chip{ flex:0 0 auto; height:44px; padding:0 16px; border:1px solid var(--rule-strong); border-radius:100px; background:#fff; color:var(--accent); font-size:14px; font-weight:600; cursor:pointer; }
+.sc-quick .sq-chip.pri{ background:var(--accent); border-color:var(--accent); color:#fff; }
+.sc-quick .sq-info{ font-size:12px; color:var(--ink-faint); margin-top:8px; }
+@media (max-width:1023.98px){
+  .sc-quick{ position:sticky; bottom:calc(var(--navh) + var(--safe-b)); z-index:15; border-radius:10px 10px 0 0; margin:0 -14px; border-left:0; border-right:0; }
+}
+
+/* Materi: kartu "Coba di lembar" */
+#view-materi-detail .mt-try{ margin:16px 0 4px; padding:14px 16px; background:#F8FAFC; border:1px solid var(--rule); border-radius:10px; }
+#view-materi-detail .mt-try h3{ margin:0 0 4px; font-size:15px; font-weight:700; color:var(--ink); }
+#view-materi-detail .mt-try p{ margin:0 0 10px; font-size:13px; line-height:1.5; color:var(--ink-soft); }
+.mt-try-tbl{ background:#fff; border:1px solid var(--rule); border-radius:8px; overflow:auto; margin-bottom:12px; }
+.mt-try-tbl table{ border-collapse:collapse; width:100%; font-size:13px; }
+.mt-try-tbl th{ background:#EEF2F6; color:var(--ink-soft); font-size:12px; font-weight:600; padding:6px 10px; text-align:left; border-bottom:1px solid var(--rule); }
+.mt-try-tbl td{ padding:6px 10px; border-bottom:1px solid #E1E6EC; font-family:var(--font-mono); }
+.mt-try-tbl td.more{ text-align:center; color:var(--ink-faint); font-family:var(--font-body); border-bottom:0; }
+.mt-try-go{ width:100%; height:44px; border:0; border-radius:8px; background:var(--accent-2); color:#fff; font-size:14px; font-weight:600; cursor:pointer; }
+@media (min-width:1360px){
+  #view-materi-detail .mt-wrap{ max-width:1400px; grid-template-columns:264px minmax(0,720px) 320px; justify-content:center; }
+  #view-materi-detail .mt-wrap > .mt-try{ grid-column:3; grid-row:1 / span 60; align-self:start; position:sticky; top:112px; margin:16px 0 0; }
+}
+
+/* Panel Variabel di samping Lembar (desktop lebar) */
+.sc-vars{ display:none; }
+@media (min-width:1280px){
+  html body #view-metode-calc .chapter-inner{ display:grid; grid-template-columns:232px minmax(0,1fr); grid-auto-flow:dense; gap:16px 24px; align-items:start; }
+  html body #view-metode-calc .chapter-inner > *{ grid-column:2; min-width:0; }
+  html body #view-metode-calc .chapter-inner > .chapter-head{ grid-column:1 / -1; }
+  html body #view-metode-calc .chapter-inner > .sc-vars{ grid-column:1; grid-row:2 / span 30; display:block; position:sticky; top:112px; background:#fff; border:1px solid var(--rule); border-radius:10px; padding:6px 0 8px; max-height:calc(100vh - 150px); overflow:auto; }
+  .sc-vars .sv-k{ font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint); padding:10px 14px 6px; }
+  .sc-vars .sv-row{ display:flex; align-items:center; gap:8px; padding:7px 14px; font-size:13px; }
+  .sc-vars .sv-n{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .sc-vars .sv-t{ font-size:10.5px; font-weight:600; padding:2px 6px; border-radius:4px; background:#E6ECF2; color:#33475B; }
+  .sc-vars .sv-r{ font-size:10.5px; font-weight:700; padding:2px 6px; border-radius:4px; background:var(--accent-soft); color:var(--accent-2); }
+  .sc-vars .sv-empty{ padding:6px 14px 10px; font-size:12.5px; color:var(--ink-faint); }
+}
+
+/* Riwayat kalkulator: panel mengikuti rancangan (daftar baris, hasil tebal) */
+.calc-hist-card{ background:#F8FAFC; border:1px solid var(--rule); border-radius:10px; padding:0; overflow:hidden; }
+.calc-hist-head{ background:#fff; border-bottom:1px solid var(--rule); height:44px; padding:0 14px; margin:0; }
+.calc-hist-head h2{ font-family:var(--font-body); font-size:14px; font-weight:700; }
+.calc-hist-head .calc-mode-btn{ background:none; border:0; color:var(--accent-2); font-size:13px; font-weight:600; min-height:36px; padding:0 6px; cursor:pointer; }
+.calc-hist{ gap:0; max-height:none; }
+.calc-hist-item{ background:transparent; border:0; border-bottom:1px solid #E1E6EC; border-radius:0; padding:10px 14px; text-align:left; }
+.calc-hist-item:last-child{ border-bottom:0; }
+.calc-hist-item .hx{ font-size:12.5px; color:var(--ink-faint); }
+.calc-hist-item .hr{ font-size:17px; font-weight:600; color:var(--accent); }
+.calc-hist-empty{ padding:20px 14px; }
+.calc-hist-card .hint{ margin:0; padding:10px 14px 12px; font-size:12px; color:var(--ink-faint); border-top:1px solid #E1E6EC; }
+@media (min-width:1024px){
+  .calc-layout{ grid-template-columns:minmax(0,1fr) 320px; gap:24px; }
+  .calc-hist-card{ position:sticky; top:112px; padding:0; align-self:start; }
+  .calc-hist{ max-height:calc(100vh - 290px); min-height:200px; }
+}
+
+/* Grafik (desktop lebar): pita pengaturan menjadi panel "Pengaturan grafik" di kanan */
+@media (min-width:1440px){
+  .chapter-inner:has(.gr-chart){ grid-template-columns:minmax(300px,340px) minmax(0,1fr) 320px; max-width:1680px; }
+  .chapter-inner:has(.gr-chart) > .rb-main{ grid-column:3; grid-row:2 / span 4; position:sticky; top:112px; max-height:calc(100vh - 140px); overflow:auto; background:#F8FAFC; border-radius:10px; }
+  .chapter-inner:has(.gr-chart) > .rb-main::before{ content:'Pengaturan grafik'; display:block; padding:14px 16px 8px; font-size:15px; font-weight:700; color:var(--ink); background:#F8FAFC; }
+  .chapter-inner:has(.gr-chart) > .rb-main .rb-tabs{ padding:0 10px; background:#F8FAFC; }
+  .chapter-inner:has(.gr-chart) > .rb-main .rb-tab{ padding:0 12px; flex:1 1 auto; text-align:center; }
+  .chapter-inner:has(.gr-chart) > .rb-main .rb-panel{ background:#F8FAFC; }
+  .chapter-inner:has(.gr-chart) > .rb-main .rb-body{ flex-direction:column; overflow:visible; padding:12px 14px 6px; gap:14px; }
+  .chapter-inner:has(.gr-chart) > .rb-main .rb-grp{ flex-direction:column; padding:0 0 14px; border-right:0; border-bottom:1px solid var(--rule); }
+  .chapter-inner:has(.gr-chart) > .rb-main .rb-grp:last-child{ border-bottom:0; padding-bottom:0; }
+  .chapter-inner:has(.gr-chart) > .rb-main .rb-gbody{ grid-template-columns:minmax(0,1fr); }
+  .chapter-inner:has(.gr-chart) > .rb-main .rb-glabel{ order:-1; text-align:left; padding:0 0 8px; text-transform:uppercase; letter-spacing:.06em; font-size:11px; }
+  .chapter-inner:has(.gr-chart) > .rb-main .select-input,
+  .chapter-inner:has(.gr-chart) > .rb-main .plain-input{ width:100%; }
+  .chapter-inner:has(.gr-chart) > .rb-main .rb-chk,
+  .chapter-inner:has(.gr-chart) > .rb-main .rb-color,
+  .chapter-inner:has(.gr-chart) > .rb-main .rb-btn{ width:100%; }
+}

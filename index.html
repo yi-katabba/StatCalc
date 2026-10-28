@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>StatCalc - APLIKASI Kerja Statistik</title>
-<meta name="theme-color" content="#17212C">
+<meta name="theme-color" content="#22384A">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -12,7 +12,7 @@
 <meta name="color-scheme" content="light">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* =========================================================================
    STATCALC - single-file webview app
@@ -636,6 +636,7 @@ table.mini-table td.bad{ color:var(--bad); font-weight:700; }
    (specificity ID selector sebelumnya membuat #view-login SELALU tampil,
    menimpa halaman lain walau class "active"-nya sudah dipindah oleh JS). */
 #view-login.active{ display:flex; }
+#view-login .login-sky{ position:absolute; inset:0; z-index:0; }
 .login-box{
   position:relative; z-index:2;
   background:var(--paper); border-radius:18px;
@@ -681,6 +682,14 @@ table.mini-table td.bad{ color:var(--bad); font-weight:700; }
   padding:calc(14px + var(--safe-t)) 20px 34px;
   transition:background 3s ease;
 }
+.sky-banner-bg{ position:absolute; inset:0; z-index:0; transition:background 4s ease; }
+.sky-star-canvas{ position:absolute; inset:0; width:100%; height:100%; z-index:1; pointer-events:none; }
+.sky-clouds{ position:absolute; inset:0; z-index:2; pointer-events:none; transition:opacity 3s ease; }
+.sky-extras{ position:absolute; inset:0; z-index:3; pointer-events:none; }
+.sky-orbit{ position:absolute; width:260px; height:130px; bottom:0; left:50%; transform:translateX(-50%); z-index:3; pointer-events:none; overflow:visible; }
+.sky-body{ position:absolute; width:34px; height:34px; display:flex; align-items:center; justify-content:center; font-size:26px; line-height:1; will-change:transform; }
+@keyframes skyDrift{ 0%,100%{ transform:translateX(0); } 50%{ transform:translateX(14px); } }
+@keyframes skyFloat{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-6px); } }
 
 .sky-header-row{ position:relative; z-index:4; display:flex; align-items:center; justify-content:space-between; gap:12px; }
 .sky-user{ display:flex; align-items:center; gap:12px; min-width:0; }
@@ -693,6 +702,7 @@ table.mini-table td.bad{ color:var(--bad); font-weight:700; }
 .sky-greet{ min-width:0; }
 .sky-greet .g-hi{ font-size:11.5px; color:rgba(255,255,255,0.78); font-weight:500; }
 .sky-greet .g-name{ font-size:16px; color:#fff; font-weight:700; font-family:var(--font-display); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:44vw; }
+.sky-clock{ font-family:var(--font-mono); font-size:11.5px; color:rgba(255,255,255,0.85); background:rgba(0,0,0,0.18); padding:5px 11px; border-radius:100px; flex-shrink:0; }
 
 .eyebrow.on-sky{ border-color:rgba(255,255,255,0.6); color:#fff; }
 .cover.on-sky{ position:relative; z-index:4; padding-top:18px; }
@@ -1083,6 +1093,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
   .sky-banner .cover.on-sky{ max-width:none; margin:0; }
   .quote-card{ margin:18px 0 0; max-width:640px; }
   .sky-greet .g-name{ max-width:320px; }
+  .sky-orbit{ width:340px; height:160px; }
 
   /* Grid menu */
   .hub-grid{ grid-template-columns:repeat(4,1fr); gap:16px; }
@@ -1290,254 +1301,8 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
   .calc-math{ font-size:42px; }
   .calc-btn{ min-height:62px; }
 }
-
-/* =========================================================================
-   TEMA "PERANGKAT LUNAK STATISTIK"
-   Terinspirasi SPSS / Minitab / JASP: panel kerja abu-biru dingin, toolbar
-   gelap, kartu bergaris tipis, tabel output bergaya jurnal (garis atas-bawah),
-   tabel data bergaya spreadsheet, angka monospasi.
-   Blok ini sengaja diletakkan paling akhir agar menimpa gaya sebelumnya.
-   ========================================================================= */
-:root{
-  --paper:#EDF0F4; --paper-2:#E3E8EE; --rule:#D5DBE3; --rule-strong:#B4BECB;
-  --ink:#141B24; --ink-soft:#4F5B69; --ink-faint:#7C8896;
-  --accent:#1B4F8A; --accent-hi:#2461A6; --accent-press:#153E6E;
-  --accent-2:#D98A00; --accent-soft:#E2ECF7;
-  --good:#1F6B45; --bad:#B23A28; --bad-bg:#FBE9E5;
-  --chrome:#17212C; --chrome-2:#202E3D;
-  --font-body:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,system-ui,sans-serif;
-  --font-display:var(--font-body);
-  --font-mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Courier New',monospace;
-  --radius:6px;
-  --card-shadow:0 1px 0 rgba(20,27,36,.04), 0 2px 8px -4px rgba(20,27,36,.14);
-  --shadow:var(--card-shadow);
-}
-html{ background:var(--chrome); }
-body{ font-feature-settings:'tnum' 1,'cv11' 1; }
-@media (min-width:700px){ html{ background:var(--paper); } }
-
-/* Kertas grafik halus di belakang seluruh halaman */
-.sheet-bg{
-  display:block; left:0; width:100%; transform:none;
-  background-image:
-    linear-gradient(rgba(27,79,138,.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(27,79,138,.045) 1px, transparent 1px);
-  background-size:24px 24px; background-position:0 0;
-}
-@media (max-width:699.98px){
-  .sheet-bg{ left:50%; width:min(100%,var(--shell)); transform:translateX(-50%); }
-}
-.mono, .stat-card .v, table.result-table, table.mini-table, table.data-table{ font-variant-numeric:tabular-nums; }
-
-/* ---------- Toolbar atas ---------- */
-.topbar{ background:var(--chrome); border-bottom:1px solid #0C131B; box-shadow:0 2px 0 var(--accent); }
-.topbar .page-title{ font-size:15.5px; font-weight:700; letter-spacing:.01em; }
-.back-btn{ border-radius:8px; width:38px; height:38px; min-height:38px; background:rgba(255,255,255,.08); }
-.side-toggle{ border-radius:8px; background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.2); }
-
-/* ---------- Header beranda: ruang kerja statistik ---------- */
-.sky-banner{
-  position:relative; overflow:hidden; border-radius:0; color:#fff;
-  background:
-    radial-gradient(520px 220px at 88% 0%, rgba(36,97,166,.55), transparent 70%),
-    linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px),
-    var(--chrome);
-  background-size:auto, 22px 22px, 22px 22px, auto;
-  border-bottom:3px solid var(--accent-2);
-  transition:none;
-}
-.sky-avatar{ border-radius:10px; width:42px; height:42px; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.32); font-family:var(--font-mono); font-size:15px; }
-.sky-greet .g-hi{ font-family:var(--font-mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:rgba(255,255,255,.62); }
-.sky-greet .g-name{ font-family:var(--font-body); font-size:15.5px; }
-.hd-badge{ display:inline-flex; align-items:center; gap:7px; flex-shrink:0; font-family:var(--font-mono); font-size:10.5px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:rgba(255,255,255,.8); border:1px solid rgba(255,255,255,.22); padding:4px 10px; border-radius:4px; }
-.hd-badge i{ width:7px; height:7px; border-radius:50%; background:#4ADE80; box-shadow:0 0 0 3px rgba(74,222,128,.2); }
-.eyebrow{ font-family:var(--font-mono); font-size:10.5px; font-weight:600; letter-spacing:.1em; border-radius:4px; padding:4px 9px; }
-.eyebrow.on-sky{ background:rgba(255,255,255,.1); color:#9CC4F2; border:1px solid rgba(255,255,255,.2); }
-.cover.on-sky h1{ font-size:34px; font-weight:800; letter-spacing:-.03em; text-shadow:none; }
-.cover.on-sky h1::after{ content:'\03A3'; margin-left:10px; font-weight:500; color:var(--accent-2); font-size:.8em; }
-.cover.on-sky .lede{ color:rgba(255,255,255,.76); font-size:13.5px; }
-.hd-plot{ position:relative; z-index:1; display:block; width:100%; max-width:560px; height:56px; margin:16px 0 0; }
-.hd-plot .hp-bars rect{ fill:rgba(156,196,242,.22); stroke:rgba(156,196,242,.45); stroke-width:1; vector-effect:non-scaling-stroke; }
-.hd-plot .hp-curve{ fill:none; stroke:var(--accent-2); stroke-width:2; }
-.hd-plot .hp-axis{ stroke:rgba(255,255,255,.4); stroke-width:1; }
-.quote-card{
-  border-radius:4px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14);
-  border-left:3px solid var(--accent-2); backdrop-filter:none; padding:12px 16px;
-}
-.quote-card::before{ content:'Catatan statistik'; display:block; font-family:var(--font-mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--accent-2); margin-bottom:5px; }
-.quote-card .q-text{ font-family:var(--font-body); font-style:normal; font-size:13.5px; color:rgba(255,255,255,.92); }
-.quote-card .q-author{ color:rgba(255,255,255,.6); }
-
-/* Judul bagian */
-.toc-heading h2, .toc-section h2{ display:flex; align-items:center; font-size:14px !important; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft); }
-.toc-heading h2::before{ content:''; width:4px; height:15px; background:var(--accent-2); margin-right:9px; border-radius:1px; }
-.cover h1, .chapter-head h1{ letter-spacing:-.025em; }
-.eyebrow{ background:var(--accent-soft); color:var(--accent); }
-
-/* ---------- Ubin menu ---------- */
-.hub-card, .menu-card{
-  border:1px solid var(--rule); border-top:3px solid var(--accent); border-radius:8px;
-  background:#fff; box-shadow:var(--card-shadow);
-}
-.hub-card:has(.tone-gold), .menu-card:has(.tone-gold){ border-top-color:#C77D0A; }
-.hub-card:has(.tone-green), .menu-card:has(.tone-green){ border-top-color:#1F8A55; }
-.hub-card:has(.tone-teal), .menu-card:has(.tone-teal){ border-top-color:#0E8A8D; }
-.hub-card:has(.tone-plum), .menu-card:has(.tone-plum){ border-top-color:#6B4BA8; }
-.hub-card:has(.tone-rust), .menu-card:has(.tone-rust){ border-top-color:#B23A28; }
-.hub-card .hc-icon, .menu-card .mc-icon{ border-radius:8px; width:42px; height:42px; }
-.hc-icon.tone-navy, .mc-icon.tone-navy{ background:#DCE8F6; color:#1B4F8A; }
-.hc-icon.tone-gold, .mc-icon.tone-gold{ background:#FBEBCF; color:#8A5A00; }
-.hc-icon.tone-green, .mc-icon.tone-green{ background:#D8EFE2; color:#1F6B45; }
-.hc-icon.tone-teal, .mc-icon.tone-teal{ background:#D5EEEE; color:#0E6F72; }
-.hc-icon.tone-plum, .mc-icon.tone-plum{ background:#E8E0F3; color:#5B3A8C; }
-.hc-icon.tone-rust, .mc-icon.tone-rust{ background:#F7DDD6; color:#A5402C; }
-.hub-card .hc-title, .menu-card .mc-title{ font-weight:700; letter-spacing:-.005em; }
-.menu-card .mc-sub{ letter-spacing:.02em; }
-.menu-card .mc-status{ border-radius:3px; font-weight:600; }
-.menu-card .mc-status.available{ background:#DDF0E5; color:var(--good); }
-@media (min-width:700px) and (hover:hover){
-  .hub-card:hover, .menu-card:not(.is-soon):hover{ transform:none; border-color:var(--accent); box-shadow:0 0 0 1px var(--accent), 0 8px 20px -12px rgba(27,79,138,.45); }
-}
-
-/* ---------- Panel & kartu ---------- */
-.card, .petunjuk-item, .profile-stat, .test-block{
-  border:1px solid var(--rule); border-radius:8px; box-shadow:var(--card-shadow); background:#fff;
-}
-.card h2{ font-size:16px; font-weight:700; letter-spacing:-.005em; padding-bottom:10px; margin-bottom:12px; border-bottom:1px solid var(--rule); }
-.step-tag{ background:none; border-left:3px solid var(--accent-2); border-radius:0; padding:1px 0 1px 8px; color:var(--accent); font-size:10.5px; letter-spacing:.12em; font-weight:700; margin-bottom:8px; }
-.petunjuk-num{ border-radius:6px; background:var(--chrome); }
-.chapter-head .eyebrow{ margin-bottom:10px; }
-
-/* ---------- Kontrol input ---------- */
-.select-input, .plain-input, .stepper, .login-field input{ background:#fff; border:1px solid var(--rule-strong); border-radius:6px; }
-.select-input:focus, .plain-input:focus, .login-field input:focus{ border-color:var(--accent); box-shadow:0 0 0 3px rgba(27,79,138,.18); outline:none; }
-.stepper{ height:44px; }
-.stepper button{ background:var(--paper-2); color:var(--accent); }
-.plain-input, .stepper input{ font-variant-numeric:tabular-nums; }
-.btn-primary{ background:var(--accent); border-color:var(--accent); border-radius:6px; box-shadow:none; font-weight:700; letter-spacing:.01em; }
-.btn-primary:hover{ background:var(--accent-hi); }
-.btn-ghost{ background:#fff; color:var(--accent); border:1px solid var(--accent); border-radius:6px; font-weight:700; }
-.btn-ghost:hover{ background:var(--accent-soft); }
-label{ font-weight:600; }
-
-/* ---------- Tabel data (gaya spreadsheet / Data View) ---------- */
-.table-scroll{ border-radius:6px; background:#fff; box-shadow:inset 0 0 0 1px var(--rule-strong); }
-table.data-table{ border-collapse:collapse; }
-table.data-table thead th{ background:linear-gradient(#EEF2F6,#E1E7EE); border:1px solid var(--rule-strong); border-bottom:2px solid var(--rule-strong); color:var(--ink); font-size:12.5px; font-weight:700; letter-spacing:.02em; }
-table.data-table tbody td{ border:1px solid var(--rule); }
-table.data-table tbody td.rownum{ background:#EEF2F6; color:var(--ink-faint); font-family:var(--font-mono); border-right:1px solid var(--rule-strong); }
-table.data-table input[type="text"]{ font-family:var(--font-mono); font-size:14.5px; }
-table.data-table input:focus{ background:#fff; box-shadow:inset 0 0 0 2px var(--accent); }
-table.data-table input.invalid{ background:var(--bad-bg); box-shadow:inset 0 0 0 2px var(--bad); }
-
-/* ---------- Tabel hasil (gaya output jurnal / APA) ---------- */
-table.result-table{ border-collapse:collapse; background:#fff; font-size:13px; }
-table.result-table caption{ font-weight:700; color:var(--ink); padding:0 0 8px; text-align:left; }
-.table-scroll:has(table.result-table){ box-shadow:none; background:transparent; border-radius:0; }
-table.result-table th, table.result-table td{ border:none; border-bottom:1px solid var(--rule); padding:7px 12px; }
-table.result-table thead th{ background:#fff; border-top:2px solid var(--ink); border-bottom:1.5px solid var(--ink); font-weight:700; }
-table.result-table tbody tr:nth-child(even) td{ background:#F6F8FB; }
-table.result-table tbody td:first-child, table.result-table tbody th, table.result-table tbody tr:nth-child(even) td:first-child{ background:#EEF2F6; text-align:center; font-weight:600; }
-table.result-table tbody tr:last-child td, table.result-table tbody tr:last-child th{ border-bottom:2px solid var(--ink); }
-table.result-table tfoot td{ background:var(--accent-soft); color:var(--accent); font-weight:700; border-bottom:1px solid var(--rule-strong); }
-table.mini-table{ border-collapse:collapse; background:#fff; }
-table.mini-table th, table.mini-table td{ border:none; border-bottom:1px solid var(--rule); padding:6px 10px; }
-table.mini-table thead th{ background:#fff; border-top:2px solid var(--ink); border-bottom:1.5px solid var(--ink); }
-table.mini-table tbody tr:last-child td{ border-bottom:2px solid var(--ink); }
-
-/* ---------- Tab hasil: tab klasik ---------- */
-.tabs{ display:flex; background:none; border:none; border-bottom:1px solid var(--rule-strong); border-radius:0; padding:0; gap:2px; margin:0 0 16px; max-width:100%; }
-.tabs{ overflow-y:hidden; }
-.tab-btn{ background:transparent; border:1px solid transparent; border-top:3px solid transparent; border-radius:6px 6px 0 0; margin:0; padding:9px 16px; min-height:42px; font-weight:600; color:var(--ink-soft); box-shadow:none; }
-.tab-btn:hover{ background:rgba(27,79,138,.06); color:var(--ink); }
-.tab-btn.active{ background:#fff; color:var(--accent); font-weight:700; border:1px solid var(--rule-strong); border-top:3px solid var(--accent); border-bottom-color:#fff; box-shadow:none; }
-
-/* ---------- Hasil: kartu statistik, langkah, kesimpulan ---------- */
-.stat-card{ background:#fff; border:1px solid var(--rule); border-left:3px solid var(--accent); border-radius:6px; box-shadow:none; }
-.stat-card .k{ font-size:10.5px; letter-spacing:.08em; }
-.stat-card .v{ font-size:19px; letter-spacing:-.01em; }
-.equation-box{ background:var(--chrome); border-radius:8px; border-left:4px solid var(--accent-2); text-align:left; }
-.equation-box .label{ color:var(--accent-2); opacity:1; }
-.step-block{ background:#fff; border:1px solid var(--rule); border-left:3px solid var(--accent); border-radius:6px; }
-.step-block::before{ border-radius:5px; background:var(--chrome); width:24px; height:24px; font-size:12px; }
-.step-block .formula, .step-block .matrix{ background:#F6F8FB; border:1px solid var(--rule); border-radius:5px; }
-.interpretation{ background:#FFF9EC; border:1px solid #F0DFB8; border-left:3px solid var(--accent-2); border-radius:6px; padding:12px 14px; }
-.hyp-box{ background:#F3F6FA; border:1px solid var(--rule); border-radius:6px; }
-.test-verdict{ border-radius:4px; }
-.test-verdict.ok{ background:#DDF0E5; }
-.chart-wrap canvas{ border-radius:6px; border:1px solid var(--rule); }
-.error-msg{ border-radius:6px; border-left:3px solid var(--bad); }
-
-/* ---------- Filter grafik ---------- */
-.gf-chip{ border-radius:6px; font-weight:600; }
-.gf-chip.active{ background:var(--chrome); border-color:var(--chrome); }
-.gf-desc{ border-radius:6px; background:var(--accent-soft); border-left-color:var(--accent); }
-.mc-tags span{ border-radius:3px; }
-
-/* ---------- Kuis ---------- */
-.quiz-opt{ border-radius:8px; border:1px solid var(--rule-strong); }
-.quiz-opt .qo-letter{ border-radius:5px; }
-.quiz-progress-bar{ border-radius:2px; height:6px; }
-.quiz-progress-fill{ background:var(--accent); border-radius:2px; }
-
-/* ---------- Kalkulator ilmiah ---------- */
-.calc-display{ background:var(--chrome); border-radius:8px; border-bottom:3px solid var(--accent-2); }
-.calc-btn{ border:1px solid var(--rule); border-bottom-width:2px; background:#fff; border-radius:8px; }
-.calc-btn.op, .calc-btn.nav{ background:var(--accent-soft); color:var(--accent); border-color:#C9DAEE; }
-.calc-btn.fn{ background:#F3F6FA; }
-.calc-btn.eq{ background:var(--accent); border-color:var(--accent-press); }
-.calc-btn.clear{ background:var(--bad-bg); border-color:#F1C8BF; }
-.calc-mode-btn{ border-radius:5px; }
-.calc-hist-item{ border-radius:6px; }
-
-/* ---------- Toast & profil ---------- */
-.toast{ border-radius:6px; background:var(--chrome); border-left:3px solid var(--accent-2); }
-.profile-panel-head{ background:var(--chrome); border-bottom:3px solid var(--accent-2); }
-.profile-avatar-big{ border-radius:12px; font-family:var(--font-mono); }
-.profile-action{ border-radius:6px; border:1px solid var(--rule); }
-.profile-stat .p-v{ font-family:var(--font-mono); }
-
-/* ---------- Navigasi bawah (ponsel/tablet) ---------- */
-.bottom-nav{ background:#fff; border-top:1px solid var(--rule-strong); box-shadow:0 -4px 14px -10px rgba(20,27,36,.4); }
-.nav-item svg{ width:24px; height:24px; padding:0; border-radius:0; }
-.nav-item.active svg{ background:none; }
-.nav-item:active svg{ background:none; }
-.nav-item::before{ content:''; position:absolute; top:-6px; left:26%; right:26%; height:3px; border-radius:0 0 3px 3px; background:transparent; transition:background .15s ease; }
-.nav-item.active::before{ background:var(--accent); }
-.nav-item.active{ color:var(--accent); }
-
-/* ---------- Login ---------- */
-#view-login{
-  background:
-    radial-gradient(520px 320px at 85% 0%, rgba(36,97,166,.5), transparent 70%),
-    linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px),
-    var(--chrome);
-  background-size:auto, 24px 24px, 24px 24px, auto;
-}
-.login-box{ background:#fff; border-radius:10px; border:1px solid rgba(255,255,255,.2); border-top:4px solid var(--accent-2); box-shadow:0 24px 60px -16px rgba(0,0,0,.7); }
-.login-mark .mark-badge{ border-radius:10px; background:var(--chrome); font-family:var(--font-mono); font-size:20px; letter-spacing:-.04em; box-shadow:inset 0 -3px 0 var(--accent-2); }
-.login-field label{ letter-spacing:.1em; }
-.btn-login{ border-radius:6px; background:var(--accent); letter-spacing:.01em; }
-.btn-login:hover{ background:var(--accent-hi); }
-
-/* ---------- PC: sidebar gelap ala aplikasi statistik ---------- */
-@media (min-width:1024px){
-  .bottom-nav{ background:var(--chrome); border-right:1px solid #0C131B; box-shadow:none; }
-  .bottom-nav::before{ content:'\03A3  StatCalc'; color:#fff; font-size:19px; font-weight:800; letter-spacing:-.01em; border-bottom:1px solid rgba(255,255,255,.12); }
-  .nav-item{ color:rgba(255,255,255,.66); border-radius:6px; }
-  .nav-item svg{ stroke:currentColor; }
-  .nav-item::before{ top:9px; bottom:9px; left:0; right:auto; width:3px; height:auto; border-radius:0 3px 3px 0; }
-  .nav-item.active::before{ background:var(--accent-2); }
-  .nav-item.active{ background:rgba(255,255,255,.1) !important; color:#fff; }
-  .nav-item:not(.active):hover{ background:rgba(255,255,255,.06) !important; color:#fff; }
-  .side-fab{ background:rgba(255,255,255,.1); color:#fff; border-color:rgba(255,255,255,.22); box-shadow:none; border-radius:8px; }
-  .side-fab:hover{ background:rgba(255,255,255,.18); }
-  body.side-off .side-fab{ background:#fff; color:var(--accent); border-color:var(--rule-strong); }
-  .sky-banner{ border-radius:0; }
-}
 </style>
+<link rel="stylesheet" href="statcalc-theme.css">
 <link rel="stylesheet" href="Method/Materi/katex/katex.min.css">
 </head>
 <body class="pre-auth">
@@ -1546,6 +1311,7 @@ table.mini-table tbody tr:last-child td{ border-bottom:2px solid var(--ink); }
 
 <!-- ===================== LOGIN ===================== -->
 <section class="view active" id="view-login">
+  <div class="login-sky" id="loginSky"></div>
   <div class="login-box">
     <div class="login-mark">
       <span class="mark-badge" aria-hidden="true">SC</span>
@@ -1568,6 +1334,7 @@ table.mini-table tbody tr:last-child td{ border-bottom:2px solid var(--ink); }
     <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M9.5 4.5v15"/></svg>
   </button>
   <span class="page-title" id="pageTitle"></span>
+  <button type="button" class="top-avatar" id="topAvatar" aria-label="Profil">?</button>
 </header>
 
 <button type="button" class="side-fab" id="sideFab" aria-pressed="false" aria-label="Sembunyikan menu samping" title="Sembunyikan menu samping">
@@ -1577,6 +1344,12 @@ table.mini-table tbody tr:last-child td{ border-bottom:2px solid var(--ink); }
 <!-- ===================== TAB: BERANDA ===================== -->
 <main class="view" id="view-home">
   <div class="sky-banner" id="skyBanner">
+    <div class="sky-banner-bg" id="skyBg"></div>
+    <canvas class="sky-star-canvas" id="skyStars"></canvas>
+    <div class="sky-clouds" id="skyClouds"></div>
+    <div class="sky-extras" id="skyExtras"></div>
+    <div class="sky-orbit"><div class="sky-body" id="skyBody"></div></div>
+
     <div class="sky-header-row">
       <div class="sky-user" id="openProfileBtn">
         <div class="sky-avatar" id="skyAvatar">?</div>
@@ -1585,7 +1358,7 @@ table.mini-table tbody tr:last-child td{ border-bottom:2px solid var(--ink); }
           <div class="g-name" id="skyGreetName">-</div>
         </div>
       </div>
-      <span class="hd-badge"><i aria-hidden="true"></i>Offline</span>
+      <div class="sky-clock" id="skyClock">--:--</div>
     </div>
 
     <section class="cover on-sky" style="padding-left:0;padding-right:0;padding-bottom:0;">
@@ -1593,19 +1366,6 @@ table.mini-table tbody tr:last-child td{ border-bottom:2px solid var(--ink); }
       <h1>StatCalc</h1>
       <p class="lede">Kumpulan kalkulator statistik yang berjalan langsung di perangkat Anda - tanpa server, tanpa data terkirim ke mana pun.</p>
     </section>
-
-    <svg class="hd-plot" viewBox="0 0 320 64" preserveAspectRatio="none" aria-hidden="true">
-      <g class="hp-bars">
-        <rect x="14"  y="52" width="22" height="12"/><rect x="40"  y="44" width="22" height="20"/>
-        <rect x="66"  y="32" width="22" height="32"/><rect x="92"  y="18" width="22" height="46"/>
-        <rect x="118" y="8"  width="22" height="56"/><rect x="144" y="6"  width="22" height="58"/>
-        <rect x="170" y="14" width="22" height="50"/><rect x="196" y="26" width="22" height="38"/>
-        <rect x="222" y="38" width="22" height="26"/><rect x="248" y="48" width="22" height="16"/>
-        <rect x="274" y="55" width="22" height="9"/>
-      </g>
-      <path class="hp-curve" vector-effect="non-scaling-stroke" d="M6 62 C60 60 84 22 155 5 C226 22 250 60 306 62"/>
-      <line class="hp-axis" x1="6" y1="63.5" x2="314" y2="63.5" vector-effect="non-scaling-stroke"/>
-    </svg>
 
     <div class="quote-card">
       <p class="q-text" id="quoteText">&ldquo;&hellip;&rdquo;</p>
@@ -2561,27 +2321,15 @@ table.mini-table tbody tr:last-child td{ border-bottom:2px solid var(--ink); }
 
 <!-- ===================== BOTTOM NAVIGATION ===================== -->
 <nav class="bottom-nav" id="bottomNav">
-  <button type="button" class="nav-item active" data-tab="home">
-    <svg viewBox="0 0 24 24"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9a1 1 0 0 0 1 1h3v-5h4v5h3a1 1 0 0 0 1-1v-9"/></svg>
-    <span>Beranda</span>
-  </button>
-  <button type="button" class="nav-item" data-tab="metode">
-    <svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg>
-    <span>Metode</span>
-  </button>
-  <button type="button" class="nav-item" data-tab="materi">
-    <svg viewBox="0 0 24 24"><path d="M12 6.5C10.3 5.2 8 4.5 4.5 4.5v13c3.5 0 5.8.7 7.5 2 1.7-1.3 4-2 7.5-2v-13c-3.5 0-5.8.7-7.5 2Z"/><path d="M12 6.5v13"/></svg>
-    <span>Materi</span>
-  </button>
-  <button type="button" class="nav-item" data-tab="kalkulator">
-    <svg viewBox="0 0 24 24"><rect x="4.5" y="2.5" width="15" height="19" rx="2.4"/><line x1="8" y1="7" x2="16" y2="7"/><circle cx="8.5" cy="12" r="0.6" fill="currentColor"/><circle cx="12" cy="12" r="0.6" fill="currentColor"/><circle cx="15.5" cy="12" r="0.6" fill="currentColor"/><circle cx="8.5" cy="16" r="0.6" fill="currentColor"/><circle cx="12" cy="16" r="0.6" fill="currentColor"/><circle cx="15.5" cy="16" r="0.6" fill="currentColor"/></svg>
-    <span>Hitung</span>
-  </button>
-  <button type="button" class="nav-item" data-tab="profil" id="navProfilBtn">
-    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c1.2-4 4-6 7.5-6s6.3 2 7.5 6"/></svg>
-    <span>Profil</span>
-  </button>
+  <button type="button" class="nav-item active" data-tab="home"><svg viewBox="0 0 24 24"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9a1 1 0 0 0 1 1h3v-5h4v5h3a1 1 0 0 0 1-1v-9"/></svg><span>Beranda</span></button>
+  <button type="button" class="nav-item" data-tab="metode-calc"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 10h17M10 4.5v15"/></svg><span class="m-l">Lembar</span><span class="d-l">Data</span></button>
+  <button type="button" class="nav-item" data-tab="metode"><svg viewBox="0 0 24 24"><path d="M4 4v16h16M7 16l4-5 3 2 5-7"/></svg><span class="m-l">Analisis</span><span class="d-l">Stat</span></button>
+  <button type="button" class="nav-item desk-only" data-tab="metode-graph"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 15l3-4 2 2 3-5"/></svg><span>Grafik</span></button>
+  <button type="button" class="nav-item" data-tab="materi"><svg viewBox="0 0 24 24"><path d="M12 6.5C10.3 5.2 8 4.5 4.5 4.5v13c3.5 0 5.8.7 7.5 2 1.7-1.3 4-2 7.5-2v-13c-3.5 0-5.8.7-7.5 2ZM12 6.5v13"/></svg><span>Materi</span></button>
+  <button type="button" class="nav-item" data-tab="kalkulator"><svg viewBox="0 0 24 24"><rect x="5" y="2.5" width="14" height="19" rx="2.4"/><path d="M8 7h8M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01"/></svg><span class="m-l">Hitung</span><span class="d-l">Fungsi</span></button>
 </nav>
+
+<footer class="status-bar" id="statusBar"><span id="sbUser">StatCalc</span><span class="sb-sp"></span><span>Offline &middot; data tetap di perangkat</span></footer>
 
 <div class="toast" id="toast"></div>
 
@@ -2799,7 +2547,7 @@ table.mini-table tbody tr:last-child td{ border-bottom:2px solid var(--ink); }
     materi: 'view-materi', 'materi-detail': 'view-materi-detail',
   };
   const PAGE_TITLES = {
-    metode: 'Pilih Metode', 'metode-calc': 'Metode Calc', 'metode-stat': 'Metode Stat', 'metode-graph': 'Metode Graph', tentang: 'Tentang StatCalc',
+    metode: 'Pilih Metode', 'metode-calc': 'Lembar', 'metode-stat': 'Metode Stat', 'metode-graph': 'Metode Graph', tentang: 'Tentang StatCalc',
     matriks: 'Kalkulator Matriks', kalkulator: 'Kalkulator Ilmiah', petunjuk: 'Petunjuk', materi: 'Materi Statistik',
   };
   let backTarget = 'home';
@@ -2894,11 +2642,11 @@ table.mini-table tbody tr:last-child td{ border-bottom:2px solid var(--ink); }
     if (!viewId) return;
     $$('.view').forEach((v) => v.classList.remove('active'));
     $('#' + viewId).classList.add('active');
-    const navTab = (pageId.indexOf('metode') === 0 || isMethod) ? 'metode' : pageId.indexOf('materi') === 0 ? 'materi' : pageId;
+    const navTab = (pageId === 'metode-calc' || pageId === 'metode-graph') ? pageId : (pageId.indexOf('metode') === 0 || isMethod) ? 'metode' : pageId.indexOf('materi') === 0 ? 'materi' : pageId;
     $$('.nav-item', bottomNav).forEach((b) => b.classList.toggle('active', b.dataset.tab === navTab));
     if (pageId === 'home') {
       topbar.classList.remove('visible');
-      setRandomQuote();
+      setRandomQuote(); updateSky();
     } else {
       topbar.classList.add('visible');
       const m = METHODS.find((x) => x.id === pageId);
@@ -3032,6 +2780,150 @@ table.mini-table tbody tr:last-child td{ border-bottom:2px solid var(--ink); }
   window.StatCalc = { switchTab, navigate, goToMethod, showToast, trackCalc, openView, onNavigate: (fn) => { navHook = fn; } };
 })();
 
+/* =========================================================================
+   1.5 HEADER LANGIT - ANIMASI SIANG/MALAM REAL-TIME
+   -------------------------------------------------------------------------
+   Warna langit, posisi matahari/bulan, awan dan bintang mengikuti jam
+   perangkat pengguna saat ini (0-23). Dipanggil ulang tiap kali tab
+   "Beranda" dibuka, lalu berjalan sendiri via requestAnimationFrame.
+   ========================================================================= */
+(function () {
+  'use strict';
+
+  const SKY_COLORS_24 = [
+    ['#0B1424', '#16263A', '#22384A'], // 00
+    ['#0A1220', '#141F34', '#1C2E3E'], // 01
+    ['#09101C', '#111B2E', '#182636'], // 02
+    ['#0B1424', '#152540', '#1E344A'], // 03
+    ['#0C1830', '#1B2E52', '#2A4468'], // 04
+    ['#1A2050', '#6E3A1E', '#B0631F'], // 05 subuh
+    ['#22384A', '#B0631F', '#D98A2B'], // 06 fajar
+    ['#22384A', '#3E6688', '#E0A040'], // 07
+    ['#22384A', '#4A7DA0', '#8FC1DE'], // 08
+    ['#22384A', '#4A85AC', '#9ED0E8'], // 09
+    ['#2E4A61', '#4E8CB4', '#A6D6EC'], // 10
+    ['#2E4A61', '#5090B6', '#AEDBEE'], // 11
+    ['#3661A0', '#4E8CB4', '#A6D6EC'], // 12 terik
+    ['#2E4A61', '#4E8CB4', '#A6D6EC'], // 13
+    ['#2E4A61', '#4A85AC', '#9ED0E8'], // 14
+    ['#284870', '#3E6688', '#D98A46'], // 15
+    ['#22384A', '#8A4B24', '#D98A2B'], // 16
+    ['#1E3050', '#8A3E1E', '#C25A1E'], // 17
+    ['#301A48', '#7A2E5C', '#B0481E'], // 18 magrib
+    ['#1A1030', '#301E5C', '#5C2848'], // 19
+    ['#0F1430', '#161F44', '#22384A'], // 20
+    ['#0B1424', '#131F38', '#1A2C42'], // 21
+    ['#09101C', '#111B2E', '#182636'], // 22
+    ['#0B1424', '#16263A', '#22384A'], // 23
+  ];
+
+  const STARS = [];
+  for (let i = 0; i < 18; i++) {
+    STARS.push({ x: Math.random() * 94 + 1, y: Math.random() * 70 + 2, r: Math.random() * 1.4 + 0.6, phase: Math.random() * Math.PI * 2 });
+  }
+
+  let built = false, raf = null, prevHour = -1;
+
+  function hexToRgb(hex) { return [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)]; }
+  function rgbToHex(r, g, b) { return '#' + [r, g, b].map((v) => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, '0')).join(''); }
+  function lerpColor(c1, c2, t) { const a = hexToRgb(c1), b = hexToRgb(c2); return rgbToHex(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t); }
+
+  function build() {
+    if (built) return;
+    const banner = document.getElementById('skyBanner');
+    if (!banner) return;
+    built = true;
+    const cloudSpots = [[6, 12, 22], [24, 8, 18], [50, 14, 24], [70, 6, 20], [86, 16, 16]];
+    document.getElementById('skyClouds').innerHTML = cloudSpots.map(([x, y, sz], i) =>
+      `<div style="position:absolute;left:${x}%;top:${y}%;font-size:${sz}px;opacity:.55;animation:skyDrift ${9 + i * 2}s ease-in-out infinite ${i * .7}s;">\u2601\uFE0F</div>`
+    ).join('');
+  }
+
+  function loop(ts) {
+    const now = new Date();
+    const h = now.getHours(), m = now.getMinutes(), s = now.getSeconds();
+    const totalMin = h * 60 + m + s / 60;
+
+    const clock = document.getElementById('skyClock');
+    if (clock) clock.textContent = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+
+    // bintang berkelap-kelip
+    const cv = document.getElementById('skyStars');
+    const starAlpha = h < 5 ? 1 : h < 6 ? .4 : h >= 21 ? 1 : h >= 19 ? .6 : h >= 18 ? .25 : 0;
+    if (cv) {
+      const W = cv.clientWidth, H = cv.clientHeight;
+      if (cv.width !== W) cv.width = W;
+      if (cv.height !== H) cv.height = H;
+      const ctx = cv.getContext && cv.getContext('2d');
+      if (ctx) {
+        ctx.clearRect(0, 0, W, H);
+        if (starAlpha > 0) {
+          STARS.forEach((st) => {
+            const tw = 0.55 + 0.45 * Math.sin(ts / 1100 + st.phase);
+            ctx.globalAlpha = starAlpha * tw * 0.9;
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(st.x / 100 * W, st.y / 100 * H, st.r, 0, Math.PI * 2);
+            ctx.fill();
+          });
+          ctx.globalAlpha = 1;
+        }
+      }
+    }
+
+    // orbit matahari/bulan
+    const isSun = h >= 6 && h < 18;
+    let frac = isSun ? (totalMin - 360) / 720 : ((totalMin >= 1080 ? totalMin - 1080 : totalMin + 360) / 720);
+    frac = Math.max(0, Math.min(1, frac));
+    const angle = (180 - frac * 180) * Math.PI / 180;
+    const R = 120;
+    const bx = 130 + R * Math.cos(angle);
+    const by = 130 - R * Math.sin(angle) * 0.86;
+    const body = document.getElementById('skyBody');
+    if (body) {
+      body.style.transform = `translate(${bx - 17}px, ${by - 17}px)`;
+      if (h >= 6 && h < 7) { body.textContent = '\uD83C\uDF05'; body.style.fontSize = '22px'; }
+      else if (h >= 7 && h < 17) { body.textContent = '\u2600\uFE0F'; body.style.fontSize = (h >= 11 && h < 15) ? '28px' : '25px'; body.style.filter = 'drop-shadow(0 0 10px rgba(255,220,120,.85))'; }
+      else if (h >= 17 && h < 19) { body.textContent = '\uD83C\uDF07'; body.style.fontSize = '22px'; }
+      else { body.textContent = '\uD83C\uDF19'; body.style.fontSize = '24px'; body.style.filter = 'drop-shadow(0 0 8px rgba(210,225,255,.65))'; }
+    }
+
+    if (h !== prevHour) { prevHour = h; applyPhase(h); }
+    raf = requestAnimationFrame(loop);
+  }
+
+  function applyPhase(h) {
+    const bg = document.getElementById('skyBg');
+    const clouds = document.getElementById('skyClouds');
+    const extras = document.getElementById('skyExtras');
+    if (!bg) return;
+    const m = new Date().getMinutes();
+    const t = m / 60;
+    const next = (h + 1) % 24;
+    const c1 = SKY_COLORS_24[h], c2 = SKY_COLORS_24[next];
+    const top = lerpColor(c1[0], c2[0], t), mid = lerpColor(c1[1], c2[1], t), bot = lerpColor(c1[2], c2[2], t);
+    bg.style.background = `linear-gradient(160deg, ${top}, ${mid}, ${bot})`;
+    if (clouds) clouds.style.opacity = h < 5 ? 0 : h < 7 ? .5 : h < 17 ? .7 : h < 19 ? .4 : h < 21 ? .15 : 0;
+    const EXTRAS = {
+      5: '<div style="position:absolute;right:8%;top:16%;font-size:12px;opacity:.4;animation:skyFloat 3s ease-in-out infinite;">\u2728</div>',
+      12: '<div style="position:absolute;left:6%;top:14%;font-size:11px;opacity:.4;animation:skyFloat 2.4s ease-in-out infinite;">\u2728</div>',
+      19: '<div style="position:absolute;left:10%;top:12%;font-size:10px;opacity:.35;animation:skyFloat 3.2s ease-in-out infinite;">\u2B50</div>',
+      21: '<div style="position:absolute;right:12%;top:16%;font-size:10px;opacity:.4;animation:skyFloat 3.6s ease-in-out infinite;">\u2B50</div><div style="position:absolute;left:20%;top:24%;font-size:9px;opacity:.3;animation:skyFloat 2.8s ease-in-out infinite .6s;">\u2B50</div>',
+    };
+    if (extras) extras.innerHTML = EXTRAS[h] || '';
+  }
+
+  function updateSky() {
+    build();
+    if (raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(loop);
+  }
+
+  window.updateSky = updateSky;
+  try {
+    if (localStorage.getItem('statcalc_user')) updateSky();
+  } catch (e) { /* localStorage diblokir; updateSky akan dipanggil oleh switchTab saat login berhasil */ }
+})();
 </script>
 
 <!-- ===================== PITA (RIBBON) METODE - dimuat sebelum modul Stat ===================== -->
@@ -3076,6 +2968,8 @@ table.mini-table tbody tr:last-child td{ border-bottom:2px solid var(--ink); }
 <script src="Method/Calc/sheet.js"></script>
 <script src="Method/Calc/sheet-graph.js"></script>
 <script src="Method/Calc/sheet-data.js"></script>
+<script src="Method/Calc/sheet-quick.js"></script>
+<script src="Method/Calc/sheet-vars.js"></script>
 
 <!-- ===================== EKSPOR HASIL STAT: grafik pendukung + unduh .docx (muat SETELAH semua file Method/Graph/) ===================== -->
 <script src="Method/Shared/stat-charts.js"></script>
@@ -3099,6 +2993,7 @@ table.mini-table tbody tr:last-child td{ border-bottom:2px solid var(--ink); }
 <script src="Method/Materi/data/stasioner.js"></script>
 <script src="Method/Materi/data/arima.js"></script>
 <script src="Method/Materi/data/rsm.js"></script>
+<script src="Method/Materi/materi-lembar.js"></script>
 
 
 <!-- =========================================================================
@@ -3179,6 +3074,17 @@ table.mini-table tbody tr:last-child td{ border-bottom:2px solid var(--ink); }
   // Saat halaman dibuka / di-refresh
   if (!apply()) sync(true);
 })();
+</script>
+<script>
+(function(){var a=document.getElementById('topAvatar'),b=document.getElementById('skyAvatar'),o=document.getElementById('openProfileBtn');
+if(!a)return;function sync(){if(b)a.textContent=b.textContent||'?';}sync();
+if(b)new MutationObserver(sync).observe(b,{childList:true,characterData:true,subtree:true});
+a.addEventListener('click',function(){if(o)o.click();});})();
+</script>
+<script>
+(function(){var u=document.getElementById('sbUser'),n=document.getElementById('skyGreetName');
+function f(){if(u&&n&&n.textContent.trim()&&n.textContent.trim()!=='-')u.textContent='Tersimpan di perangkat \u00B7 '+n.textContent.trim();}
+f();if(n)new MutationObserver(f).observe(n,{childList:true,characterData:true,subtree:true});})();
 </script>
 </body>
 </html>
