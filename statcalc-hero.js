@@ -155,3 +155,39 @@
   }
   run();
 })();
+
+/* ---------- Halaman masuk: simbol menyebar di seluruh latar (kartu putih menutupi bagian tengah) ---------- */
+(function () {
+  'use strict';
+  var view = document.getElementById('view-login');
+  if (!view || view.querySelector('.login-stat')) return;
+
+  var SYMS = ['μ','σ','Σ','α','r²','p','x̄','z','χ²','β','ρ','H₀','t','n','F','s²','λ','R²','df','θ'];
+  var COLS = 7, ROWS = 5, seed = 20261029;
+  function rnd() { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }  // acak tetap, hasil sama tiap muat
+
+  var layer = document.createElement('div');
+  layer.className = 'login-stat';
+  layer.setAttribute('aria-hidden', 'true');
+
+  var cells = [];
+  for (var r = 0; r < ROWS; r++) for (var c = 0; c < COLS; c++) cells.push([r, c]);
+  // acak urutan sel agar simbol kecil/besar tidak berkelompok
+  for (var i = cells.length - 1; i > 0; i--) { var k = Math.floor(rnd() * (i + 1)); var tmp = cells[i]; cells[i] = cells[k]; cells[k] = tmp; }
+
+  cells.forEach(function (cell, n) {
+    var el = document.createElement('span');
+    el.className = 'hero-sym';
+    el.textContent = SYMS[n % SYMS.length];
+    var left = (cell[1] + 0.15 + rnd() * 0.7) / COLS * 100;
+    var top = (cell[0] + 0.15 + rnd() * 0.7) / ROWS * 100;
+    var size = 18 + Math.round(rnd() * 26);
+    var o = (0.07 + rnd() * 0.12).toFixed(2);
+    var dx = Math.round((rnd() - 0.5) * 36), dy = Math.round((rnd() - 0.5) * 36);
+    var dur = (8 + rnd() * 8).toFixed(1), del = (-rnd() * 12).toFixed(1);
+    el.style.cssText = 'left:' + left.toFixed(1) + '%;top:' + top.toFixed(1) + '%;font-size:' + size + 'px;--o:' + o +
+      ';--dx:' + dx + 'px;--dy:' + dy + 'px;--dur:' + dur + 's;--del:' + del + 's';
+    layer.appendChild(el);
+  });
+  view.insertBefore(layer, view.firstChild);
+})();

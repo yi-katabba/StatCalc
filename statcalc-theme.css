@@ -683,8 +683,9 @@ body.pf-on .top-avatar{ box-shadow:0 0 0 2px #7FA8D6; }
 @media (max-width:700px){
   /* HP: kurva kecil di pojok kanan atas (sebaris dengan sapaan) agar teks tetap bersih */
   .hero-curve{ top:10px; bottom:auto; right:10px; height:66px; width:48%; opacity:.85; }
-  .hero-sym{ display:none; }
-  .hero-sym:nth-child(5), .hero-sym:nth-child(12){ display:block; }
+  .hero-stat .hero-sym{ display:none; }
+  .hero-stat .hero-sym:nth-child(5), .hero-stat .hero-sym:nth-child(12){ display:block; }
+  .login-stat .hero-sym:nth-child(n+19){ display:none; }
 }
 @media (prefers-reduced-motion: reduce){
   .hero-sym, .hc-ring, .hero-stat .hc-line, .hero-stat .hc-area, .hero-stat .hc-band,
@@ -692,3 +693,7 @@ body.pf-on .top-avatar{ box-shadow:0 0 0 2px #7FA8D6; }
   .hc-ring{ display:none; }
   .hero-sym{ opacity:var(--o,.14) !important; }
 }
+
+/* ---------- Halaman masuk: simbol statistik menyebar di belakang kartu putih ---------- */
+.login-stat{ position:absolute; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
+.login-stat .hero-sym{ color:#BFD8FA; }
