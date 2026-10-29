@@ -118,3 +118,11 @@ tanpa membuka halaman Graph. Dimuat **setelah** `Method/Calc/sheet.js`.
 muncul legenda di bawah judul, dan garis regresi dibuat per kelompok (interval kepercayaan hanya untuk mode tanpa kelompok).
 Di tab Grafik Calc kolom ini muncul sebagai peran **Kelompokkan warna** (bawaan: Tidak ada; kolom bertanda `noGuess: true` tidak ditebak otomatis).
 Menu Graph dan tab Grafik Calc dikelompokkan menurut jenis: Hubungan, Sebaran, Kategori, Waktu.
+
+## Tombol (?) penjelasan judul langkah
+
+`Method/Shared/penjelasan-judul.js` (dimuat setelah semua file Stat dan Graph) menaruh tombol tanda tanya lingkaran di sisi kanan
+judul langkah (`<h2>` di `.step-card`) pada semua metode Stat dan semua halaman Graph. Klik untuk menampilkan / menyembunyikan
+penjelasannya, yaitu `p.hint` dan `.gr-format` yang menjadi anak langsung kartu. Judul tanpa penjelasan (mis. "Hasil") tidak diberi
+tombol. Halaman grafik baru dari `GraphCore.add` otomatis ikut, selama kartunya memakai pola `h2` + `p.hint`. Setelan awal:
+penjelasan tersembunyi (`DEFAULT_OPEN = false` di file itu).
