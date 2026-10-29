@@ -1,6 +1,6 @@
 /* Layar Analisis (ponsel/tablet): kartu "Variabel yang dipakai" (Y, X, Faktor) dan ringkasan n.
-   Kartu juga jadi pintu masuk ke Lembar: tombol "Jalankan di Lembar" membuka Lembar dengan metode terpilih,
-   dan menekan kartu metode (Metode Stat) mengirim data lalu menampilkan hasil di Hasil.
+   Kartu juga jadi pintu masuk ke Lembar: tombol "Jalankan di Lembar" membuka Lembar dengan metode terpilih.
+   Kartu metode di bawahnya selalu membuka halaman metode; data Lembar dimuat lewat tombol "Isi dari Lembar" di halaman itu.
    Sumber: StatCalcVars (Method/Calc/sheet-vars.js), StatCalcSheet.api (sheet.js). Dimuat SETELAH sheet-vars.js. */
 (function () {
   'use strict';
@@ -36,7 +36,6 @@
     /* pintu masuk: data belum otomatis dipakai oleh halaman metode, jadi jelaskan dua jalannya */
     h += methodSelect() +
       '<button type="button" class="av-go" data-av="go">Jalankan di Lembar</button>' +
-      '<div class="av-hint">Atau ketuk salah satu kartu metode di bawah: data dikirim dan hasilnya tampil di Hasil.</div>' +
       '<button type="button" class="av-link" data-av="sheet">Ubah di Lembar</button>';
     return h;
   }
@@ -65,20 +64,10 @@
     if (!A || !A.getMethod) return;
     cards.forEach(function (c) { var s = c.querySelector('.av-sel'); if (s) s.value = A.getMethod(); });
   }
-  /* Kartu metode ditekan: kirim data lalu tampilkan hasil di Hasil (Lembar). Mengembalikan true bila ditangani;
-     tanpa data / metode tidak didukung -> false, sehingga halaman metode dibuka seperti biasa. */
-  function runFromCard(id) {
-    var s = V.summary();
-    if (!A || !A.canRun || !A.canRun(id) || !s.n || !s.num) return false;
-    if (SC && SC.navigate) SC.navigate('metode-calc', { backTo: 'metode-stat' });
-    A.runMethod(id);
-    syncSelects();
-    return true;
-  }
   function render() { var h = html(); cards.forEach(function (c) { c.innerHTML = h; }); }
   render();
   V.onChange(render);
   /* pilihan metode bisa berubah di Lembar: samakan tiap kali layar Analisis ditampilkan */
   hosts.forEach(function (v) { new MutationObserver(function () { if (v.classList.contains('active')) syncSelects(); }).observe(v, { attributes: true, attributeFilter: ['class'] }); });
-  window.StatCalcAnalisisVars = { render: render, run: runFromCard };
+  window.StatCalcAnalisisVars = { render: render };
 })();

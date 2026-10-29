@@ -118,6 +118,11 @@
     #view-metode-calc .sg-bhead h3{ margin:0; font-size:15px; font-family:var(--font-body); }
     #view-metode-calc .sg-bbtns{ display:flex; flex-wrap:wrap; gap:8px; }
     #view-metode-calc .sg-bbtns .btn-ghost{ flex:none; min-height:38px; padding:0 14px; font-size:13.5px; }
+    #view-metode-calc .sg-blk.min .sg-bchart,#view-metode-calc .sg-blk.min .sg-bnote,#view-metode-calc .sg-blk.min .sg-bsum{ display:none; }
+    #view-metode-calc .sg-blk.min .sg-bhead{ margin-bottom:0; }
+    #view-metode-calc .sg-bhead h3{ cursor:pointer; }
+    #view-metode-calc .sg-blk.min .sg-bhead h3::before{ content:'▸ '; }
+    #view-metode-calc .sg-blk:not(.min) .sg-bhead h3::before{ content:'▾ '; }
     #view-metode-calc .sg-bchart{ position:relative; border:1px solid var(--rule); border-radius:8px; overflow:hidden; max-width:820px; margin:0 auto; background:#fff; }
     #view-metode-calc .sg-bchart svg{ display:block; width:100%; height:auto; }
     #view-metode-calc .sg-bchart .sg-err{ position:static; min-height:140px; }
@@ -405,9 +410,19 @@
 
   /* --------------------------- Grafik di bawah lembar ------------------------ */
   function dlName(ch) { return ((($('#scFname', section) || {}).value || 'data-calc').trim() || 'data-calc').replace(/[\\/:*?"<>|]+/g, '_') + '-' + ch.key; }
+  /* grafik di luar lembar yang diciutkan (disimpan per grafik agar tidak hilang saat daftar dibangun ulang) */
+  const minSet = new Set();
+  function setMin(ch, on) {
+    if (on) minSet.add(ch.uid); else minSet.delete(ch.uid);
+    const b = blockEl(ch); if (!b) return;
+    b.classList.toggle('min', on);
+    const t = $('[data-bact="min"]', b);
+    if (t) { t.textContent = on ? 'Buka' : 'Ciutkan'; t.setAttribute('aria-expanded', on ? 'false' : 'true'); t.title = on ? 'Tampilkan grafik' : 'Ciutkan grafik (hanya judul)'; }
+  }
   function blockHTML(ch) {
-    return `<div class="sg-blk${ch.uid === selId ? ' sel' : ''}" data-uid="${ch.uid}">
+    return `<div class="sg-blk${ch.uid === selId ? ' sel' : ''}${minSet.has(ch.uid) ? ' min' : ''}" data-uid="${ch.uid}">
       <div class="sg-bhead"><h3></h3><div class="sg-bbtns">
+        <button type="button" class="btn-ghost" data-bact="min" aria-expanded="${minSet.has(ch.uid) ? 'false' : 'true'}" title="${minSet.has(ch.uid) ? 'Tampilkan grafik' : 'Ciutkan grafik (hanya judul)'}">${minSet.has(ch.uid) ? 'Buka' : 'Ciutkan'}</button>
         <button type="button" class="btn-ghost" data-bact="edit">Edit grafik</button>
         <button type="button" class="btn-ghost" data-bact="png">Unduh PNG</button>
         <button type="button" class="btn-ghost" data-bact="copy">Salin</button>
@@ -446,10 +461,12 @@
     const b = e.target.closest('.sg-blk'); if (!b) return;
     const ch = byId(b.dataset.uid); if (!ch) return;
     const act = e.target.closest('[data-bact]');
+    if (!act && e.target.closest('.sg-bhead h3')) { setMin(ch, !minSet.has(ch.uid)); return; }   /* ketuk judul = ciutkan / buka */
     if (!act) { if (!e.target.closest('summary')) select(ch.uid, true); return; }
     const a = act.dataset.bact;
-    if (a === 'edit') { select(ch.uid, true); const r = $('.sc-ribbon', section); if (r && r.scrollIntoView) r.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
-    else if (a === 'del') removeChart(ch.uid);
+    if (a === 'min') { setMin(ch, !minSet.has(ch.uid)); return; }
+    if (a === 'edit') { setMin(ch, false); select(ch.uid, true); const r = $('.sc-ribbon', section); if (r && r.scrollIntoView) r.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    else if (a === 'del') { minSet.delete(ch.uid); removeChart(ch.uid); }
     else if (a === 'png') GC.downloadPNG(ch._svg, dlName(ch), () => msg('err', 'Peramban ini tidak dapat membuat PNG. Gunakan Unduh SVG.', 6000));
     else if (a === 'svg') GC.downloadSVG(ch._svg, dlName(ch));
     else if (a === 'copy') GC.copyPNG(ch._svg, () => msg('ok', 'Gambar grafik disalin ke clipboard.', 3000), (m) => msg('err', m, 6000));

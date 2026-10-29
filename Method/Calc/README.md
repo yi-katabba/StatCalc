@@ -46,7 +46,7 @@ Halaman metode tidak membaca data Lembar sendiri, jadi kartu **Variabel yang dip
 | Aksi | Hasil |
 |---|---|
 | **Jalankan di Lembar** (setelah memilih *Metode* di kartu) | Membuka Lembar, tab Statistik aktif, metode terpilih sudah dicentang. Analisis dijalankan lewat *Jalankan analisis*. |
-| Ketuk **kartu metode** (Metode Stat) saat data ada | Data dikirim, hasil langsung tampil di Hasil (segmen Hasil di ponsel, panel kanan di desktop). Tanpa data, halaman metode dibuka seperti biasa. |
+| Ketuk **kartu metode** (Metode Stat) | Selalu membuka halaman metode. Data Lembar dimuat lewat tombol **Isi dari Lembar** di halaman itu. |
 
 API di `StatCalcSheet.api`: `hasData()`, `canRun(id)`, `methodList()`, `getMethod()`, `pickMethod(id)`, `openStatTab()`, `runMethod(id)`. Tombol *Jalankan analisis* di pita memakai `runMethod` yang sama; bila lembar kosong kini muncul pesan galat, bukan panel Hasil yang menggantung pada "Menghitung…".
 
@@ -61,3 +61,11 @@ Di tiap kartu data halaman Stat dan Graph, tombol **Isi contoh data** kini ditem
 | Kolom data kurang dari kolom tabel | Pesan dari importer (mis. RSM butuh minimal 3 kolom) tetap tampil. |
 
 Graph dengan kolom opsional di ujung (mis. *Kelompok warna* pada Scatter) dilengkapi kolom kosong otomatis. API: `StatCalcSheet.api.fillFromSheet(id, cardSel)`, `StatCalcImport.cards()`, `StatCalcImport.notify(kartu, 'ok'|'err', pesan)`.
+
+## Grafik "Di luar lembar kerja" bisa diciutkan (`sheet-graph.js`)
+
+Tiap grafik di panel hasil punya tombol **Ciutkan / Buka** (atau ketuk judulnya). Saat diciutkan hanya judul dan tombol aksi yang tampil; grafik, catatan, dan ringkasan disembunyikan. Status tersimpan per grafik selama sesi (tidak hilang saat daftar dibangun ulang), dan tombol **Edit grafik** membuka grafik yang sedang diciutkan.
+
+## Pita bisa digeser (`Method/Shared/geser-pita.js`)
+
+Berlaku untuk pita Lembar (`.sc-rbody`) dan pita halaman Stat / "Pengaturan grafik" halaman Graph (`.rb-body`, termasuk pita Warna / Garis kisi pada grafik pendukung hasil; pita yang dibuat belakangan dikenali otomatis). Bila lebar tidak cukup: gulir mouse biasa menggeser ke kiri/kanan (Ctrl + roda tetap zoom; di ujung, halaman bergulir seperti biasa), tahan klik kiri pada bagian kosong lalu tarik (kolom isian dan pilihan tidak ikut menarik), serta panah ‹ › di tepi yang muncul hanya bila masih ada isi di sisi itu. Bilah gulir bawaan disembunyikan; geser sentuh tetap bekerja.
