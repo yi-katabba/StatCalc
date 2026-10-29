@@ -5,7 +5,7 @@
    - Klik dua kali pada pemisah = kembali ke lebar default halaman itu.
    - Keyboard: fokus ke pemisah lalu tekan ← → (Shift = loncat lebih jauh),
      Enter/Home = default.
-   - Tombol "Atur ulang lebar kolom" muncul di judul halaman saat lebar diubah.
+   - Tombol "Atur ulang lebar kolom" muncul di bilah judul atas (kanan) saat lebar diubah.
    - Pilihan disimpan per halaman di localStorage (statcalc.cols.*).
    - Default = lebar bawaan CSS; skrip ini tidak mengubahnya kecuali pengguna
      menggeser pemisah.
@@ -38,8 +38,8 @@
     '.col-grip:hover i,.col-grip:focus-visible i,.col-grip.on i{background:var(--accent-2,#2F6DB5);height:52px;}' +
     'body.col-dragging{cursor:col-resize !important;user-select:none;-webkit-user-select:none;}' +
     'body.col-dragging *{cursor:col-resize !important;}' +
-    '.col-reset{display:inline-flex;align-items:center;gap:6px;margin-top:10px;min-height:32px;padding:0 12px;border:1px solid var(--rule-strong,#C5CDD6);border-radius:8px;background:#fff;color:var(--accent,#1F3A57);font:600 12.5px/1 inherit;font-family:inherit;cursor:pointer;}' +
-    '.col-reset:hover{background:var(--accent-soft,#E3ECF7);}' +
+    '.col-reset{display:inline-flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0;white-space:nowrap;min-height:34px;padding:0 12px;border:1px solid var(--rule-strong,#C5CDD6);border-radius:8px;background:#fff;color:var(--accent,#1F3A57);font:600 12.5px/1 inherit;font-family:inherit;cursor:pointer;}' +
+    '.col-reset:hover{background:var(--accent-soft,#E3ECF7);}.topbar .col-reset + .top-avatar{margin-left:8px;}' +
     '.col-reset[hidden]{display:none !important;}' +
     '@media (max-width:1023.98px){.col-grip,.col-reset{display:none !important;}}';
   document.head.appendChild(css);
@@ -124,7 +124,7 @@
 
     var head = c.querySelector(':scope > .chapter-head');
     var pt = pf(cs.paddingTop), pb = pf(cs.paddingBottom);
-    var top = head ? head.offsetTop + head.offsetHeight : pt;
+    var top = shown(head) ? head.offsetTop + head.offsetHeight : pt;
     var height = c.clientHeight - top - pb;
     function place(side, k) {
       var g = st.grips[side] || (st.grips[side] = mkGrip(st, side));
@@ -136,31 +136,36 @@
     place('l', li >= 0 ? 0 : -1);
     place('r', ri >= 0 ? n - 2 : -1);
 
-    updateBtn(st.view);
+    updateBtn();
   }
 
-  var btns = {};
-  function ensureBtn(view, id) {
-    if (!view || btns[id]) return;
-    var head = view.querySelector('.chapter-head'); if (!head) return;
-    var b = document.createElement('button'); b.type = 'button'; b.className = 'col-reset'; b.hidden = true;
-    b.textContent = '↺ Atur ulang lebar kolom'; b.title = 'Kembalikan lebar kolom halaman ini ke default';
-    b.addEventListener('click', function () {
+  /* Tombol reset: satu, di bilah judul atas (sejajar tombol kembali & judul, rata kanan) */
+  var btn = null;
+  function ensureBtn() {
+    if (btn) return;
+    var bar = document.getElementById('topbar'); if (!bar) return;
+    btn = document.createElement('button'); btn.type = 'button'; btn.className = 'col-reset'; btn.hidden = true;
+    btn.textContent = '↺ Atur ulang lebar kolom'; btn.title = 'Kembalikan lebar kolom halaman ini ke default';
+    btn.addEventListener('click', function () {
+      var id = activeView();
       list.forEach(function (st) { if (st.view === id) { st.custom = {}; save(st); layout(st); } });
-      window.dispatchEvent(new Event('resize'));
+      updateBtn(); window.dispatchEvent(new Event('resize'));
     });
-    head.appendChild(b); btns[id] = b;
+    var av = document.getElementById('topAvatar');
+    if (av) bar.insertBefore(btn, av); else bar.appendChild(btn);
   }
-  function updateBtn(id) {
-    var b = btns[id]; if (!b) return;
-    var on = list.some(function (st) {
+  function activeView() { var v = document.querySelector('.view.active'); return v ? v.id : ''; }
+  function updateBtn() {
+    ensureBtn(); if (!btn) return;
+    var id = activeView();
+    var on = !!id && list.some(function (st) {
       return st.view === id && (st.custom.l || st.custom.r) && ['l', 'r'].some(function (k) { return st.grips[k] && st.grips[k].style.display !== 'none'; });
     });
-    if (b.hidden === on) b.hidden = !on;
+    if (btn.hidden === on) btn.hidden = !on;
   }
   function hide(st) {
     ['l', 'r'].forEach(function (s) { if (st.grips[s]) st.grips[s].style.display = 'none'; });
-    updateBtn(st.view);
+    updateBtn();
   }
 
   function startDrag(st, side, g, e) {
@@ -188,7 +193,7 @@
       c: c, def: def, key: (view ? view.id : 'x') + ':' + idx, grips: {}, custom: {}, cur: { l: 0, r: 0 }, info: null, view: ''
     };
     var saved = load(st.key); if (saved.l > 0) st.custom.l = saved.l; if (saved.r > 0) st.custom.r = saved.r;
-    st.view = view ? view.id : 'x'; ensureBtn(view, st.view);
+    st.view = view ? view.id : 'x';
     states.set(c, st); list.push(st);
     if (window.ResizeObserver) {
       var raf = 0;
@@ -209,6 +214,7 @@
   function refresh() {
     scan();
     list.forEach(function (st) { if (shown(st.c)) layout(st); });
+    updateBtn();
   }
 
   var t = 0;

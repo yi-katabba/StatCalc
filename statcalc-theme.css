@@ -583,3 +583,9 @@ body.pf-on .top-avatar{ box-shadow:0 0 0 2px #7FA8D6; }
 @media (min-width:1440px){
   .chapter-inner:has(.gr-chart){ max-width:none; }
 }
+
+/* ===== Header halaman (eyebrow + judul + pengantar) disembunyikan di semua halaman ===== */
+.chapter-head{ display:none !important; }
+@media (min-width:700px){
+  .chapter-inner{ padding-top:20px; }
+}
