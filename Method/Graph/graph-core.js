@@ -388,10 +388,10 @@
           <div class="step-tag">Langkah ${S + 3}</div>
           <h2>Hasil</h2>
           <div class="gr-chart" id="${P}chart"></div>
-          <div class="control-row gr-actions">
-            <button type="button" class="btn-ghost" id="${P}png">Unduh PNG</button>
-            <button type="button" class="btn-ghost" id="${P}copy">Salin gambar</button>
-            <button type="button" class="btn-ghost" id="${P}svg">Unduh SVG</button>
+          <div class="control-row gr-actions ib-row">
+            ${window.StatIconBtn('png', 'Unduh PNG', `id="${P}png"`)}
+            ${window.StatIconBtn('copy', 'Salin gambar', `id="${P}copy"`)}
+            ${window.StatIconBtn('svg', 'Unduh SVG', `id="${P}svg"`)}
           </div>
           <div class="gr-sum" id="${P}sum"></div>
         </section>

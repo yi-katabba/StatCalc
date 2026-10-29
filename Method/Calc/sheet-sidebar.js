@@ -47,7 +47,7 @@
     '#view-metode-calc .sx-act{display:inline-flex;align-items:center;gap:6px;}' +
     '#view-metode-calc .sx-x{font-size:20px;}' +
     '#view-metode-calc .sx-min .sx-x{display:none;}' +
-    '#view-metode-calc .sg-below > .sg-top > .sg-close{display:none;}' +
+    '#view-metode-calc .sg-below > .sg-top > .sg-close,#view-metode-calc .sc-res > .sr-top .sr-x{display:none;}' +
     '#view-metode-calc .sg-below.sx-min > .sx-bar{margin:0;border-radius:0;}' +
     '}';
   document.head.appendChild(css);
@@ -98,15 +98,18 @@
   var R = res ? make('r', res, 'Hasil analisis') : null;
   /* panel Grafik "di luar lembar kerja" menempati kolom kanan yang sama: ikut diciutkan bersama panel hasil */
   var gres = host.querySelector(':scope > .sg-below');
-  if (gres) {
-    var G = make('r', gres, 'Grafik');
-    /* tombol tutup (x) di bilah atas, di samping tombol ciutkan; di layar sempit tetap memakai x di judul panel */
-    var bt = G.bar.querySelector('.sx-btn'), act = document.createElement('span'), cx = document.createElement('button');
+  var G = null;
+  if (gres) G = make('r', gres, 'Grafik');
+  /* tombol tutup (x) di bilah atas, di samping tombol ciutkan; di layar sempit tetap memakai x di judul panel */
+  function addClose(made, panel, closeSel, label) {
+    var bt = made.bar.querySelector('.sx-btn'), act = document.createElement('span'), cx = document.createElement('button');
     act.className = 'sx-act'; cx.type = 'button'; cx.className = 'sx-btn sx-x'; cx.innerHTML = '&times;';
-    cx.title = cx.ariaLabel = 'Tutup panel grafik';
-    cx.addEventListener('click', function (e) { e.stopPropagation(); var c = gres.querySelector('.sg-close'); if (c) c.click(); });
-    G.bar.insertBefore(act, bt); act.appendChild(cx); act.appendChild(bt);
+    cx.title = label; cx.setAttribute('aria-label', label);
+    cx.addEventListener('click', function (e) { e.stopPropagation(); var c = panel.querySelector(closeSel); if (c) c.click(); });
+    made.bar.insertBefore(act, bt); act.appendChild(cx); act.appendChild(bt);
   }
+  if (R) addClose(R, res, '.sr-x', 'Tutup panel hasil');
+  if (gres) addClose(G, gres, '.sg-close', 'Tutup panel grafik');
 
   /* Titik penanda di rel kanan bila ada hasil baru saat panel diciutkan */
   var body = res && res.querySelector('#srBody');

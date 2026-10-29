@@ -29,9 +29,9 @@
   };
   var st = document.createElement('style');
   st.textContent =
-    '.ib{display:inline-flex !important;align-items:center;justify-content:center;flex:1 1 0;width:auto !important;min-width:44px;max-width:120px;min-height:44px !important;padding:0 !important;}' +
+    '.ib{display:inline-flex !important;align-items:center;justify-content:center;flex:1 1 0 !important;width:auto !important;min-width:44px;max-width:120px;padding-left:0 !important;padding-right:0 !important;min-height:44px !important;padding:0 !important;}' +
     '.ib svg{width:21px;height:21px;flex:0 0 auto;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;pointer-events:none;}' +
     '.ib:disabled{opacity:.45;cursor:not-allowed;}' +
-    '.ib-row,.ib-row.control-row{display:flex !important;flex-wrap:nowrap !important;gap:8px;align-items:stretch;}';
+    '.ib-row,.ib-row.control-row{display:flex !important;flex-direction:row !important;flex-wrap:nowrap !important;gap:8px;align-items:stretch;}';
   document.head.appendChild(st);
 })();

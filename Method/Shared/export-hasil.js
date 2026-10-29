@@ -381,9 +381,9 @@
   style.textContent = `
     .ex-bar{ display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; margin:4px 0 14px; padding:10px 14px; border:1px solid var(--rule); border-radius:var(--radius); background:var(--accent-soft); }
     .ex-main-btns{ justify-content:flex-start; }
-    .ex-main-btns .ib{ flex:0 0 auto; width:64px !important; max-width:none; }
+    .ex-main-btns .ib{ flex:0 0 auto !important; width:64px !important; max-width:none; }
     .ex-bar-btns{ flex:0 1 auto; }
-    .ex-bar-btns .ib{ flex:0 0 auto; width:52px !important; }
+    .ex-bar-btns .ib{ flex:0 0 auto !important; width:52px !important; }
     .ex-bar a{ font-size:13.5px; font-weight:600; color:var(--accent); }
     .ex-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr)); gap:18px; margin-top:16px; }
     .ex-fig{ margin:0; border:1px solid var(--rule); border-radius:var(--radius); background:#fff; overflow:hidden; display:flex; flex-direction:column; }
