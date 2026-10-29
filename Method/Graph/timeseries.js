@@ -13,6 +13,7 @@
     axes: ['Periode', 'Nilai'],
     options: [
       { key: 'points', type: 'checkbox', label: 'Tampilkan titik data', def: true },
+      { key: 'size', type: 'range', label: 'Ukuran titik', min: 2, max: 10, step: 0.5, def: 3.6, unit: ' px' },
       { key: 'meanLine', type: 'checkbox', label: 'Garis rata-rata', def: false },
       { key: 'trend', type: 'checkbox', label: 'Garis tren linear', def: true },
       { key: 'zero', type: 'checkbox', label: 'Mulai sumbu Y dari 0', def: false },
@@ -54,7 +55,7 @@
           `<line clip-path="url(#${cid})" x1="${px(0).toFixed(1)}" y1="${py(reg.a + reg.b).toFixed(1)}" x2="${px(n - 1).toFixed(1)}" y2="${py(reg.a + reg.b * n).toFixed(1)}" stroke="${u.ST.c2}" stroke-width="2" stroke-dasharray="6 4"/>`;
       }
       s += `<polyline fill="none" stroke="${u.ST.c1}" stroke-width="2.2" stroke-linejoin="round" points="${v.map((y, i) => `${px(i).toFixed(1)},${py(y).toFixed(1)}`).join(' ')}"/>`;
-      if (o.points) v.forEach((y, i) => { s += `<circle cx="${px(i).toFixed(1)}" cy="${py(y).toFixed(1)}" r="3.6" fill="${u.ST.c1}" stroke="#fff" stroke-width="1"/>`; });
+      if (o.points) v.forEach((y, i) => { s += `<circle cx="${px(i).toFixed(1)}" cy="${py(y).toFixed(1)}" r="${o.size || 3.6}" fill="${u.ST.c1}" stroke="#fff" stroke-width="1"/>`; });
       s += '</svg>';
 
       const iMax = v.indexOf(u.max(v)), iMin = v.indexOf(u.min(v));

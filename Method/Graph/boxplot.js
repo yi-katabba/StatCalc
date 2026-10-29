@@ -30,7 +30,7 @@
     });
   }
 
-  /* groups: [{name, vals:[...]}]; o: {title, xLabel, yLabel, qmethod, mean, pts, showOut} */
+  /* groups: [{name, vals:[...]}]; o: {title, xLabel, yLabel, qmethod, mean, pts, size, showOut} */
   function boxSvg(groups, o) {
     o = o || {};
     if (groups.length > 12) throw new Error('Maksimal 12 kelompok/variabel. Gabungkan atau kurangi terlebih dahulu.');
@@ -55,8 +55,8 @@
         `<line x1="${(cx - bwid / 4).toFixed(1)}" x2="${(cx + bwid / 4).toFixed(1)}" y1="${py(wlo).toFixed(1)}" y2="${py(wlo).toFixed(1)}" stroke="${col}" stroke-width="1.6"/>` +
         `<rect x="${x0.toFixed(1)}" y="${py(x.q3).toFixed(1)}" width="${bwid.toFixed(1)}" height="${Math.max(1, py(x.q1) - py(x.q3)).toFixed(1)}" fill="${col}" fill-opacity=".22" stroke="${col}" stroke-width="1.8"/>` +
         `<line x1="${x0.toFixed(1)}" x2="${(x0 + bwid).toFixed(1)}" y1="${py(x.med).toFixed(1)}" y2="${py(x.med).toFixed(1)}" stroke="${col}" stroke-width="3.2"/>`;
-      if (o.pts) x.vals.forEach((v, k) => { const jx = cx + ((k % 7) - 3) * (bwid / 16); s += `<circle cx="${jx.toFixed(1)}" cy="${py(v).toFixed(1)}" r="2.4" fill="${col}" fill-opacity=".45"/>`; });
-      if (showOut) x.out.forEach((v) => { s += `<circle cx="${cx.toFixed(1)}" cy="${py(v).toFixed(1)}" r="3.8" fill="#fff" stroke="${col}" stroke-width="1.6"/>`; });
+      if (o.pts) x.vals.forEach((v, k) => { const jx = cx + ((k % 7) - 3) * (bwid / 16); s += `<circle cx="${jx.toFixed(1)}" cy="${py(v).toFixed(1)}" r="${o.size || 2.4}" fill="${col}" fill-opacity=".45"/>`; });
+      if (showOut) x.out.forEach((v) => { s += `<circle cx="${cx.toFixed(1)}" cy="${py(v).toFixed(1)}" r="${(o.size || 2.4) * 1.58}" fill="#fff" stroke="${col}" stroke-width="1.6"/>`; });
       if (o.mean) { const my = py(x.mean), r = 5.5; s += `<path d="M${cx.toFixed(1)} ${(my - r).toFixed(1)} L${(cx + r).toFixed(1)} ${my.toFixed(1)} L${cx.toFixed(1)} ${(my + r).toFixed(1)} L${(cx - r).toFixed(1)} ${my.toFixed(1)} Z" fill="#fff" stroke="${INKC}" stroke-width="1.5"/>`; }
     });
     s += '</svg>';
@@ -83,6 +83,7 @@
     { key: 'mean', type: 'checkbox', label: 'Tandai rata-rata (belah ketupat)', def: true },
     { key: 'showOut', type: 'checkbox', label: 'Tampilkan pencilan', def: true },
     { key: 'pts', type: 'checkbox', label: 'Tampilkan semua titik data', def: false },
+    { key: 'size', type: 'range', label: 'Ukuran titik', min: 1.5, max: 8, step: 0.5, def: 2.4, unit: ' px' },
   ];
 
   GraphCore.add({
@@ -112,7 +113,7 @@
           title: o.title || (single ? 'Boxplot ' + groups[0].name : 'Boxplot per variabel'),
           xLabel: o.xLabel === '' || o.xLabel === undefined ? (single ? '' : 'Variabel') : o.xLabel,
           yLabel: o.yLabel === '' || o.yLabel === undefined ? 'Nilai' : o.yLabel,
-          qmethod: o.qmethod, mean: o.mean, pts: o.pts, showOut: o.showOut,
+          qmethod: o.qmethod, mean: o.mean, pts: o.pts, size: o.size, showOut: o.showOut,
         });
         return { svg: r.svg, summary: summaryTable(r.stats, o.qmethod) + interpretation(!single) };
       },
@@ -126,7 +127,7 @@
       const groups = names.map((g) => ({ name: g, vals: map[g] }));
       const r = boxSvg(groups, {
         title: o.title || 'Boxplot', xLabel: o.xLabel || 'Kelompok', yLabel: o.yLabel || 'Nilai',
-        qmethod: o.qmethod, mean: o.mean, pts: o.pts, showOut: o.showOut,
+        qmethod: o.qmethod, mean: o.mean, pts: o.pts, size: o.size, showOut: o.showOut,
       });
       return { svg: r.svg, summary: summaryTable(r.stats, o.qmethod) + interpretation(names.length > 1) };
     },

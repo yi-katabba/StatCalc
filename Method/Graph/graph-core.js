@@ -271,6 +271,7 @@
     const useRibbon = !!window.StatRibbon;
     function optHTML(o) {
       const oid = P + 'o-' + o.key;
+      if (o.type === 'range') return `<div class="gr-opt"><label for="${oid}">${esc(o.label)}</label><input type="range" id="${oid}" min="${o.min}" max="${o.max}" step="${o.step || 1}" value="${o.def}"></div>`;
       if (o.type === 'checkbox') return `<label class="gr-check" for="${oid}"><input type="checkbox" id="${oid}" ${o.def ? 'checked' : ''}> ${esc(o.label)}</label>`;
       if (o.type === 'select') return `<div class="gr-opt"><label for="${oid}">${esc(o.label)}</label><select class="select-input" id="${oid}">${o.choices.map((c) => `<option value="${esc(c[0])}" ${c[0] === o.def ? 'selected' : ''}>${esc(c[1])}</option>`).join('')}</select></div>`;
       return `<div class="gr-opt"><label for="${oid}">${esc(o.label)}</label><input type="text" class="plain-input" id="${oid}" ${o.type === 'number' ? 'inputmode="decimal"' : ''} placeholder="${esc(o.placeholder || '')}" value="${o.def !== undefined ? esc(o.def) : ''}" autocomplete="off"></div>`;
@@ -438,6 +439,7 @@
         const el = $('#' + P + 'o-' + d.key, section);
         if (!el) return;
         if (d.type === 'checkbox') o[d.key] = el.checked;
+        else if (d.type === 'range') o[d.key] = parseFloat(el.value);
         else if (d.type === 'select') o[d.key] = el.value;
         else if (d.type === 'number') { const v = parseNum(el.value); o[d.key] = Number.isFinite(v) ? v : null; }
         else o[d.key] = el.value.trim();
@@ -538,6 +540,7 @@
     function buildRibbon() {
       const item = (o) => {
         const oid = P + 'o-' + o.key;
+        if (o.type === 'range') return { type: 'range', id: oid, label: o.label, min: o.min, max: o.max, step: o.step, def: o.def, unit: o.unit };
         if (o.type === 'checkbox') return { type: 'check', id: oid, label: o.label, def: !!o.def };
         if (o.type === 'select') return { type: 'select', id: oid, label: o.label, options: o.choices, selected: o.def };
         return { type: o.type === 'number' ? 'number' : 'text', id: oid, label: o.label, placeholder: o.placeholder || '', def: o.def };
@@ -665,6 +668,7 @@
     if (!r) return o;
     r.opts.forEach((d) => {
       if (d.type === 'checkbox') o[d.key] = !!d.def;
+      else if (d.type === 'range') o[d.key] = +d.def;
       else if (d.type === 'select') o[d.key] = d.def !== undefined ? d.def : d.choices[0][0];
       else if (d.type === 'number') o[d.key] = d.def !== undefined && Number.isFinite(+d.def) ? +d.def : null;
       else o[d.key] = d.def !== undefined ? String(d.def) : '';

@@ -950,7 +950,7 @@
   /* p-value MacKinnon bersifat asimtotik, sedangkan nilai kritis memakai koreksi ukuran sampel;
      pada sampel kecil keduanya bisa berbeda tipis di sekitar batas 5%. */
   function disagreeNote(res) {
-    if ((res.pval < 0.05) === res.stationary) return '';
+    if ((res.pval < statAlpha()) === res.stationary) return '';
     return `<p class="test-note">Catatan: p-value (${fmt(res.pval, 4)}) berada di sisi 0.05 yang berbeda dari keputusan nilai kritis. Hal ini wajar pada sampel kecil karena p-value MacKinnon bersifat asimtotik, sedangkan nilai kritis sudah dikoreksi untuk n = ${res.nobs}. Keputusan di atas memakai nilai kritis; hasil berada dekat batas sehingga sebaiknya ditafsirkan hati-hati (mis. tambah data atau bandingkan dengan grafik).</p>`;
   }
 

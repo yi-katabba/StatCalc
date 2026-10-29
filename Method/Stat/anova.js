@@ -296,7 +296,7 @@
     const MSW = dfW > 0 ? SSW / dfW : NaN;
     const F = (Number.isFinite(MSW) && MSW > 0) ? MSB / MSW : NaN;
     const p = fUpperP(F, dfB, dfW);
-    const significant = Number.isFinite(p) ? p < 0.05 : false;
+    const significant = Number.isFinite(p) ? p < statAlpha() : false;
 
     return { k, ns, N, means, sds, mins, maxs, grandMean, SSB, SSW, SST, dfB, dfW, dfT, MSB, MSW, F, p, significant };
   }
@@ -355,9 +355,9 @@
       dfA, dfB: dfB2, dfAB, dfE, dfT,
       MS_A, MS_B, MS_AB, MS_E,
       F_A, F_B, F_AB, p_A, p_B, p_AB,
-      sigA: Number.isFinite(p_A) ? p_A < 0.05 : false,
-      sigB: Number.isFinite(p_B) ? p_B < 0.05 : false,
-      sigAB: Number.isFinite(p_AB) ? p_AB < 0.05 : false,
+      sigA: Number.isFinite(p_A) ? p_A < statAlpha() : false,
+      sigB: Number.isFinite(p_B) ? p_B < statAlpha() : false,
+      sigAB: Number.isFinite(p_AB) ? p_AB < statAlpha() : false,
     };
   }
 

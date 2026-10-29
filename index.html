@@ -12,7 +12,7 @@
 <meta name="color-scheme" content="light">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* =========================================================================
    STATCALC - single-file webview app
@@ -1302,6 +1302,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
   .calc-btn{ min-height:62px; }
 }
 </style>
+<link rel="stylesheet" href="statcalc-theme.css">
 <link rel="stylesheet" href="Method/Materi/katex/katex.min.css">
 </head>
 <body class="pre-auth">
@@ -1333,6 +1334,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
     <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M9.5 4.5v15"/></svg>
   </button>
   <span class="page-title" id="pageTitle"></span>
+  <button type="button" class="top-avatar" id="topAvatar" aria-label="Profil">?</button>
 </header>
 
 <button type="button" class="side-fab" id="sideFab" aria-pressed="false" aria-label="Sembunyikan menu samping" title="Sembunyikan menu samping">
@@ -1975,7 +1977,6 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
         <button type="button" class="tab-btn" data-tab="rs-tab-opt">Optimasi</button>
         <button type="button" class="tab-btn" data-tab="rs-tab-diag">Diagnostik</button>
         <button type="button" class="tab-btn" data-tab="rs-tab-steps">Langkah Perhitungan</button>
-        <button type="button" class="tab-btn" data-tab="rs-tab-interp">Interpretasi</button>
       </nav>
       <div class="tab-panel active" id="rs-tab-model"><div id="rsModelWrap" class="equation-wrap"></div></div>
       <div class="tab-panel" id="rs-tab-coef"><div id="rsCoefWrap" class="equation-wrap"></div></div>
@@ -1989,7 +1990,6 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
       </div>
       <div class="tab-panel" id="rs-tab-diag"><div id="rsDiagWrap" class="equation-wrap"></div></div>
       <div class="tab-panel" id="rs-tab-steps"><div id="rsStepsWrap" class="steps-wrap"></div></div>
-      <div class="tab-panel" id="rs-tab-interp"><div id="rsInterpWrap"></div></div>
     </section>
 
     <section class="card step-card" id="rs-conclusion-card" hidden>
@@ -2303,6 +2303,11 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
         <div class="p-v" id="profileStatCalc">0</div>
       </div>
     </div>
+    <div class="profile-set">
+      <label for="profileAlpha">Taraf signifikansi (&alpha;)</label>
+      <select id="profileAlpha" class="select-input"><option value="0.1">0,10</option><option value="0.05" selected>0,05</option><option value="0.01">0,01</option></select>
+      <p class="profile-set-note">Dipakai di semua uji hipotesis. Hitung ulang analisis yang sudah terbuka agar memakai nilai baru.</p>
+    </div>
     <button type="button" class="profile-action" id="btnGantiNama">
       <svg class="pa-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
       Ganti Nama
@@ -2321,27 +2326,15 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 
 <!-- ===================== BOTTOM NAVIGATION ===================== -->
 <nav class="bottom-nav" id="bottomNav">
-  <button type="button" class="nav-item active" data-tab="home">
-    <svg viewBox="0 0 24 24"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9a1 1 0 0 0 1 1h3v-5h4v5h3a1 1 0 0 0 1-1v-9"/></svg>
-    <span>Beranda</span>
-  </button>
-  <button type="button" class="nav-item" data-tab="metode">
-    <svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg>
-    <span>Metode</span>
-  </button>
-  <button type="button" class="nav-item" data-tab="materi">
-    <svg viewBox="0 0 24 24"><path d="M12 6.5C10.3 5.2 8 4.5 4.5 4.5v13c3.5 0 5.8.7 7.5 2 1.7-1.3 4-2 7.5-2v-13c-3.5 0-5.8.7-7.5 2Z"/><path d="M12 6.5v13"/></svg>
-    <span>Materi</span>
-  </button>
-  <button type="button" class="nav-item" data-tab="kalkulator">
-    <svg viewBox="0 0 24 24"><rect x="4.5" y="2.5" width="15" height="19" rx="2.4"/><line x1="8" y1="7" x2="16" y2="7"/><circle cx="8.5" cy="12" r="0.6" fill="currentColor"/><circle cx="12" cy="12" r="0.6" fill="currentColor"/><circle cx="15.5" cy="12" r="0.6" fill="currentColor"/><circle cx="8.5" cy="16" r="0.6" fill="currentColor"/><circle cx="12" cy="16" r="0.6" fill="currentColor"/><circle cx="15.5" cy="16" r="0.6" fill="currentColor"/></svg>
-    <span>Hitung</span>
-  </button>
-  <button type="button" class="nav-item" data-tab="profil" id="navProfilBtn">
-    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c1.2-4 4-6 7.5-6s6.3 2 7.5 6"/></svg>
-    <span>Profil</span>
-  </button>
+  <button type="button" class="nav-item active" data-tab="home"><svg viewBox="0 0 24 24"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9a1 1 0 0 0 1 1h3v-5h4v5h3a1 1 0 0 0 1-1v-9"/></svg><span>Beranda</span></button>
+  <button type="button" class="nav-item" data-tab="metode-calc"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 10h17M10 4.5v15"/></svg><span class="m-l">Lembar</span><span class="d-l">Data</span></button>
+  <button type="button" class="nav-item" data-tab="metode"><svg viewBox="0 0 24 24"><path d="M4 4v16h16M7 16l4-5 3 2 5-7"/></svg><span class="m-l">Analisis</span><span class="d-l">Stat</span></button>
+  <button type="button" class="nav-item desk-only" data-tab="metode-graph"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 15l3-4 2 2 3-5"/></svg><span>Grafik</span></button>
+  <button type="button" class="nav-item" data-tab="materi"><svg viewBox="0 0 24 24"><path d="M12 6.5C10.3 5.2 8 4.5 4.5 4.5v13c3.5 0 5.8.7 7.5 2 1.7-1.3 4-2 7.5-2v-13c-3.5 0-5.8.7-7.5 2ZM12 6.5v13"/></svg><span>Materi</span></button>
+  <button type="button" class="nav-item" data-tab="kalkulator"><svg viewBox="0 0 24 24"><rect x="5" y="2.5" width="14" height="19" rx="2.4"/><path d="M8 7h8M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01"/></svg><span class="m-l">Hitung</span><span class="d-l">Fungsi</span></button>
 </nav>
+
+<footer class="status-bar" id="statusBar"><span id="sbUser">StatCalc</span><span class="sb-sp"></span><span>Offline &middot; data tetap di perangkat</span></footer>
 
 <div class="toast" id="toast"></div>
 
@@ -2559,7 +2552,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
     materi: 'view-materi', 'materi-detail': 'view-materi-detail',
   };
   const PAGE_TITLES = {
-    metode: 'Pilih Metode', 'metode-calc': 'Metode Calc', 'metode-stat': 'Metode Stat', 'metode-graph': 'Metode Graph', tentang: 'Tentang StatCalc',
+    metode: 'Pilih Metode', 'metode-calc': 'Lembar', 'metode-stat': 'Metode Stat', 'metode-graph': 'Metode Graph', tentang: 'Tentang StatCalc',
     matriks: 'Kalkulator Matriks', kalkulator: 'Kalkulator Ilmiah', petunjuk: 'Petunjuk', materi: 'Materi Statistik',
   };
   let backTarget = 'home';
@@ -2654,7 +2647,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
     if (!viewId) return;
     $$('.view').forEach((v) => v.classList.remove('active'));
     $('#' + viewId).classList.add('active');
-    const navTab = (pageId.indexOf('metode') === 0 || isMethod) ? 'metode' : pageId.indexOf('materi') === 0 ? 'materi' : pageId;
+    const navTab = (pageId === 'metode-calc' || pageId === 'metode-graph') ? pageId : (pageId.indexOf('metode') === 0 || isMethod) ? 'metode' : pageId.indexOf('materi') === 0 ? 'materi' : pageId;
     $$('.nav-item', bottomNav).forEach((b) => b.classList.toggle('active', b.dataset.tab === navTab));
     if (pageId === 'home') {
       topbar.classList.remove('visible');
@@ -2980,6 +2973,9 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 <script src="Method/Calc/sheet.js"></script>
 <script src="Method/Calc/sheet-graph.js"></script>
 <script src="Method/Calc/sheet-data.js"></script>
+<script src="Method/Calc/sheet-quick.js"></script>
+<script src="Method/Calc/sheet-vars.js"></script>
+<script src="status-bar.js"></script>
 
 <!-- ===================== EKSPOR HASIL STAT: grafik pendukung + unduh .docx (muat SETELAH semua file Method/Graph/) ===================== -->
 <script src="Method/Shared/stat-charts.js"></script>
@@ -2993,7 +2989,9 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 <!-- ===================== MATERI STATISTIK (KaTeX lokal + Method/Materi/; muat PALING AKHIR agar bisa menempelkan tautan ke halaman metode Stat) ===================== -->
 <script src="Method/Materi/katex/katex.min.js"></script>
 <script src="Method/Materi/katex/auto-render.min.js"></script>
+<script src="prefs.js"></script>
 <script src="kalkulator.js"></script>
+<script src="kalkulator-panel.js"></script>
 <script src="Method/Materi/materi.js"></script>
 <script src="Method/Materi/data/deskriptif.js"></script>
 <script src="Method/Materi/data/konsep-uji.js"></script>
@@ -3003,6 +3001,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 <script src="Method/Materi/data/stasioner.js"></script>
 <script src="Method/Materi/data/arima.js"></script>
 <script src="Method/Materi/data/rsm.js"></script>
+<script src="Method/Materi/materi-lembar.js"></script>
 
 
 <!-- =========================================================================
@@ -3083,6 +3082,17 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
   // Saat halaman dibuka / di-refresh
   if (!apply()) sync(true);
 })();
+</script>
+<script>
+(function(){var a=document.getElementById('topAvatar'),b=document.getElementById('skyAvatar'),o=document.getElementById('openProfileBtn');
+if(!a)return;function sync(){if(b)a.textContent=b.textContent||'?';}sync();
+if(b)new MutationObserver(sync).observe(b,{childList:true,characterData:true,subtree:true});
+a.addEventListener('click',function(){if(o)o.click();});})();
+</script>
+<script>
+(function(){var u=document.getElementById('sbUser'),n=document.getElementById('skyGreetName');
+function f(){if(u&&n&&n.textContent.trim()&&n.textContent.trim()!=='-')u.textContent='Tersimpan di perangkat \u00B7 '+n.textContent.trim();}
+f();if(n)new MutationObserver(f).observe(n,{childList:true,characterData:true,subtree:true});})();
 </script>
 </body>
 </html>

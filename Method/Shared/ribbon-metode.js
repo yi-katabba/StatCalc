@@ -79,6 +79,9 @@
       if (it.type === 'text' || it.type === 'number') {
         return `<div class="rb-fld"><label for="${it.id}">${esc(it.label)}</label><input type="text" class="plain-input" id="${it.id}"${it.type === 'number' ? ' inputmode="decimal"' : ''} placeholder="${esc(it.placeholder || '')}" value="${esc(it.def === undefined || it.def === null ? '' : it.def)}" autocomplete="off"></div>`;
       }
+      if (it.type === 'range') {
+        return `<div class="rb-fld"><label for="${it.id}">${esc(it.label)} <span class="rb-rv" id="${it.id}-v">${esc(it.def)}${esc(it.unit || '')}</span></label><input type="range" class="rb-range" id="${it.id}" min="${it.min}" max="${it.max}" step="${it.step || 1}" value="${esc(it.def)}" data-unit="${esc(it.unit || '')}"></div>`;
+      }
       if (it.type === 'color') {
         return `<label class="rb-color" for="${it.id}">${esc(it.label)}<input type="color" id="${it.id}" value="${esc(it.def || '#000000')}"></label>`;
       }
@@ -140,6 +143,7 @@
     }
     sec.addEventListener('change', (e) => { if (e.target.matches('[data-rb]')) apply(); });
     if (cfg.onAction) sec.addEventListener('click', (e) => { const b = e.target.closest('[data-rb-act]'); if (b) cfg.onAction(b.dataset.rbAct, e); });
+    sec.addEventListener('input', (e) => { const r = e.target; if (r && r.matches && r.matches('input.rb-range')) { const v = document.getElementById(r.id + '-v'); if (v) v.textContent = r.value + (r.dataset.unit || ''); } });
     if (cfg.onChange) { sec.addEventListener('input', cfg.onChange); sec.addEventListener('change', cfg.onChange); }
     /* hasil baru menyetel ulang tab aktif -> periksa lagi */
     let t = null;

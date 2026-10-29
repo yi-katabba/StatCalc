@@ -1033,7 +1033,7 @@
   function renderModel(R) {
     const { fit, o } = R;
     const rows = fit.params.map((p) => {
-      const sig = Number.isFinite(p.p) ? (p.p < 0.05 ? '<span style="color:var(--good,#4E7F3A);font-weight:600;">signifikan</span>' : '<span style="color:var(--bad,#B5532F);">tidak signifikan</span>') : '-';
+      const sig = Number.isFinite(p.p) ? (p.p < statAlpha() ? '<span style="color:var(--good,#4E7F3A);font-weight:600;">signifikan</span>' : '<span style="color:var(--bad,#B5532F);">tidak signifikan</span>') : '-';
       return `<tr><td>${escapeHTML(p.name)}</td><td>${fmt(p.est, 4)}</td><td>${fmt(p.se, 4)}</td><td>${fmt(p.z, 3)}</td><td>${fmtP(p.p)}</td><td>${sig}</td></tr>`;
     }).join('');
     const warn = [];
@@ -1242,7 +1242,7 @@
   /* ---------- Tab Diagnostik ---------- */
   function renderDiag(R) {
     const { fit, lb, jb, o } = R;
-    const lbOk = Number.isFinite(lb.p) ? lb.p > 0.05 : null;
+    const lbOk = Number.isFinite(lb.p) ? lb.p > statAlpha() : null;
     const m = mean(fit.e), sd = Math.sqrt(fit.e.reduce((s, v) => s + (v - m) * (v - m), 0) / Math.max(1, fit.e.length - 1));
     const tmean = m / (sd / Math.sqrt(fit.e.length)), pmean = 2 * (1 - normCdf(Math.abs(tmean)));
     const nPar = o.p + o.q + o.P + o.Q;
@@ -1265,14 +1265,14 @@
         <h4>Uji Normalitas Residu (Jarque-Bera)</h4>
         <p class="test-sub">H<sub>0</sub>: residu berdistribusi normal. Normalitas dibutuhkan agar selang kepercayaan ramalan akurat.</p>
         ${jb ? `<div class="test-stat-row">${statCard('JB', fmt(jb.JB, 3))}${statCard('Skewness', fmt(jb.skew, 3))}${statCard('Kurtosis', fmt(jb.kurt, 3))}${statCard('p-value', fmtP(jb.p))}</div>
-        <div class="test-verdict ${jb.p > 0.05 ? 'ok' : 'bad'}">${jb.p > 0.05 ? 'Residu berdistribusi normal' : 'Residu tidak normal'}</div>
-        <p class="test-conclusion">${jb.p > 0.05 ? 'H<sub>0</sub> tidak ditolak (p &gt; 0,05).' : 'H<sub>0</sub> ditolak (p &le; 0,05). Selang ramalan perlu ditafsirkan dengan hati-hati; periksa pencilan pada grafik residu.'}</p>`
+        <div class="test-verdict ${jb.p > statAlpha() ? 'ok' : 'bad'}">${jb.p > statAlpha() ? 'Residu berdistribusi normal' : 'Residu tidak normal'}</div>
+        <p class="test-conclusion">${jb.p > statAlpha() ? 'H<sub>0</sub> tidak ditolak (p &gt; 0,05).' : 'H<sub>0</sub> ditolak (p &le; 0,05). Selang ramalan perlu ditafsirkan dengan hati-hati; periksa pencilan pada grafik residu.'}</p>`
         : '<p class="test-note">Residu terlalu sedikit untuk uji Jarque-Bera (minimal 8).</p>'}
       </div>
       <div class="test-block">
         <h4>Rata-rata Residu</h4>
         <div class="test-stat-row">${statCard('Rata-rata residu', fmt(m, 4))}${statCard('t-hitung', fmt(tmean, 3))}${statCard('p-value', fmtP(pmean))}</div>
-        <p class="test-conclusion">Rata-rata residu ${pmean > 0.05 ? 'tidak berbeda nyata dari nol (baik)' : 'berbeda nyata dari nol (mungkin ada tren yang belum ditangkap)'}.</p>
+        <p class="test-conclusion">Rata-rata residu ${pmean > statAlpha() ? 'tidak berbeda nyata dari nol (baik)' : 'berbeda nyata dari nol (mungkin ada tren yang belum ditangkap)'}.</p>
       </div>
       <div id="arDiagCharts"></div>`;
     const box = $('#arDiagCharts', el.diagWrap);
@@ -1478,8 +1478,8 @@
   function renderEval(R) {
     const { fit, fc, ev, lb, o, season } = R, N = R.Y.length;
     const verdict = mapeLabel(ev.mape);
-    const lbOk = Number.isFinite(lb.p) ? lb.p > 0.05 : null;
-    const sigPar = fit.params.filter((p) => Number.isFinite(p.p) && p.p >= 0.05).map((p) => p.name);
+    const lbOk = Number.isFinite(lb.p) ? lb.p > statAlpha() : null;
+    const sigPar = fit.params.filter((p) => Number.isFinite(p.p) && p.p >= statAlpha()).map((p) => p.name);
     const notes = [];
     if (!o.seasonal && season.found) notes.push(`ACF menunjukkan indikasi pola musiman (s ≈ ${season.s}); pertimbangkan model <strong>SARIMA</strong>.`);
     if (o.seasonal && !season.found && !season.tooShort) notes.push('Tidak ada indikasi musiman yang kuat pada data; <strong>ARIMA</strong> yang lebih sederhana mungkin sudah cukup.');

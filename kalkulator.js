@@ -110,9 +110,11 @@
     }
     const r = expr(); if (pos < tokens.length) throw new Error('Ekspresi tidak valid'); return r;
   }
+  let decimals = null; // null = otomatis (12 digit signifikan)
   function formatResult(v) {
     if (!Number.isFinite(v)) return 'Error';
     if (Math.abs(v) < 1e-12) v = 0;
+    if (decimals !== null && Math.abs(v) < 1e15) { const r = parseFloat(v.toFixed(decimals)); return String(Object.is(r, -0) ? 0 : r); }
     if (Math.abs(v) >= 1e15 || (Math.abs(v) < 1e-9 && v !== 0)) return v.toExponential(6);
     let s = v.toPrecision(12);
     if (s.indexOf('e') === -1 && s.indexOf('.') !== -1) s = s.replace(/0+$/, '').replace(/\.$/, '');
@@ -441,5 +443,10 @@
   renderHistory();
   reset();
   window.addEventListener('resize', placeCaret);
-  window.StatCalcCalc = { reset };
+  window.StatCalcCalc = {
+    reset,
+    setDecimals(n) { decimals = (n === null || n === '' || !Number.isFinite(+n)) ? null : Math.max(0, Math.min(10, Math.floor(+n))); updateLive(); },
+    getDecimals() { return decimals; },
+    getAngle() { return angleMode; },
+  };
 })();

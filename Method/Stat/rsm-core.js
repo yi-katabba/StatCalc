@@ -238,7 +238,7 @@
     const X = o.X, y = o.y, k = X[0].length, n = y.length;
     const names = o.names && o.names.length === k ? o.names : X[0].map((_, i) => 'X' + (i + 1));
     const model = o.model || 'quad';
-    const alpha = o.alpha || 0.05;
+    const alpha = o.alpha || (window.statAlpha ? window.statAlpha() : 0.05);
     const cd = coding(X);
     if (cd.half.some((h) => !(h > 0))) { const e = new Error('KONSTAN'); e.idx = cd.half.findIndex((h) => !(h > 0)); throw e; }
     const Xc = encode(cd, X);

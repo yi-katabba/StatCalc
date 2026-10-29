@@ -1622,7 +1622,8 @@
   q('scSend').addEventListener('click', () => {
     hide('scErr4');
     const id = q('scTarget').value, t = SEND[id];
-    const { rows, C } = exportRows();
+    let { rows, C } = exportRows();
+    if (typeof window.StatCalcSheetRoles === 'function') { const ro = window.StatCalcSheetRoles(id, rows); if (ro) { rows = ro.rows; C = ro.C; } }
     const first = S.header ? 1 : 0;
     if (rows.length <= first) { flash('scErr4', 'Belum ada data pada lembar kerja. Isi atau impor data terlebih dahulu.', 6000); return; }
     if (!window.StatCalc || !window.StatCalcImport || !window.StatCalcImport.has(t.card) && !t.build) { flash('scErr4', 'Halaman tujuan belum siap. Muat ulang halaman lalu coba lagi.', 6000); return; }

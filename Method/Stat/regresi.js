@@ -647,7 +647,7 @@
     const F = (df > 0 && res.SSE > 0) ? (res.SSR / k) / (res.SSE / df) : NaN;
     const df1 = k, df2 = df;
     const pF = fUpperP(F, df1, df2);
-    const fTest = { F, df1, df2, p: pF, significant: Number.isFinite(pF) ? pF < 0.05 : false };
+    const fTest = { F, df1, df2, p: pF, significant: Number.isFinite(pF) ? pF < statAlpha() : false };
 
     const varNames = k === 1 ? ['X'] : data.varNames || Array.from({ length: k }, (_, i) => `X${i + 1}`);
     const tTests = res.beta.map((b, j) => {
@@ -655,7 +655,7 @@
       const t = se > 0 ? b / se : NaN;
       const p = tTwoTailedP(t, df);
       const name = j === 0 ? (k === 1 ? 'a (konstanta)' : 'b0 (konstanta)') : (k === 1 ? 'b' : `b${j}`) + ` (${varNames[j - 1]})`;
-      return { name, b, se, t, p, significant: Number.isFinite(p) ? p < 0.05 : false };
+      return { name, b, se, t, p, significant: Number.isFinite(p) ? p < statAlpha() : false };
     });
     return { fTest, tTests };
   }
@@ -816,19 +816,19 @@
     const kurt = sd > 0 ? m4 / (sd ** 4) : 3;
     const JB = (n / 6) * (skew ** 2 + ((kurt - 3) ** 2) / 4);
     const p = chiSq2UpperP(JB);
-    return { kind: 'jb', name: NORM_NAMES.jb, JB, skew, kurt, p, normal: p >= 0.05 };
+    return { kind: 'jb', name: NORM_NAMES.jb, JB, skew, kurt, p, normal: p >= statAlpha() };
   }
 
   function computeShapiroWilkTest(res) {
     const r = shapiroWilk(res.residuals);
     if (!r) return { kind: 'sw', name: NORM_NAMES.sw, unavailable: true, normal: null, reason: 'Uji Shapiro-Wilk memerlukan minimal 3 data dan residual yang tidak seluruhnya sama.' };
-    return { kind: 'sw', name: NORM_NAMES.sw, W: r.W, p: r.p, n: r.n, normal: r.p >= 0.05 };
+    return { kind: 'sw', name: NORM_NAMES.sw, W: r.W, p: r.p, n: r.n, normal: r.p >= statAlpha() };
   }
 
   function computeKolmogorovTest(res) {
     const r = lilliefors(res.residuals);
     if (!r) return { kind: 'ks', name: NORM_NAMES.ks, unavailable: true, normal: null, reason: 'Uji Kolmogorov-Smirnov (Lilliefors) memerlukan minimal 4 data dan residual yang tidak seluruhnya sama.' };
-    return { kind: 'ks', name: NORM_NAMES.ks, D: r.D, mean: r.mean, sd: r.sd, p: r.p, n: r.n, normal: r.p >= 0.05 };
+    return { kind: 'ks', name: NORM_NAMES.ks, D: r.D, mean: r.mean, sd: r.sd, p: r.p, n: r.n, normal: r.p >= statAlpha() };
   }
 
   /* Uji normalitas sesuai pilihan di Langkah 4 */
@@ -870,7 +870,7 @@
       const se = aux.SEbeta[j + 1];
       const t = se > 0 ? b / se : NaN;
       const p = tTwoTailedP(t, aux.df);
-      return { name: varNames[j], b, t, p, problematic: Number.isFinite(p) ? p < 0.05 : false };
+      return { name: varNames[j], b, t, p, problematic: Number.isFinite(p) ? p < statAlpha() : false };
     });
     const anyProblem = rows.some((r) => r.problematic);
     return { kind: 'glejser', name: HETERO_NAMES.glejser, rows, anyProblem, df: aux.df };
@@ -885,7 +885,7 @@
     const LM = n * aux.R2;
     const p = chiSqUpperP(LM, aux.q);
     const Fp = Number.isFinite(aux.F) ? fUpperP(aux.F, aux.q, aux.df2) : NaN;
-    return { kind: 'bp', name: HETERO_NAMES.bp, LM, R2: aux.R2, df: aux.q, F: aux.F, df2: aux.df2, p, Fp, anyProblem: p < 0.05 };
+    return { kind: 'bp', name: HETERO_NAMES.bp, LM, R2: aux.R2, df: aux.q, F: aux.F, df2: aux.df2, p, Fp, anyProblem: p < statAlpha() };
   }
 
   /* White: regresikan e\u00B2 terhadap X, X\u00B2 dan (bila data cukup) hasil kali silang antar X; LM = n\u00B7R\u00B2 ~ \u03C7\u00B2(q). */
@@ -901,7 +901,7 @@
     const LM = n * aux.R2;
     const p = chiSqUpperP(LM, aux.q);
     const Fp = Number.isFinite(aux.F) ? fUpperP(aux.F, aux.q, aux.df2) : NaN;
-    return { kind: 'white', name: HETERO_NAMES.white, LM, R2: aux.R2, df: aux.q, F: aux.F, df2: aux.df2, p, Fp, withCross, hasCross: cross.length > 0, anyProblem: p < 0.05 };
+    return { kind: 'white', name: HETERO_NAMES.white, LM, R2: aux.R2, df: aux.q, F: aux.F, df2: aux.df2, p, Fp, withCross, hasCross: cross.length > 0, anyProblem: p < statAlpha() };
   }
 
   /* Uji heteroskedastisitas sesuai pilihan di Langkah 4 */
@@ -1000,7 +1000,7 @@
     if (!aux || !(aux.df2 >= 1)) return { kind: 'bg', name: AUTO_NAMES.bg, unavailable: true, reason: 'Uji Breusch-Godfrey tidak dapat dihitung (data kurang atau residual tidak bervariasi).' };
     const LM = n * aux.R2, p = chiSqUpperP(LM, 1);
     const Fp = Number.isFinite(aux.F) ? fUpperP(aux.F, aux.q, aux.df2) : NaN;
-    return { kind: 'bg', name: AUTO_NAMES.bg, LM, R2: aux.R2, p, F: aux.F, df2: aux.df2, q: aux.q, Fp, anyProblem: p < 0.05 };
+    return { kind: 'bg', name: AUTO_NAMES.bg, LM, R2: aux.R2, p, F: aux.F, df2: aux.df2, q: aux.q, Fp, anyProblem: p < statAlpha() };
   }
   /* Runs test (Wald-Wolfowitz) pada tanda residual: aproksimasi normal. */
   function computeRunsTest(res) {
@@ -1015,7 +1015,7 @@
     if (!(v > 0)) return { kind: 'runs', name: AUTO_NAMES.runs, unavailable: true, reason: 'Ragam statistik Runs bernilai nol untuk data ini.' };
     const z = (runs - mu) / Math.sqrt(v);
     const p = Math.min(1, 2 * normUpperP(Math.abs(z)));
-    return { kind: 'runs', name: AUTO_NAMES.runs, n, n1, n2, runs, mu, sd: Math.sqrt(v), z, p, anyProblem: p < 0.05, few: runs < mu };
+    return { kind: 'runs', name: AUTO_NAMES.runs, n, n1, n2, runs, mu, sd: Math.sqrt(v), z, p, anyProblem: p < statAlpha(), few: runs < mu };
   }
   function computeAutocorrelationTest(res, data) {
     if (state.autoTest === 'bg') return computeBreuschGodfrey(res, data);

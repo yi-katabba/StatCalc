@@ -11,7 +11,10 @@
     minRows: 5, defaultRows: 8,
     sample: [[62], [75], [68], [80], [72], [85], [70], [66], [78], [74], [90], [69], [73], [77], [82], [64], [71], [76], [88], [67]],
     axes: ['Kuantil teoritis (z)', 'Nilai data'],
-    options: [{ key: 'line', type: 'checkbox', label: 'Tampilkan garis normal acuan', def: true }],
+    options: [
+      { key: 'line', type: 'checkbox', label: 'Tampilkan garis normal acuan', def: true },
+      { key: 'size', type: 'range', label: 'Ukuran titik', min: 3, max: 12, step: 0.5, def: 4.2, unit: ' px' },
+    ],
     draw(d, o) {
       const n = d.n, y = u.sortedAsc(d.cols[0]);
       const m = u.mean(y), s1 = u.sd(y);
@@ -27,7 +30,7 @@
         s += `<clipPath id="${cid}"><rect x="${L.m.l}" y="${L.m.t}" width="${L.pw}" height="${L.ph}"/></clipPath>` +
           `<line clip-path="url(#${cid})" x1="${px(sxs.lo).toFixed(1)}" y1="${py(m + s1 * sxs.lo).toFixed(1)}" x2="${px(sxs.hi).toFixed(1)}" y2="${py(m + s1 * sxs.hi).toFixed(1)}" stroke="${u.ST.c2}" stroke-width="2.2" stroke-dasharray="6 4"/>`;
       }
-      z.forEach((zv, i) => { s += `<circle cx="${px(zv).toFixed(1)}" cy="${py(y[i]).toFixed(1)}" r="4.2" fill="${u.ST.c1}" fill-opacity=".78" stroke="#fff" stroke-width="1"/>`; });
+      z.forEach((zv, i) => { s += `<circle cx="${px(zv).toFixed(1)}" cy="${py(y[i]).toFixed(1)}" r="${o.size || 4.2}" fill="${u.ST.c1}" fill-opacity=".78" stroke="#fff" stroke-width="1"/>`; });
       s += '</svg>';
 
       const r = u.linreg(z, y).r;
