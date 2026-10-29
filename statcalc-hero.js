@@ -1,4 +1,5 @@
-/* StatCalc - animasi header Beranda: tiga adegan bergantian (kurva normal, scatter + regresi, time series + ramalan)
+/* StatCalc - animasi header Beranda: enam adegan bergantian (kurva normal, histogram -> normal, scatter + regresi,
+   uji hipotesis H0 vs H1, time series + ramalan, kontur RSM + optimum)
    + simbol statistik melayang. Mandiri, tanpa pustaka, berjalan offline.
    Hanya menyentuh elemen .hero-stat di dalam #skyBanner. */
 (function () {
@@ -285,8 +286,237 @@
     };
   }
 
+  /* =====================================================================
+     Adegan 4 - Histogram -> kurva normal (menu Deskriptif):
+     batang menjulang dari sampel kecil yang berantakan, lalu makin rapi
+     mengikuti kurva N(x̄, s²) seiring n bertambah
+     ===================================================================== */
+  function sceneHistogram() {
+    var g = mk('g', {}, svg);
+    axis(g);
+    var K = 13, BX0 = 60, BW = 480 / K, MU = 300, SG = 85, HP = 140, i;
+    var rnd = seeded(31415926);
+    var bars = [], ideal = [], nz = [], add = [];
+    for (i = 0; i < K; i++) {
+      var z = (BX0 + BW * (i + 0.5) - MU) / SG;
+      ideal.push(HP * Math.exp(-z * z / 2));
+      nz.push((rnd() - 0.5) * 0.9);
+      add.push(rnd() * 16);
+      bars.push(mk('rect', { 'class': 'hc-bar', x: f1(BX0 + BW * i + 1.5), width: f1(BW - 3), y: BASE, height: 0 }, g));
+    }
+    var mean = mk('line', { 'class': 'hc-mean', x1: MU, x2: MU, y1: BASE, y2: 44 }, g);
+    var d = '', n = 96, x;
+    for (i = 0; i <= n; i++) {
+      x = X0 + (X1 - X0) * i / n;
+      var zz = (x - MU) / SG;
+      d += (i ? 'L' : 'M') + f1(x) + ' ' + f1(BASE - HP * Math.exp(-zz * zz / 2));
+    }
+    var curve = mk('path', { 'class': 'hc-line', pathLength: 1, d: d }, g);
+    var tk = mk('text', { 'class': 'hc-tick', x: MU, y: BASE + 20, 'text-anchor': 'middle' }, g); tk.textContent = 'x̄';
+    var l1 = label(g, X0 + 6, 26, 'Histogram → N(x̄, s²)', 'start');
+    var l2 = label(g, X0 + 6, 46, 'n = 20', 'start');
+    var lastN = -1;
+
+    return {
+      name: 'histogram', dur: 15, g: g,
+      render: function (t, still) {
+        var conv = still ? 1 : smooth(seg(t, 3.8, 9.2));
+        var w = still ? 0 : smooth(seg(t, 10.4, 12.4));
+        for (var k = 0; k < K; k++) {
+          var gr = still ? 1 : smooth(seg(t, 0.3 + k * 0.12, 1.5 + k * 0.12));
+          var h = ideal[k] * (1 + nz[k] * (1 - conv)) + add[k] * (1 - conv);
+          h = Math.max(0, h * (1 + 0.04 * w * Math.sin(t * 1.3 + k * 1.7))) * gr;
+          bars[k].setAttribute('y', f1(BASE - h));
+          bars[k].setAttribute('height', f1(h));
+        }
+        drawIn(curve, still ? 1 : smooth(seg(t, 8.6, 11)));
+        var fd = still ? 1 : smooth(seg(t, 10.2, 11.2));
+        setOp(mean, fd); setOp(tk, fd);
+        var nn = Math.round(20 + 480 * conv * conv);
+        if (nn !== lastN) { lastN = nn; l2.textContent = 'n = ' + nn; }
+        var lab = still ? 1 : smooth(seg(t, 0.8, 1.8));
+        setOp(l1, lab); setOp(l2, lab);
+      }
+    };
+  }
+
+  /* =====================================================================
+     Adegan 5 - Uji hipotesis H0 vs H1 (menu Konsep Uji / ANOVA):
+     daerah alpha (galat tipe I) dan beta (galat tipe II); beta berubah
+     saat μ1 bergeser, nilainya dihitung sungguhan dari Φ
+     ===================================================================== */
+  function sceneTest() {
+    var g = mk('g', {}, svg);
+    axis(g);
+    var SIG = 42, HP = 140, MU0 = 280, MU1 = 395, CZ = 1.645, CX0 = MU0 + CZ * SIG;
+    function Phi(z) {
+      var t = 1 / (1 + 0.2316419 * Math.abs(z)), dd = 0.3989423 * Math.exp(-z * z / 2);
+      var p = dd * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+      return z > 0 ? 1 - p : p;
+    }
+    function yAt(x, mu) { var z = (x - mu) / SIG; return BASE - HP * Math.exp(-z * z / 2); }
+    function curveD(mu) {
+      var s = '', i, n = 96;
+      for (i = 0; i <= n; i++) { var x = X0 + (X1 - X0) * i / n; s += (i ? 'L' : 'M') + f1(x) + ' ' + f1(yAt(x, mu)); }
+      return s;
+    }
+
+    var aFill = mk('path', { 'class': 'hc-alpha' }, g);
+    var bFill = mk('path', { 'class': 'hc-beta' }, g);
+    var c0 = mk('path', { 'class': 'hc-line', pathLength: 1, d: curveD(MU0) }, g);
+    var c1 = mk('path', { 'class': 'hc-line hc-line2', pathLength: 1 }, g);
+    var crit = mk('line', { 'class': 'hc-mean', x1: f1(CX0), x2: f1(CX0), y1: BASE, y2: BASE }, g);
+    var h0 = label(g, MU0, BASE - HP - 8, 'H₀', 'middle');
+    var h1 = label(g, MU1, BASE - HP - 8, 'H₁', 'middle');
+    var la = label(g, CX0 + 22, BASE - 46, 'α', 'start'); la.setAttribute('class', 'hc-lab hc-lab-a');
+    var lb = label(g, CX0 - 16, BASE - 12, 'β', 'end'); lb.setAttribute('class', 'hc-lab hc-lab-b');
+
+    var tickG = mk('g', {}, g);
+    function tick(txt, x) {
+      var tx = mk('text', { 'class': 'hc-tick', x: f1(x), y: BASE + 20, 'text-anchor': 'middle' }, tickG);
+      tx.textContent = txt;
+      var tl = mk('line', { 'class': 'hc-axis', x1: f1(x), x2: f1(x), y1: BASE, y2: BASE + 5 }, tickG);
+      return { t: tx, l: tl };
+    }
+    var t0 = tick('μ₀', MU0), tc = tick('c', CX0), t1 = tick('μ₁', MU1);
+    var l1 = label(g, X0 + 6, 26, 'H₀: μ = μ₀  vs  H₁: μ = μ₁', 'start');
+    var l2 = label(g, X0 + 6, 46, '', 'start');
+    var lastTxt = '';
+
+    // alpha: ekor kanan H0 di kanan nilai kritis c
+    var ad = 'M' + f1(CX0) + ' ' + BASE, i, x;
+    for (i = 0; i <= 30; i++) { x = CX0 + (X1 - CX0) * i / 30; ad += 'L' + f1(x) + ' ' + f1(yAt(x, MU0)); }
+    aFill.setAttribute('d', ad + 'L' + X1 + ' ' + BASE + 'Z');
+
+    return {
+      name: 'test', dur: 16, g: g,
+      render: function (t, still) {
+        var w = still ? 0 : smooth(seg(t, 9.4, 11.4));
+        var mu1 = MU1 + w * 26 * Math.sin((t - 9.4) * TAU / 9);
+        c1.setAttribute('d', curveD(mu1));
+        var bd = 'M' + X0 + ' ' + BASE;
+        for (i = 0; i <= 40; i++) { x = X0 + (CX0 - X0) * i / 40; bd += 'L' + f1(x) + ' ' + f1(yAt(x, mu1)); }
+        bFill.setAttribute('d', bd + 'L' + f1(CX0) + ' ' + BASE + 'Z');
+
+        drawIn(c0, still ? 1 : smooth(seg(t, 0.2, 2.4)));
+        drawIn(c1, still ? 1 : smooth(seg(t, 2.6, 4.8)));
+        setOp(h0, still ? 1 : smooth(seg(t, 1.8, 2.6)));
+        setOp(h1, still ? 1 : smooth(seg(t, 4.2, 5)));
+        var kc = still ? 1 : smooth(seg(t, 5.2, 6));
+        crit.setAttribute('y2', f1(BASE - (BASE - 40) * kc));
+        setOp(tc.t, kc); setOp(tc.l, kc);
+        var m = still ? 1 : smooth(seg(t, 0.2, 1));
+        setOp(t0.t, m); setOp(t0.l, m);
+        var m1 = still ? 1 : smooth(seg(t, 3, 3.8));
+        t1.t.setAttribute('x', f1(mu1)); t1.l.setAttribute('x1', f1(mu1)); t1.l.setAttribute('x2', f1(mu1));
+        h1.setAttribute('x', f1(mu1));
+        setOp(t1.t, m1); setOp(t1.l, m1);
+        setOp(aFill, still ? 1 : smooth(seg(t, 6, 7)));
+        setOp(bFill, still ? 1 : smooth(seg(t, 7.2, 8.2)));
+        setOp(la, still ? 1 : smooth(seg(t, 6.6, 7.4)));
+        setOp(lb, still ? 1 : smooth(seg(t, 7.8, 8.6)));
+        var beta = Phi((CX0 - mu1) / SIG);
+        var txt = 'α = 0,05  ·  β = ' + fmt(beta) + '  ·  1 − β = ' + fmt(1 - beta);
+        if (txt !== lastTxt) { lastTxt = txt; l2.textContent = txt; }
+        setOp(l1, still ? 1 : smooth(seg(t, 0.8, 1.8)));
+        setOp(l2, still ? 1 : smooth(seg(t, 8.2, 9.2)));
+      }
+    };
+  }
+
+  /* =====================================================================
+     Adegan 6 - Kontur RSM + titik optimum (menu RSM):
+     kontur elips respon kuadratik, jalur pendakian curam menuju optimum
+     ===================================================================== */
+  function sceneRSM() {
+    var g = mk('g', {}, svg);
+    axis(g);
+    mk('line', { 'class': 'hc-axis', x1: X0, y1: BASE, x2: X0, y2: 70 }, g);
+    var CXm = 420, CYm = 112, RX = 140, RY = 66, PHI = -0.35;
+    var LV = [[90, 0.30], [85, 0.564], [80, 0.739], [75, 0.879], [70, 1]];   // [nilai ŷ, skala jari-jari]
+    var NP = 72, i;
+
+    var cons = LV.map(function (lv) { return mk('path', { 'class': 'hc-contour', pathLength: 1 }, g); });
+    var vals = LV.map(function (lv) {
+      var tx = mk('text', { 'class': 'hc-tick', 'text-anchor': 'start' }, g);
+      tx.textContent = String(lv[0]);
+      return tx;
+    });
+    var asc = mk('path', { 'class': 'hc-fc' }, g);
+    var head = mk('circle', { 'class': 'hc-dot', r: 3.5 }, g);
+    var ring = mk('circle', { 'class': 'hc-ring', r: 8 }, g);
+    var star = mk('path', { 'class': 'hc-opt' }, g);
+    var sd = '';
+    for (i = 0; i < 10; i++) {
+      var ang = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? 4.2 : 10;
+      sd += (i ? 'L' : 'M') + f1(rr * Math.cos(ang)) + ' ' + f1(rr * Math.sin(ang));
+    }
+    star.setAttribute('d', sd + 'Z');
+    var lx = label(g, X1, BASE + 20, 'x₁', 'end'); lx.setAttribute('class', 'hc-tick');
+    var ly = label(g, X0 + 8, 66, 'x₂', 'start'); ly.setAttribute('class', 'hc-tick');
+    var l1 = label(g, X0 + 6, 26, 'ŷ = β₀ + Σβᵢxᵢ + Σβᵢᵢxᵢ² + Σβᵢⱼxᵢxⱼ', 'start');
+    var l2 = label(g, X0 + 6, 46, 'x* = titik optimum', 'start');
+    var U0 = -1.2 * RX, V0 = -0.9 * RY;
+
+    return {
+      name: 'rsm', dur: 16, g: g,
+      render: function (t, still) {
+        var w = still ? 0 : smooth(seg(t, 9.6, 11.6));
+        var cx = CXm + w * 7 * Math.sin((t - 9.6) * TAU / 10);
+        var cy = CYm + w * 4 * Math.cos((t - 9.6) * TAU / 12);
+        var phi = PHI + w * 0.09 * Math.sin((t - 9.6) * TAU / 13);
+        var cp = Math.cos(phi), sp = Math.sin(phi);
+        function px(u, v) { return cx + u * cp - v * sp; }
+        function py(u, v) { return cy + u * sp + v * cp; }
+
+        for (var j = 0; j < LV.length; j++) {
+          var s = LV[j][1], d = '', q;
+          for (q = 0; q < NP; q++) {
+            var th = TAU * q / NP;
+            d += (q ? 'L' : 'M') + f1(px(RX * s * Math.cos(th), RY * s * Math.sin(th))) + ' ' + f1(py(RX * s * Math.cos(th), RY * s * Math.sin(th)));
+          }
+          cons[j].setAttribute('d', d + 'Z');
+          var ta = 0.3 + (LV.length - 1 - j) * 0.55;               // kontur terluar tergambar lebih dulu
+          drawIn(cons[j], still ? 1 : smooth(seg(t, ta, ta + 1.4)));
+          vals[j].setAttribute('x', f1(px(RX * s, 0) + 5));
+          vals[j].setAttribute('y', f1(py(RX * s, 0) + 4));
+          setOp(vals[j], still ? 1 : smooth(seg(t, ta + 1, ta + 1.8)));
+        }
+        setOp(lx, still ? 1 : smooth(seg(t, 0.4, 1.2)));
+        setOp(ly, still ? 1 : smooth(seg(t, 0.4, 1.2)));
+        setOp(l1, still ? 1 : smooth(seg(t, 1, 2)));
+
+        // jalur pendakian curam: u dan v menyusut dengan laju berbeda (elips gepeng -> melengkung)
+        var k = still ? 1 : seg(t, 4.2, 8);
+        var ad = '', hx = cx, hy = cy, steps = Math.max(1, Math.round(k * 48));
+        for (q = 0; q <= steps; q++) {
+          var sk = k * q / steps, fin = 1 - smooth(seg(sk, 0.86, 1));
+          var uu = U0 * Math.exp(-2.2 * sk) * fin, vv = V0 * Math.exp(-2.2 * 4.6 * sk) * fin;
+          hx = px(uu, vv); hy = py(uu, vv);
+          ad += (q ? 'L' : 'M') + f1(hx) + ' ' + f1(hy);
+        }
+        asc.setAttribute('d', k > 0 ? ad : '');
+        head.setAttribute('cx', f1(hx)); head.setAttribute('cy', f1(hy));
+        setOp(head, still ? 0 : (k > 0 && k < 1 ? smooth(seg(t, 4.2, 4.8)) : 0));
+        if (still || k >= 1) head.style.opacity = '0';
+
+        var ks = still ? 1 : seg(t, 8, 8.9);
+        star.setAttribute('transform', 'translate(' + f1(cx) + ' ' + f1(cy) + ') scale(' + (ks <= 0 ? 0 : outBack(ks)).toFixed(3) + ')');
+        setOp(l2, still ? 1 : smooth(seg(t, 8, 9)));
+        if (still || t < 8.9) { ring.style.opacity = '0'; }
+        else {
+          var p = ((t - 8.9) % 3) / 3;
+          ring.setAttribute('cx', f1(cx)); ring.setAttribute('cy', f1(cy));
+          ring.setAttribute('r', (8 * (0.7 + 2 * p)).toFixed(2));
+          ring.style.opacity = (0.9 * (1 - p)).toFixed(3);
+        }
+      }
+    };
+  }
+
   /* ---------- Rangkai adegan ---------- */
-  var scenes = [sceneNormal(), sceneScatter(), sceneSeries()];   // urutan putar
+  // urutan putar: selang-seling agar tiap kelompok menu (Deskriptif, Regresi, Konsep Uji, Time Series, RSM) bergantian
+  var scenes = [sceneNormal(), sceneHistogram(), sceneScatter(), sceneTest(), sceneSeries(), sceneRSM()];
   var cur = 0, age = 0;
 
   function show(i) {
