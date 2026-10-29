@@ -1776,6 +1776,7 @@
       canRun: (id) => !!(SEND[id] && CALC_BTN[id]),
       methodList: () => Object.keys(SEND).map((id) => ({ id, title: SEND[id].title })),
       openStatTab: () => showTab('kirim'),
+      openGraphTab: () => showTab('grafik'),
       sendTo, MAX_R, MAX_C, ensure, pushUndo, invalidate, fullRender, flash, hide, normalizeInput,
       shiftFormula, adjustFormula, adjustAll,
       registerState: (get, set) => { extraGet = get; extraSet = set; },
