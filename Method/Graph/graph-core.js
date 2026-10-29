@@ -384,7 +384,7 @@
           <div class="step-tag">Langkah ${S + 2}</div>
           <h2>${useRibbon ? 'Gambar grafik' : 'Pengaturan grafik'}</h2>
           ${useRibbon
-    ? '<p class="hint">Judul, label, opsi grafik, <strong>warna</strong>, dan <strong>garis kisi</strong> diatur lewat pita di bagian atas halaman ini. Setelah grafik muncul, setiap perubahan pada pita langsung diterapkan.</p>'
+    ? '<p class="hint">Judul, label, opsi grafik, <strong>warna</strong>, dan <strong>garis kisi</strong> diatur lewat pita <strong>Edit Grafik</strong> yang berada tepat di atas grafik. Setelah grafik muncul, setiap perubahan pada pita langsung diterapkan.</p>'
     : `<p class="hint">Semua pengaturan bersifat opsional. Kosongkan untuk memakai pengaturan bawaan.</p><div class="gr-opts">${opts.map(optHTML).join('')}</div>`}
           <div class="control-row">
             <button type="button" class="btn-primary" id="${P}draw">Gambar Grafik &rarr;</button>
@@ -652,6 +652,18 @@
       }, 40);
     }
     if (useRibbon) { buildRibbon(); bindGridDefaults(); }
+    /* ponsel/tablet: pita Edit Grafik dipindah ke antara Langkah 2 (gambar grafik) dan hasil grafik,
+       jadi tepat di atas grafiknya. Di layar lebar pita kembali ke posisi semula (di bawah judul). */
+    (function () {
+      const rb = $('.rb-main', section), head = $('.chapter-head', section), mq = window.matchMedia('(max-width:1023.98px)');
+      if (!rb || !head) return;
+      function place() {
+        if (mq.matches) { if (rb.nextElementSibling !== outCard) section.querySelector('.chapter-inner').insertBefore(rb, outCard); }
+        else if (rb.previousElementSibling !== head) head.parentNode.insertBefore(rb, head.nextSibling);
+      }
+      place();
+      if (mq.addEventListener) mq.addEventListener('change', place); else mq.addListener(place);
+    })();
 
     q('draw').addEventListener('click', () => {
       hideErr();

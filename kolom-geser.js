@@ -23,8 +23,8 @@
     { sel: '#view-kalkulator .calc-layout', right: '.calc-hist-card' },
     { sel: '#view-matriks > .chapter-inner', left: '.mx-left', right: '.mx-right' },
     { sel: '#view-metode-calc > .chapter-inner', left: '.sc-vars', right: '.sc-res, .sg-below' },
-    { sel: '.chapter-inner:has(.gr-chart)', left: '[id$="data-card"]', right: '.rb-main' },
-    { sel: '.chapter-inner:has(> .st-side)', left: '.st-side' },
+    { sel: '.chapter-inner:has(.gr-chart)', left: '[id$="data-card"]', right: '.rb-main', maxPct: 0.5 },
+    { sel: '.chapter-inner:has(> .st-side)', left: '.st-side', maxPct: 0.5 },
     { sel: '#view-materi-detail .mt-wrap', left: '.mt-toc', right: '.mt-try' },
     { sel: '#view-home .hm', right: '.hm-side' },
     { sel: '#view-profil > .chapter-inner', left: '.pf-menu' }
@@ -91,7 +91,8 @@
 
   function clamp(st, side, w) {
     var inf = st.info; if (!inf) return w;
-    var lim = LIM[side], other = side === 'l' ? (inf.ri >= 0 ? (st.cur.r || 0) : 0) : (inf.li >= 0 ? (st.cur.l || 0) : 0);
+    var lim = LIM[side].slice(), other = side === 'l' ? (inf.ri >= 0 ? (st.cur.r || 0) : 0) : (inf.li >= 0 ? (st.cur.l || 0) : 0);
+    if (side === 'l' && st.def && st.def.maxPct) lim[1] = Math.max(lim[1], Math.round(inf.content * st.def.maxPct)); /* sidebar boleh selebar maxPct dari lebar halaman */
     var gaps = (inf.n - 1) * inf.gap, max = Math.min(lim[1], inf.content - other - gaps - MID_MIN);
     return Math.round(Math.max(lim[0], Math.min(Math.max(lim[0], max), w)));
   }
