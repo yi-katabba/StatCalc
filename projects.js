@@ -15,7 +15,7 @@
   function applyExtras(o) { o = o || {}; Object.keys(extras).forEach(function (k) { try { extras[k].set(o[k]); } catch (e) { /* abaikan */ } }); }
   var $ = function (id) { return document.getElementById(id); };
   var NAMES = { regresi: 'Regresi Linear', smoothing: 'Smoothing', anova: 'ANOVA', rsm: 'RSM', stasioner: 'Stasioneritas', arima: 'ARIMA', deskriptif: 'Deskriptif',
-    scatter: 'Pencar', histogram: 'Histogram', boxplot: 'Boxplot', probplot: 'Prob. plot', barchart: 'Batang', piechart: 'Pie', timeseries: 'Deret waktu' };
+    scatter: 'Pencar', histogram: 'Histogram', boxplot: 'Boxplot', probplot: 'Prob. plot', ecdf: 'ECDF', barchart: 'Batang', piechart: 'Pie', timeseries: 'Deret waktu' };
 
   function rd(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function wr(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }

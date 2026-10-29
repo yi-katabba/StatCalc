@@ -38,6 +38,7 @@
   const ICON = {
     histogram: `<path d="M3.5 20.5h17"/><rect x="4.5" y="13" width="3.6" height="7.5" ${F}/><rect x="8.1" y="7" width="3.6" height="13.5" ${F}/><rect x="11.7" y="3.8" width="3.6" height="16.7" ${F}/><rect x="15.3" y="10" width="3.6" height="10.5" ${F}/>`,
     probplot: '<path d="M4 3.5v17h16.5"/><path d="M6.5 17.8 18.5 6" stroke-dasharray="2.4 2"/><circle cx="7.6" cy="16.2" r="1.15" fill="currentColor" stroke="none"/><circle cx="10.2" cy="14.4" r="1.15" fill="currentColor" stroke="none"/><circle cx="12.6" cy="12.3" r="1.15" fill="currentColor" stroke="none"/><circle cx="15.2" cy="10.6" r="1.15" fill="currentColor" stroke="none"/><circle cx="17.6" cy="7.2" r="1.15" fill="currentColor" stroke="none"/>',
+    ecdf: '<path d="M4 3.5v17h16.5"/><path d="M4 19h3.5v-3.5h3.5V12h3.5V8h2.5V5.5h3"/><circle cx="7.5" cy="15.5" r="1" fill="currentColor" stroke="none"/><circle cx="11" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="14.5" cy="8" r="1" fill="currentColor" stroke="none"/>',
     boxplot: `<path d="M3.5 20.5h17"/><path d="M8 4.5v3M8 15v3.5M5.8 4.5h4.4M5.8 18.5h4.4"/><rect x="5" y="7.5" width="6" height="7.5" rx=".6" ${F}/><path d="M5 11.2h6"/><path d="M16.5 3.5v5M16.5 13.5v5M14.3 3.5h4.4M14.3 18.5h4.4"/><rect x="13.5" y="8.5" width="6" height="5" rx=".6" ${F}/><path d="M13.5 11h6"/>`,
     interval: `<path d="M3.5 20.5h17"/><path d="M7 4.5v13M5 4.5h4M5 17.5h4"/><circle cx="7" cy="11" r="1.7" fill="currentColor" stroke="none"/><path d="M12.5 7.5v11M10.5 7.5h4M10.5 18.5h4"/><circle cx="12.5" cy="13" r="1.7" fill="currentColor" stroke="none"/><path d="M18 3.5v9M16 3.5h4M16 12.5h4"/><circle cx="18" cy="8" r="1.7" fill="currentColor" stroke="none"/>`,
     boxgroup: `<path d="M3.5 17h17"/><path d="M6.2 3.5v2.5M6.2 11v3M4.7 3.5h3M4.7 14h3"/><rect x="4" y="6" width="4.4" height="5" rx=".5" ${F}/><path d="M12 5.5v2M12 12v2.5M10.5 5.5h3M10.5 14.5h3"/><rect x="9.8" y="7.5" width="4.4" height="4.5" rx=".5" ${F}/><path d="M17.8 7v2M17.8 13.5v1M16.3 7h3M16.3 14.5h3"/><rect x="15.6" y="9" width="4.4" height="4.5" rx=".5" ${F}/><path d="M4.6 20.5h3.2M10.4 20.5h3.2M16.2 20.5h3.2"/>`,
@@ -57,6 +58,7 @@
   const ROLES = {
     histogram: [{ l: 'Kolom data', hint: 'kolom angka yang disebarkan' }],
     probplot: [{ l: 'Kolom data', hint: 'kolom angka yang diperiksa kenormalannya' }],
+    ecdf: [{ l: 'Kolom data', hint: 'kolom angka yang dihitung fungsi sebaran empirisnya' }],
     scatter: [{ l: 'Variabel X', hint: 'sumbu mendatar (variabel bebas)' }, { l: 'Variabel Y', hint: 'sumbu tegak (variabel terikat)' }, { l: 'Kelompokkan warna', hint: 'kolom kategori untuk mewarnai titik (opsional)', none: 'Tidak ada' }],
     barchart: [{ l: 'Label kategori', hint: 'nama tiap batang (teks)' }, { l: 'Nilai', hint: 'tinggi batang (angka)' }],
     piechart: [{ l: 'Label kategori', hint: 'nama tiap irisan (teks)' }, { l: 'Nilai', hint: 'ukuran irisan (angka tidak negatif)' }],
@@ -68,6 +70,7 @@
     { key: 'scatter', gid: 'scatter', label: 'Scatter Plot', tip: 'Scatter Plot: hubungan dua kolom angka (X dan Y)', group: 'Hubungan' },
     { key: 'histogram', gid: 'histogram', label: 'Histogram', tip: 'Histogram: sebaran satu kolom angka', group: 'Sebaran' },
     { key: 'probplot', gid: 'probplot', label: 'Probability Plot', tip: 'Probability Plot (Q-Q normal): cek kenormalan satu kolom angka', group: 'Sebaran' },
+    { key: 'ecdf', gid: 'ecdf', label: 'Empirical CDF', tip: 'Empirical CDF: proporsi data \u2264 x untuk satu kolom angka', group: 'Sebaran' },
     { key: 'boxplot', gid: 'boxplot', mode: 'wide', label: 'Boxplot', tip: 'Boxplot per variabel: tiap kolom angka = satu kotak', group: 'Sebaran' },
     { key: 'boxgroup', gid: 'boxplot', mode: 'long', label: 'Boxplot Kelompok', tip: 'Boxplot per kelompok (gaya ANOVA): pilih kolom label kelompok dan kolom nilai', group: 'Sebaran', dialog: true, why: 'Kolom label menentukan kelompok setiap nilai, seperti faktor pada ANOVA. Satu kotak digambar untuk tiap label yang berbeda.' },
     { key: 'interval', gid: 'interval', mode: 'wide', label: 'Interval Plot', tip: 'Interval Plot per variabel: rata-rata dan selang kepercayaan tiap kolom angka', group: 'Sebaran' },
@@ -79,7 +82,7 @@
   const entryOf = (key) => CATALOG.find((e) => e.key === key);
   const rolesOf = (gid, mode) => ROLES[gid + ':long'] || (mode === 'long' && ROLES[gid]) || [];
   /* peran kolom -> label sumbu otomatis (dari judul kolom): [indeks peran sumbu X, indeks peran sumbu Y] */
-  const AXSRC = { histogram: [0, null], probplot: [null, null], scatter: [0, 1], barchart: [0, 1], timeseries: [0, 1], boxplot: [0, 1], interval: [0, 1], piechart: [null, null] };
+  const AXSRC = { histogram: [0, null], probplot: [null, null], ecdf: [0, null], scatter: [0, 1], barchart: [0, 1], timeseries: [0, 1], boxplot: [0, 1], interval: [0, 1], piechart: [null, null] };
 
   /* --------------------------------- Gaya --------------------------------- */
   const style = document.createElement('style');
@@ -903,7 +906,7 @@
     return X.CFB.write(cfb, { type: 'array', fileType: 'zip' });
   }
   /* ---------------- API Proyek: daftar, pilih, simpan, pulihkan ---------------- */
-  const SHORT = { scatter: 'Pencar', histogram: 'Histogram', probplot: 'Plot probabilitas', boxplot: 'Boxplot', interval: 'Interval', barchart: 'Batang', piechart: 'Pie', timeseries: 'Deret waktu' };
+  const SHORT = { scatter: 'Pencar', histogram: 'Histogram', probplot: 'Plot probabilitas', ecdf: 'ECDF', boxplot: 'Boxplot', interval: 'Interval', barchart: 'Batang', piechart: 'Pie', timeseries: 'Deret waktu' };
   const KEYS = ['key', 'gid', 'mode', 'label', 'cols', 'vcols', 'r1', 'r2', 'opts', 'style', 'place', 'lock', 'ratio', 'w', 'h', 'x', 'y'];
   const nameOf = (ch) => (SHORT[ch.gid] || ch.label) + (ch.key === 'boxgroup' || ch.key === 'intervalgroup' ? ' kelompok' : '');
   function listCharts() {

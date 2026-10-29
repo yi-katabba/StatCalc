@@ -9,6 +9,7 @@ JS untuk menu **Graph**. Urutan `<script>` di `index.html` harus:
 | `scatter.js` | Scatter Plot | Dua variabel numerik |
 | `histogram.js` | Histogram | Numerik 1 variabel |
 | `probplot.js` | Probability Plot (Q-Q normal) | Numerik 1 variabel |
+| `ecdf.js` | Empirical CDF (fungsi tangga F(x), opsi pembanding CDF normal) | Numerik 1 variabel |
 | `boxplot.js` | Boxplot | Per variabel (kolom = variabel, seperti Excel; 1 atau banyak kolom) / per kelompok |
 | `interval.js` | Interval Plot (rata-rata + selang kepercayaan / SE / SD) | Per variabel (kolom = variabel) / per kelompok |
 | `barchart.js` | Bar Chart | Kategorik |
