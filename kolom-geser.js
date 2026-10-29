@@ -24,6 +24,7 @@
     { sel: '#view-matriks > .chapter-inner', left: '.mx-left', right: '.mx-right' },
     { sel: '#view-metode-calc > .chapter-inner', left: '.sc-vars', right: '.sc-res, .sg-below' },
     { sel: '.chapter-inner:has(.gr-chart)', left: '[id$="data-card"]', right: '.rb-main' },
+    { sel: '.chapter-inner:has(> .st-side)', left: '.st-side' },
     { sel: '#view-materi-detail .mt-wrap', left: '.mt-toc', right: '.mt-try' },
     { sel: '#view-home .hm', right: '.hm-side' },
     { sel: '#view-profil > .chapter-inner', left: '.pf-menu' }

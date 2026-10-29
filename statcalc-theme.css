@@ -621,3 +621,34 @@ body.pf-on .top-avatar{ box-shadow:0 0 0 2px #7FA8D6; }
 }
 /* Jarak atas untuk halaman yang kehilangan header */
 .view > .gf-wrap, .view > .toc-section, .view > .hub-grid, .view > .tentang-body{ padding-top:20px; }
+
+/* ===== Ponsel/tablet: halaman Graph dibagi dua segmen, Data | Grafik (graph-core.js) =====
+   Data   : Langkah 1 (masukkan data; pada grafik "per variabel" termasuk pilihan format data)
+   Grafik : pita Edit Grafik, lalu Langkah 2 (gambar grafik) dan Langkah 3 (hasil).
+   Layar >= 1024px memakai tata letak kolom dan menampilkan semuanya seperti semula. */
+@media (min-width:1024px){ .gr-seg-bar{ display:none !important; } }
+@media (max-width:1023.98px){
+  .gr-seg-bar{ position:sticky; top:calc(var(--safe-t, 0px) + 56px); z-index:12; background:var(--paper, #fff); padding:6px 0; margin-bottom:10px; }
+  .gr-view[data-gtab="data"] .gr-pane-grafik,
+  .gr-view[data-gtab="data"] .rb-main{ display:none !important; }
+  .gr-view[data-gtab="grafik"] .gr-pane-data{ display:none !important; }
+}
+
+/* ===== Halaman metode Stat: sidebar (pengaturan + data) dan bagian utama (hasil) (stat-layout.js) ===== */
+.st-seg-bar{ display:none; }
+.st-side,.st-main{ min-width:0; }
+.st-side > .card,.st-main > .card{ margin-bottom:16px; }
+@media (min-width:1100px){
+  .chapter-inner:has(> .st-side){ display:grid; grid-template-columns:minmax(320px,400px) minmax(0,1fr); gap:0 24px; align-items:start; max-width:1400px; }
+  .chapter-inner:has(> .st-side) > *{ grid-column:1 / -1; min-width:0; }
+  .chapter-inner:has(> .st-side) > .st-side{ grid-column:1; position:sticky; top:112px; max-height:calc(100vh - 140px); overflow:auto; }
+  .chapter-inner:has(> .st-side) > .st-main{ grid-column:2; }
+  .chapter-inner:has(> .st-side) > .rb-main{ margin-bottom:16px; }
+}
+@media (min-width:1024px){ .st-seg-bar{ display:none !important; } }
+@media (max-width:1023.98px){
+  .st-seg-bar{ display:flex; position:sticky; top:calc(var(--safe-t, 0px) + 56px); z-index:12; background:var(--paper, #fff); padding:6px 0; margin-bottom:10px; }
+  .st-view[data-stab="data"] .st-main,
+  .st-view[data-stab="data"] > .chapter-inner > .rb-main{ display:none !important; }
+  .st-view[data-stab="hasil"] .st-side{ display:none !important; }
+}

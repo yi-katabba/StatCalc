@@ -300,7 +300,7 @@
 
     const W_ = cfg.wide || null, S = W_ ? 1 : 0;
     const wideModeCard = W_ ? `
-        <section class="card step-card">
+        <section class="card step-card gr-pane-data">
           <div class="step-tag">Langkah 1</div>
           <h2>Pilih format data</h2>
           <div class="gr-modebar">
@@ -313,7 +313,7 @@
           <p class="hint gr-note">Pilih <strong>Per variabel</strong> bila tiap variabel/kelompok sudah berada di kolomnya sendiri (boleh hanya 1 variabel). Pilih <strong>Per kelompok</strong> bila semua nilai ada di satu kolom dan kelompoknya ditulis di kolom lain.</p>
         </section>` : '';
     const wideDataCard = W_ ? `
-        <section class="card step-card" id="${P}wdata-card">
+        <section class="card step-card gr-pane-data" id="${P}wdata-card">
           <div class="step-tag">Langkah 2</div>
           <h2>Masukkan data (per variabel)</h2>
           <div class="gr-format"><strong>Jenis data:</strong> ${esc(typeText)}. ${W_.format || ''}</div>
@@ -339,8 +339,9 @@
         </section>` : '';
 
     const section = document.createElement('section');
-    section.className = 'view';
+    section.className = 'view gr-view';
     section.id = 'view-' + id;
+    section.dataset.gtab = 'data';
     section.innerHTML = `
       <div class="chapter-inner">
         <div class="chapter-head ch-wide">
@@ -349,9 +350,16 @@
           <p class="lede">${cfg.lede || ''}</p>
         </div>
 
+        <div class="hs-bar gr-seg-bar">
+          <div class="hs-seg" role="tablist" aria-label="Bagian halaman grafik">
+            <button type="button" role="tab" class="on" data-gtab="data" aria-selected="true">Data</button>
+            <button type="button" role="tab" data-gtab="grafik" aria-selected="false">Grafik</button>
+          </div>
+        </div>
+
         ${wideModeCard}
         ${wideDataCard}
-        <section class="card step-card" id="${P}data-card" ${W_ ? 'hidden' : ''}>
+        <section class="card step-card gr-pane-data" id="${P}data-card" ${W_ ? 'hidden' : ''}>
           <div class="step-tag">Langkah ${S + 1}</div>
           <h2>Masukkan data${W_ ? ' (per kelompok)' : ''}</h2>
           <div class="gr-format"><strong>Jenis data:</strong> ${esc(typeText)}. ${cfg.format || ''}</div>
@@ -372,7 +380,7 @@
           </div>
         </section>
 
-        <section class="card step-card">
+        <section class="card step-card gr-pane-grafik">
           <div class="step-tag">Langkah ${S + 2}</div>
           <h2>${useRibbon ? 'Gambar grafik' : 'Pengaturan grafik'}</h2>
           ${useRibbon
@@ -384,7 +392,7 @@
           <p class="error-msg" id="${P}err" role="alert" hidden></p>
         </section>
 
-        <section class="card step-card" id="${P}out" hidden>
+        <section class="card step-card gr-pane-grafik" id="${P}out" hidden>
           <div class="step-tag">Langkah ${S + 3}</div>
           <h2>Hasil</h2>
           <div class="gr-chart" id="${P}chart"></div>
@@ -397,6 +405,20 @@
         </section>
       </div>`;
     document.body.insertBefore(section, $('#profileOverlay'));
+
+    /* ponsel/tablet: segmen Data | Grafik (CSS menyembunyikan bagian yang tidak aktif; desktop menampilkan semuanya) */
+    const segBar = $('.gr-seg-bar', section);
+    function setGTab(t) {
+      section.dataset.gtab = t;
+      $$('button[data-gtab]', segBar).forEach((b) => { const on = b.dataset.gtab === t; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
+    }
+    segBar.addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-gtab]');
+      if (!b || b.dataset.gtab === section.dataset.gtab) return;
+      setGTab(b.dataset.gtab);
+      const top = segBar.getBoundingClientRect().top + window.pageYOffset - 8;
+      if (top < window.pageYOffset) window.scrollTo({ top: Math.max(0, top), behavior: 'auto' });
+    });
 
     const q = (s) => $('#' + P + s, section);
     const body = q('body'), errEl = q('err'), outCard = q('out');
