@@ -1304,6 +1304,17 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 </style>
 <link rel="stylesheet" href="statcalc-theme.css?v=34">
 <link rel="stylesheet" href="Method/Materi/katex/katex.min.css">
+<style>
+.ar-ord{display:grid;gap:10px;width:100%;margin-bottom:6px;}
+.ar-ord-1{grid-template-columns:minmax(0,1fr);}
+.ar-ord-2{grid-template-columns:repeat(2,minmax(0,1fr));}
+.sm-ptitle{flex-basis:100%;font-size:14.5px;margin:4px 0 8px;color:var(--accent);}
+.ar-ord-3{grid-template-columns:repeat(3,minmax(0,1fr));}
+.ar-ord-4{grid-template-columns:repeat(4,minmax(0,1fr));}
+.ar-ord-f{display:flex;flex-direction:column;gap:6px;min-width:0;}
+.ar-ord-f label{margin:0;white-space:nowrap;text-align:center;}
+.ar-ord-f .plain-input{width:100%;min-width:0;box-sizing:border-box;text-align:center;}
+</style>
 </head>
 <body class="pre-auth">
 
@@ -1714,37 +1725,43 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
         </select>
       </div>
       <div class="control-row" id="smParamSMA">
-        <label for="smN">Jumlah periode (n)</label>
-        <input type="number" id="smN" class="plain-input" min="2" max="20" step="1" value="3" inputmode="numeric">
-        <p class="field-note">n adalah banyaknya data terbaru yang dirata-ratakan untuk membentuk satu nilai ramalan. n harus bilangan bulat &ge; 2.</p>
+        <h3 class="st-group-title sm-ptitle" data-hlp-target="smNoteSMA">Parameter SMA</h3>
+        <div class="ar-ord ar-ord-1">
+          <div class="ar-ord-f"><label for="smN">n</label><input type="number" id="smN" class="plain-input" min="2" max="20" step="1" value="3" inputmode="numeric"></div>
+        </div>
+        <p class="field-note" id="smNoteSMA"><strong>n</strong> = jumlah periode: banyaknya data terbaru yang dirata-ratakan untuk membentuk satu nilai ramalan. n harus bilangan bulat &ge; 2.</p>
       </div>
       <div class="control-row" id="smParamDMA" hidden>
-        <label for="smNDMA">Jumlah periode (n)</label>
-        <input type="number" id="smNDMA" class="plain-input" min="2" max="20" step="1" value="3" inputmode="numeric">
-        <p class="field-note">n adalah panjang rata-rata bergerak, dipakai dua kali berturut-turut (rata-rata dari rata-rata). n harus bilangan bulat &ge; 2. Metode ini (DMA) cocok untuk data yang memiliki tren linear. Minimal dibutuhkan 2&times;n periode data.</p>
+        <h3 class="st-group-title sm-ptitle" data-hlp-target="smNoteDMA">Parameter DMA</h3>
+        <div class="ar-ord ar-ord-1">
+          <div class="ar-ord-f"><label for="smNDMA">n</label><input type="number" id="smNDMA" class="plain-input" min="2" max="20" step="1" value="3" inputmode="numeric"></div>
+        </div>
+        <p class="field-note" id="smNoteDMA"><strong>n</strong> = jumlah periode: panjang rata-rata bergerak, dipakai dua kali berturut-turut (rata-rata dari rata-rata). n harus bilangan bulat &ge; 2. Metode ini (DMA) cocok untuk data yang memiliki tren linear. Minimal dibutuhkan 2&times;n periode data.</p>
       </div>
       <div class="control-row" id="smParamSES" hidden>
-        <label for="smAlpha">Nilai alpha (&alpha;)</label>
-        <input type="number" id="smAlpha" class="plain-input" min="0.01" max="1" step="0.01" value="0.2" inputmode="decimal">
-        <p class="field-note">&alpha; adalah bobot pemulusan, bernilai antara 0 dan 1. &alpha; mendekati 1 membuat ramalan lebih responsif terhadap data terbaru; &alpha; mendekati 0 membuat ramalan lebih halus/stabil.</p>
+        <h3 class="st-group-title sm-ptitle" data-hlp-target="smNoteSES">Parameter SES</h3>
+        <div class="ar-ord ar-ord-1">
+          <div class="ar-ord-f"><label for="smAlpha">&alpha;</label><input type="number" id="smAlpha" class="plain-input" min="0.01" max="1" step="0.01" value="0.2" inputmode="decimal"></div>
+        </div>
+        <p class="field-note" id="smNoteSES"><strong>&alpha; (alpha)</strong> = bobot pemulusan, bernilai antara 0 dan 1. &alpha; mendekati 1 membuat ramalan lebih responsif terhadap data terbaru; &alpha; mendekati 0 membuat ramalan lebih halus/stabil.</p>
       </div>
       <div class="control-row" id="smParamDES" hidden>
-        <label for="smAlphaDES">Nilai alpha (&alpha;) - level</label>
-        <input type="number" id="smAlphaDES" class="plain-input" min="0.01" max="1" step="0.01" value="0.2" inputmode="decimal">
-        <label for="smBetaDES">Nilai beta (&beta;) - tren</label>
-        <input type="number" id="smBetaDES" class="plain-input" min="0.01" max="1" step="0.01" value="0.1" inputmode="decimal">
-        <p class="field-note">&alpha; mengatur bobot pemulusan level (nilai dasar) data, sedangkan &beta; mengatur bobot pemulusan tren (kecenderungan naik/turun). Keduanya bernilai antara 0 dan 1. Metode ini (Holt) cocok untuk data yang memiliki tren tetapi tidak berpola musiman.</p>
+        <h3 class="st-group-title sm-ptitle" data-hlp-target="smNoteDES">Parameter DES (Holt)</h3>
+        <div class="ar-ord ar-ord-2">
+          <div class="ar-ord-f"><label for="smAlphaDES">&alpha;</label><input type="number" id="smAlphaDES" class="plain-input" min="0.01" max="1" step="0.01" value="0.2" inputmode="decimal"></div>
+<div class="ar-ord-f"><label for="smBetaDES">&beta;</label><input type="number" id="smBetaDES" class="plain-input" min="0.01" max="1" step="0.01" value="0.1" inputmode="decimal"></div>
+        </div>
+        <p class="field-note" id="smNoteDES"><strong>&alpha; (alpha) - level</strong> = bobot pemulusan level (nilai dasar) data. <strong>&beta; (beta) - tren</strong> = bobot pemulusan tren (kecenderungan naik/turun). Keduanya bernilai antara 0 dan 1. Metode ini (Holt) cocok untuk data yang memiliki tren tetapi tidak berpola musiman.</p>
       </div>
       <div class="control-row" id="smParamTES" hidden>
-        <label for="smAlphaTES">Nilai alpha (&alpha;) - level</label>
-        <input type="number" id="smAlphaTES" class="plain-input" min="0.01" max="1" step="0.01" value="0.2" inputmode="decimal">
-        <label for="smBetaTES">Nilai beta (&beta;) - tren</label>
-        <input type="number" id="smBetaTES" class="plain-input" min="0.01" max="1" step="0.01" value="0.1" inputmode="decimal">
-        <label for="smGammaTES">Nilai gamma (&gamma;) - musiman</label>
-        <input type="number" id="smGammaTES" class="plain-input" min="0.01" max="1" step="0.01" value="0.1" inputmode="decimal">
-        <label for="smSeasonTES">Panjang musim (L)</label>
-        <input type="number" id="smSeasonTES" class="plain-input" min="2" max="12" step="1" value="4" inputmode="numeric">
-        <p class="field-note">&alpha;, &beta;, dan &gamma; masing-masing mengatur bobot pemulusan level, tren, dan pola musiman (0-1). L adalah panjang satu siklus musim (mis. 4 untuk data triwulanan, 12 untuk data bulanan). Metode ini (Winter) cocok untuk data yang memiliki tren sekaligus pola musiman berulang. Minimal dibutuhkan 2&times;L periode data.</p>
+        <h3 class="st-group-title sm-ptitle" data-hlp-target="smNoteTES">Parameter TES (Winter)</h3>
+        <div class="ar-ord ar-ord-4">
+          <div class="ar-ord-f"><label for="smAlphaTES">&alpha;</label><input type="number" id="smAlphaTES" class="plain-input" min="0.01" max="1" step="0.01" value="0.2" inputmode="decimal"></div>
+<div class="ar-ord-f"><label for="smBetaTES">&beta;</label><input type="number" id="smBetaTES" class="plain-input" min="0.01" max="1" step="0.01" value="0.1" inputmode="decimal"></div>
+<div class="ar-ord-f"><label for="smGammaTES">&gamma;</label><input type="number" id="smGammaTES" class="plain-input" min="0.01" max="1" step="0.01" value="0.1" inputmode="decimal"></div>
+<div class="ar-ord-f"><label for="smSeasonTES">L</label><input type="number" id="smSeasonTES" class="plain-input" min="2" max="12" step="1" value="4" inputmode="numeric"></div>
+        </div>
+        <p class="field-note" id="smNoteTES"><strong>&alpha; (alpha) - level</strong> = bobot pemulusan level. <strong>&beta; (beta) - tren</strong> = bobot pemulusan tren. <strong>&gamma; (gamma) - musiman</strong> = bobot pemulusan pola musiman. Ketiganya bernilai antara 0 dan 1. <strong>L (panjang musim)</strong> = panjang satu siklus musim (mis. 4 untuk data triwulanan, 12 untuk data bulanan). Metode ini (Winter) cocok untuk data yang memiliki tren sekaligus pola musiman berulang. Minimal dibutuhkan 2&times;L periode data.</p>
       </div>
       <div class="control-row">
         <button type="button" class="btn-primary" id="smBuildTableBtn">Buat Tabel Input &rarr;</button>
@@ -2170,7 +2187,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
       <h2>Pilih model &amp; orde</h2>
       <p class="hint">Pilih jenis model sesuai ada-tidaknya pola musiman pada data, lalu tentukan orde. Bingung memilih orde? Isi dulu dengan nilai awal, klik <em>Hitung Model</em>, lihat ACF/PACF dan tab <em>Bandingkan Model</em> pada hasil, lalu sesuaikan ordenya dan hitung ulang.</p>
       <div class="control-row">
-        <label for="arMode">Jenis model</label>
+        <label for="arMode" data-hlp-target="arModeHint">Jenis model</label>
         <select id="arMode" class="select-input">
           <option value="arima">ARIMA - data tanpa pola musiman</option>
           <option value="sarima">SARIMA - data dengan pola musiman</option>
@@ -2178,33 +2195,30 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
         <p class="field-note" id="arModeHint"></p>
       </div>
 
-      <h3 class="st-group-title" style="font-size:14.5px;margin:14px 0 8px;color:var(--accent);">Orde non-musiman (p, d, q)</h3>
+      <h3 class="st-group-title" style="font-size:14.5px;margin:14px 0 8px;color:var(--accent);" data-hlp-target="arOrdNote">Orde non-musiman (p, d, q)</h3>
       <div class="control-row">
-        <label for="arP">AR (p)</label>
-        <input type="number" id="arP" class="plain-input" min="0" max="5" step="1" value="1" inputmode="numeric">
-        <label for="arD">Diferensiasi (d)</label>
-        <input type="number" id="arD" class="plain-input" min="0" max="2" step="1" value="1" inputmode="numeric">
-        <label for="arQ">MA (q)</label>
-        <input type="number" id="arQ" class="plain-input" min="0" max="5" step="1" value="0" inputmode="numeric">
-        <p class="field-note">p = banyaknya lag AR (nilai masa lalu), d = berapa kali data dibedakan agar stasioner (0 bila sudah stasioner; 1 untuk data bertren), q = banyaknya lag galat masa lalu (MA). Gunakan <em>Uji Stasioneritas</em> untuk menentukan d.</p>
+        <div class="ar-ord ar-ord-3">
+          <div class="ar-ord-f"><label for="arP">AR (p)</label><input type="number" id="arP" class="plain-input" min="0" max="5" step="1" value="1" inputmode="numeric"></div>
+          <div class="ar-ord-f"><label for="arD">Dif (d)</label><input type="number" id="arD" class="plain-input" min="0" max="2" step="1" value="1" inputmode="numeric"></div>
+          <div class="ar-ord-f"><label for="arQ">MA (q)</label><input type="number" id="arQ" class="plain-input" min="0" max="5" step="1" value="0" inputmode="numeric"></div>
+        </div>
+        <p class="field-note" id="arOrdNote">p = banyaknya lag AR (nilai masa lalu), d = berapa kali data dibedakan agar stasioner (0 bila sudah stasioner; 1 untuk data bertren), q = banyaknya lag galat masa lalu (MA). Gunakan <em>Uji Stasioneritas</em> untuk menentukan d.</p>
       </div>
 
       <div id="arSeasonalBox" hidden>
-        <h3 class="st-group-title" style="font-size:14.5px;margin:18px 0 8px;color:var(--accent);">Orde musiman (P, D, Q) dan panjang musim (s)</h3>
+        <h3 class="st-group-title" style="font-size:14.5px;margin:18px 0 8px;color:var(--accent);" data-hlp-target="arSeasNote">Orde musiman (P, D, Q) dan panjang musim (s)</h3>
         <div class="control-row">
-          <label for="arSP">AR musiman (P)</label>
-          <input type="number" id="arSP" class="plain-input" min="0" max="2" step="1" value="0" inputmode="numeric">
-          <label for="arSD">Diferensiasi musiman (D)</label>
-          <input type="number" id="arSD" class="plain-input" min="0" max="1" step="1" value="1" inputmode="numeric">
-          <label for="arSQ">MA musiman (Q)</label>
-          <input type="number" id="arSQ" class="plain-input" min="0" max="2" step="1" value="1" inputmode="numeric">
-          <label for="arS">Panjang musim (s)</label>
-          <input type="number" id="arS" class="plain-input" min="2" max="52" step="1" value="12" inputmode="numeric">
-          <p class="field-note">s = banyaknya periode dalam satu siklus musim (12 untuk data bulanan, 4 untuk triwulanan, 7 untuk harian dengan pola mingguan). D = 1 membedakan data terhadap nilai s periode sebelumnya sehingga menghilangkan pola musiman. P dan Q bekerja pada lag kelipatan s. Pola awal yang umum dan sering cukup: (0,1,1)[s].</p>
+          <div class="ar-ord ar-ord-4">
+            <div class="ar-ord-f"><label for="arSP">AR (P)</label><input type="number" id="arSP" class="plain-input" min="0" max="2" step="1" value="0" inputmode="numeric"></div>
+            <div class="ar-ord-f"><label for="arSD">Dif (D)</label><input type="number" id="arSD" class="plain-input" min="0" max="1" step="1" value="1" inputmode="numeric"></div>
+            <div class="ar-ord-f"><label for="arSQ">MA (Q)</label><input type="number" id="arSQ" class="plain-input" min="0" max="2" step="1" value="1" inputmode="numeric"></div>
+            <div class="ar-ord-f"><label for="arS">s</label><input type="number" id="arS" class="plain-input" min="2" max="52" step="1" value="12" inputmode="numeric"></div>
+          </div>
+          <p class="field-note" id="arSeasNote">s = banyaknya periode dalam satu siklus musim (12 untuk data bulanan, 4 untuk triwulanan, 7 untuk harian dengan pola mingguan). D = 1 membedakan data terhadap nilai s periode sebelumnya sehingga menghilangkan pola musiman. P dan Q bekerja pada lag kelipatan s. Pola awal yang umum dan sering cukup: (0,1,1)[s].</p>
         </div>
       </div>
 
-      <h3 class="st-group-title" style="font-size:14.5px;margin:18px 0 8px;color:var(--accent);">Metode estimasi parameter</h3>
+      <h3 class="st-group-title" style="font-size:14.5px;margin:18px 0 8px;color:var(--accent);" data-hlp-target="arMethodHint">Metode estimasi parameter</h3>
       <div class="control-row">
         <label for="arMethod">Metode</label>
         <select id="arMethod" class="select-input">
@@ -2217,20 +2231,20 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 
       <h3 class="st-group-title" style="font-size:14.5px;margin:18px 0 8px;color:var(--accent);">Pengaturan lain</h3>
       <div class="control-row">
-        <label for="arConst">Konstanta</label>
+        <label for="arConst" data-hlp-target="arConstNote">Konstanta</label>
         <select id="arConst" class="select-input">
           <option value="auto">Otomatis (ada hanya bila tanpa diferensiasi)</option>
           <option value="yes">Ya (rata-rata bila d = D = 0, drift bila ada diferensiasi)</option>
           <option value="no">Tidak</option>
         </select>
-        <p class="field-note">Pada data yang sudah dibedakan, konstanta menjadi <em>drift</em> (kecenderungan naik/turun tetap per periode). Aktifkan hanya bila data bertren linear.</p>
+        <p class="field-note" id="arConstNote">Pada data yang sudah dibedakan, konstanta menjadi <em>drift</em> (kecenderungan naik/turun tetap per periode). Aktifkan hanya bila data bertren linear.</p>
       </div>
       <div class="control-row">
         <label for="arH">Jumlah periode ramalan (h)</label>
         <input type="number" id="arH" class="plain-input" min="1" max="60" step="1" value="6" inputmode="numeric">
       </div>
       <div class="control-row">
-        <label for="arFcMode">Cara peramalan</label>
+        <label for="arFcMode" data-hlp-target="arFcModeHint">Cara peramalan</label>
         <select id="arFcMode" class="select-input">
           <option value="recursive">Rekursif (satu-satu)</option>
           <option value="direct">Rentang (langsung per horizon)</option>

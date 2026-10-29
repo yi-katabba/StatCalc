@@ -4,7 +4,7 @@
    Berlaku untuk semua judul langkah (<h2> di dalam .step-card) pada:
      - metode Stat  : Regresi, Smoothing, ANOVA, RSM, Stasioneritas, ARIMA, Deskriptif
      - metode Graph : semua halaman grafik (.gr-view)
-   Bila kartu langkah punya penjelasan (p.hint atau .gr-format yang menjadi anak langsung
+   Panel "Ekspor" (Grafik Pendukung & Unduh Hasil) juga diberi tombol. Bila kartu langkah punya penjelasan (p.hint atau .gr-format yang menjadi anak langsung
    kartu), tombol (?) ditaruh di sisi kanan judul. Klik untuk menampilkan / menyembunyikan
    penjelasan itu. Judul tanpa penjelasan (mis. "Hasil") tidak diberi tombol.
 
@@ -22,6 +22,8 @@
   var VIEWS = ['regresi', 'smoothing', 'anova', 'rsm', 'stasioner', 'arima', 'deskriptif']
     .map(function (id) { return '#view-' + id; }).concat(['.gr-view']);
   var CARD_SEL = VIEWS.map(function (v) { return v + ' .step-card'; }).join(',');
+  /* panel Ekspor (export-hasil.js) menaruh judul + penjelasan di dalam .ex-dyn, bukan langsung di kartu */
+  function rootOf(card) { return card.classList.contains('ex-panel') ? card.querySelector(':scope > .ex-dyn') : card; }
   var EXPL_SEL = ':scope > p.hint, :scope > .gr-format';
   var uid = 0;
 
@@ -30,12 +32,12 @@
   st.textContent =
     '.hlp-off{display:none !important;}' +
     '.hlp-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;' +
-      'width:22px;height:22px;min-width:22px;margin:-2px 0 0 10px;padding:0;border-radius:50%;' +
-      'border:1.5px solid var(--accent-2,#1F5FA8);background:transparent;color:var(--accent-2,#1F5FA8);' +
-      'font:800 13px/1 var(--font-body,system-ui,sans-serif);cursor:pointer;flex:0 0 auto;' +
+      'width:15.4px;height:15.4px;min-width:15.4px;margin:-2px 0 0 8px;padding:0;border-radius:50%;' +
+      'border:1.2px solid var(--accent-2,#1F5FA8);background:transparent;color:var(--accent-2,#1F5FA8);' +
+      'font:800 9.1px/1 var(--font-body,system-ui,sans-serif);cursor:pointer;flex:0 0 auto;' +
       'transition:background .12s ease,color .12s ease;}' +
     '.hlp-btn::before{content:"?";}' +
-    '.hlp-btn::after{content:"";position:absolute;inset:-11px;}' +   /* area sentuh ~44px */
+    '.hlp-btn::after{content:"";position:absolute;inset:-14px;}' +   /* area sentuh ~44px */
     '.hlp-btn:hover{background:var(--accent-soft,#E2EDF9);}' +
     '.hlp-btn[aria-expanded="true"]{background:var(--accent-2,#1F5FA8);color:#fff;}' +
     '.hlp-btn:focus-visible{outline:2px solid var(--accent-2,#1F5FA8);outline-offset:2px;}' +
@@ -56,9 +58,11 @@
   }
 
   function enhance(card) {
-    var h2 = card.querySelector(':scope > h2');
+    var root = rootOf(card);
+    if (!root) return;
+    var h2 = root.querySelector(':scope > h2');
     if (!h2) return;
-    var expl = Array.prototype.slice.call(card.querySelectorAll(EXPL_SEL));
+    var expl = Array.prototype.slice.call(root.querySelectorAll(EXPL_SEL));
     if (!expl.length) return;
 
     var btn = h2.querySelector(':scope > .hlp-btn');
@@ -70,7 +74,7 @@
       h2.appendChild(btn);
       btn.addEventListener('click', function (e) {
         e.preventDefault(); e.stopPropagation();
-        var list = Array.prototype.slice.call(card.querySelectorAll(EXPL_SEL));
+        var list = Array.prototype.slice.call(root.querySelectorAll(EXPL_SEL));
         setOpen(btn, list, btn.getAttribute('aria-expanded') !== 'true');
       });
       expl.forEach(function (el) { el.dataset.hlp = '1'; });
@@ -89,8 +93,30 @@
     if (fresh) btn.setAttribute('aria-controls', expl.map(function (el) { return el.id; }).join(' '));
   }
 
+  /* Sub-judul / label bertanda data-hlp-target="id1 id2": tombol (?) di dalam elemen itu
+     menampilkan / menyembunyikan elemen penjelasan ber-id tersebut (setelan awal tersembunyi). */
+  function enhanceTargets() {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-hlp-target]'), function (host) {
+      if (host.querySelector(':scope > .hlp-btn')) return;
+      var ids = host.getAttribute('data-hlp-target').split(/\s+/).filter(Boolean);
+      var expl = ids.map(function (i) { return document.getElementById(i); }).filter(Boolean);
+      if (!expl.length) return;
+      var btn = document.createElement('button');
+      btn.type = 'button'; btn.className = 'hlp-btn';
+      btn.setAttribute('aria-label', 'Penjelasan: ' + host.textContent.trim());
+      btn.setAttribute('aria-controls', ids.join(' '));
+      host.appendChild(btn);
+      btn.addEventListener('click', function (e) {
+        e.preventDefault(); e.stopPropagation();
+        setOpen(btn, expl, btn.getAttribute('aria-expanded') !== 'true');
+      });
+      setOpen(btn, expl, DEFAULT_OPEN);
+    });
+  }
+
   function scan() {
     Array.prototype.forEach.call(document.querySelectorAll(CARD_SEL), enhance);
+    enhanceTargets();
   }
 
   /* Pemindaian ulang ringan (digabung per frame) bila isi halaman metode berubah */
