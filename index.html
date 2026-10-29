@@ -1305,7 +1305,23 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 <link rel="stylesheet" href="statcalc-theme.css?v=34">
 <link rel="stylesheet" href="Method/Materi/katex/katex.min.css">
 <style>
+.ar-sep{border-top:1px solid var(--rule);padding-top:16px !important;margin-top:16px !important;flex-basis:100%;}
+.ar-two{display:grid;grid-template-columns:minmax(0,1fr);gap:0 16px;}
+.ar-two .control-row{margin:0 0 10px;}
+@media (min-width:560px){.ar-two{grid-template-columns:repeat(2,minmax(0,1fr));}}
+.ar-two .control-row{flex-direction:column;align-items:stretch;gap:6px;}
+.ar-two .control-row>.plain-input,.ar-two .control-row>.select-input{width:100%;box-sizing:border-box;}
+@media (min-width:560px){.ar-ord.ar-ord-3{grid-template-columns:repeat(4,minmax(0,1fr));}}
+#arNeedHint{display:block;background:var(--accent-soft);border:1px solid var(--rule);border-radius:12px;padding:12px 14px;margin:6px 0 14px;font-size:13.5px;color:var(--ink);}
+#arNeedHint:empty{display:none;}
 .ar-ord{display:grid;gap:10px;width:100%;margin-bottom:6px;}
+.ctr-f{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;}
+.ctr-f .select-input{width:100%;}
+.ctr-f label{text-align:center;margin:0;}
+.ctr-f .stepper{align-self:center !important;}
+.ctr-row .sm-ptitle{text-align:center;}
+.ctr-row .field-note{text-align:left;}
+#an-setup-card .ctr-row .sm-ptitle{text-align:left;}
 .ar-ord-1{grid-template-columns:minmax(0,1fr);}
 .ar-ord-2{grid-template-columns:repeat(2,minmax(0,1fr));}
 .sm-ptitle{flex-basis:100%;font-size:14.5px;margin:4px 0 8px;color:var(--accent);}
@@ -1836,36 +1852,46 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
         </select>
       </div>
 
-      <div class="control-row" id="anParamOne">
-        <label for="anKOne">Jumlah kelompok (k)</label>
-        <div class="stepper">
-          <button type="button" id="anDecK" aria-label="Kurangi jumlah kelompok">&minus;</button>
-          <input type="number" id="anKOne" min="2" max="8" value="3" inputmode="numeric">
-          <button type="button" id="anIncK" aria-label="Tambah jumlah kelompok">+</button>
+      <div class="control-row ctr-row" id="anParamOne">
+        <h3 class="st-group-title sm-ptitle" data-hlp-target="anNoteOne">Parameter ANOVA satu arah</h3>
+        <div class="ctr-f">
+          <label for="anKOne">Jumlah kelompok (k)</label>
+          <div class="stepper">
+            <button type="button" id="anDecK" aria-label="Kurangi jumlah kelompok">&minus;</button>
+            <input type="number" id="anKOne" min="2" max="8" value="3" inputmode="numeric">
+            <button type="button" id="anIncK" aria-label="Tambah jumlah kelompok">+</button>
+          </div>
         </div>
-        <p class="field-note">Jumlah kelompok (perlakuan) yang dibandingkan rata-ratanya - minimal 2, maksimal 8. Jumlah data pada tiap kelompok boleh berbeda.</p>
+        <p class="field-note" id="anNoteOne">Jumlah kelompok (perlakuan) yang dibandingkan rata-ratanya - minimal 2, maksimal 8. Jumlah data pada tiap kelompok boleh berbeda.</p>
       </div>
 
-      <div class="control-row" id="anParamTwo" hidden>
-        <label for="anRowsA">Jumlah level Faktor A (baris)</label>
-        <div class="stepper">
-          <button type="button" id="anDecA" aria-label="Kurangi level Faktor A">&minus;</button>
-          <input type="number" id="anRowsA" min="2" max="6" value="2" inputmode="numeric">
-          <button type="button" id="anIncA" aria-label="Tambah level Faktor A">+</button>
+      <div class="control-row ctr-row" id="anParamTwo" hidden>
+        <h3 class="st-group-title sm-ptitle" data-hlp-target="anNoteTwo">Parameter ANOVA dua arah</h3>
+        <div class="ctr-f">
+          <label for="anRowsA">Level Faktor A (baris)</label>
+          <div class="stepper">
+            <button type="button" id="anDecA" aria-label="Kurangi level Faktor A">&minus;</button>
+            <input type="number" id="anRowsA" min="2" max="6" value="2" inputmode="numeric">
+            <button type="button" id="anIncA" aria-label="Tambah level Faktor A">+</button>
+          </div>
         </div>
-        <label for="anColsB">Jumlah level Faktor B (kolom)</label>
-        <div class="stepper">
-          <button type="button" id="anDecB" aria-label="Kurangi level Faktor B">&minus;</button>
-          <input type="number" id="anColsB" min="2" max="6" value="2" inputmode="numeric">
-          <button type="button" id="anIncB" aria-label="Tambah level Faktor B">+</button>
+        <div class="ctr-f">
+          <label for="anColsB">Level Faktor B (kolom)</label>
+          <div class="stepper">
+            <button type="button" id="anDecB" aria-label="Kurangi level Faktor B">&minus;</button>
+            <input type="number" id="anColsB" min="2" max="6" value="2" inputmode="numeric">
+            <button type="button" id="anIncB" aria-label="Tambah level Faktor B">+</button>
+          </div>
         </div>
-        <label for="anReplic">Jumlah replikasi per sel (r)</label>
-        <div class="stepper">
-          <button type="button" id="anDecR" aria-label="Kurangi jumlah replikasi">&minus;</button>
-          <input type="number" id="anReplic" min="2" max="6" value="2" inputmode="numeric">
-          <button type="button" id="anIncR" aria-label="Tambah jumlah replikasi">+</button>
+        <div class="ctr-f">
+          <label for="anReplic">Replikasi per sel (r)</label>
+          <div class="stepper">
+            <button type="button" id="anDecR" aria-label="Kurangi jumlah replikasi">&minus;</button>
+            <input type="number" id="anReplic" min="2" max="6" value="2" inputmode="numeric">
+            <button type="button" id="anIncR" aria-label="Tambah jumlah replikasi">+</button>
+          </div>
         </div>
-        <p class="field-note">Kalkulator ini memakai desain seimbang (balanced design): jumlah replikasi/ulangan harus sama pada tiap sel kombinasi Faktor A &times; Faktor B, agar pengaruh interaksi (AB) dapat dihitung.</p>
+        <p class="field-note" id="anNoteTwo"><strong>Level Faktor A (baris)</strong> = banyaknya taraf Faktor A; <strong>Level Faktor B (kolom)</strong> = banyaknya taraf Faktor B; <strong>Replikasi per sel (r)</strong> = banyaknya ulangan pada tiap sel kombinasi A &times; B. Kalkulator ini memakai desain seimbang (balanced design): jumlah replikasi/ulangan harus sama pada tiap sel kombinasi Faktor A &times; Faktor B, agar pengaruh interaksi (AB) dapat dihitung.</p>
       </div>
 
       <div class="control-row">
@@ -1933,23 +1959,25 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
       <div class="step-tag">Langkah 1</div>
       <h2>Tentukan jumlah faktor &amp; bentuk model</h2>
       <p class="hint">RSM biasanya memakai rancangan percobaan seperti Central Composite Design (CCD) atau Box-Behnken. Masukkan setiap percobaan (run) sebagai satu baris: nilai tiap faktor dalam satuan aslinya, lalu nilai respon. Faktor dikodekan otomatis ke skala &minus;1 sampai +1 dari rentang data.</p>
-      <div class="control-row">
-        <label for="rsVarCount">Jumlah faktor (prediktor)</label>
-        <div class="stepper">
-          <button type="button" id="rsDecK" aria-label="Kurangi jumlah faktor">&minus;</button>
-          <input type="number" id="rsVarCount" min="2" max="4" value="3" inputmode="numeric">
-          <button type="button" id="rsIncK" aria-label="Tambah jumlah faktor">+</button>
+      <div class="control-row ctr-row">
+        <div class="ctr-f">
+          <label for="rsVarCount" data-hlp-target="rsNoteK">Jumlah faktor (prediktor)</label>
+          <div class="stepper">
+            <button type="button" id="rsDecK" aria-label="Kurangi jumlah faktor">&minus;</button>
+            <input type="number" id="rsVarCount" min="2" max="4" value="3" inputmode="numeric">
+            <button type="button" id="rsIncK" aria-label="Tambah jumlah faktor">+</button>
+          </div>
         </div>
-        <p class="field-note">Minimal 2, maksimal 4 faktor. Contoh bawaan: 3 faktor (Waktu, Konsentrasi, pH) dengan 1 respon (Degradasi).</p>
+        <p class="field-note" id="rsNoteK">Minimal 2, maksimal 4 faktor. Contoh bawaan: 3 faktor (Waktu, Konsentrasi, pH) dengan 1 respon (Degradasi).</p>
       </div>
-      <div class="control-row">
-        <label for="rsModel">Model yang dipasang</label>
+      <div class="control-row ctr-row">
+        <div class="ctr-f"><label for="rsModel" data-hlp-target="rsNoteM">Model yang dipasang</label>
         <select id="rsModel" class="select-input">
           <option value="quad" selected>Kuadratik penuh (orde kedua) - disarankan untuk RSM</option>
           <option value="2fi">Linear + interaksi 2 faktor</option>
           <option value="linear">Linear (orde pertama)</option>
-        </select>
-        <p class="field-note">Model kuadratik membutuhkan tiap faktor diuji pada minimal 3 level (mis. CCD atau Box-Behnken). Tab Model &amp; ANOVA juga membandingkan ketiga model secara sekuensial agar Anda bisa memeriksa apakah suku kuadrat memang diperlukan.</p>
+        </select></div>
+        <p class="field-note" id="rsNoteM">Model kuadratik membutuhkan tiap faktor diuji pada minimal 3 level (mis. CCD atau Box-Behnken). Tab Model &amp; ANOVA juga membandingkan ketiga model secara sekuensial agar Anda bisa memeriksa apakah suku kuadrat memang diperlukan.</p>
       </div>
       <div class="control-row">
         <button type="button" class="btn-primary" id="rsBuildTableBtn">Buat Tabel Input &rarr;</button>
@@ -2033,67 +2061,69 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 
       <h3 class="st-group-title" style="font-size:14.5px;margin:14px 0 8px;color:var(--accent);">Tahap 1 - Stasioner dalam varians (Box-Cox)</h3>
       <div class="control-row">
-        <label for="stBoxMode">Transformasi Box-Cox</label>
+        <label for="stBoxMode" data-hlp-target="stNoteBox">Transformasi Box-Cox</label>
         <select id="stBoxMode" class="select-input">
           <option value="auto">Otomatis: transformasi bila selang &lambda; tidak memuat 1</option>
           <option value="none">Hanya lihat grafik (tanpa transformasi)</option>
           <option value="manual">&lambda; ditentukan manual</option>
         </select>
-        <p class="field-note">Grafik Box-Cox selalu ditampilkan. Bila selang kepercayaan 95% untuk &lambda; memuat 1, varians sudah stabil dan data tidak perlu ditransformasi. Data bernilai &le; 0 otomatis digeser agar positif.</p>
+        <p class="field-note" id="stNoteBox">Grafik Box-Cox selalu ditampilkan. Bila selang kepercayaan 95% untuk &lambda; memuat 1, varians sudah stabil dan data tidak perlu ditransformasi. Data bernilai &le; 0 otomatis digeser agar positif.</p>
       </div>
       <div class="control-row">
-        <label for="stSigmaMode">Estimator StDev pada grafik Box-Cox</label>
+        <label for="stSigmaMode" data-hlp-target="stNoteSigma">Estimator StDev pada grafik Box-Cox</label>
         <select id="stSigmaMode" class="select-input">
           <option value="sd">Simpangan baku sampel (StDev biasa)</option>
           <option value="mr">Moving range, &sigma; = MR&#772;/1,128 (untuk data individual)</option>
         </select>
-        <p class="field-note">StDev biasa memakai seluruh data sehingga tren ikut dihitung sebagai variasi. Moving range hanya melihat selisih antar data berurutan, sehingga lebih cocok untuk data bertren (data individual, subgroup size 1).</p>
+        <p class="field-note" id="stNoteSigma">StDev biasa memakai seluruh data sehingga tren ikut dihitung sebagai variasi. Moving range hanya melihat selisih antar data berurutan, sehingga lebih cocok untuk data bertren (data individual, subgroup size 1).</p>
       </div>
       <div class="control-row" id="stLambdaRow" hidden>
-        <label for="stLambda">Nilai &lambda;</label>
+        <label for="stLambda" data-hlp-target="stNoteLambda">Nilai &lambda;</label>
         <input type="text" id="stLambda" class="plain-input" value="0" inputmode="decimal">
-        <p class="field-note">Angka antara &minus;5 dan 5. &lambda; = 0 berarti logaritma natural, 0,5 akar kuadrat, &minus;1 kebalikan.</p>
+        <p class="field-note" id="stNoteLambda">Angka antara &minus;5 dan 5. &lambda; = 0 berarti logaritma natural, 0,5 akar kuadrat, &minus;1 kebalikan.</p>
       </div>
 
-      <h3 class="st-group-title" style="font-size:14.5px;margin:18px 0 8px;color:var(--accent);">Tahap 2 - Stasioner dalam mean (uji akar unit)</h3>
+      <h3 class="st-group-title ar-sep" style="font-size:14.5px;margin:18px 0 8px;color:var(--accent);">Tahap 2 - Stasioner dalam mean (uji akar unit)</h3>
       <div class="control-row">
-        <label for="stTest">Jenis uji</label>
+        <label for="stTest" data-hlp-target="stNoteTest">Jenis uji</label>
         <select id="stTest" class="select-input">
           <option value="adf">Augmented Dickey-Fuller (ADF)</option>
           <option value="pp">Phillips-Perron (PP)</option>
           <option value="kpss">KPSS</option>
           <option value="all">Bandingkan ketiganya (ADF + PP + KPSS)</option>
         </select>
-        <p class="field-note">ADF dan PP berhipotesis nol <em>tidak stasioner</em> (ada akar unit); KPSS berhipotesis nol <em>stasioner</em>. PP mengoreksi autokorelasi secara nonparametrik, sedangkan ADF menambahkan lag.</p>
+        <p class="field-note" id="stNoteTest">ADF dan PP berhipotesis nol <em>tidak stasioner</em> (ada akar unit); KPSS berhipotesis nol <em>stasioner</em>. PP mengoreksi autokorelasi secara nonparametrik, sedangkan ADF menambahkan lag.</p>
       </div>
       <div class="control-row">
-        <label for="stDiff">Data yang diuji</label>
+        <label for="stDiff" data-hlp-target="stNoteDiff">Data yang diuji</label>
         <select id="stDiff" class="select-input">
           <option value="0">Level (data asli)</option>
           <option value="1">Diferensiasi pertama (&Delta;Y)</option>
           <option value="2">Diferensiasi kedua (&Delta;&sup2;Y)</option>
         </select>
+        <p class="field-note" id="stNoteDiff">Mulai dari <em>Level</em>. Bila data masih tidak stasioner dalam mean, uji ulang pada diferensiasi pertama (&Delta;Y = Y<sub>t</sub> &minus; Y<sub>t-1</sub>), lalu kedua bila perlu. Banyaknya diferensiasi yang membuat data stasioner menjadi nilai d pada ARIMA.</p>
       </div>
       <div class="control-row">
-        <label for="stModel">Model uji</label>
+        <label for="stModel" data-hlp-target="stNoteModel">Model uji</label>
         <select id="stModel" class="select-input">
           <option value="c">Dengan konstanta (intercept)</option>
           <option value="ct">Dengan konstanta &amp; tren</option>
           <option value="nc">Tanpa konstanta &amp; tren (none)</option>
         </select>
-        <p class="field-note">Gunakan &ldquo;konstanta &amp; tren&rdquo; bila grafik data terlihat naik/turun mengikuti garis tren; &ldquo;konstanta&rdquo; bila data berfluktuasi di sekitar nilai rata-rata tertentu. KPSS hanya mengenal model konstanta atau konstanta &amp; tren (pilihan &ldquo;none&rdquo; dibaca sebagai konstanta).</p>
+        <p class="field-note" id="stNoteModel">Gunakan &ldquo;konstanta &amp; tren&rdquo; bila grafik data terlihat naik/turun mengikuti garis tren; &ldquo;konstanta&rdquo; bila data berfluktuasi di sekitar nilai rata-rata tertentu. KPSS hanya mengenal model konstanta atau konstanta &amp; tren (pilihan &ldquo;none&rdquo; dibaca sebagai konstanta).</p>
       </div>
       <div class="control-row">
-        <label for="stLagMode">Jumlah lag / bandwidth</label>
+        <label for="stLagMode" data-hlp-target="stNoteLagMode">Jumlah lag / bandwidth</label>
         <select id="stLagMode" class="select-input">
           <option value="auto">Otomatis (AIC untuk ADF; Newey-West untuk PP &amp; KPSS)</option>
           <option value="manual">Manual</option>
         </select>
+        <p class="field-note" id="stNoteLagMode"><strong>Otomatis</strong>: ADF memilih lag dengan kriteria AIC, PP dan KPSS memakai bandwidth Newey-West. <strong>Manual</strong>: Anda menentukan sendiri banyaknya lag lewat kolom <em>Lag (p)</em> yang muncul.</p>
       </div>
       <div class="control-row" id="stLagRow" hidden>
-        <label for="stLag">Lag (p)</label>
+        <label for="stLag" data-hlp-target="stNoteLag">Lag (p)</label>
         <input type="number" id="stLag" class="plain-input" min="0" max="12" step="1" value="1" inputmode="numeric">
-        <p class="field-note">Pada ADF: banyaknya suku &Delta;z masa lalu (0 = Dickey-Fuller biasa). Pada PP dan KPSS: bandwidth (lag) Newey-West untuk ragam jangka panjang. Bilangan bulat 0-12.</p>
+        <p class="field-note" id="stNoteLag">Pada ADF: banyaknya suku &Delta;z masa lalu (0 = Dickey-Fuller biasa). Pada PP dan KPSS: bandwidth (lag) Newey-West untuk ragam jangka panjang. Bilangan bulat 0-12.</p>
       </div>
       <div class="control-row">
         <button type="button" class="btn-primary" id="stBuildTableBtn">Buat Tabel Input &rarr;</button>
@@ -2195,7 +2225,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
         <p class="field-note" id="arModeHint"></p>
       </div>
 
-      <h3 class="st-group-title" style="font-size:14.5px;margin:14px 0 8px;color:var(--accent);" data-hlp-target="arOrdNote">Orde non-musiman (p, d, q)</h3>
+      <h3 class="st-group-title ar-sep" style="font-size:14.5px;margin:14px 0 8px;color:var(--accent);" data-hlp-target="arOrdNote">Orde non-musiman (p, d, q)</h3>
       <div class="control-row">
         <div class="ar-ord ar-ord-3">
           <div class="ar-ord-f"><label for="arP">AR (p)</label><input type="number" id="arP" class="plain-input" min="0" max="5" step="1" value="1" inputmode="numeric"></div>
@@ -2218,7 +2248,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
         </div>
       </div>
 
-      <h3 class="st-group-title" style="font-size:14.5px;margin:18px 0 8px;color:var(--accent);" data-hlp-target="arMethodHint">Metode estimasi parameter</h3>
+      <h3 class="st-group-title ar-sep" style="font-size:14.5px;margin:18px 0 8px;color:var(--accent);" data-hlp-target="arMethodHint">Metode estimasi parameter</h3>
       <div class="control-row">
         <label for="arMethod">Metode</label>
         <select id="arMethod" class="select-input">
@@ -2229,7 +2259,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
         <p class="field-note" id="arMethodHint"></p>
       </div>
 
-      <h3 class="st-group-title" style="font-size:14.5px;margin:18px 0 8px;color:var(--accent);">Pengaturan lain</h3>
+      <h3 class="st-group-title ar-sep" style="font-size:14.5px;margin:18px 0 8px;color:var(--accent);">Pengaturan lain</h3>
       <div class="control-row">
         <label for="arConst" data-hlp-target="arConstNote">Konstanta</label>
         <select id="arConst" class="select-input">
@@ -2239,6 +2269,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
         </select>
         <p class="field-note" id="arConstNote">Pada data yang sudah dibedakan, konstanta menjadi <em>drift</em> (kecenderungan naik/turun tetap per periode). Aktifkan hanya bila data bertren linear.</p>
       </div>
+      <div class="ar-two">
       <div class="control-row">
         <label for="arH">Jumlah periode ramalan (h)</label>
         <input type="number" id="arH" class="plain-input" min="1" max="60" step="1" value="6" inputmode="numeric">
@@ -2250,6 +2281,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
           <option value="direct">Rentang (langsung per horizon)</option>
         </select>
         <p class="field-note" id="arFcModeHint"></p>
+      </div>
       </div>
       <p class="field-note" id="arNeedHint"></p>
       <div class="btn-grid btn-grid-1">
