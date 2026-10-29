@@ -40,6 +40,7 @@
     histogram: { grid: { h: 1, v: 0 }, c1: 'Warna batang' },
     probplot: { grid: { h: 1, v: 1 }, c1: 'Warna titik', c2: 'Warna garis acuan' },
     boxplot: { grid: { h: 1, v: 0 }, pal: true },
+    interval: { grid: { h: 1, v: 0 }, c2: 'Warna garis rata-rata keseluruhan', pal: true },
     barchart: { grid: { h: 1, v: 0 }, c1: 'Warna batang', pal: true },
     piechart: { grid: null, pal: true },
     timeseries: { grid: { h: 1, v: 0 }, c1: 'Warna garis data', c2: 'Warna garis tren' },

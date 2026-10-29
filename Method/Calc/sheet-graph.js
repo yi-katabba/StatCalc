@@ -39,6 +39,7 @@
     histogram: `<path d="M3.5 20.5h17"/><rect x="4.5" y="13" width="3.6" height="7.5" ${F}/><rect x="8.1" y="7" width="3.6" height="13.5" ${F}/><rect x="11.7" y="3.8" width="3.6" height="16.7" ${F}/><rect x="15.3" y="10" width="3.6" height="10.5" ${F}/>`,
     probplot: '<path d="M4 3.5v17h16.5"/><path d="M6.5 17.8 18.5 6" stroke-dasharray="2.4 2"/><circle cx="7.6" cy="16.2" r="1.15" fill="currentColor" stroke="none"/><circle cx="10.2" cy="14.4" r="1.15" fill="currentColor" stroke="none"/><circle cx="12.6" cy="12.3" r="1.15" fill="currentColor" stroke="none"/><circle cx="15.2" cy="10.6" r="1.15" fill="currentColor" stroke="none"/><circle cx="17.6" cy="7.2" r="1.15" fill="currentColor" stroke="none"/>',
     boxplot: `<path d="M3.5 20.5h17"/><path d="M8 4.5v3M8 15v3.5M5.8 4.5h4.4M5.8 18.5h4.4"/><rect x="5" y="7.5" width="6" height="7.5" rx=".6" ${F}/><path d="M5 11.2h6"/><path d="M16.5 3.5v5M16.5 13.5v5M14.3 3.5h4.4M14.3 18.5h4.4"/><rect x="13.5" y="8.5" width="6" height="5" rx=".6" ${F}/><path d="M13.5 11h6"/>`,
+    interval: `<path d="M3.5 20.5h17"/><path d="M7 4.5v13M5 4.5h4M5 17.5h4"/><circle cx="7" cy="11" r="1.7" fill="currentColor" stroke="none"/><path d="M12.5 7.5v11M10.5 7.5h4M10.5 18.5h4"/><circle cx="12.5" cy="13" r="1.7" fill="currentColor" stroke="none"/><path d="M18 3.5v9M16 3.5h4M16 12.5h4"/><circle cx="18" cy="8" r="1.7" fill="currentColor" stroke="none"/>`,
     boxgroup: `<path d="M3.5 17h17"/><path d="M6.2 3.5v2.5M6.2 11v3M4.7 3.5h3M4.7 14h3"/><rect x="4" y="6" width="4.4" height="5" rx=".5" ${F}/><path d="M12 5.5v2M12 12v2.5M10.5 5.5h3M10.5 14.5h3"/><rect x="9.8" y="7.5" width="4.4" height="4.5" rx=".5" ${F}/><path d="M17.8 7v2M17.8 13.5v1M16.3 7h3M16.3 14.5h3"/><rect x="15.6" y="9" width="4.4" height="4.5" rx=".5" ${F}/><path d="M4.6 20.5h3.2M10.4 20.5h3.2M16.2 20.5h3.2"/>`,
     scatter: '<path d="M4 3.5v17h16.5"/><path d="M6.5 16.5 19 7.5" stroke-dasharray="2.4 2"/><circle cx="7.4" cy="14.4" r="1.25" fill="currentColor" stroke="none"/><circle cx="10" cy="15.6" r="1.25" fill="currentColor" stroke="none"/><circle cx="11.6" cy="11.4" r="1.25" fill="currentColor" stroke="none"/><circle cx="14.4" cy="12.6" r="1.25" fill="currentColor" stroke="none"/><circle cx="16.2" cy="8.2" r="1.25" fill="currentColor" stroke="none"/><circle cx="18.6" cy="9.6" r="1.25" fill="currentColor" stroke="none"/>',
     barchart: `<path d="M3.5 20.5h17"/><rect x="4.8" y="11" width="3.8" height="9.5" rx=".6" ${F}/><rect x="10.1" y="5" width="3.8" height="15.5" rx=".6" ${F}/><rect x="15.4" y="13.5" width="3.8" height="7" rx=".6" ${F}/>`,
@@ -60,6 +61,7 @@
     barchart: [{ l: 'Label kategori', hint: 'nama tiap batang (teks)' }, { l: 'Nilai', hint: 'tinggi batang (angka)' }],
     piechart: [{ l: 'Label kategori', hint: 'nama tiap irisan (teks)' }, { l: 'Nilai', hint: 'ukuran irisan (angka tidak negatif)' }],
     timeseries: [{ l: 'Label periode', hint: 'urutan waktu, mis. Jan, Feb, 2024-Q1' }, { l: 'Nilai', hint: 'nilai pada tiap periode (angka)' }],
+    'interval:long': [{ l: 'Label kelompok', hint: 'kolom yang menentukan kelompok tiap nilai', none: '(tanpa kelompok)' }, { l: 'Nilai', hint: 'angka yang dihitung rata-rata dan selangnya' }],
     'boxplot:long': [{ l: 'Label kelompok', hint: 'kolom yang menentukan kelompok tiap nilai (faktor ANOVA)', none: '(tanpa kelompok)' }, { l: 'Nilai', hint: 'angka yang dibandingkan antar kelompok' }],
   };
   const CATALOG = [
@@ -68,14 +70,16 @@
     { key: 'probplot', gid: 'probplot', label: 'Probability Plot', tip: 'Probability Plot (Q-Q normal): cek kenormalan satu kolom angka', group: 'Sebaran' },
     { key: 'boxplot', gid: 'boxplot', mode: 'wide', label: 'Boxplot', tip: 'Boxplot per variabel: tiap kolom angka = satu kotak', group: 'Sebaran' },
     { key: 'boxgroup', gid: 'boxplot', mode: 'long', label: 'Boxplot Kelompok', tip: 'Boxplot per kelompok (gaya ANOVA): pilih kolom label kelompok dan kolom nilai', group: 'Sebaran', dialog: true, why: 'Kolom label menentukan kelompok setiap nilai, seperti faktor pada ANOVA. Satu kotak digambar untuk tiap label yang berbeda.' },
+    { key: 'interval', gid: 'interval', mode: 'wide', label: 'Interval Plot', tip: 'Interval Plot per variabel: rata-rata dan selang kepercayaan tiap kolom angka', group: 'Sebaran' },
+    { key: 'intervalgroup', gid: 'interval', mode: 'long', label: 'Interval Kelompok', tip: 'Interval Plot per kelompok: pilih kolom label kelompok dan kolom nilai', group: 'Sebaran', dialog: true, why: 'Kolom label menentukan kelompok setiap nilai. Satu selang kepercayaan digambar untuk tiap label yang berbeda.' },
     { key: 'barchart', gid: 'barchart', label: 'Bar Chart', tip: 'Bar Chart: bandingkan nilai antar kategori', group: 'Kategori', dialog: true, why: 'Pilih kolom yang berisi nama kategori (label tiap batang) dan kolom nilainya. Kategori yang sama akan dijumlahkan.' },
     { key: 'piechart', gid: 'piechart', label: 'Pie Chart', tip: 'Pie Chart: komposisi bagian terhadap total', group: 'Kategori', dialog: true, why: 'Pilih kolom yang berisi nama kategori (label tiap irisan) dan kolom nilainya. Kategori yang sama akan dijumlahkan.' },
     { key: 'timeseries', gid: 'timeseries', label: 'Time Series', tip: 'Time Series Plot: data menurut urutan waktu', group: 'Waktu', dialog: true, why: 'Pilih kolom periode (label sumbu waktu) dan kolom nilainya. Urutkan data dari periode paling awal ke paling akhir.' },
   ];
   const entryOf = (key) => CATALOG.find((e) => e.key === key);
-  const rolesOf = (gid, mode) => ROLES[gid === 'boxplot' ? 'boxplot:long' : gid] || (mode === 'long' && ROLES[gid]) || [];
+  const rolesOf = (gid, mode) => ROLES[gid + ':long'] || (mode === 'long' && ROLES[gid]) || [];
   /* peran kolom -> label sumbu otomatis (dari judul kolom): [indeks peran sumbu X, indeks peran sumbu Y] */
-  const AXSRC = { histogram: [0, null], probplot: [null, null], scatter: [0, 1], barchart: [0, 1], timeseries: [0, 1], boxplot: [0, 1], piechart: [null, null] };
+  const AXSRC = { histogram: [0, null], probplot: [null, null], scatter: [0, 1], barchart: [0, 1], timeseries: [0, 1], boxplot: [0, 1], interval: [0, 1], piechart: [null, null] };
 
   /* --------------------------------- Gaya --------------------------------- */
   const style = document.createElement('style');
@@ -899,9 +903,9 @@
     return X.CFB.write(cfb, { type: 'array', fileType: 'zip' });
   }
   /* ---------------- API Proyek: daftar, pilih, simpan, pulihkan ---------------- */
-  const SHORT = { scatter: 'Pencar', histogram: 'Histogram', probplot: 'Plot probabilitas', boxplot: 'Boxplot', barchart: 'Batang', piechart: 'Pie', timeseries: 'Deret waktu' };
+  const SHORT = { scatter: 'Pencar', histogram: 'Histogram', probplot: 'Plot probabilitas', boxplot: 'Boxplot', interval: 'Interval', barchart: 'Batang', piechart: 'Pie', timeseries: 'Deret waktu' };
   const KEYS = ['key', 'gid', 'mode', 'label', 'cols', 'vcols', 'r1', 'r2', 'opts', 'style', 'place', 'lock', 'ratio', 'w', 'h', 'x', 'y'];
-  const nameOf = (ch) => (SHORT[ch.gid] || ch.label) + (ch.key === 'boxgroup' ? ' kelompok' : '');
+  const nameOf = (ch) => (SHORT[ch.gid] || ch.label) + (ch.key === 'boxgroup' || ch.key === 'intervalgroup' ? ' kelompok' : '');
   function listCharts() {
     const cnt = {};
     return charts.map((ch) => { const b = nameOf(ch); cnt[b] = (cnt[b] || 0) + 1; return { uid: ch.uid, name: b + ' ' + cnt[b], err: !!ch._err }; });
