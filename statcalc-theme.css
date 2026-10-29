@@ -101,7 +101,7 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{ outline-color
   .nav-item .d-l{ display:inline !important; }
   .nav-item.desk-only{ display:flex !important; }
   .nav-item[data-tab="home"]{ order:1; } .nav-item[data-tab="metode-calc"]{ order:2; }
-  .nav-item[data-tab="metode"]{ order:3; } .nav-item[data-tab="metode-graph"]{ order:4; }
+  .nav-item[data-tab="metode"],.nav-item[data-tab="metode-stat"]{ order:3; } .nav-item[data-tab="metode-graph"]{ order:4; }
   .nav-item[data-tab="kalkulator"]{ order:5; } .nav-item[data-tab="materi"]{ order:6; }
 }
 
@@ -428,8 +428,8 @@ html body #view-metode-calc .sc-msg.ok{ background:#E3F0E8; }
   html body #view-metode-calc .chapter-inner.has-below{ grid-template-columns:232px minmax(0,1fr) 380px; }
   html body #view-metode-calc .chapter-inner.has-below > .sg-below:not([hidden]){ grid-column:3; grid-row:1 / span 30; align-self:start; position:sticky; top:76px; margin:0; max-height:calc(100vh - 116px); overflow:auto; }
   html body #view-metode-calc .chapter-inner.has-res > .sg-below{ display:none; }
-  #view-metode-calc .sg-below .sg-bbtns{ display:grid; grid-template-columns:1fr 1fr; }
-  #view-metode-calc .sg-below .sg-bbtns .btn-ghost{ width:100%; padding:0 8px; }
+  #view-metode-calc .sg-below .sg-bbtns{ display:flex; flex-wrap:nowrap; }
+  #view-metode-calc .sg-below .sg-bbtns .btn-ghost{ padding:0; }
 }
 
 /* Panel Proyek (di atas daftar Variabel, desktop lebar) */

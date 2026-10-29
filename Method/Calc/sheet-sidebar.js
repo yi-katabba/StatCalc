@@ -42,6 +42,13 @@
     '#view-metode-calc .sx-min .sx-title{writing-mode:vertical-rl;transform:rotate(180deg);}' +
     '#view-metode-calc .sx-min .sx-bar.ping .sx-btn::after{content:"";position:absolute;top:6px;right:6px;width:9px;height:9px;border-radius:50%;background:var(--accent-2,#2F6DB5);box-shadow:0 0 0 2px #fff;}' +
     '#view-metode-calc .sx-min .sx-btn{position:relative;}' +
+    '#view-metode-calc .sg-below{padding-top:0;}' +
+    '#view-metode-calc .sg-below > .sx-bar{margin:0 -18px 12px;border-radius:10px 10px 0 0;z-index:5;}' +
+    '#view-metode-calc .sx-act{display:inline-flex;align-items:center;gap:6px;}' +
+    '#view-metode-calc .sx-x{font-size:20px;}' +
+    '#view-metode-calc .sx-min .sx-x{display:none;}' +
+    '#view-metode-calc .sg-below > .sg-top > .sg-close{display:none;}' +
+    '#view-metode-calc .sg-below.sx-min > .sx-bar{margin:0;border-radius:0;}' +
     '}';
   document.head.appendChild(css);
 
@@ -54,6 +61,7 @@
     window.dispatchEvent(new Event('resize'));
   }
 
+  var painters = { l: [], r: [] };
   function make(side, panel, title) {
     var left = side === 'l';
     var bar = document.createElement('div');
@@ -70,12 +78,13 @@
       /* kiri: ‹ untuk ciutkan, › untuk buka; kanan sebaliknya */
       btn.innerHTML = (left !== min) ? '&#8249;' : '&#8250;';
       btn.setAttribute('aria-expanded', String(!min));
-      var nm = left ? 'kiri (Proyek & Variabel)' : 'kanan (Hasil analisis)';
+      var nm = left ? 'kiri (Proyek & Variabel)' : 'kanan (' + title + ')';
       btn.title = (min ? 'Buka panel ' : 'Ciutkan panel ') + nm;
       btn.setAttribute('aria-label', btn.title);
       if (!min) bar.classList.remove('ping');
     }
-    function set(v) { state[side] = v; paint(); persist(); relayout(); }
+    painters[side].push(paint);
+    function set(v) { state[side] = v; painters[side].forEach(function (f) { f(); }); persist(); relayout(); }
     btn.addEventListener('click', function (e) { e.stopPropagation(); set(!state[side]); });
     /* rel yang diciutkan bisa diklik di mana saja untuk membuka */
     panel.addEventListener('click', function (e) { if (wide() && state[side] && !e.target.closest('.sx-btn')) set(false); });
@@ -87,6 +96,17 @@
   var res = host.querySelector(':scope > .sc-res');
   var L = vars ? make('l', vars, 'Proyek & Variabel') : null;
   var R = res ? make('r', res, 'Hasil analisis') : null;
+  /* panel Grafik "di luar lembar kerja" menempati kolom kanan yang sama: ikut diciutkan bersama panel hasil */
+  var gres = host.querySelector(':scope > .sg-below');
+  if (gres) {
+    var G = make('r', gres, 'Grafik');
+    /* tombol tutup (x) di bilah atas, di samping tombol ciutkan; di layar sempit tetap memakai x di judul panel */
+    var bt = G.bar.querySelector('.sx-btn'), act = document.createElement('span'), cx = document.createElement('button');
+    act.className = 'sx-act'; cx.type = 'button'; cx.className = 'sx-btn sx-x'; cx.innerHTML = '&times;';
+    cx.title = cx.ariaLabel = 'Tutup panel grafik';
+    cx.addEventListener('click', function (e) { e.stopPropagation(); var c = gres.querySelector('.sg-close'); if (c) c.click(); });
+    G.bar.insertBefore(act, bt); act.appendChild(cx); act.appendChild(bt);
+  }
 
   /* Titik penanda di rel kanan bila ada hasil baru saat panel diciutkan */
   var body = res && res.querySelector('#srBody');
@@ -104,7 +124,7 @@
     set: function (o) {
       if (o && 'left' in o) state.l = !!o.left;
       if (o && 'right' in o) state.r = !!o.right;
-      if (L) L.paint(); if (R) R.paint(); persist(); relayout();
+      painters.l.concat(painters.r).forEach(function (f) { f(); }); persist(); relayout();
     }
   };
 })();

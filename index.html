@@ -1302,7 +1302,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
   .calc-btn{ min-height:62px; }
 }
 </style>
-<link rel="stylesheet" href="statcalc-theme.css?v=26">
+<link rel="stylesheet" href="statcalc-theme.css?v=27">
 <link rel="stylesheet" href="Method/Materi/katex/katex.min.css">
 </head>
 <body class="pre-auth">
@@ -1372,7 +1372,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
     <div class="hm-main">
       <div id="pjSlot"></div>
       <section class="hm-sec" aria-labelledby="hmMethH">
-        <div class="hm-lab"><h2 id="hmMethH">Mulai dari metode</h2><button type="button" class="hm-link" data-nav="metode">Semua metode &rsaquo;</button></div>
+        <div class="hm-lab"><h2 id="hmMethH">Mulai dari metode</h2><button type="button" class="hm-link" data-nav="metode-stat">Semua metode &rsaquo;</button></div>
         <div class="hm-methods" id="hmMethods">
           <button type="button" class="hm-mt" data-m="deskriptif"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Deskriptif</button>
           <button type="button" class="hm-mt" data-m="regresi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v16h16"/><path d="M7 16l4-5 3 2 5-7"/></svg>Regresi</button>
@@ -2945,6 +2945,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 </script>
 
 <!-- ===================== PITA (RIBBON) METODE - dimuat sebelum modul Stat ===================== -->
+<script src="Method/Shared/ikon-tombol.js?v=1"></script>
 <script src="Method/Shared/ribbon-metode.js"></script>
 
 <!-- ===================== METODE: REGRESI LINEAR (logika di Method/Stat/regresi.js) ===================== -->
@@ -2984,14 +2985,14 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 
 <!-- ===================== METODE CALC: lembar kerja ala Excel (Method/Calc/sheet.js; membuat #view-metode-calc sendiri) ===================== -->
 <script src="Method/Calc/sheet.js?v=25"></script>
-<script src="Method/Calc/sheet-graph.js?v=24"></script>
+<script src="Method/Calc/sheet-graph.js?v=26"></script>
 <script src="Method/Calc/sheet-hasil.js?v=25"></script>
 <script src="Method/Calc/sheet-data.js"></script>
 <script src="Method/Calc/sheet-vars.js"></script>
-<script src="Method/Calc/sheet-sidebar.js?v=25"></script>
+<script src="Method/Calc/sheet-sidebar.js?v=28"></script>
 <script src="Method/Calc/ribbon-menu.js?v=24"></script>
 <script src="analisis-vars.js?v=3"></script>
-<script src="Method/Shared/isi-lembar.js?v=1"></script>
+<script src="Method/Shared/isi-lembar.js?v=5"></script>
 <script src="Method/Shared/geser-pita.js?v=1"></script>
 <script src="status-bar.js"></script>
 <script src="projects.js"></script>
@@ -3000,7 +3001,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 
 <!-- ===================== EKSPOR HASIL STAT: grafik pendukung + unduh .docx (muat SETELAH semua file Method/Graph/) ===================== -->
 <script src="Method/Shared/stat-charts.js"></script>
-<script src="Method/Shared/export-hasil.js"></script>
+<script src="Method/Shared/export-hasil.js?v=3"></script>
 
 <!-- ===================== KALKULATOR MATRIKS (logika di matriks.js) ===================== -->
 <script src="matriks.js"></script>

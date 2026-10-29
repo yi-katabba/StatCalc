@@ -111,13 +111,16 @@
     @media (pointer:coarse){ #view-metode-calc .sg-h{ width:22px; height:22px; border-radius:6px; } #view-metode-calc .sg-x{ width:32px; height:32px; } }
 
     #view-metode-calc .sg-below{ margin-top:16px; padding:16px 18px 18px; }
-    #view-metode-calc .sg-below > h2{ margin:0 0 4px; font-size:18px; }
+    #view-metode-calc .sg-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin:0 0 4px; }
+    #view-metode-calc .sg-below > .sg-top > h2{ margin:0; font-size:18px; }
+    #view-metode-calc .sg-close{ flex:0 0 auto; border:0; background:none; font-size:22px; line-height:1; color:var(--ink-faint); cursor:pointer; min-width:32px; min-height:32px; border-radius:8px; }
+    #view-metode-calc .sg-close:hover{ background:var(--paper-2); color:var(--ink); }
     #view-metode-calc .sg-blk{ border:1px solid var(--rule); border-radius:12px; padding:12px; margin-top:12px; background:#fff; }
     #view-metode-calc .sg-blk.sel{ border-color:var(--accent-2); box-shadow:0 0 0 2px var(--accent-soft); }
     #view-metode-calc .sg-bhead{ display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center; justify-content:space-between; margin-bottom:10px; }
     #view-metode-calc .sg-bhead h3{ margin:0; font-size:15px; font-family:var(--font-body); }
-    #view-metode-calc .sg-bbtns{ display:flex; flex-wrap:wrap; gap:8px; }
-    #view-metode-calc .sg-bbtns .btn-ghost{ flex:none; min-height:38px; padding:0 14px; font-size:13.5px; }
+    #view-metode-calc .sg-bbtns{ display:flex; flex-wrap:nowrap; gap:8px; flex:1 1 100%; }
+    #view-metode-calc .sg-bbtns .btn-ghost{ min-height:44px; }
     #view-metode-calc .sg-blk.min .sg-bchart,#view-metode-calc .sg-blk.min .sg-bnote,#view-metode-calc .sg-blk.min .sg-bsum{ display:none; }
     #view-metode-calc .sg-blk.min .sg-bhead{ margin-bottom:0; }
     #view-metode-calc .sg-bhead h3{ cursor:pointer; }
@@ -169,9 +172,12 @@
   const below = document.createElement('section');
   below.className = 'card sg-below';
   below.hidden = true;
-  below.innerHTML = '<h2>Grafik</h2><p class="hint">Setiap grafik di sini bisa diunduh sebagai gambar PNG atau SVG. Klik grafik atau tombol Edit grafik untuk mengubahnya lewat tab Edit Grafik di pita.</p><div class="sg-blist"></div>';
+  below.innerHTML = '<div class="sg-top"><h2>Grafik</h2><button type="button" class="sg-close" aria-label="Tutup panel grafik" title="Tutup">&times;</button></div><p class="hint">Setiap grafik di sini bisa diunduh sebagai gambar PNG atau SVG. Klik grafik atau tombol Edit grafik untuk mengubahnya lewat tab Edit Grafik di pita.</p><div class="sg-blist"></div>';
   $('.sc-main', section).insertAdjacentElement('afterend', below);
   const blist = $('.sg-blist', below);
+  /* panel grafik ditutup dengan tombol x; dibuka lagi saat grafik dibuat / dipindah ke sini / dipilih dari daftar Proyek */
+  let belowClosed = false;
+  $('.sg-close', below).addEventListener('click', () => { belowClosed = true; rebuildBelow(); });
 
   /* --------------------------- Bantu: kolom & data -------------------------- */
   const cn = (c) => SH.colName(c);
@@ -412,22 +418,26 @@
   function dlName(ch) { return ((($('#scFname', section) || {}).value || 'data-calc').trim() || 'data-calc').replace(/[\\/:*?"<>|]+/g, '_') + '-' + ch.key; }
   /* grafik di luar lembar yang diciutkan (disimpan per grafik agar tidak hilang saat daftar dibangun ulang) */
   const minSet = new Set();
+  function minUi(t, on) {
+    if (!t) return;
+    const lab = on ? 'Tampilkan grafik' : 'Ciutkan grafik (hanya judul)';
+    t.innerHTML = window.StatIcon(on ? 'down' : 'up'); t.setAttribute('aria-expanded', on ? 'false' : 'true'); t.title = lab; t.setAttribute('aria-label', lab);
+  }
   function setMin(ch, on) {
     if (on) minSet.add(ch.uid); else minSet.delete(ch.uid);
     const b = blockEl(ch); if (!b) return;
     b.classList.toggle('min', on);
-    const t = $('[data-bact="min"]', b);
-    if (t) { t.textContent = on ? 'Buka' : 'Ciutkan'; t.setAttribute('aria-expanded', on ? 'false' : 'true'); t.title = on ? 'Tampilkan grafik' : 'Ciutkan grafik (hanya judul)'; }
+    minUi($('[data-bact="min"]', b), on);
   }
   function blockHTML(ch) {
     return `<div class="sg-blk${ch.uid === selId ? ' sel' : ''}${minSet.has(ch.uid) ? ' min' : ''}" data-uid="${ch.uid}">
       <div class="sg-bhead"><h3></h3><div class="sg-bbtns">
-        <button type="button" class="btn-ghost" data-bact="min" aria-expanded="${minSet.has(ch.uid) ? 'false' : 'true'}" title="${minSet.has(ch.uid) ? 'Tampilkan grafik' : 'Ciutkan grafik (hanya judul)'}">${minSet.has(ch.uid) ? 'Buka' : 'Ciutkan'}</button>
-        <button type="button" class="btn-ghost" data-bact="edit">Edit grafik</button>
-        <button type="button" class="btn-ghost" data-bact="png">Unduh PNG</button>
-        <button type="button" class="btn-ghost" data-bact="copy">Salin</button>
-        <button type="button" class="btn-ghost" data-bact="svg">Unduh SVG</button>
-        <button type="button" class="btn-ghost" data-bact="del">Hapus</button>
+        ${window.StatIconBtn(minSet.has(ch.uid) ? 'down' : 'up', minSet.has(ch.uid) ? 'Tampilkan grafik' : 'Ciutkan grafik (hanya judul)', `data-bact="min" aria-expanded="${minSet.has(ch.uid) ? 'false' : 'true'}"`)}
+        ${window.StatIconBtn('edit', 'Edit grafik', 'data-bact="edit"')}
+        ${window.StatIconBtn('png', 'Unduh PNG', 'data-bact="png"')}
+        ${window.StatIconBtn('copy', 'Salin gambar', 'data-bact="copy"')}
+        ${window.StatIconBtn('svg', 'Unduh SVG', 'data-bact="svg"')}
+        ${window.StatIconBtn('del', 'Hapus grafik', 'data-bact="del"')}
       </div></div>
       <div class="sg-bchart"></div>
       <p class="hint sg-bnote" hidden></p>
@@ -448,8 +458,8 @@
     const list = charts.filter((c) => c.place === 'below');
     blist.innerHTML = list.map(blockHTML).join('');
     list.forEach(paintBelow);
-    below.hidden = !list.length;
-    if (below.parentNode) below.parentNode.classList.toggle('has-below', !!list.length);
+    below.hidden = !list.length || belowClosed;
+    if (below.parentNode) below.parentNode.classList.toggle('has-below', !below.hidden);
   }
   /* grafik di panel hasil: desktop = menggantikan panel hasil Stat di kolom kanan; ponsel = pindah ke segmen Hasil */
   function revealBelow() {
@@ -477,6 +487,7 @@
   function mountAll(ch) {
     const f = floatEl(ch); if (f) f.remove();
     if (ch.place === 'above') mountFloat(ch);
+    if (ch.place === 'below') belowClosed = false;
     rebuildBelow();
     if (ch.place === 'below') revealBelow();
   }
@@ -897,6 +908,7 @@
   }
   function focusChart(uid) {
     const ch = byId(uid); if (!ch) return false;
+    if (ch.place === 'below' && belowClosed) { belowClosed = false; rebuildBelow(); revealBelow(); }
     select(uid, true);
     if (ch.place === 'above') {
       elScroll.scrollTop = Math.max(0, ch.y - 24); elScroll.scrollLeft = Math.max(0, ch.x - GUT - 24);

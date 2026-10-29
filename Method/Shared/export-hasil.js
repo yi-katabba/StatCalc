@@ -380,6 +380,10 @@
   const style = document.createElement('style');
   style.textContent = `
     .ex-bar{ display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; margin:4px 0 14px; padding:10px 14px; border:1px solid var(--rule); border-radius:var(--radius); background:var(--accent-soft); }
+    .ex-main-btns{ justify-content:flex-start; }
+    .ex-main-btns .ib{ flex:0 0 auto; width:64px !important; max-width:none; }
+    .ex-bar-btns{ flex:0 1 auto; }
+    .ex-bar-btns .ib{ flex:0 0 auto; width:52px !important; }
     .ex-bar a{ font-size:13.5px; font-weight:600; color:var(--accent); }
     .ex-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr)); gap:18px; margin-top:16px; }
     .ex-fig{ margin:0; border:1px solid var(--rule); border-radius:var(--radius); background:#fff; overflow:hidden; display:flex; flex-direction:column; }
@@ -582,10 +586,10 @@
       <figure class="ex-fig">
         <div class="ex-chart">${c.svg}</div>
         <figcaption><strong>${X(c.title)}</strong>${c.caption ? X(c.caption) : ''}</figcaption>
-        <div class="control-row">
-          <button type="button" class="btn-ghost" data-ex="png" data-i="${i}">Unduh PNG</button>
-          <button type="button" class="btn-ghost" data-ex="svg" data-i="${i}">Unduh SVG</button>
-          <button type="button" class="btn-ghost" data-ex="copy" data-i="${i}">Salin gambar</button>
+        <div class="control-row ib-row">
+          ${window.StatIconBtn('png', 'Unduh PNG', `data-ex="png" data-i="${i}"`)}
+          ${window.StatIconBtn('svg', 'Unduh SVG', `data-ex="svg" data-i="${i}"`)}
+          ${window.StatIconBtn('copy', 'Salin gambar', `data-ex="copy" data-i="${i}"`)}
         </div>
       </figure>`).join('');
     panel.hidden = false;
@@ -593,10 +597,10 @@
       <div class="step-tag">Ekspor</div>
       <h2>Grafik Pendukung &amp; Unduh Hasil</h2>
       <p class="hint">Grafik dibuat dari data yang baru dihitung. Unduh tiap grafik sebagai PNG/SVG, atau unduh <strong>seluruh hasil</strong> (pengaturan, tabel, uji, kesimpulan, grafik, dan data input) dalam satu dokumen Word.</p>
-      <div class="control-row">
-        <button type="button" class="btn-primary" data-ex="docx" data-ex-id="${id}">Unduh Hasil (.docx)</button>
-        <button type="button" class="btn-ghost" data-ex="share">Bagikan</button>
-        ${spec.resolved.length ? '<button type="button" class="btn-ghost" data-ex="zip">Unduh semua grafik (.zip)</button>' : ''}
+      <div class="control-row ib-row ex-main-btns">
+        ${window.StatIconBtn('docx', 'Unduh Hasil (.docx)', `data-ex="docx" data-ex-id="${id}"`, 'btn-primary')}
+        ${window.StatIconBtn('share', 'Bagikan', 'data-ex="share"')}
+        ${spec.resolved.length ? window.StatIconBtn('zip', 'Unduh semua grafik (.zip)', 'data-ex="zip"') : ''}
       </div>
       <p class="ex-status" hidden></p>
       ${spec.resolved.length ? '<div class="ex-rib" data-rib-slot></div>' : ''}
@@ -608,7 +612,7 @@
     if (rc && !rc.querySelector('.ex-bar')) {
       const bar = document.createElement('div');
       bar.className = 'ex-bar';
-      bar.innerHTML = `<button type="button" class="btn-ghost" data-ex-bar="docx">Unduh hasil (.docx)</button><button type="button" class="btn-ghost" data-ex-bar="share">Bagikan</button><a href="#ex-panel-${id}" data-ex-go="1">Lihat grafik pendukung &darr;</a>`;
+      bar.innerHTML = `<span class="ib-row ex-bar-btns">${window.StatIconBtn('docx', 'Unduh hasil (.docx)', 'data-ex-bar="docx"')}${window.StatIconBtn('share', 'Bagikan', 'data-ex-bar="share"')}</span><a href="#ex-panel-${id}" data-ex-go="1">Lihat grafik pendukung &darr;</a>`;
       const h2 = rc.querySelector('h2');
       (h2 && h2.nextSibling ? h2.parentNode : rc).insertBefore(bar, h2 ? h2.nextSibling : rc.firstChild);
       bar.addEventListener('click', (e) => {
