@@ -92,7 +92,15 @@
     var h = state.parts && state.parts[state.tab];
     body.innerHTML = h || '<p class="sr-msg">Tidak ada isi untuk tab ini pada metode ' + esc(M[state.id] ? M[state.id].title : '') + '.</p>';
   }
-  function showPanel() { host.classList.add('has-res'); }
+  /* Hasil muncul di kanan ATAS: gulir halaman ke atas agar panel sejajar dengan bagian atas lembar
+     (tombol Analisis cepat ada di bawah lembar, jadi halaman biasanya sedang tergulir ke bawah) */
+  function toTop() {
+    try {
+      for (var n = host.parentNode; n && n !== document.body; n = n.parentNode) if (n.scrollTop) n.scrollTop = 0;
+      window.scrollTo(0, 0);
+    } catch (e) { /* abaikan */ }
+  }
+  function showPanel() { host.classList.add('has-res'); toTop(); }
 
   seg.addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return;
