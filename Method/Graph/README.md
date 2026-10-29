@@ -109,3 +109,10 @@ tanpa membuka halaman Graph. Dimuat **setelah** `Method/Calc/sheet.js`.
 - Klik grafik membuka tab **Edit Grafik** (data, teks, opsi, warna, garis kisi, tampilan).
 - `StatCalcSheet` menyediakan kait `onChange` dan `onStructure` agar grafik ikut berubah saat data diedit
   atau kolom/baris disisip dan dihapus.
+
+## Kelompokkan warna (Scatter)
+
+`scatter.js` punya kolom ketiga opsional (teks) **Kelompok warna**. Bila terisi, titik diwarnai per kelompok memakai palet (`u.ST.pal`),
+muncul legenda di bawah judul, dan garis regresi dibuat per kelompok (interval kepercayaan hanya untuk mode tanpa kelompok).
+Di tab Grafik Calc kolom ini muncul sebagai peran **Kelompokkan warna** (bawaan: Tidak ada; kolom bertanda `noGuess: true` tidak ditebak otomatis).
+Menu Graph dan tab Grafik Calc dikelompokkan menurut jenis: Hubungan, Sebaran, Kategori, Waktu.

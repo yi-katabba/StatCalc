@@ -33,6 +33,11 @@
     { card: '#sm-data-card', body: '#smDataTableBody', add: '#smAddRowBtn', remove: '#smRemoveRowBtn', minHint: '#smMinRowsHint' }, // Smoothing
     { card: '#ar-data-card', body: '#arDataTableBody', add: '#arAddRowBtn', remove: '#arRemoveRowBtn', minHint: '#arMinRowsHint' }, // ARIMA & SARIMA
     { card: '#rs-data-card', body: '#rsDataTableBody', add: '#rsAddRowBtn', remove: '#rsRemoveRowBtn', minHint: '#rsMinRowsHint', onApply: (i) => { if (window.StatCalcRSM) window.StatCalcRSM.applyNames(i); } }, // RSM (judul kolom ikut file)
+    /* ANOVA: selalu satu arah (kolom = kelompok); jenis & jumlah kelompok disesuaikan otomatis */
+    { card: '#an-data-card', body: '#anDataTableBody', add: '#anAddRowBtn', remove: '#anRemoveRowBtn', minHint: null, fitCols: (n) => {
+      const m = $('#anMethod'); if (m && m.value !== 'one') { m.value = 'one'; m.dispatchEvent(new Event('change')); }
+      const k = $('#anKOne'); if (k) k.value = Math.max(2, Math.min(8, n)); const b = $('#anBuildTableBtn'); if (b) b.click();
+    } }, // ANOVA satu arah
   ];
 
   /* ------------------------------ Gaya ------------------------------ */

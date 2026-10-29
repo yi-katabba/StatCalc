@@ -326,3 +326,51 @@ html body #view-metode-calc .sc-msg.ok{ background:#E3F0E8; }
   .sc-quick .sq-chip{ height:40px; }
   .sc-quick .sq-info{ margin-top:4px; }
 }
+
+/* Profil: pengaturan angka & data di perangkat */
+.profile-group-k{ font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint); margin:16px 2px 8px; }
+.profile-set + .profile-set{ margin-top:0; }
+
+/* Beranda: proyek terakhir */
+.pj-actions{ display:flex; gap:10px; padding:0 16px 12px; flex-wrap:wrap; }
+.pj-actions .btn-primary,.pj-actions .btn-ghost{ flex:1 1 150px; max-width:260px; }
+.pj-list{ margin:0 16px 8px; background:#fff; border:1px solid var(--rule); border-radius:10px; overflow:hidden; }
+.pj-head{ display:none; }
+.pj-row{ position:relative; display:grid; grid-template-columns:1fr auto; gap:2px 12px; padding:12px 44px 12px 14px; border-bottom:1px solid #E1E6EC; cursor:pointer; align-items:center; }
+.pj-row:last-child{ border-bottom:0; }
+.pj-row:hover,.pj-row:focus-visible{ background:var(--accent-soft); outline:none; }
+.pj-row.on .pj-name::after{ content:"aktif"; margin-left:8px; font-size:11px; font-weight:600; color:var(--accent-2); }
+.pj-name{ font-weight:600; font-size:14px; color:var(--ink); grid-column:1; word-break:break-word; }
+.pj-n{ grid-column:2; font-family:var(--font-mono); font-size:12.5px; color:var(--ink-soft); text-align:right; }
+.pj-n i{ font-style:normal; font-family:var(--font-body); }
+.pj-m,.pj-t{ font-size:12.5px; color:var(--ink-faint); }
+.pj-m{ grid-column:1; } .pj-t{ grid-column:2; text-align:right; }
+.pj-del{ position:absolute; right:6px; top:50%; transform:translateY(-50%); width:34px; height:34px; border:0; background:none; font-size:22px; line-height:1; color:var(--ink-faint); border-radius:8px; cursor:pointer; }
+.pj-del:hover{ background:var(--bad-bg); color:var(--bad); }
+.pj-empty{ margin:0; padding:18px 14px; font-size:13.5px; color:var(--ink-soft); line-height:1.55; }
+@media (min-width:1024px){
+  .pj-head,.pj-row{ grid-template-columns:minmax(0,2.2fr) 90px minmax(0,1.6fr) minmax(0,1.3fr) 0; gap:0 14px; }
+  .pj-head{ display:grid; padding:8px 14px; background:#EEF2F6; border-bottom:1px solid var(--rule); font-size:12px; font-weight:600; color:var(--ink-soft); }
+  .pj-row{ height:48px; padding:0 14px; }
+  .pj-name{ grid-column:auto; } .pj-n{ grid-column:auto; text-align:left; } .pj-m,.pj-t{ grid-column:auto; text-align:left; font-size:13px; color:var(--ink); }
+  .pj-del{ right:10px; }
+}
+.profile-stat-row{ grid-template-columns:repeat(3,1fr) !important; }
+.profile-stat-row .p-k{ font-size:11px; }
+#sbProj{ opacity:.9; }
+
+/* Nama proyek di tengah bilah atas (desktop); disembunyikan di ponsel.
+   Di layar sempit dipusatkan pada ruang kosong di kanan tab; di layar lebar (>=1680px) tepat di tengah bilah. */
+.nav-proj{ display:none; }
+@media (min-width:1024px){
+  .nav-proj{ display:block; order:99; flex:0 1 auto; min-width:0; max-width:30vw; margin:auto; padding:5px 14px; border-radius:6px; background:rgba(255,255,255,.14); color:#fff; font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; pointer-events:none; }
+  .nav-proj[hidden]{ display:none; }
+}
+@media (min-width:1680px){
+  .nav-proj{ position:absolute; left:50%; top:50%; margin:0; transform:translate(-50%,-50%); max-width:24vw; }
+}
+
+/* Menu Grafik: kartu dikelompokkan menurut jenis grafik */
+.gk-head{ grid-column:1 / -1; display:flex; align-items:center; gap:8px; margin:10px 0 0; font-family:var(--font-body); font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint); }
+.gk-head:first-child{ margin-top:0; }
+.gk-head span{ font-weight:600; font-size:11px; padding:1px 7px; border-radius:100px; background:var(--paper-2); color:var(--ink-soft); letter-spacing:0; }

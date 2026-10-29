@@ -669,6 +669,7 @@
                       <optgroup label="Stat">
                         <option value="deskriptif">Statistika Deskriptif</option>
                         <option value="regresi">Regresi Linear</option>
+                        <option value="anova">ANOVA Satu Arah</option>
                         <option value="rsm">Response Surface (RSM)</option>
                         <option value="smoothing">Metode Smoothing</option>
                         <option value="stasioner">Uji Stasioneritas (ADF)</option>
@@ -1597,6 +1598,7 @@
   /* ------------------------ Kirim ke Stat / Graph ------------------------- */
   const SEND = {
     deskriptif: { title: 'Statistika Deskriptif', card: '#ds-data-card' },
+    anova: { title: 'ANOVA Lengkap', card: '#an-data-card', build: '#anBuildTableBtn', kg: '#anKOne' },
     regresi: { title: 'Regresi Linear', card: '#data-card', build: '#buildTableBtn', k: true },
     smoothing: { title: 'Metode Smoothing', card: '#sm-data-card', build: '#smBuildTableBtn', onlyIfHidden: true },
     stasioner: { title: 'Uji Stasioneritas', card: '#st-data-card', build: '#stBuildTableBtn', onlyIfHidden: true },
@@ -1633,6 +1635,7 @@
     window.StatCalc.goToMethod(id, t.title, 'metode-calc');
     try {
       if (t.k) { const k = Math.max(1, Math.min(6, numCols - 1)); $('#varCount').value = k; $(t.build).click(); }
+      else if (t.kg) { const m = $('#anMethod'); if (m && m.value !== 'one') { m.value = 'one'; m.dispatchEvent(new Event('change')); } $(t.kg).value = Math.max(2, Math.min(8, numCols)); $(t.build).click(); }
       else if (t.kv) { $(t.kv).value = Math.max(2, Math.min(4, numCols - 1)); $(t.build).click(); }
       else if (t.build && (!t.onlyIfHidden || $(t.card).hidden)) $(t.build).click();
     } catch (e) { /* tabel tujuan tetap bisa dibuat manual */ }
@@ -1724,6 +1727,10 @@
       MAX_R, MAX_C, ensure, pushUndo, invalidate, fullRender, flash, hide, normalizeInput,
       shiftFormula, adjustFormula, adjustAll,
       registerState: (get, set) => { extraGet = get; extraSet = set; },
+      /* dipakai projects.js: simpan/buka proyek (isi lembar + status ekstra seperti filter) */
+      exportState: () => snapshot(),
+      importState: (js, name) => { undoStack = []; redoStack = []; resetExtra(); applySnapshot(js); if (name != null) q('scFname').value = name; updateUndoBtn(); },
+      blankState: () => JSON.stringify({ R: 20, C: 6, header: true, cells: emptyCells(20, 6) }),
       setInfoHook: (fn) => { infoHook = fn; },
       onReset: (fn) => { resetHooks.push(fn); },
       onTab: (name, fn) => { tabHooks[name] = fn; },

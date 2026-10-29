@@ -36,7 +36,7 @@
   const resetST = () => Object.assign(ST, ST0);
   /* Pengaturan pita per grafik: grid = garis kisi bawaan (null = tanpa kisi); c1/c2 = label pemilih warna; pal = pakai palet */
   const GRAPH_STYLE = {
-    scatter: { grid: { h: 1, v: 1 }, c1: 'Warna titik', c2: 'Warna garis regresi' },
+    scatter: { grid: { h: 1, v: 1 }, c1: 'Warna titik', c2: 'Warna garis regresi', pal: true },
     histogram: { grid: { h: 1, v: 0 }, c1: 'Warna batang' },
     probplot: { grid: { h: 1, v: 1 }, c1: 'Warna titik', c2: 'Warna garis acuan' },
     boxplot: { grid: { h: 1, v: 0 }, pal: true },
@@ -252,6 +252,27 @@
     img.src = url;
   }
 
+  /* Salin gambar PNG ke clipboard (Chrome, Edge, Safari, Firefox terbaru). onOk()/onFail(alasan) */
+  function copyPNG(svg, onOk, onFail) {
+    const fail = (m) => { if (onFail) onFail(m || 'Peramban ini tidak mendukung salin gambar. Gunakan Unduh PNG.'); };
+    if (!(navigator.clipboard && navigator.clipboard.write && window.ClipboardItem)) { fail(); return; }
+    const e = exportSvg(svg);
+    const blobP = new Promise((res, rej) => {
+      const img = new Image(), url = URL.createObjectURL(new Blob([e.str], { type: 'image/svg+xml;charset=utf-8' }));
+      img.onload = () => {
+        try {
+          const c = document.createElement('canvas'); c.width = e.w * 2; c.height = e.h * 2;
+          const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height); ctx.drawImage(img, 0, 0, c.width, c.height);
+          URL.revokeObjectURL(url);
+          c.toBlob((b) => (b ? res(b) : rej(new Error('png'))), 'image/png');
+        } catch (err) { URL.revokeObjectURL(url); rej(err); }
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('img')); };
+      img.src = url;
+    });
+    navigator.clipboard.write([new ClipboardItem({ 'image/png': blobP })]).then(() => { if (onOk) onOk(); }, () => fail('Gambar tidak dapat disalin (izin clipboard ditolak atau tidak didukung). Gunakan Unduh PNG.'));
+  }
+
   /* ----------------------------- Pembuat halaman graph ----------------------------- */
   let clipCounter = 0;
   const registry = {};
@@ -369,6 +390,7 @@
           <div class="gr-chart" id="${P}chart"></div>
           <div class="control-row gr-actions">
             <button type="button" class="btn-ghost" id="${P}png">Unduh PNG</button>
+            <button type="button" class="btn-ghost" id="${P}copy">Salin gambar</button>
             <button type="button" class="btn-ghost" id="${P}svg">Unduh SVG</button>
           </div>
           <div class="gr-sum" id="${P}sum"></div>
@@ -624,6 +646,10 @@
       if (lastSvg) downloadPNG(lastSvg, id, () => showErr('Peramban ini tidak dapat membuat PNG. Gunakan Unduh SVG.'));
     });
     q('svg').addEventListener('click', () => { if (lastSvg) downloadSVG(lastSvg, id); });
+    q('copy').addEventListener('click', () => {
+      if (!lastSvg) return;
+      copyPNG(lastSvg, () => { if (window.StatCalc && window.StatCalc.showToast) window.StatCalc.showToast('Gambar grafik disalin ke clipboard.'); }, (m) => showErr(m));
+    });
 
     /* ---- impor data (Tempel dari Excel / unggah file) ---- */
     if (window.StatCalcImport && window.StatCalcImport.register) {
@@ -694,7 +720,7 @@
 
   window.GraphCore = {
     add, info, defaults, render, registry,
-    downloadSVG, downloadPNG, exportSvg, parseNum, saveBlob,
+    downloadSVG, downloadPNG, copyPNG, exportSvg, parseNum, saveBlob,
     PALETTES, PALETTE_LABEL, PAL, GRID,
     u: {
       esc, fmt, parseNum, PAL, INK, SOFT, GRID, AXIS, ST, ST0, PALETTES, PALETTE_LABEL, resetST,

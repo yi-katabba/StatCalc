@@ -432,10 +432,47 @@
       status(panel, 'Arsip grafik (PNG + SVG) berhasil diunduh.');
     } catch (e) { status(panel, 'Arsip grafik tidak dapat dibuat di peramban ini. Unduh grafik satu per satu sebagai SVG.', true); }
   }
+  /* Bagikan: menu bagikan perangkat (teks kesimpulan + berkas .docx bila didukung); bila tak ada, salin ringkasan */
+  function summaryText(spec) {
+    const el = spec.anchor ? $(spec.anchor) : null;
+    let t = el ? String(el.innerText || el.textContent || '') : '';
+    t = t.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+    if (t.length > 1500) t = t.slice(0, 1500).replace(/\s+\S*$/, '') + '\u2026';
+    return (spec.title || 'Hasil analisis') + '\n\n' + (t || 'Lihat dokumen hasil terlampir.') + '\n\n\u2014 Dihitung dengan StatCalc';
+  }
+  async function doShare(id) {
+    const spec = STORE[id], panel = $('#ex-panel-' + id);
+    if (!spec) return;
+    const text = summaryText(spec);
+    try {
+      if (navigator.share) {
+        const data = { title: spec.title || 'Hasil StatCalc', text };
+        try {
+          const blob = await buildDocx(spec);
+          const f = new File([blob], 'StatCalc-' + id + '.docx', { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+          if (navigator.canShare && navigator.canShare({ files: [f] })) data.files = [f];
+        } catch (e) { /* bagikan teks saja */ }
+        await navigator.share(data);
+        status(panel, 'Hasil dibagikan.');
+      } else if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+        status(panel, 'Peramban ini tidak punya menu Bagikan, jadi ringkasan hasil disalin ke clipboard.');
+      } else status(panel, 'Bagikan tidak didukung di peramban ini. Gunakan Unduh Hasil (.docx).', true);
+    } catch (e) {
+      if (e && e.name === 'AbortError') return;
+      status(panel, 'Hasil tidak dapat dibagikan. Gunakan Unduh Hasil (.docx).', true);
+    }
+  }
   async function doFig(id, i, kind) {
     const spec = STORE[id], ch = spec.resolved[i], panel = $('#ex-panel-' + id);
     const nm = 'StatCalc-' + id + '-' + String(i + 1).padStart(2, '0');
     if (kind === 'svg') { saveBlob(new Blob([svgSized(ch.svg)], { type: 'image/svg+xml;charset=utf-8' }), nm + '.svg'); return; }
+    if (kind === 'copy') {
+      if (!(navigator.clipboard && navigator.clipboard.write && window.ClipboardItem)) { status(panel, 'Peramban ini tidak mendukung salin gambar. Gunakan Unduh PNG.', true); return; }
+      try { const png = await svgToPng(ch.svg, 2); await navigator.clipboard.write([new ClipboardItem({ 'image/png': png.blob })]); status(panel, 'Gambar "' + ch.title + '" disalin ke clipboard.'); }
+      catch (e) { status(panel, 'Gambar tidak dapat disalin (izin clipboard ditolak). Gunakan Unduh PNG.', true); }
+      return;
+    }
     try { const png = await svgToPng(ch.svg, 2); saveBlob(png.blob, nm + '.png'); }
     catch (e) { status(panel, 'Peramban ini tidak dapat membuat PNG. Gunakan Unduh SVG.', true); }
   }
@@ -534,7 +571,8 @@
         const k = b.dataset.ex;
         if (k === 'docx') doDocx(id);
         else if (k === 'zip') doZip(id);
-        else if (k === 'png' || k === 'svg') doFig(id, +b.dataset.i, k);
+        else if (k === 'share') doShare(id);
+        else if (k === 'png' || k === 'svg' || k === 'copy') doFig(id, +b.dataset.i, k);
       });
       panel.innerHTML = '<div class="ex-dyn"></div>';
       anchor.parentNode.insertBefore(panel, anchor.nextSibling);
@@ -547,6 +585,7 @@
         <div class="control-row">
           <button type="button" class="btn-ghost" data-ex="png" data-i="${i}">Unduh PNG</button>
           <button type="button" class="btn-ghost" data-ex="svg" data-i="${i}">Unduh SVG</button>
+          <button type="button" class="btn-ghost" data-ex="copy" data-i="${i}">Salin gambar</button>
         </div>
       </figure>`).join('');
     panel.hidden = false;
@@ -556,6 +595,7 @@
       <p class="hint">Grafik dibuat dari data yang baru dihitung. Unduh tiap grafik sebagai PNG/SVG, atau unduh <strong>seluruh hasil</strong> (pengaturan, tabel, uji, kesimpulan, grafik, dan data input) dalam satu dokumen Word.</p>
       <div class="control-row">
         <button type="button" class="btn-primary" data-ex="docx" data-ex-id="${id}">Unduh Hasil (.docx)</button>
+        <button type="button" class="btn-ghost" data-ex="share">Bagikan</button>
         ${spec.resolved.length ? '<button type="button" class="btn-ghost" data-ex="zip">Unduh semua grafik (.zip)</button>' : ''}
       </div>
       <p class="ex-status" hidden></p>
@@ -568,11 +608,12 @@
     if (rc && !rc.querySelector('.ex-bar')) {
       const bar = document.createElement('div');
       bar.className = 'ex-bar';
-      bar.innerHTML = `<button type="button" class="btn-ghost" data-ex-bar="docx">Unduh hasil (.docx)</button><a href="#ex-panel-${id}" data-ex-go="1">Lihat grafik pendukung &darr;</a>`;
+      bar.innerHTML = `<button type="button" class="btn-ghost" data-ex-bar="docx">Unduh hasil (.docx)</button><button type="button" class="btn-ghost" data-ex-bar="share">Bagikan</button><a href="#ex-panel-${id}" data-ex-go="1">Lihat grafik pendukung &darr;</a>`;
       const h2 = rc.querySelector('h2');
       (h2 && h2.nextSibling ? h2.parentNode : rc).insertBefore(bar, h2 ? h2.nextSibling : rc.firstChild);
       bar.addEventListener('click', (e) => {
         if (e.target.closest('[data-ex-bar="docx"]')) doDocx(id);
+        if (e.target.closest('[data-ex-bar="share"]')) doShare(id);
         const g = e.target.closest('[data-ex-go]');
         if (g) { e.preventDefault(); const p = $('#ex-panel-' + id); if (p && p.scrollIntoView) p.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
       });

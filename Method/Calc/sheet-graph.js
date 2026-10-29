@@ -55,21 +55,21 @@
   const ROLES = {
     histogram: [{ l: 'Kolom data', hint: 'kolom angka yang disebarkan' }],
     probplot: [{ l: 'Kolom data', hint: 'kolom angka yang diperiksa kenormalannya' }],
-    scatter: [{ l: 'Variabel X', hint: 'sumbu mendatar (variabel bebas)' }, { l: 'Variabel Y', hint: 'sumbu tegak (variabel terikat)' }],
+    scatter: [{ l: 'Variabel X', hint: 'sumbu mendatar (variabel bebas)' }, { l: 'Variabel Y', hint: 'sumbu tegak (variabel terikat)' }, { l: 'Kelompokkan warna', hint: 'kolom kategori untuk mewarnai titik (opsional)', none: 'Tidak ada' }],
     barchart: [{ l: 'Label kategori', hint: 'nama tiap batang (teks)' }, { l: 'Nilai', hint: 'tinggi batang (angka)' }],
     piechart: [{ l: 'Label kategori', hint: 'nama tiap irisan (teks)' }, { l: 'Nilai', hint: 'ukuran irisan (angka tidak negatif)' }],
     timeseries: [{ l: 'Label periode', hint: 'urutan waktu, mis. Jan, Feb, 2024-Q1' }, { l: 'Nilai', hint: 'nilai pada tiap periode (angka)' }],
     'boxplot:long': [{ l: 'Label kelompok', hint: 'kolom yang menentukan kelompok tiap nilai (faktor ANOVA)', none: '(tanpa kelompok)' }, { l: 'Nilai', hint: 'angka yang dibandingkan antar kelompok' }],
   };
   const CATALOG = [
-    { key: 'histogram', gid: 'histogram', label: 'Histogram', tip: 'Histogram: sebaran satu kolom angka', group: 'Sebaran data' },
-    { key: 'probplot', gid: 'probplot', label: 'Probability Plot', tip: 'Probability Plot (Q-Q normal): cek kenormalan satu kolom angka', group: 'Sebaran data' },
-    { key: 'boxplot', gid: 'boxplot', mode: 'wide', label: 'Boxplot', tip: 'Boxplot per variabel: tiap kolom angka = satu kotak', group: 'Sebaran data' },
-    { key: 'boxgroup', gid: 'boxplot', mode: 'long', label: 'Boxplot Kelompok', tip: 'Boxplot per kelompok (gaya ANOVA): pilih kolom label kelompok dan kolom nilai', group: 'Sebaran data', dialog: true, why: 'Kolom label menentukan kelompok setiap nilai, seperti faktor pada ANOVA. Satu kotak digambar untuk tiap label yang berbeda.' },
     { key: 'scatter', gid: 'scatter', label: 'Scatter Plot', tip: 'Scatter Plot: hubungan dua kolom angka (X dan Y)', group: 'Hubungan' },
-    { key: 'barchart', gid: 'barchart', label: 'Bar Chart', tip: 'Bar Chart: bandingkan nilai antar kategori', group: 'Kategori & waktu', dialog: true, why: 'Pilih kolom yang berisi nama kategori (label tiap batang) dan kolom nilainya. Kategori yang sama akan dijumlahkan.' },
-    { key: 'piechart', gid: 'piechart', label: 'Pie Chart', tip: 'Pie Chart: komposisi bagian terhadap total', group: 'Kategori & waktu', dialog: true, why: 'Pilih kolom yang berisi nama kategori (label tiap irisan) dan kolom nilainya. Kategori yang sama akan dijumlahkan.' },
-    { key: 'timeseries', gid: 'timeseries', label: 'Time Series', tip: 'Time Series Plot: data menurut urutan waktu', group: 'Kategori & waktu', dialog: true, why: 'Pilih kolom periode (label sumbu waktu) dan kolom nilainya. Urutkan data dari periode paling awal ke paling akhir.' },
+    { key: 'histogram', gid: 'histogram', label: 'Histogram', tip: 'Histogram: sebaran satu kolom angka', group: 'Sebaran' },
+    { key: 'probplot', gid: 'probplot', label: 'Probability Plot', tip: 'Probability Plot (Q-Q normal): cek kenormalan satu kolom angka', group: 'Sebaran' },
+    { key: 'boxplot', gid: 'boxplot', mode: 'wide', label: 'Boxplot', tip: 'Boxplot per variabel: tiap kolom angka = satu kotak', group: 'Sebaran' },
+    { key: 'boxgroup', gid: 'boxplot', mode: 'long', label: 'Boxplot Kelompok', tip: 'Boxplot per kelompok (gaya ANOVA): pilih kolom label kelompok dan kolom nilai', group: 'Sebaran', dialog: true, why: 'Kolom label menentukan kelompok setiap nilai, seperti faktor pada ANOVA. Satu kotak digambar untuk tiap label yang berbeda.' },
+    { key: 'barchart', gid: 'barchart', label: 'Bar Chart', tip: 'Bar Chart: bandingkan nilai antar kategori', group: 'Kategori', dialog: true, why: 'Pilih kolom yang berisi nama kategori (label tiap batang) dan kolom nilainya. Kategori yang sama akan dijumlahkan.' },
+    { key: 'piechart', gid: 'piechart', label: 'Pie Chart', tip: 'Pie Chart: komposisi bagian terhadap total', group: 'Kategori', dialog: true, why: 'Pilih kolom yang berisi nama kategori (label tiap irisan) dan kolom nilainya. Kategori yang sama akan dijumlahkan.' },
+    { key: 'timeseries', gid: 'timeseries', label: 'Time Series', tip: 'Time Series Plot: data menurut urutan waktu', group: 'Waktu', dialog: true, why: 'Pilih kolom periode (label sumbu waktu) dan kolom nilainya. Urutkan data dari periode paling awal ke paling akhir.' },
   ];
   const entryOf = (key) => CATALOG.find((e) => e.key === key);
   const rolesOf = (gid, mode) => ROLES[gid === 'boxplot' ? 'boxplot:long' : gid] || (mode === 'long' && ROLES[gid]) || [];
@@ -203,6 +203,7 @@
     order.forEach((j) => {
       const d = info.columns[j];
       let pick;
+      if (d.noGuess) return;
       if (d.text) {
         pick = cols.find((x) => !x.numeric && !used.has(x.c));
         if (!pick && !d.optional) {
@@ -258,7 +259,7 @@
     });
     const cols = info.columns.map(() => []); let n = 0, skipped = 0;
     for (let r = a; r <= b; r++) {
-      const raw = ch.cols.map((c) => rd(r, c));
+      const raw = info.columns.map((_, j) => rd(r, ch.cols[j] === undefined ? -1 : ch.cols[j]));
       if (raw.every((v) => v === '')) continue;
       const row = []; let ok = true;
       for (let j = 0; j < info.columns.length; j++) {
@@ -405,6 +406,7 @@
       <div class="sg-bhead"><h3></h3><div class="sg-bbtns">
         <button type="button" class="btn-ghost" data-bact="edit">Edit grafik</button>
         <button type="button" class="btn-ghost" data-bact="png">Unduh PNG</button>
+        <button type="button" class="btn-ghost" data-bact="copy">Salin</button>
         <button type="button" class="btn-ghost" data-bact="svg">Unduh SVG</button>
         <button type="button" class="btn-ghost" data-bact="del">Hapus</button>
       </div></div>
@@ -439,6 +441,7 @@
     else if (a === 'del') removeChart(ch.uid);
     else if (a === 'png') GC.downloadPNG(ch._svg, dlName(ch), () => msg('err', 'Peramban ini tidak dapat membuat PNG. Gunakan Unduh SVG.', 6000));
     else if (a === 'svg') GC.downloadSVG(ch._svg, dlName(ch));
+    else if (a === 'copy') GC.copyPNG(ch._svg, () => msg('ok', 'Gambar grafik disalin ke clipboard.', 3000), (m) => msg('err', m, 6000));
   });
 
   /* ------------------------------ Pasang / lepas ---------------------------- */

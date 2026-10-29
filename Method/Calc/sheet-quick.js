@@ -4,7 +4,7 @@
   var view = document.getElementById('view-metode-calc'), sh = window.StatCalcSheet;
   if (!view || !sh) return;
   var host = view.querySelector('.chapter-inner') || view;
-  var ITEMS = [['regresi', 'Regresi'], ['deskriptif', 'Deskriptif'], ['scatter', 'Scatter'], ['histogram', 'Histogram'], ['smoothing', 'Smoothing']];
+  var ITEMS = [['regresi', 'Regresi'], ['deskriptif', 'Deskriptif'], ['anova', 'ANOVA'], ['scatter', 'Scatter'], ['histogram', 'Histogram'], ['smoothing', 'Smoothing'], ['rsm', 'RSM'], ['stasioner', 'Stasioner'], ['arima', 'ARIMA']];
   var bar = document.createElement('div');
   bar.className = 'sc-quick';
   bar.innerHTML = '<div class="sq-k">Analisis cepat</div><div class="sq-row">' +
