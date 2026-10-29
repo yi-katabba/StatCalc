@@ -509,6 +509,9 @@
   const svgI = (k) => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICO[k]}</svg>`;
   const rb = (id, ico, label, tip, cls, dis) => `<button type="button" class="sc-rb ${cls || ''}" id="${id}" title="${tip || label}" aria-label="${tip || label}"${dis ? ' disabled' : ''}>${svgI(ico)}<span>${label}</span></button>`;
 
+  /* tombol pilihan metode (tab Statistik): satu terpilih (aria-checked) */
+  const mb = (m, label, tip, path) => `<button type="button" class="sc-rb sc-mb" role="radio" aria-checked="false" data-m="${m}" title="${tip}" aria-label="${tip}"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${path}</svg><span>${label}</span></button>`;
+
   /* --------------------------- Markup halaman ---------------------------- */
   const section = document.createElement('section');
   section.className = 'view';
@@ -659,37 +662,43 @@
           <div class="sc-rpanel" data-panel="grafik" role="tabpanel"><div class="sc-rbody" id="sgInsertBody"></div></div>
           <div class="sc-rpanel" data-panel="editgrafik" role="tabpanel"><div class="sc-rbody" id="sgEditBody"></div></div>
 
-          <!-- ============ TAB KIRIM ============ -->
+          <!-- ============ TAB KIRIM (Statistik): pilih metode berkelompok + Jalankan analisis ============ -->
           <div class="sc-rpanel" data-panel="kirim" role="tabpanel">
             <div class="sc-rbody">
-              <div class="sc-grp">
-                <div class="sc-gbody">
-                  <div class="sc-fld"><label for="scTarget">Analisis dengan</label>
-                    <select id="scTarget" class="select-input" style="width:220px">
-                      <optgroup label="Stat">
-                        <option value="deskriptif">Statistika Deskriptif</option>
-                        <option value="regresi">Regresi Linear</option>
-                        <option value="anova">ANOVA Satu Arah</option>
-                        <option value="rsm">Response Surface (RSM)</option>
-                        <option value="smoothing">Metode Smoothing</option>
-                        <option value="stasioner">Uji Stasioneritas (ADF)</option>
-                        <option value="arima">ARIMA &amp; SARIMA</option>
-                      </optgroup>
-                      <optgroup label="Graph">
-                        <option value="histogram">Histogram</option>
-                        <option value="boxplot">Boxplot</option>
-                        <option value="scatter">Scatter Plot</option>
-                        <option value="probplot">Probability Plot</option>
-                        <option value="timeseries">Time Series Plot</option>
-                        <option value="barchart">Bar Chart</option>
-                        <option value="piechart">Pie Chart</option>
-                      </optgroup>
-                    </select>
-                  </div>
-                  ${rb('scSend', 'send', 'Buka & analisis', 'Bawa data lembar kerja ke metode terpilih', 'pri')}
+              <select id="scTarget" hidden aria-hidden="true" tabindex="-1">
+                <option value="deskriptif">Statistika Deskriptif</option><option value="regresi">Regresi Linear</option>
+                <option value="anova">ANOVA Satu Arah</option><option value="rsm">Response Surface (RSM)</option>
+                <option value="smoothing">Metode Smoothing</option><option value="stasioner">Uji Stasioneritas (ADF)</option>
+                <option value="arima">ARIMA &amp; SARIMA</option>
+                <option value="histogram">Histogram</option><option value="boxplot">Boxplot</option><option value="scatter">Scatter Plot</option>
+                <option value="probplot">Probability Plot</option><option value="timeseries">Time Series Plot</option>
+                <option value="barchart">Bar Chart</option><option value="piechart">Pie Chart</option>
+              </select>
+              <div class="sc-grp"><div class="sc-gbody" role="radiogroup" aria-label="Metode Ringkasan">
+                ${mb('deskriptif', 'Deskriptif', 'Statistika deskriptif: ringkasan data', '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>')}
+              </div><div class="sc-glabel">Ringkasan</div></div>
+              <div class="sc-grp"><div class="sc-gbody" role="radiogroup" aria-label="Metode Model">
+                ${mb('regresi', 'Regresi', 'Regresi linear sederhana / berganda', '<path d="M4 4v16h16"/><path d="M7 16l4-5 3 2 5-7"/>')}
+                ${mb('anova', 'ANOVA', 'ANOVA satu arah', '<rect x="4" y="10" width="4" height="10"/><rect x="10" y="4" width="4" height="16"/><rect x="16" y="13" width="4" height="7"/>')}
+                ${mb('rsm', 'RSM', 'Response Surface Methodology', '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>')}
+              </div><div class="sc-glabel">Model</div></div>
+              <div class="sc-grp"><div class="sc-gbody" role="radiogroup" aria-label="Metode Deret waktu">
+                ${mb('smoothing', 'Smoothing', 'Metode smoothing / pemulusan', '<path d="M3 15c3-8 5 4 8-3s5 3 10-6"/>')}
+                ${mb('stasioner', 'Stasioner', 'Uji stasioneritas (ADF)', '<path d="M3 12h18M3 8c4 0 4 8 8 8s4-8 10-8"/>')}
+                ${mb('arima', 'ARIMA', 'ARIMA dan SARIMA', '<path d="M3 18l5-8 4 4 9-10M16 4h5v5"/>')}
+              </div><div class="sc-glabel">Deret waktu</div></div>
+              <div class="sc-grp"><div class="sc-gbody">
+                <div class="sc-fld"><label for="scTargetG">Halaman Graph</label>
+                  <select id="scTargetG" class="select-input" style="width:170px">
+                    <option value="">Pilih grafik&hellip;</option><option value="histogram">Histogram</option><option value="boxplot">Boxplot</option>
+                    <option value="scatter">Scatter Plot</option><option value="probplot">Probability Plot</option><option value="timeseries">Time Series Plot</option>
+                    <option value="barchart">Bar Chart</option><option value="piechart">Pie Chart</option>
+                  </select>
                 </div>
-                <div class="sc-glabel">Metode Stat / Graph</div>
-              </div>
+              </div><div class="sc-glabel">Graph</div></div>
+              <div class="sc-grp last"><div class="sc-gbody" style="align-items:center">
+                ${rb('scSend', 'send', 'Jalankan analisis', 'Jalankan metode terpilih pada data lembar kerja', 'pri')}
+              </div><div class="sc-glabel">Aksi</div></div>
             </div>
           </div>
         </div>
@@ -1621,18 +1630,30 @@
     }
     return { rows, C: b.C };
   }
-  q('scSend').addEventListener('click', () => {
+  /* pilih metode: tombol berkelompok di tab Statistik (nilai disimpan di #scTarget) */
+  function pickMethod(id) {
+    q('scTarget').value = id;
+    $$('.sc-mb', section).forEach((b) => b.setAttribute('aria-checked', b.dataset.m === id ? 'true' : 'false'));
+    const g = q('scTargetG'); if (g) g.value = g.querySelector(`option[value="${id}"]`) ? id : '';
+  }
+  $$('.sc-mb', section).forEach((b) => b.addEventListener('click', () => pickMethod(b.dataset.m)));
+  q('scTargetG').addEventListener('change', (e) => { if (e.target.value) pickMethod(e.target.value); });
+  pickMethod('regresi');
+  /* Kirim data ke halaman metode. silent = jangan pindah halaman (hasil ditampilkan di panel Hasil Lembar).
+     Mengembalikan true bila data terkirim. */
+  const CALC_BTN = { regresi: '#calcBtn', smoothing: '#smCalcBtn', anova: '#anCalcBtn', rsm: '#rsCalcBtn', stasioner: '#stCalcBtn', arima: '#arCalcBtn', deskriptif: '#dsCalc' };
+  function sendTo(id, silent) {
     hide('scErr4');
-    const id = q('scTarget').value, t = SEND[id];
+    const t = SEND[id];
     let { rows, C } = exportRows();
     if (typeof window.StatCalcSheetRoles === 'function') { const ro = window.StatCalcSheetRoles(id, rows); if (ro) { rows = ro.rows; C = ro.C; } }
     const first = S.header ? 1 : 0;
-    if (rows.length <= first) { flash('scErr4', 'Belum ada data pada lembar kerja. Isi atau impor data terlebih dahulu.', 6000); return; }
-    if (!window.StatCalc || !window.StatCalcImport || !window.StatCalcImport.has(t.card) && !t.build) { flash('scErr4', 'Halaman tujuan belum siap. Muat ulang halaman lalu coba lagi.', 6000); return; }
+    if (rows.length <= first) { flash('scErr4', 'Belum ada data pada lembar kerja. Isi atau impor data terlebih dahulu.', 6000); return false; }
+    if (!window.StatCalc || !window.StatCalcImport || !window.StatCalcImport.has(t.card) && !t.build) { flash('scErr4', 'Halaman tujuan belum siap. Muat ulang halaman lalu coba lagi.', 6000); return false; }
     // jumlah kolom angka -> jumlah variabel X untuk regresi
     let numCols = 0;
     for (let c = 0; c < C; c++) { let n = 0, tot = 0; for (let r = first; r < rows.length; r++) { if (rows[r][c] !== '') { tot++; if (!Number.isNaN(parseNum(rows[r][c]))) n++; } } if (tot && n / tot >= 0.8) numCols++; }
-    window.StatCalc.goToMethod(id, t.title, 'metode-calc');
+    if (!silent) window.StatCalc.goToMethod(id, t.title, 'metode-calc');
     try {
       if (t.k) { const k = Math.max(1, Math.min(6, numCols - 1)); $('#varCount').value = k; $(t.build).click(); }
       else if (t.kg) { const m = $('#anMethod'); if (m && m.value !== 'one') { m.value = 'one'; m.dispatchEvent(new Event('change')); } $(t.kg).value = Math.max(2, Math.min(8, numCols)); $(t.build).click(); }
@@ -1641,8 +1662,22 @@
     } catch (e) { /* tabel tujuan tetap bisa dibuat manual */ }
     setTimeout(() => {
       const ok = window.StatCalcImport.send(t.card, rows, 'lembar kerja Calc', { hasHeader: S.header });
-      if (!ok) window.StatCalc.showToast('Tabel tujuan belum tersedia. Selesaikan Langkah 1 pada halaman ini.');
+      if (silent) {
+        if (!ok) { window.StatCalcHasil.fail(id, 'Tabel tujuan belum tersedia. Buka halaman metode lalu selesaikan Langkah 1.'); return; }
+        const ap = $(t.card + ' [data-act="apply"]');          /* langkah "Terapkan ke Tabel" otomatis */
+        if (!ap) { window.StatCalcHasil.fail(id, 'Data tidak dapat diterapkan ke tabel metode. Periksa jumlah kolom angka di Lembar.'); return; }
+        ap.click();
+        const cb = $(CALC_BTN[id]); if (cb) cb.click();
+        window.StatCalcHasil.collect(id);
+      } else if (!ok) window.StatCalc.showToast('Tabel tujuan belum tersedia. Selesaikan Langkah 1 pada halaman ini.');
     }, 120);
+    return true;
+  }
+  q('scTarget').addEventListener('change', () => pickMethod(q('scTarget').value));
+  q('scSend').addEventListener('click', () => {
+    const id = q('scTarget').value;
+    /* metode Stat: hasil tampil di panel Hasil pada Lembar; Graph: buka halaman Graph */
+    if (CALC_BTN[id] && window.StatCalcHasil) { window.StatCalcHasil.start(id); sendTo(id, true); } else sendTo(id, false);
   });
 
   /* -------------------------------- Ekspor -------------------------------- */
@@ -1724,7 +1759,7 @@
     firstDataRow, showTab, onChange: (fn) => { changeListeners.push(fn); }, onStructure: (fn) => { structureListeners.push(fn); },
     /* dipakai Method/Calc/sheet-data.js (tab Data) */
     api: {
-      MAX_R, MAX_C, ensure, pushUndo, invalidate, fullRender, flash, hide, normalizeInput,
+      sendTo, MAX_R, MAX_C, ensure, pushUndo, invalidate, fullRender, flash, hide, normalizeInput,
       shiftFormula, adjustFormula, adjustAll,
       registerState: (get, set) => { extraGet = get; extraSet = set; },
       /* dipakai projects.js: simpan/buka proyek (isi lembar + status ekstra seperti filter) */

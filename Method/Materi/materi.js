@@ -230,6 +230,51 @@
   }
   const topicById = (id) => TOPICS.find((t) => t.id === id);
 
+  /* ------------------------------ Progres baca ------------------------------ */
+  /* Disimpan di statcalc.materi.progress: { idTopik: { r: [idBagian terbaca], l: idBagian terakhir, t: waktu } }.
+     Sebuah bagian dianggap terbaca bila berada di tengah layar selama 1,5 detik; bagian terakhir juga
+     dianggap terbaca bila akhir halaman (tombol Sebelumnya/Berikutnya) terlihat sama lama. */
+  const PROG_KEY = 'statcalc.materi.progress', progListeners = [];
+  function loadProg() { try { const o = JSON.parse(localStorage.getItem(PROG_KEY) || '{}'); return o && typeof o === 'object' ? o : {}; } catch (e) { return {}; } }
+  function saveProg(o) { try { localStorage.setItem(PROG_KEY, JSON.stringify(o)); } catch (e) { /* abaikan */ } }
+  function markRead(topicId, secId) {
+    const t = topicById(topicId); if (!t || !t.sections.some((x) => x.id === secId)) return;
+    const st = loadProg(), p = st[topicId] || (st[topicId] = { r: [], l: '', t: 0 });
+    if (p.r.indexOf(secId) === -1) p.r.push(secId);
+    p.l = secId; p.t = Date.now();
+    saveProg(st);
+    progListeners.forEach((f) => { try { f(); } catch (e) { /* abaikan */ } });
+  }
+  function progress() {
+    const st = loadProg();
+    return TOPICS.map((t) => {
+      const p = st[t.id] || {}, ids = t.sections.map((x) => x.id), rd = Array.isArray(p.r) ? p.r : [];
+      const read = ids.filter((id) => rd.indexOf(id) !== -1).length, li = p.l ? ids.indexOf(p.l) : -1;
+      return { id: t.id, title: t.title, subtitle: t.subtitle || '', total: ids.length, read, started: read > 0, done: ids.length > 0 && read >= ids.length,
+        lastId: li >= 0 ? p.l : '', lastIndex: li, lastTitle: li >= 0 ? t.sections[li].title : '', t: p.t || 0 };
+    });
+  }
+  let watcher = null;
+  function watch(t) {
+    if (watcher) { watcher.disconnect(); watcher = null; }
+    if (typeof IntersectionObserver !== 'function') return;
+    const timers = new Map();
+    const arm = (key, fn) => { if (!timers.has(key)) timers.set(key, setTimeout(() => { timers.delete(key); fn(); }, 1500)); };
+    const disarm = (key) => { if (timers.has(key)) { clearTimeout(timers.get(key)); timers.delete(key); } };
+    watcher = new IntersectionObserver((ents) => {
+      ents.forEach((en) => {
+        const sec = en.target.dataset.sec, key = en.target.classList.contains('mt-foot') ? '#end' : sec;
+        if (en.isIntersecting) arm(key, () => markRead(t.id, key === '#end' ? t.sections[t.sections.length - 1].id : sec));
+        else disarm(key);
+      });
+    }, { rootMargin: '-45% 0px -45% 0px' });
+    const rootEl = wrap;
+    $$('.mt-sec', rootEl).forEach((el) => watcher.observe(el));
+    const foot = $('.mt-foot', rootEl); if (foot) { const w = new IntersectionObserver((ents) => {
+      ents.forEach((en) => { if (en.isIntersecting) arm('#end', () => markRead(t.id, t.sections[t.sections.length - 1].id)); else disarm('#end'); });
+    }, { threshold: 0.6 }); w.observe(foot); const old = watcher; watcher = { disconnect() { old.disconnect(); w.disconnect(); timers.forEach((x) => clearTimeout(x)); } }; }
+  }
+
   /* ------------------------------ Daftar topik ------------------------------ */
   function cardHTML(t) {
     return `
@@ -334,6 +379,7 @@
       tb.parentNode.insertBefore(w, tb); w.appendChild(tb);
     });
     typeset($('.mt-content', wrap));
+    watch(t);
   }
 
   wrap.addEventListener('click', (e) => {
@@ -490,5 +536,5 @@
   METHOD_LINKS.forEach(decorateView);
 
   /* ------------------------------ API publik ------------------------------ */
-  window.StatCalcMateri = { register, open, topics: () => TOPICS.slice(), has: (id) => !!topicById(id), currentId: () => (current ? current.id : null) };
+  window.StatCalcMateri = { register, open, progress, onProgress: (fn) => { progListeners.push(fn); }, topics: () => TOPICS.slice(), has: (id) => !!topicById(id), currentId: () => (current ? current.id : null) };
 })();

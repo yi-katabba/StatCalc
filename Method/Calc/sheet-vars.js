@@ -7,7 +7,10 @@
   var host = view.querySelector('.chapter-inner') || view;
   var aside = document.createElement('aside');
   aside.className = 'sc-vars';
-  aside.setAttribute('aria-label', 'Variabel');
+  aside.setAttribute('aria-label', 'Proyek dan variabel');
+  /* aside = Panel Proyek (diisi project-panel.js) + daftar Variabel */
+  var projBox = document.createElement('div'); projBox.id = 'svProj'; projBox.className = 'sv-proj'; aside.appendChild(projBox);
+  var bodyEl = document.createElement('div'); bodyEl.id = 'svVars'; aside.appendChild(bodyEl);
   host.appendChild(aside);
   var roles = {}, manual = false, cols = [];
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
@@ -36,7 +39,7 @@
   function render() {
     var list = scan(), eff = effective(list), html = '<div class="sv-k">Variabel</div>';
     cols = list;
-    if (!list.length) { aside.innerHTML = html + '<div class="sv-empty">Belum ada data.</div>'; return; }
+    if (!list.length) { bodyEl.innerHTML = html + '<div class="sv-empty">Belum ada data.</div>'; return; }
     list.forEach(function (it) {
       var role = eff[it.c] || '';
       html += '<div class="sv-row"><span class="sv-t' + (it.num ? ' mono' : '') + '">' + (it.num ? '123' : 'Abc') + '</span><span class="sv-n">' + esc(it.name) + '</span>' +
@@ -44,7 +47,7 @@
     });
     html += '<div class="sv-hint">Peran menentukan kolom yang dikirim ke Regresi, RSM, dan Scatter.' +
       (manual ? ' <button type="button" class="sv-reset">Atur ulang</button>' : '') + '</div>';
-    aside.innerHTML = html;
+    bodyEl.innerHTML = html;
   }
   aside.addEventListener('click', function (e) {
     var b = e.target.closest('.sv-r'), rs = e.target.closest('.sv-reset');

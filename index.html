@@ -1366,44 +1366,39 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
       <h1>StatCalc</h1>
       <p class="lede">Kumpulan kalkulator statistik yang berjalan langsung di perangkat Anda - tanpa server, tanpa data terkirim ke mana pun.</p>
     </section>
-
-    <div class="quote-card">
-      <p class="q-text" id="quoteText">&ldquo;&hellip;&rdquo;</p>
-      <p class="q-author" id="quoteAuthor">-</p>
-    </div>
   </div>
 
-  <div class="toc-section" style="padding-top:20px;">
-    <div class="toc-heading" style="border-bottom:none;">
-      <h2 style="font-family:var(--font-display);">Menu Utama</h2>
+  <div class="hm" id="homeBody">
+    <div class="hm-main">
+      <div id="pjSlot"></div>
+      <section class="hm-sec" aria-labelledby="hmMethH">
+        <div class="hm-lab"><h2 id="hmMethH">Mulai dari metode</h2><button type="button" class="hm-link" data-nav="metode">Semua metode &rsaquo;</button></div>
+        <div class="hm-methods" id="hmMethods">
+          <button type="button" class="hm-mt" data-m="deskriptif"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Deskriptif</button>
+          <button type="button" class="hm-mt" data-m="regresi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v16h16"/><path d="M7 16l4-5 3 2 5-7"/></svg>Regresi</button>
+          <button type="button" class="hm-mt" data-m="anova"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10" width="4" height="10"/><rect x="10" y="4" width="4" height="16"/><rect x="16" y="13" width="4" height="7"/></svg>ANOVA</button>
+          <button type="button" class="hm-mt" data-m="rsm"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>RSM</button>
+          <button type="button" class="hm-mt" data-m="smoothing"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15c3-8 5 4 8-3s5 3 10-6"/></svg>Smoothing</button>
+          <button type="button" class="hm-mt" data-m="stasioner"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18M3 8c4 0 4 8 8 8s4-8 10-8"/></svg>Stasioner</button>
+          <button type="button" class="hm-mt" data-m="arima"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18l5-8 4 4 9-10M16 4h5v5"/></svg>ARIMA</button>
+          <button type="button" class="hm-mt" data-m="grafik"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 15l3-4 2 2 3-5"/></svg>Grafik</button>
+        </div>
+      </section>
     </div>
-  </div>
-  <div class="hub-grid" id="hubGrid">
-    <button type="button" class="hub-card" data-nav="metode">
-      <span class="hc-icon tone-navy" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="1.3"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.3"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.3"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.3"/></svg></span>
-      <div class="hc-title">Pilih Metode</div>
-      <div class="hc-desc">Kalkulator regresi, korelasi, uji hipotesis, dan metode statistik lainnya.</div>
-    </button>
-    <button type="button" class="hub-card" data-nav="materi">
-      <span class="hc-icon tone-teal" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10.3 5.2 8 4.5 4.5 4.5v13c3.5 0 5.8.7 7.5 2 1.7-1.3 4-2 7.5-2v-13c-3.5 0-5.8.7-7.5 2Z"/><path d="M12 6.5v13"/></svg></span>
-      <div class="hc-title">Materi Statistik</div>
-      <div class="hc-desc">Penjelasan konsep dan rumus (LaTeX) semua metode Stat, lengkap dengan contoh hitung.</div>
-    </button>
-    <button type="button" class="hub-card" data-nav="matriks">
-      <span class="hc-icon tone-gold" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4H5v16h3"/><path d="M16 4h3v16h-3"/><circle cx="10" cy="9" r="1" fill="currentColor" stroke="none"/><circle cx="14" cy="9" r="1" fill="currentColor" stroke="none"/><circle cx="10" cy="15" r="1" fill="currentColor" stroke="none"/><circle cx="14" cy="15" r="1" fill="currentColor" stroke="none"/></svg></span>
-      <div class="hc-title">Kalkulator Matriks</div>
-      <div class="hc-desc">Jumlah, kali, determinan, invers, rank, nilai eigen, SPL, dan regresi OLS.</div>
-    </button>
-    <button type="button" class="hub-card" data-nav="kalkulator">
-      <span class="hc-icon tone-green" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="2.5" width="15" height="19" rx="2"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="7.5" y1="12" x2="7.5" y2="12"/><line x1="12" y1="12" x2="12" y2="12"/><line x1="16.5" y1="12" x2="16.5" y2="12"/><line x1="7.5" y1="16" x2="7.5" y2="16"/><line x1="12" y1="16" x2="12" y2="16"/><line x1="16.5" y1="16" x2="16.5" y2="16"/></svg></span>
-      <div class="hc-title">Kalkulator Ilmiah</div>
-      <div class="hc-desc">Kalkulator lengkap untuk perhitungan aritmatika hingga fungsi ilmiah.</div>
-    </button>
-    <button type="button" class="hub-card" data-nav="petunjuk">
-      <span class="hc-icon tone-plum" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V6a2 2 0 0 1 2-2h13v15.5"/><path d="M6 19.5h13"/><path d="M6 19.5A1.5 1.5 0 0 1 6 16.5h13"/></svg></span>
-      <div class="hc-title">Petunjuk</div>
-      <div class="hc-desc">Panduan singkat cara menggunakan setiap fitur di aplikasi ini.</div>
-    </button>
+    <aside class="hm-side">
+      <section class="hm-sec" aria-labelledby="hmLearnH">
+        <div class="hm-lab"><h2 id="hmLearnH">Lanjutkan belajar</h2></div>
+        <div class="hm-learn" id="hmLearn"></div>
+      </section>
+      <section class="hm-sec hm-quick" aria-labelledby="hmQuickH">
+        <div class="hm-lab"><h2 id="hmQuickH">Fungsi cepat</h2></div>
+        <div class="hm-qlist" id="hmQuick">
+          <button type="button" class="hm-mt" data-nav="kalkulator"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="2.5" width="14" height="19" rx="2.4"/><path d="M8 7h8M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01"/></svg>Kalkulator ilmiah</button>
+          <button type="button" class="hm-mt" data-nav="matriks"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4H5v16h3M16 4h3v16h-3"/></svg>Kalkulator matriks</button>
+          <button type="button" class="hm-mt" data-nav="petunjuk"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5V6a2 2 0 0 1 2-2h13v15.5"/><path d="M6 19.5h13"/><path d="M6 19.5A1.5 1.5 0 0 1 6 16.5h13"/></svg>Petunjuk penggunaan</button>
+        </div>
+      </section>
+    </aside>
   </div>
 </main>
 
@@ -2549,6 +2544,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 
   /* ================= QUOTE ================= */
   function setRandomQuote() {
+    if (!$('#quoteText')) return;           /* kartu kutipan sudah diganti struktur Beranda baru */
     const q = QUOTES[Math.floor(Math.random() * QUOTES.length)];
     $('#quoteText').textContent = `\u201C${q.q}\u201D`;
     $('#quoteAuthor').textContent = `- ${q.a}`;
@@ -2560,7 +2556,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
   const graphList = $('#graphList');
   const graphCount = $('#graphCount');
   const catGrid = $('#catGrid');
-  const hubGrid = $('#hubGrid');
+  const hubGrid = $('#hubGrid');            /* null: Beranda baru memakai home.js */
   const topbar = $('#topbar');
   const backBtn = $('#backBtn');
   const pageTitle = $('#pageTitle');
@@ -2657,7 +2653,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
   });
 
   /* ---- Kartu hub di Beranda (Pilih Metode / Matriks / Kalkulator / Petunjuk) ---- */
-  hubGrid.addEventListener('click', (e) => {
+  if (hubGrid) hubGrid.addEventListener('click', (e) => {
     const card = e.target.closest('.hub-card');
     if (!card) return;
     const target = card.dataset.nav;
@@ -2811,7 +2807,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
   }
 
   // expose minimal API untuk metode lain nanti
-  window.StatCalc = { switchTab, navigate, goToMethod, showToast, trackCalc, openView, onNavigate: (fn) => { navHook = fn; } };
+  window.StatCalc = { switchTab, navigate, goToMethod, showToast, trackCalc, trackMethodUse, openView, onNavigate: (fn) => { navHook = fn; } };
 })();
 
 /* =========================================================================
@@ -3001,11 +2997,14 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 <!-- ===================== METODE CALC: lembar kerja ala Excel (Method/Calc/sheet.js; membuat #view-metode-calc sendiri) ===================== -->
 <script src="Method/Calc/sheet.js"></script>
 <script src="Method/Calc/sheet-graph.js"></script>
+<script src="Method/Calc/sheet-hasil.js"></script>
 <script src="Method/Calc/sheet-data.js"></script>
 <script src="Method/Calc/sheet-quick.js"></script>
 <script src="Method/Calc/sheet-vars.js"></script>
 <script src="status-bar.js"></script>
 <script src="projects.js"></script>
+<script src="project-panel.js"></script>
+<script src="home.js"></script>
 
 <!-- ===================== EKSPOR HASIL STAT: grafik pendukung + unduh .docx (muat SETELAH semua file Method/Graph/) ===================== -->
 <script src="Method/Shared/stat-charts.js"></script>

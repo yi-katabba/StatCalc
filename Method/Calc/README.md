@@ -5,6 +5,7 @@
 | `sheet.js` | Lembar kerja ala Excel: grid, mesin rumus, impor/ekspor, pita (File, Edit, Data, Fungsi, Grafik, Statistik). |
 | `sheet-graph.js` | Tab **Grafik** / **Edit Grafik** (grafik langsung dari data lembar). Dimuat setelah `sheet.js`. |
 | `sheet-data.js` | Tab **Data** (merapikan data sebelum analisis). Dimuat setelah `sheet.js`. |
+| `sheet-hasil.js` | Panel **Hasil** di dalam Lembar (tab Ringkasan / Tabel / Langkah / Grafik di desktop; segmen Data / Hasil / Grafik di ponsel). Menyalin hasil dari halaman metode. Dimuat setelah `sheet-graph.js`. |
 
 ## Tab Data (`sheet-data.js`)
 

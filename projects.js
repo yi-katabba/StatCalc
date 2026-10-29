@@ -1,12 +1,18 @@
 /* Proyek: simpan otomatis isi Lembar ke perangkat, daftar "Proyek terakhir" di Beranda,
    proyek baru / impor, nama proyek di bilah status, jumlah proyek di Profil.
-   Penyimpanan: statcalc.proj.index (daftar), statcalc.proj.d.<id> (isi), statcalc.proj.cur (aktif).
+   Penyimpanan: statcalc.proj.index (daftar), statcalc.proj.d.<id> (isi Lembar), statcalc.proj.x.<id> (hasil + grafik),
+   statcalc.proj.cur (aktif). Berkas proyek .scp (JSON) memuat Lembar, hasil, dan grafik sekaligus.
    Ikut dalam ekspor cadangan dan "Hapus semua data" karena berawalan "statcalc". */
 (function () {
   'use strict';
   var sh = window.StatCalcSheet, SC = window.StatCalc;
   if (!sh || !sh.api || !sh.api.exportState || !SC) return;
-  var K_IDX = 'statcalc.proj.index', K_D = 'statcalc.proj.d.', K_CUR = 'statcalc.proj.cur';
+  var K_IDX = 'statcalc.proj.index', K_D = 'statcalc.proj.d.', K_X = 'statcalc.proj.x.', K_CUR = 'statcalc.proj.cur';
+  /* Bagian ekstra proyek (hasil, grafik) didaftarkan modul lain: { get(): data, set(data) } */
+  var extras = {}, warnedX = false, refreshHooks = [];
+  function readExtras(id) { try { var o = JSON.parse(rd(K_X + id) || 'null'); return o && typeof o === 'object' ? o : {}; } catch (e) { return {}; } }
+  function collectExtras() { var o = {}; Object.keys(extras).forEach(function (k) { try { o[k] = extras[k].get(); } catch (e) { /* abaikan */ } }); return o; }
+  function applyExtras(o) { o = o || {}; Object.keys(extras).forEach(function (k) { try { extras[k].set(o[k]); } catch (e) { /* abaikan */ } }); }
   var $ = function (id) { return document.getElementById(id); };
   var NAMES = { regresi: 'Regresi Linear', smoothing: 'Smoothing', anova: 'ANOVA', rsm: 'RSM', stasioner: 'Stasioneritas', arima: 'ARIMA', deskriptif: 'Deskriptif',
     scatter: 'Pencar', histogram: 'Histogram', boxplot: 'Boxplot', probplot: 'Prob. plot', barchart: 'Batang', piechart: 'Pie', timeseries: 'Deret waktu' };
@@ -36,9 +42,10 @@
     timer = null; if (loading) return;
     var id = cur(), d = dims(), nm = ($('scFname') && $('scFname').value.trim()) || 'data-calc';
     if (!id) { if (d.rows === 0) return; id = newId(); wr(K_CUR, id); }
-    var snap = sh.api.exportState(), idx = index(), p = idx.filter(function (x) { return x.id === id; })[0];
-    if (p && rd(K_D + id) === snap && p.name === nm) return;
+    var snap = sh.api.exportState(), xs = JSON.stringify(collectExtras()), idx = index(), p = idx.filter(function (x) { return x.id === id; })[0];
+    if (p && rd(K_D + id) === snap && rd(K_X + id) === xs && p.name === nm) return;
     if (!wr(K_D + id, snap)) { if (!warned) { warned = true; toast('Penyimpanan perangkat penuh atau tidak tersedia: proyek tidak tersimpan.'); } return; }
+    if (!wr(K_X + id, xs) && !warnedX) { warnedX = true; toast('Hasil dan grafik terlalu besar untuk disimpan otomatis. Gunakan Simpan .scp untuk menyimpan ke berkas.'); }
     var now = Date.now();
     if (!p) { p = { id: id, opened: now }; idx.push(p); }
     p.name = nm; p.rows = d.rows; p.cols = d.cols; p.updated = now;
@@ -68,6 +75,7 @@
     save();                                  /* simpan proyek yang sedang terbuka lebih dulu */
     loading = true;
     try { sh.api.importState(snap, p.name); } catch (e) { loading = false; toast('Proyek tidak dapat dibuka.'); return false; }
+    applyExtras(readExtras(id));
     wr(K_CUR, id);
     var idx = index(); idx.forEach(function (x) { if (x.id === id) x.opened = Date.now(); }); saveIndex(idx);
     setTimeout(function () { loading = false; queue(); refresh(); }, 400);
@@ -79,14 +87,14 @@
     if (!wr(K_D + id, snap)) { toast('Penyimpanan perangkat penuh atau tidak tersedia.'); return null; }
     idx.push({ id: id, name: nm, rows: 0, cols: 0, opened: now, updated: now }); saveIndex(idx);
     wr(K_CUR, id); loading = true;
-    sh.api.importState(snap, nm);
+    sh.api.importState(snap, nm); applyExtras({});
     setTimeout(function () { loading = false; queue(); refresh(); }, 400);
     return id;
   }
   function remove(id) {
     var p = find(id); if (!p) return;
     if (!window.confirm('Hapus proyek "' + p.name + '"? Tindakan ini tidak bisa dibatalkan.')) return;
-    rm(K_D + id); saveIndex(index().filter(function (x) { return x.id !== id; }));
+    rm(K_D + id); rm(K_X + id); saveIndex(index().filter(function (x) { return x.id !== id; }));
     if (cur() === id) rm(K_CUR);
     refresh(); toast('Proyek dihapus.');
   }
@@ -103,13 +111,13 @@
   }
   function build() {
     if (!home || $('pjSection')) return;
-    var sec = document.createElement('div'); sec.id = 'pjSection'; sec.className = 'pj-section';
+    var sec = document.createElement('section'); sec.id = 'pjSection'; sec.className = 'pj-section hm-sec';
     sec.innerHTML =
-      '<div class="toc-section" style="padding-top:20px;"><div class="toc-heading" style="border-bottom:none;"><h2 style="font-family:var(--font-display);">Proyek terakhir</h2><span class="count" id="pjCount"></span></div></div>' +
-      '<div class="pj-actions"><button type="button" class="btn-primary" id="pjNew">Proyek baru</button><button type="button" class="btn-ghost" id="pjImport">Impor CSV / XLSX</button></div>' +
+      '<div class=\"hm-lab\"><h2>Proyek terakhir</h2><span class=\"count\" id=\"pjCount\"></span></div>' +
+      '<div class="pj-actions"><button type="button" class="btn-primary" id="pjNew">Proyek baru</button><button type="button" class="btn-ghost" id="pjImport">Impor CSV / XLSX</button><button type=\"button\" class=\"btn-ghost\" id=\"pjScp\">Buka .scp</button></div>' +
       '<div class="pj-list" id="pjList" role="list"></div>';
-    var first = home.querySelector('.toc-section:not(#pjSection .toc-section)'), anchor = first || $('hubGrid');
-    anchor.parentNode.insertBefore(sec, anchor);
+    var slot = $('pjSlot'), first = home.querySelector('.toc-section'), anchor = first || $('hubGrid');
+    if (slot) slot.appendChild(sec); else if (anchor) anchor.parentNode.insertBefore(sec, anchor); else home.appendChild(sec);
     list = $('pjList'); countEl = $('pjCount');
     $('pjNew').addEventListener('click', function () { if (create()) SC.navigate('metode-calc', { backTo: 'home' }); });
     $('pjImport').addEventListener('click', function () {
@@ -117,6 +125,7 @@
       SC.navigate('metode-calc', { backTo: 'home' });
       var f = $('scFile'); if (f) { f.value = ''; f.click(); }
     });
+    $('pjScp').addEventListener('click', function () { pickScp(function () { SC.navigate('metode-calc', { backTo: 'home' }); }); });
     list.addEventListener('click', function (e) {
       var del = e.target.closest('.pj-del'), row = e.target.closest('.pj-row'); if (!row) return;
       if (del) { e.stopPropagation(); remove(row.dataset.id); return; }
@@ -147,6 +156,7 @@
     var sb = $('sbProj'), p = find(cur());
     if (sb) sb.textContent = p ? p.name + ' \u00B7 tersimpan' : '';
     showName(p ? p.name : '');
+    refreshHooks.forEach(function (f) { try { f(); } catch (e) { /* abaikan */ } });
   }
   if (list === undefined && home) {
     build();
@@ -161,7 +171,79 @@
   list = $('pjList'); countEl = $('pjCount');
   /* pulihkan proyek aktif ke Lembar saat aplikasi dibuka */
   var id0 = cur();
-  if (id0 && find(id0)) { var snap0 = rd(K_D + id0); if (snap0) { loading = true; try { sh.api.importState(snap0, find(id0).name); } catch (e) { /* abaikan */ } setTimeout(function () { loading = false; queue(); refresh(); }, 600); } }
+  if (id0 && find(id0)) { var snap0 = rd(K_D + id0); if (snap0) { loading = true; try { sh.api.importState(snap0, find(id0).name); applyExtras(readExtras(id0)); } catch (e) { /* abaikan */ } setTimeout(function () { loading = false; queue(); refresh(); }, 600); } }
   refresh();
-  window.StatCalcProjects = { list: index, open: open, create: create, remove: remove, current: cur };
+  /* ---------------- berkas proyek .scp ---------------- */
+  function safeName(n) { return (String(n || 'proyek').replace(/[\\/:*?"<>|]+/g, '_').trim() || 'proyek'); }
+  function exportScp() {
+    save();
+    var nm = ($('scFname') && $('scFname').value.trim()) || 'data-calc', sheet;
+    try { sheet = JSON.parse(sh.api.exportState()); } catch (e) { toast('Proyek tidak dapat disimpan ke berkas.'); return false; }
+    var obj = { app: 'StatCalc', format: 'scp', version: 1, name: nm, saved: new Date().toISOString(), sheet: sheet, extras: collectExtras() };
+    var blob = new Blob([JSON.stringify(obj)], { type: 'application/json' }), a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = safeName(nm) + '.scp'; document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+    toast('Proyek disimpan sebagai ' + a.download + '.');
+    return true;
+  }
+  function cleanSheet(sd) {
+    var A = sh.api, R = sd && +sd.R, C = sd && +sd.C;
+    if (!sd || !(R >= 1 && R <= A.MAX_R) || !(C >= 1 && C <= A.MAX_C) || !Array.isArray(sd.cells)) return null;
+    var cells = [], r, c;
+    for (r = 0; r < R; r++) {
+      var src = Array.isArray(sd.cells[r]) ? sd.cells[r] : [], row = [];
+      for (c = 0; c < C; c++) { var v = src[c]; row.push(typeof v === 'string' ? v.slice(0, 20000) : (typeof v === 'number' && isFinite(v) ? v : '')); }
+      cells.push(row);
+    }
+    var out = { R: R, C: C, header: sd.header !== false, cells: cells };
+    if (sd.x !== undefined) out.x = sd.x;
+    return out;
+  }
+  function importScp(text) {
+    var o; try { o = JSON.parse(text); } catch (e) { toast('Berkas .scp tidak dapat dibaca (bukan format proyek StatCalc).'); return null; }
+    if (!o || o.app !== 'StatCalc' || o.format !== 'scp' || !o.sheet) { toast('Berkas ini bukan proyek StatCalc.'); return null; }
+    if (+o.version > 1) { toast('Berkas .scp dibuat oleh versi StatCalc yang lebih baru.'); return null; }
+    var sd = cleanSheet(o.sheet); if (!sd) { toast('Isi Lembar pada berkas .scp tidak valid.'); return null; }
+    save();
+    var id = newId(), snap = JSON.stringify(sd), nm = uniqueName(String(o.name || 'Proyek impor').slice(0, 80)), now = Date.now(), idx = index(),
+      xs = JSON.stringify(o.extras && typeof o.extras === 'object' ? o.extras : {});
+    if (!wr(K_D + id, snap)) { toast('Penyimpanan perangkat penuh atau tidak tersedia.'); return null; }
+    wr(K_X + id, xs);
+    idx.push({ id: id, name: nm, rows: 0, cols: 0, opened: now, updated: now }); saveIndex(idx);
+    wr(K_CUR, id); loading = true;
+    try { sh.api.importState(snap, nm); applyExtras(readExtras(id)); } catch (e) { /* abaikan */ }
+    var d = dims(), idx2 = index(); idx2.forEach(function (x) { if (x.id === id) { x.rows = d.rows; x.cols = d.cols; } }); saveIndex(idx2);
+    setTimeout(function () { loading = false; queue(); refresh(); }, 400);
+    toast('Proyek \u201C' + nm + '\u201D dibuka.');
+    return id;
+  }
+  var scpIn = null, scpDone = null;
+  function pickScp(done) {
+    scpDone = done || null;
+    if (!scpIn) {
+      scpIn = document.createElement('input'); scpIn.type = 'file'; scpIn.accept = '.scp,application/json'; scpIn.hidden = true;
+      scpIn.addEventListener('change', function () {
+        var f = scpIn.files && scpIn.files[0]; scpIn.value = ''; if (!f) return;
+        if (f.size > 15 * 1024 * 1024) { toast('Berkas .scp terlalu besar (maksimum 15 MB).'); return; }
+        var rdr = new FileReader();
+        rdr.onload = function () { var id = importScp(String(rdr.result || '')); if (id && scpDone) scpDone(id); };
+        rdr.onerror = function () { toast('Berkas tidak dapat dibaca.'); };
+        rdr.readAsText(f);
+      });
+      document.body.appendChild(scpIn);
+    }
+    scpIn.click();
+  }
+
+  window.StatCalcProjects = {
+    list: index, open: open, create: create, remove: remove, current: cur,
+    exportScp: exportScp, importScp: importScp, pickScp: pickScp,
+    /* modul lain mendaftarkan bagian yang ikut tersimpan; touch() = minta simpan otomatis */
+    registerExtra: function (name, api) {
+      extras[name] = api;
+      var id = cur(); if (id && find(id)) { try { api.set(readExtras(id)[name]); } catch (e) { /* abaikan */ } }
+    },
+    touch: queue, onRefresh: function (fn) { refreshHooks.push(fn); },
+  };
+
 })();

@@ -21,6 +21,6 @@
     var b = e.target.closest('.sq-chip'); if (!b) return;
     var sel = document.getElementById('scTarget'), go = document.getElementById('scSend');
     if (!sel || !go) return;
-    sel.value = b.dataset.m; go.click();
+    sel.value = b.dataset.m; sel.dispatchEvent(new Event('change')); go.click();
   });
 })();

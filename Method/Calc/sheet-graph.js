@@ -143,6 +143,9 @@
 
   /* --------------------------- Status & elemen DOM -------------------------- */
   let charts = [], seq = 0, selId = null;
+  /* pendengar perubahan (dipakai Panel Proyek: daftar grafik + simpan ke proyek) */
+  const gListeners = []; let gNt = 0, gMute = false;
+  const gNotify = () => { if (gMute) return; clearTimeout(gNt); gNt = setTimeout(() => gListeners.forEach((f) => { try { f(); } catch (e) { /* abaikan */ } }), 80); };
   const insertBody = $('#sgInsertBody', section), editBody = $('#sgEditBody', section), ctxTab = $('.sc-tab-ctx', section);
   const layer = document.createElement('div');
   layer.className = 'sg-layer';
@@ -391,7 +394,7 @@
         placeEl(ch, el);
       };
       const up = () => {
-        el.classList.remove('drag');
+        el.classList.remove('drag'); gNotify();
         el.removeEventListener('pointermove', mv); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up);
       };
       el.addEventListener('pointermove', mv); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
@@ -445,7 +448,7 @@
   });
 
   /* ------------------------------ Pasang / lepas ---------------------------- */
-  function paint(ch) { if (ch.place === 'above') paintFloat(ch); else paintBelow(ch); if (ch.uid === selId) syncSelClass(); }
+  function paint(ch) { if (ch.place === 'above') paintFloat(ch); else paintBelow(ch); if (ch.uid === selId) syncSelClass(); gNotify(); }
   function mountAll(ch) {
     const f = floatEl(ch); if (f) f.remove();
     if (ch.place === 'above') mountFloat(ch);
@@ -460,14 +463,14 @@
     charts = charts.filter((c) => c !== ch);
     const f = floatEl(ch); if (f) f.remove();
     if (selId === uid) deselect();
-    rebuildBelow();
+    rebuildBelow(); gNotify();
   }
 
   /* -------------------------------- Pilihan --------------------------------- */
   function select(uid, open) {
     const was = selId, ch = byId(uid); if (!ch) return;
     selId = uid; ctxTab.hidden = false;
-    syncSelClass();
+    syncSelClass(); gNotify();
     if (was !== uid || !editBody.firstChild) buildEdit();
     if (open) {
       const t0 = elScroll.getBoundingClientRect().top;
@@ -478,7 +481,7 @@
   }
   function deselect() {
     if (selId === null) return;
-    selId = null; syncSelClass();
+    selId = null; syncSelClass(); gNotify();
     const active = $('.sc-rpanel.on', section);
     ctxTab.hidden = true;
     editBody.innerHTML = '';
@@ -625,7 +628,7 @@
       const c2 = JSON.parse(JSON.stringify({ key: ch.key, gid: ch.gid, mode: ch.mode, label: ch.label, cols: ch.cols, vcols: ch.vcols, r1: ch.r1, r2: ch.r2, opts: ch.opts, style: ch.style, place: ch.place, lock: ch.lock, ratio: ch.ratio, w: ch.w, h: ch.h, x: ch.x + 28, y: ch.y + 28 }));
       c2.uid = 'g' + (++seq);
       charts.push(c2); compute(c2); if (c2.place === 'above') clampPos(c2);
-      mountAll(c2); select(c2.uid, true);
+      mountAll(c2); select(c2.uid, true); gNotify();
     } else if (a === 'usesel') {
       const ctx = analyze(); if (!ctx) { msg('err', 'Lembar kerja masih kosong.', 5000); return; }
       const g = guess(ch.gid, ch.mode, ctx);
@@ -657,7 +660,7 @@
     if (ch._err) return ch._err;
     charts.push(ch);
     mountAll(ch);
-    select(ch.uid, true);
+    select(ch.uid, true); gNotify();
     if (ch.place === 'below') { const b = blockEl(ch); if (b && b.scrollIntoView) b.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
     return '';
   }
@@ -858,5 +861,55 @@
     }
     return X.CFB.write(cfb, { type: 'array', fileType: 'zip' });
   }
-  window.StatCalcGraph = { embedInXlsx, count: () => charts.filter((c) => c.place === 'above').length };
+  /* ---------------- API Proyek: daftar, pilih, simpan, pulihkan ---------------- */
+  const SHORT = { scatter: 'Pencar', histogram: 'Histogram', probplot: 'Plot probabilitas', boxplot: 'Boxplot', barchart: 'Batang', piechart: 'Pie', timeseries: 'Deret waktu' };
+  const KEYS = ['key', 'gid', 'mode', 'label', 'cols', 'vcols', 'r1', 'r2', 'opts', 'style', 'place', 'lock', 'ratio', 'w', 'h', 'x', 'y'];
+  const nameOf = (ch) => (SHORT[ch.gid] || ch.label) + (ch.key === 'boxgroup' ? ' kelompok' : '');
+  function listCharts() {
+    const cnt = {};
+    return charts.map((ch) => { const b = nameOf(ch); cnt[b] = (cnt[b] || 0) + 1; return { uid: ch.uid, name: b + ' ' + cnt[b], err: !!ch._err }; });
+  }
+  function focusChart(uid) {
+    const ch = byId(uid); if (!ch) return false;
+    select(uid, true);
+    if (ch.place === 'above') {
+      elScroll.scrollTop = Math.max(0, ch.y - 24); elScroll.scrollLeft = Math.max(0, ch.x - GUT - 24);
+    } else { const b = blockEl(ch); if (b && b.scrollIntoView) b.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+    return true;
+  }
+  const exportCharts = () => charts.map((ch) => { const o = {}; KEYS.forEach((k) => { o[k] = ch[k]; }); return JSON.parse(JSON.stringify(o)); });
+  function importCharts(arr) {
+    gMute = true;
+    try {
+      deselect();
+      $$('.sg-chart', layer).forEach((e) => e.remove());
+      charts = [];
+      (Array.isArray(arr) ? arr : []).slice(0, 20).forEach((o) => {
+        try {
+          if (!o || typeof o !== 'object' || !GC.info(o.gid)) return;
+          const info = GC.info(o.gid), num = (v, d) => (Number.isFinite(v) ? v : d), ints = (a) => (Array.isArray(a) ? a.filter((v) => Number.isInteger(v)).slice(0, 60) : []);
+          const ch = {
+            uid: 'g' + (++seq), key: String(o.key || o.gid), gid: o.gid, mode: o.mode === 'wide' ? 'wide' : 'long', label: String(o.label || o.gid),
+            cols: ints(o.cols), vcols: ints(o.vcols), r1: Number.isInteger(o.r1) ? o.r1 : null, r2: Number.isInteger(o.r2) ? o.r2 : null,
+            opts: Object.assign(GC.defaults(o.gid), o.opts && typeof o.opts === 'object' ? o.opts : {}),
+            style: Object.assign(defStyle(info), o.style && typeof o.style === 'object' ? o.style : {}),
+            place: o.place === 'below' ? 'below' : 'above', lock: o.lock !== false,
+            x: num(o.x, 0), y: num(o.y, 0), w: num(o.w, 0), h: num(o.h, 0), ratio: num(o.ratio, 1.6),
+          };
+          if (!ch.cols.length) ch.cols = info.columns.map(() => -1);
+          compute(ch);
+          /* lembar bisa sedang tersembunyi (ukuran 0): jangan menggeser posisi tersimpan */
+          if (ch.place === 'above') { if (!ch.w || !ch.h) initGeom(ch); else if (elInner.offsetWidth > 0) clampPos(ch); }
+          charts.push(ch); mountAll(ch);
+        } catch (e) { /* grafik yang rusak dilewati */ }
+      });
+      rebuildBelow();
+    } finally { gMute = false; }
+    gNotify();
+  }
+  window.StatCalcGraph = {
+    embedInXlsx, count: () => charts.filter((c) => c.place === 'above').length,
+    list: listCharts, selected: () => selId, focus: focusChart, deselect, remove: removeChart,
+    exportAll: exportCharts, importAll: importCharts, onChange: (fn) => { gListeners.push(fn); },
+  };
 })();
