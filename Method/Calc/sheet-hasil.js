@@ -42,7 +42,7 @@
   /* ------------------------------ kerangka panel ------------------------------ */
   var seg = document.createElement('div');
   seg.className = 'sc-seg'; seg.setAttribute('role', 'tablist'); seg.setAttribute('aria-label', 'Tampilan Lembar');
-  seg.innerHTML = '<button type="button" role="tab" data-s="data" aria-selected="true">Data</button><button type="button" role="tab" data-s="hasil" aria-selected="false">Hasil</button>';
+  seg.innerHTML = '<button type="button" role="tab" data-s="proyek" aria-selected="false" title="Proyek tersimpan, hasil dan grafik, serta daftar variabel">Proyek</button><button type="button" role="tab" data-s="data" aria-selected="true">Data</button><button type="button" role="tab" data-s="hasil" aria-selected="false">Hasil</button>';
   var head = $('.chapter-head', host);
   if (head && head.nextSibling) host.insertBefore(seg, head.nextSibling); else host.insertBefore(seg, host.firstChild);
   host.setAttribute('data-seg', 'data');

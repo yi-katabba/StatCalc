@@ -399,6 +399,17 @@ html body #view-metode-calc .sc-msg.ok{ background:#E3F0E8; }
   #view-metode-calc .chapter-inner[data-seg="grafik"] > *:not(.chapter-head):not(.sc-seg):not(.sc-res):not(.sg-below){ display:none !important; }
   #view-metode-calc .chapter-inner[data-seg="hasil"] > .sc-res,
   #view-metode-calc .chapter-inner[data-seg="grafik"] > .sc-res{ display:flex; }
+  /* Segmen Proyek (ponsel & tablet): panel Proyek + Variabel yang di desktop ada di kolom kiri */
+  #view-metode-calc .chapter-inner[data-seg="proyek"] > *:not(.chapter-head):not(.sc-seg):not(.sc-vars){ display:none !important; }
+  #view-metode-calc .chapter-inner[data-seg="proyek"] > .sc-vars{ display:block; background:#fff; border:1px solid var(--rule); border-radius:10px; padding:6px 0 10px; }
+  .sc-vars .sv-k{ font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint); padding:12px 14px 6px; }
+  .sc-vars .sv-row{ display:flex; align-items:center; gap:8px; padding:9px 14px; font-size:14px; }
+  .sc-vars .sv-n{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .sc-vars .sv-t{ font-size:10.5px; font-weight:600; padding:2px 6px; border-radius:4px; background:#E6ECF2; color:#33475B; }
+  .sc-vars .sv-r{ font-size:11px; font-weight:700; padding:2px 6px; border-radius:4px; background:var(--accent-soft); color:var(--accent-2); min-width:36px; min-height:34px; }
+  .sc-vars .sv-empty{ padding:6px 14px 12px; font-size:13px; color:var(--ink-faint); }
+  .sv-proj .pp-row{ padding:11px 14px; font-size:14px; }
+  .sv-proj .pp-b{ min-height:42px; }
   #view-metode-calc .chapter-inner:not([data-seg="data"]) > .sc-seg{ position:sticky; top:calc(var(--safe-t) + 56px); z-index:12; }
 }
 @media (min-width:1280px){

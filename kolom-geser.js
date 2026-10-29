@@ -15,7 +15,7 @@
   if (typeof document === 'undefined') return;
 
   var PFX = 'statcalc.cols.';
-  var LIM = { l: [180, 520], r: [220, 560] }, MID_MIN = 360, STEP = 16;
+  var LIM = { l: [180, 520], r: [220, 560] }, MID_MIN = 360, STEP = 16, RAIL = 44; /* RAIL = lebar rel panel yang diciutkan (sheet-sidebar.js) */
 
   /* Daftar tata letak berkolom. left/right = penanda panel samping. */
   var DEFS = [
@@ -110,8 +110,11 @@
     var info = st.info = { n: n, li: li, ri: ri, gap: gap, pl: pl, content: c.clientWidth - pl - pr };
     st.cur = { l: li >= 0 ? arr[li] : 0, r: ri >= 0 ? arr[ri] : 0 };
 
-    var wl = li >= 0 && st.custom.l ? clamp(st, 'l', st.custom.l) : null;
-    var wr = ri >= 0 && st.custom.r ? clamp(st, 'r', st.custom.r) : null;
+    /* Panel yang diciutkan (kelas sx-lmin / sx-rmin) = rel sempit; lebar custom TIDAK dihapus,
+       jadi saat dibuka lagi lebar kembali seperti semula. */
+    var minL = li >= 0 && c.classList.contains('sx-lmin'), minR = ri >= 0 && c.classList.contains('sx-rmin');
+    var wl = minL ? RAIL : (li >= 0 && st.custom.l ? clamp(st, 'l', st.custom.l) : null);
+    var wr = minR ? RAIL : (ri >= 0 && st.custom.r ? clamp(st, 'r', st.custom.r) : null);
     if (wl !== null || wr !== null) {
       c.style.gridTemplateColumns = arr.map(function (w, i) {
         if (i === li) return (wl !== null ? wl : w) + 'px';
@@ -133,8 +136,8 @@
       g.style.display = ''; g.style.left = x + 'px'; g.style.top = top + 'px'; g.style.height = height + 'px';
       g.setAttribute('aria-valuenow', Math.round(st.cur[side]));
     }
-    place('l', li >= 0 ? 0 : -1);
-    place('r', ri >= 0 ? n - 2 : -1);
+    place('l', li >= 0 && !minL ? 0 : -1);
+    place('r', ri >= 0 && !minR ? n - 2 : -1);
 
     updateBtn();
   }

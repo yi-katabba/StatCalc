@@ -5,6 +5,8 @@
 | `sheet.js` | Lembar kerja ala Excel: grid, mesin rumus, impor/ekspor, pita (File, Edit, Data, Fungsi, Grafik, Statistik). |
 | `sheet-graph.js` | Tab **Grafik** / **Edit Grafik** (grafik langsung dari data lembar). Dimuat setelah `sheet.js`. |
 | `sheet-data.js` | Tab **Data** (merapikan data sebelum analisis). Dimuat setelah `sheet.js`. |
+| `sheet-sidebar.js` | Tombol ‹ / › untuk menciutkan panel kiri (Proyek & Variabel) dan kanan (Hasil) menjadi rel sempit; lembar di tengah melebar, dan lebar semula dipulihkan saat dibuka. |
+| `ribbon-menu.js` | Mengubah kelompok checkbox di pita menjadi menu dropdown bertanda ✓ (checkbox asli disembunyikan, event `change` tetap dikirim). |
 | `sheet-hasil.js` | Panel **Hasil** di dalam Lembar (tab Ringkasan / Tabel / Langkah / Grafik di desktop; segmen Data / Hasil di ponsel). Menyalin hasil dari halaman metode. Dimuat setelah `sheet-graph.js`. |
 
 ## Tab Data (`sheet-data.js`)
@@ -28,3 +30,11 @@ Semua perintah dicatat di riwayat Urungkan/Ulangi (status filter ikut tersimpan 
 ## Zoom (`sheet.js`)
 
 Di pojok kanan bawah lembar kerja ada kontrol zoom: tombol − / +, penggeser (50%–200%, langkah 10%), dan angka persen (klik untuk kembali ke 100%). Ctrl + gulir mouse (atau cubit di trackpad) di atas lembar juga mengubah zoom. Zoom memperbesar/memperkecil **pita, kotak rumus, dan lembar** sekaligus; ukuran area lembar tetap, jadi zoom mengubah jumlah sel yang tampak (seperti Excel). Tingkat zoom diingat (`localStorage`). API: `StatCalcSheet.zoom.get() / set(persen)`.
+
+## Menu dropdown pita (`ribbon-menu.js`)
+
+Setiap kelompok `label.sc-chk` di pita dijadikan satu tombol dropdown (mis. **Judul kolom ▾**, **Nilai hilang ▾**, **Elemen ▾**, **Garis kisi ▾**, **Ukuran ▾**). Item menu bertanda ✓ bila aktif. Checkbox asli tetap ada (tersembunyi) sehingga kode lama yang membaca `.checked` / event `change` tidak berubah. Menu ikut dibangun ulang otomatis saat tab Edit Grafik dirender ulang. Keyboard: Enter / Spasi / ↓ membuka, ↑ ↓ berpindah, Esc menutup.
+
+## Panel samping dapat diciutkan (`sheet-sidebar.js`)
+
+Di layar ≥ 1280 px, panel kiri dan kanan punya tombol ‹ / › di bilah atasnya. Diciutkan = rel 44 px berjudul tegak (klik di mana saja pada rel untuk membuka). Lembar di tengah melebar mengisi ruang untuk kasus: kiri saja, kanan saja, atau keduanya. Lebar custom hasil geseran (`kolom-geser.js`) tidak dihapus, jadi lebar semula kembali persis saat dibuka. Titik biru di rel kanan menandai hasil baru yang masuk saat diciutkan. API: `StatCalcSide.get()` / `StatCalcSide.set({left, right})`. Pilihan tersimpan di `localStorage` (`statcalc.calc.side`).
