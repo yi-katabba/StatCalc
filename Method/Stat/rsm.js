@@ -25,6 +25,7 @@
           { type: 'toggle', key: 'opt', label: 'Optimasi', tab: 'rs-tab-opt' },
           { type: 'toggle', key: 'dgn', label: 'Diagnostik', tab: 'rs-tab-diag' },
           { type: 'toggle', key: 'stp', label: 'Langkah Perhitungan', tab: 'rs-tab-steps' },
+          { type: 'toggle', key: 'int', label: 'Interpretasi', tab: 'rs-tab-interp' },
         ] },
         { label: 'Bagian lain', items: [
           { type: 'toggle', key: 'concl', label: 'Langkah 4 Kesimpulan', hide: ['#rs-conclusion-card'] },
@@ -62,6 +63,19 @@
     table.mini-table td.rs-l, table.mini-table th.rs-l{ text-align:left; }
     table.mini-table td.rs-in{ padding-left:22px; text-align:left; color:var(--ink-soft); }
     table.mini-table tr.rs-best td{ background:#E7F3EA; }
+    .rs-3d{ cursor:grab; touch-action:pan-y; user-select:none; -webkit-user-select:none; }
+    .rs-3d.rs-grab{ cursor:grabbing; }
+    .rs-rot{ display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:8px 14px; align-items:end; margin:8px 4px 4px; }
+    .rs-rot label{ display:flex; flex-direction:column; gap:2px; font-size:12.5px; font-weight:600; color:var(--ink-soft); }
+    .rs-rot input[type=range]{ width:100%; }
+    .rs-rot output{ font-weight:400; color:var(--ink-faint); }
+    .rs-rot .btn-ghost{ width:100%; flex:none; }
+    #view-rsm .rs-box{ margin:0 0 14px; padding:12px 14px; border:1px solid var(--rule); border-radius:var(--radius); background:#fff; }
+    #view-rsm .rs-box h4{ margin:0 0 6px; font-size:15px; font-family:var(--font-body); }
+    #view-rsm .rs-box p{ margin:6px 0 0; font-size:14px; line-height:1.55; text-align:justify; text-justify:inter-word; hyphens:auto; }
+    #view-rsm .rs-box.good{ border-color:#9CCDB4; background:#F2FAF5; }
+    #view-rsm .rs-box.warn{ border-color:#E4C887; background:#FFF9EA; }
+    #view-rsm .flag{ color:#B3402A; font-weight:700; }
     .rs-eq{ font-family:var(--font-mono); font-size:13px; line-height:1.7; background:var(--paper-2); border-radius:var(--radius); padding:12px 14px; overflow-x:auto; white-space:normal; word-break:break-word; margin:6px 0 12px; }
   `;
   document.head.appendChild(css);
@@ -81,7 +95,7 @@
     resultsCard: $('#rs-results-card'), conclusionCard: $('#rs-conclusion-card'),
     modelWrap: $('#rsModelWrap'), coefWrap: $('#rsCoefWrap'), plotCtl: $('#rsPlotCtl'), plotWrap: $('#rsPlotWrap'),
     optCtl: $('#rsOptCtl'), optWrap: $('#rsOptWrap'), diagWrap: $('#rsDiagWrap'), stepsWrap: $('#rsStepsWrap'),
-    conclusionWrap: $('#rsConclusionWrap'),
+    conclusionWrap: $('#rsConclusionWrap'), interpWrap: $('#rsInterpWrap'),
   };
 
   /* ---------- Util ---------- */
@@ -247,7 +261,7 @@
 
   function renderAll(res) {
     renderModel(res); renderCoef(res); initPlot(res); renderOptimization(res);
-    renderDiag(res); renderSteps(res); renderConclusion(res);
+    renderDiag(res); renderSteps(res); renderInterp(res); renderConclusion(res);
     exportAll(res);
   }
 
@@ -470,7 +484,7 @@
     let zmin = Infinity, zmax = -Infinity;
     z.forEach((r) => r.forEach((v) => { if (v < zmin) zmin = v; if (v > zmax) zmax = v; }));
     const flat = !(zmax - zmin > 1e-12);
-    const az = 35 * Math.PI / 180, el_ = 27 * Math.PI / 180, ca = Math.cos(az), sa = Math.sin(az), ce = Math.cos(el_), se = Math.sin(el_);
+    const az = (Number.isFinite(o.az) ? o.az : 35) * Math.PI / 180, el_ = (Number.isFinite(o.el) ? o.el : 27) * Math.PI / 180, ca = Math.cos(az), sa = Math.sin(az), ce = Math.cos(el_), se = Math.sin(el_);
     const ZH = 1.5;
     const proj = (x, y, t) => { const Z = (t - 0.5) * ZH, xr = x * ca - y * sa, yr = x * sa + y * ca; return { x: xr, y: Z * ce + yr * se, d: yr }; };
     const tOf = (v) => (flat ? 0.5 : (v - zmin) / (zmax - zmin));
@@ -543,7 +557,7 @@
 
   function initPlot(res) {
     const k = res.k;
-    state.plot = { i: 0, j: 1, type: 'both', hold: res.cd.center.map(() => 0) };
+    state.plot = { i: 0, j: 1, type: 'both', hold: res.cd.center.map(() => 0), az: 35, el: 27 };
     const nameOpts = (sel) => res.names.map((n, f) => `<option value="${f}" ${f === sel ? 'selected' : ''}>${escapeHTML(n)}</option>`).join('');
     let holds = '';
     if (k > 2) holds = res.names.map((n, f) => `<label data-hold="${f}">${escapeHTML(short(n))} (tetap)<input type="text" class="plain-input" data-holdinp="${f}" value="${fmtC(res.cd.center[f])}" inputmode="decimal"></label>`).join('');
@@ -587,10 +601,47 @@
     const cap = (t) => `<p class="rs-cap">${t}</p>`;
     let html = '';
     if (p.type !== 'surface') html += `<div class="rs-fig">${contourSvg(res, p.i, p.j, hold)}${cap('Warna menunjukkan nilai prediksi respon; garis putih adalah garis kontur (respon yang sama). Kontur yang rapat berarti respon berubah cepat; kontur berbentuk lingkaran/elips tertutup menandakan puncak atau lembah.')}</div>`;
-    if (p.type !== 'contour') html += `<div class="rs-fig">${surfaceSvg(res, p.i, p.j, hold)}${cap('Permukaan respon prediksi. Puncak tertinggi menunjukkan kombinasi kedua faktor yang memberi respon terbesar pada nilai faktor lain yang dipegang tetap.')}</div>`;
+    if (p.type !== 'contour') html += `<div class="rs-fig"><div class="rs-3d" id="rsSurfHolder" title="Seret untuk memutar">${surfaceSvg(res, p.i, p.j, hold, { az: p.az, el: p.el })}</div>
+      <div class="rs-rot"><label>Putar (azimut)<input type="range" id="rsAz" min="-180" max="180" step="1" value="${Math.round(p.az)}"><output id="rsAzV">${Math.round(p.az)}&deg;</output></label><label>Miring (elevasi)<input type="range" id="rsEl" min="5" max="85" step="1" value="${Math.round(p.el)}"><output id="rsElV">${Math.round(p.el)}&deg;</output></label><button type="button" class="btn-ghost" id="rsRotReset">Reset sudut</button></div>
+      ${cap('Permukaan respon prediksi. Puncak tertinggi menunjukkan kombinasi kedua faktor yang memberi respon terbesar pada nilai faktor lain yang dipegang tetap. <strong>Seret grafik dengan mouse/jari untuk memutar</strong> (di layar sentuh, seret ke kiri-kanan; untuk memiringkan gunakan slider), atau pakai slider di atas.')}</div>`;
     html += `<div class="rs-fig">${perturbSvg(res, res.cd.center.map(() => 0))}${cap('Garis yang curam berarti respon sangat sensitif terhadap faktor itu; garis melengkung menandakan efek kuadratik. Titik acuan = pusat rancangan (kode 0).')}</div>`;
     el.plotWrap.innerHTML = html;
   }
+
+  /* ---------- Rotasi grafik 3D (seret / slider) ---------- */
+  function redraw3d() {
+    const res = state.res, p = state.plot, h = $('#rsSurfHolder'); if (!res || !p || !h) return;
+    h.innerHTML = surfaceSvg(res, p.i, p.j, p.hold.slice(), { az: p.az, el: p.el });
+    const a = $('#rsAz'), e = $('#rsEl');
+    if (a) { a.value = Math.round(p.az); $('#rsAzV').innerHTML = Math.round(p.az) + '&deg;'; }
+    if (e) { e.value = Math.round(p.el); $('#rsElV').innerHTML = Math.round(p.el) + '&deg;'; }
+  }
+  const wrapAz = (v) => ((v + 180) % 360 + 360) % 360 - 180;
+  let rot = null;
+  el.plotWrap.addEventListener('pointerdown', (e) => {
+    const h = e.target.closest && e.target.closest('#rsSurfHolder'); if (!h || !state.plot) return;
+    rot = { x: e.clientX, y: e.clientY, az: state.plot.az, el: state.plot.el };
+    try { h.setPointerCapture(e.pointerId); } catch (err) { /* abaikan */ }
+    h.classList.add('rs-grab');
+  });
+  el.plotWrap.addEventListener('pointermove', (e) => {
+    if (!rot || !state.plot) return;
+    const p = state.plot;
+    p.az = wrapAz(rot.az - (e.clientX - rot.x) * 0.5);
+    p.el = Math.max(5, Math.min(85, rot.el + (e.clientY - rot.y) * 0.4));
+    redraw3d();
+  });
+  const endRot = () => { rot = null; const h = $('#rsSurfHolder'); if (h) h.classList.remove('rs-grab'); };
+  el.plotWrap.addEventListener('pointerup', endRot);
+  el.plotWrap.addEventListener('pointercancel', endRot);
+  el.plotWrap.addEventListener('input', (e) => {
+    const p = state.plot; if (!p) return;
+    if (e.target.id === 'rsAz') { p.az = +e.target.value; redraw3d(); }
+    else if (e.target.id === 'rsEl') { p.el = +e.target.value; redraw3d(); }
+  });
+  el.plotWrap.addEventListener('click', (e) => {
+    if (e.target.id === 'rsRotReset' && state.plot) { state.plot.az = 35; state.plot.el = 27; redraw3d(); }
+  });
 
   /* =========================================================================
      TAB: OPTIMASI (titik stasioner + pencarian optimum + prediksi)
@@ -681,6 +732,7 @@
     const o = Core.optimize(res, { goal, target, lo, hi });
     res.optimum = o;
     $('#rsOptBlock').innerHTML = renderOptimum(res, o, { loA, hiA });
+    renderInterp(res);
     if (!silent) { renderConclusion(res); exportAll(res); }
     // isi kolom prediksi dengan optimum
     o.actual.forEach((v, i) => { const inp = $(`[data-pr="${i}"]`); if (inp && silent) inp.value = fmtC(v); });
@@ -761,6 +813,67 @@
   }
 
   /* =========================================================================
+     TAB: INTERPRETASI (penjelasan naratif hasil; diadaptasi dari RSM tipe B)
+     ========================================================================= */
+  function renderInterp(res) {
+    const m = res.m, cn = res.canon, o = res.optimum, A = res.alpha;
+    const resp = escapeHTML(short(res.resp));
+    const box = (cls, title, ps) => `<div class="rs-box ${cls}"><h4>${title}</h4>${ps.map((p) => `<p>${p}</p>`).join('')}</div>`;
+    const pTxt = (p) => (p < 0.0001 ? '&lt; 0.0001' : '= ' + fmt(p, 4));
+    let h = '';
+
+    /* 1. Kecocokan model */
+    const ad = adequacy(res), ps = [];
+    ps.push(`Uji F model menghasilkan F = <strong>${fmt(m.F, 3)}</strong> dengan p ${pTxt(m.pF)}. ${ad.sig ? `Model <strong>signifikan</strong>: minimal satu suku berpengaruh terhadap ${resp}.` : `Model <strong>tidak signifikan</strong>: belum ada bukti bahwa faktor-faktor ini memengaruhi ${resp} pada model ini.`}`);
+    ps.push(`R&sup2; = ${fmt(m.R2, 4)} berarti ${fmt(m.R2 * 100, 2)}% keragaman ${resp} dijelaskan model; R&sup2; adjusted = ${fmt(m.adj, 4)} dan R&sup2; prediksi = ${fmt(m.predR2, 4)}. ${Number.isFinite(ad.gap) ? (ad.gapOK ? `Selisih keduanya ${fmt(ad.gap, 3)} (&lt; 0.2), jadi model tidak tampak <em>overfit</em> dan punya kemampuan prediksi yang baik.` : `<span class="flag">Selisih R&sup2; adjusted dan R&sup2; prediksi ${fmt(ad.gap, 3)} (&ge; 0.2)</span>: kemungkinan ada pencilan, atau model terlalu rumit untuk jumlah percobaan ini.`) : ''}`);
+    ps.push(`Adequate precision = ${fmt(res.adeq, 2)} ${ad.apOK ? '(&gt; 4: sinyal cukup untuk menjelajahi daerah percobaan)' : '(&le; 4: sinyal lemah dibanding derau)'}; koefisien variasi ${fmt(res.cv, 2)}%.`);
+    if (ad.lofTestable) ps.push(`Lack of fit: F = ${fmt(res.lof.F, 3)}, p ${pTxt(res.lof.p)}. ${ad.lofOK ? 'Tidak signifikan, artinya model cocok dengan data (baik).' : '<span class="flag">Signifikan</span>, artinya model belum menangkap pola data sepenuhnya; pertimbangkan transformasi respon atau suku orde lebih tinggi.'}`);
+    else ps.push('Lack of fit belum bisa diuji karena tidak ada percobaan berulang. Tambahkan replikasi (mis. 3-5 titik pusat).');
+    h += box(ad.sig && ad.lofOK ? 'good' : 'warn', 'Kecocokan model', ps);
+
+    /* 2. Suku berpengaruh */
+    const terms = res.coefs.filter((c) => c.term.type !== 'const');
+    const sig = terms.filter((c) => c.p < A).sort((a, b) => Math.abs(b.t) - Math.abs(a.t));
+    const ns = terms.filter((c) => !(c.p < A));
+    const ps2 = [];
+    if (sig.length) {
+      ps2.push(`Suku yang berpengaruh signifikan (p &lt; 0.05), dari yang terkuat: ${sig.map((c) => `<strong>${escapeHTML(c.label)}</strong> (koef. ${fmt(c.b, 3)}, p ${pTxt(c.p)})`).join('; ')}.`);
+      const lin = sig.filter((c) => c.term.type === 'lin');
+      if (lin.length) ps2.push(lin.map((c) => `Menaikkan ${escapeHTML(short(c.label))} dari tengah ke batas atas rentang ${c.b > 0 ? 'menaikkan' : 'menurunkan'} ${resp} sekitar ${fmt(Math.abs(c.b), 3)} satuan (pada suku linear, dengan faktor lain di tengah).`).join(' '));
+      const sq = sig.filter((c) => c.term.type === 'sq');
+      if (sq.length) ps2.push(`Suku kuadrat signifikan (${sq.map((c) => escapeHTML(c.label)).join(', ')}) menandakan hubungan melengkung: ${sq.every((c) => c.b < 0) ? 'respon naik lalu turun (membentuk puncak), sehingga ada nilai optimum di dalam rentang.' : 'respon tidak berubah secara linear terhadap faktor tersebut.'}`);
+      const it = sig.filter((c) => c.term.type === 'int');
+      if (it.length) ps2.push(`Interaksi signifikan (${it.map((c) => escapeHTML(c.label)).join(', ')}): pengaruh satu faktor bergantung pada level faktor lain, sehingga faktor-faktor itu tidak boleh dioptimalkan sendiri-sendiri.`);
+    } else ps2.push('Tidak ada suku yang signifikan pada taraf 5%.');
+    if (ns.length) ps2.push(`Suku yang tidak signifikan: ${ns.map((c) => escapeHTML(c.label)).join(', ')}. Bila model ingin disederhanakan, suku-suku ini dapat dibuang satu per satu mulai dari p terbesar (selama prinsip hierarki dijaga) lalu model dihitung ulang.`);
+    h += box('', 'Faktor dan suku yang berpengaruh', ps2);
+
+    /* 3. Kondisi optimum */
+    const ps3 = [];
+    if (cn && cn.xs) ps3.push(`Titik stasioner berupa <strong>${NATURE[cn.nature].split(' (')[0]}</strong> pada ${res.names.map((n, i) => `${escapeHTML(short(n))} = ${fmtC(cn.actual[i])}`).join(', ')} dengan prediksi ${resp} = ${fmt(cn.ys, 3)}; titik ini ${cn.inside ? 'berada di dalam daerah percobaan' : '<span class="flag">berada di luar daerah percobaan</span> sehingga tidak boleh dipakai langsung'}.`);
+    else if (cn) ps3.push(`Titik stasioner berupa <strong>${NATURE.ridge.split(' (')[0]}</strong>, sehingga tidak ada satu titik optimum tunggal; andalkan hasil pencarian optimum di dalam rentang data.`);
+    else ps3.push('Model yang dipilih tidak memiliki suku kuadrat sehingga tidak ada titik stasioner; optimum pasti jatuh di tepi daerah percobaan. Gunakan model kuadratik bila ingin optimum di bagian dalam.');
+    if (o) {
+      const gl = o.goal === 'max' ? 'maksimum' : o.goal === 'min' ? 'minimum' : 'target ' + fmtC(o.target);
+      ps3.push(`Kondisi optimum di dalam batas pencarian (${gl}): ${res.names.map((n, i) => `<strong>${escapeHTML(short(n))} = ${fmtC(o.actual[i])}</strong>`).join(', ')}, dengan prediksi ${resp} = <strong>${fmt(o.pred.y, 3)}</strong> (CI 95% ${fmt(o.pred.ci[0], 3)} sampai ${fmt(o.pred.ci[1], 3)}; PI 95% ${fmt(o.pred.pi[0], 3)} sampai ${fmt(o.pred.pi[1], 3)}).`);
+      const edge = o.x.some((v) => Math.abs(v) >= 1 - 1e-6), extra = o.x.some((v) => Math.abs(v) > 1 + 1e-9);
+      ps3.push(extra ? '<span class="flag">Sebagian faktor berada di luar rentang data (ekstrapolasi)</span>; prediksinya kurang andal.' : edge ? '<span class="flag">Optimum jatuh di tepi daerah percobaan</span>; perluas rentang faktor yang berada di tepi pada percobaan berikutnya.' : 'Optimum berada di bagian dalam daerah percobaan, sehingga prediksinya bersandar pada interpolasi, bukan ekstrapolasi.');
+    }
+    ps3.push('Langkah berikutnya: lakukan percobaan konfirmasi (beberapa ulangan) pada kondisi optimum, lalu pastikan hasil rata-ratanya jatuh di dalam selang prediksi.');
+    h += box('good', 'Kondisi optimum', ps3);
+
+    /* 4. Diagnostik */
+    const ps4 = [], vifs = terms.map((c) => (Number.isFinite(c.vif) ? c.vif : 0)), maxVif = vifs.length ? Math.max.apply(null, vifs) : 0;
+    const out = res.diag.filter((d) => (Number.isFinite(d.sr) && Math.abs(d.sr) > 3) || (Number.isFinite(d.cook) && d.cook > 1)).map((d) => d.run);
+    ps4.push(out.length ? `Percobaan yang berpengaruh/pencilan: run ${out.join(', ')}. Periksa data aslinya.` : 'Tidak ada pencilan (|residual baku| &gt; 3) dan tidak ada Cook\'s D &gt; 1.');
+    ps4.push(maxVif > 10 ? `<span class="flag">VIF terbesar ${fmt(maxVif, 2)} (&gt; 10)</span>: ada kolinearitas tinggi antarsuku.` : `VIF terbesar ${fmt(maxVif, 2)} (&le; 10): tidak ada masalah kolinearitas.`);
+    ps4.push('Periksa juga grafik Q-Q residual (titik mendekati garis = galat mendekati normal) dan residual vs prediksi (sebaran acak tanpa pola = ragam galat konstan) pada panel grafik pendukung.');
+    h += box('', 'Diagnostik model', ps4);
+
+    el.interpWrap.innerHTML = h;
+  }
+
+  /* =========================================================================
      KESIMPULAN
      ========================================================================= */
   function renderConclusion(res) {
@@ -816,7 +929,7 @@
         id: 'rsm', title: 'Hasil Response Surface Methodology', anchor: '#rs-conclusion-card', resultsCard: '#rs-results-card', meta,
         sections: [
           { heading: 'Model & ANOVA', sel: '#rsModelWrap' }, { heading: 'Koefisien & Persamaan', sel: '#rsCoefWrap' }, { heading: 'Optimasi', sel: '#rsOptWrap' },
-          { heading: 'Diagnostik', sel: '#rsDiagWrap' }, { heading: 'Langkah Perhitungan', sel: '#rsStepsWrap' }, { heading: 'Kesimpulan', sel: '#rsConclusionWrap' },
+          { heading: 'Diagnostik', sel: '#rsDiagWrap' }, { heading: 'Langkah Perhitungan', sel: '#rsStepsWrap' }, { heading: 'Interpretasi', sel: '#rsInterpWrap' }, { heading: 'Kesimpulan', sel: '#rsConclusionWrap' },
         ],
         data: { head: res.names.concat([res.resp]), rows, caption: 'Data percobaan (satuan asli).' },
         charts,
