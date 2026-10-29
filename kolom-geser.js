@@ -22,7 +22,7 @@
     { sel: '#view-kalkulator > .chapter-inner', left: '.calc-tools' },
     { sel: '#view-kalkulator .calc-layout', right: '.calc-hist-card' },
     { sel: '#view-matriks > .chapter-inner', left: '.mx-left', right: '.mx-right' },
-    { sel: '#view-metode-calc > .chapter-inner', left: '.sc-vars' },
+    { sel: '#view-metode-calc > .chapter-inner', left: '.sc-vars', right: '.sc-res' },
     { sel: '.chapter-inner:has(.gr-chart)', left: '[id$="data-card"]', right: '.rb-main' },
     { sel: '#view-materi-detail .mt-wrap', left: '.mt-toc', right: '.mt-try' },
     { sel: '#view-home .hm', right: '.hm-side' },

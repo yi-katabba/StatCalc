@@ -4,7 +4,7 @@
    Hasil metode Stat tampil di panel kanan layar Lembar, bukan di halaman
    metode terpisah:
    - Desktop (>= 1280px): panel kanan dengan tab Ringkasan | Tabel | Langkah | Grafik.
-   - Ponsel / tablet: segmen Data | Hasil | Grafik di atas lembar.
+   - Ponsel / tablet: segmen Data | Hasil di atas lembar.
    Cara kerja: sheet.js mengirim data ke halaman metode (tanpa berpindah halaman)
    dan menekan tombol hitungnya; modul ini menunggu hasil muncul di halaman metode
    lalu menyalin tampilannya ke panel. Interaksi lanjutan (pilihan uji asumsi,
@@ -42,7 +42,7 @@
   /* ------------------------------ kerangka panel ------------------------------ */
   var seg = document.createElement('div');
   seg.className = 'sc-seg'; seg.setAttribute('role', 'tablist'); seg.setAttribute('aria-label', 'Tampilan Lembar');
-  seg.innerHTML = '<button type="button" role="tab" data-s="data" aria-selected="true">Data</button><button type="button" role="tab" data-s="hasil" aria-selected="false">Hasil</button><button type="button" role="tab" data-s="grafik" aria-selected="false">Grafik</button>';
+  seg.innerHTML = '<button type="button" role="tab" data-s="data" aria-selected="true">Data</button><button type="button" role="tab" data-s="hasil" aria-selected="false">Hasil</button>';
   var head = $('.chapter-head', host);
   if (head && head.nextSibling) host.insertBefore(seg, head.nextSibling); else host.insertBefore(seg, host.firstChild);
   host.setAttribute('data-seg', 'data');
@@ -105,8 +105,6 @@
   seg.addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return;
     var s = b.dataset.s; setSeg(s);
-    if (s === 'grafik') setTab('grafik');
-    else if (s === 'hasil' && state.tab === 'grafik') setTab('ringkasan');
   });
   $('.sr-tabs', panel).addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) setTab(b.dataset.t); });
   function hidePanel() { host.classList.remove('has-res'); setSeg('data'); notify(); }
