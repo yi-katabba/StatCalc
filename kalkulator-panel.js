@@ -30,6 +30,11 @@
   dec.addEventListener('change', function () {
     C.setDecimals(dec.value === '' ? null : dec.value);
     try { localStorage.setItem(KEY, dec.value); } catch (e) { /* abaikan */ }
+    document.dispatchEvent(new CustomEvent('statcalc:decimals', { detail: { value: dec.value, from: 'kalkulator' } }));
+  });
+  document.addEventListener('statcalc:decimals', function (e) {
+    if (!e.detail || e.detail.from === 'kalkulator') return;
+    dec.value = e.detail.value;
   });
   a.addEventListener('click', function (e) {
     var r = e.target.closest('.ct-row'); if (!r || r.dataset.go === 'kalkulator') return;

@@ -132,11 +132,24 @@
       if (open(row.dataset.id)) SC.navigate('metode-calc', { backTo: 'home' });
     });
   }
-  /* nama proyek di tengah bilah atas; ikut berubah saat nama file diketik */
+  /* nama proyek di bilah atas: hanya di halaman yang memakai data (Data, Stat, Grafik) dan hanya bila
+     namanya sudah diberi pengguna (bukan nama bawaan); ikut berubah saat nama file diketik */
+  var DEFAULT_NAMES = ['data-calc', 'data-baru'];
+  var NO_CHIP = ['view-home', 'view-metode', 'view-materi', 'view-materi-detail', 'view-kalkulator', 'view-matriks', 'view-tentang', 'view-petunjuk', 'view-profil', 'view-login'];
+  var shownName = '';
+  function chipVisible() {
+    var nm = shownName.trim(), v = document.querySelector('.view.active');
+    return !!nm && DEFAULT_NAMES.indexOf(nm.toLowerCase()) === -1 && !(v && NO_CHIP.indexOf(v.id) !== -1);
+  }
   function showName(nm) {
     var el = $('navProj'); if (!el) return;
-    nm = (nm || '').trim(); el.textContent = nm; el.title = nm; el.hidden = !nm;
+    shownName = nm || ''; nm = shownName.trim(); el.textContent = nm; el.title = nm; el.hidden = !chipVisible();
   }
+  new MutationObserver(function (ms) {
+    for (var i = 0; i < ms.length; i++) {
+      if (ms[i].target.classList && ms[i].target.classList.contains('view')) { var el = $('navProj'); if (el) el.hidden = !chipVisible(); return; }
+    }
+  }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'] });
   if ($('scFname')) $('scFname').addEventListener('input', function () { if (cur()) showName($('scFname').value); });
   function refresh() {
     var idx = index().sort(function (a, b) { return (b.opened || 0) - (a.opened || 0); });

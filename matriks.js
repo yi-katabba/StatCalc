@@ -676,13 +676,59 @@
 
   const css = document.createElement('style');
   css.textContent = `
-    #view-matriks .chapter-inner{ max-width:1040px; }
-    #view-matriks .mx-pair{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr)); gap:20px; align-items:start; }
+    #view-matriks .chapter-inner{ max-width:none; }
+    #view-matriks .mx-pair{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr)); gap:20px; align-items:start; min-width:0; }
+    #view-matriks .chapter-inner > *{ min-width:0; }
+    #view-matriks .chapter-inner{ display:grid; grid-template-columns:minmax(0,1fr); gap:16px; }
+    /* Panel kiri: alat hitung + operasi */
+    #view-matriks .mx-left{ background:#fff; border:1px solid var(--rule); border-radius:10px; padding:6px 0 14px; }
+    #view-matriks .mx-left .ct-k{ font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint); padding:10px 14px 6px; }
+    #view-matriks .mx-left .ct-k2{ margin-top:6px; }
+    #view-matriks .mx-left .ct-row{ display:none; align-items:center; gap:10px; width:100%; min-height:44px; padding:0 14px; border:0; background:none; color:var(--ink); font-size:13.5px; font-family:inherit; text-align:left; cursor:pointer; }
+    #view-matriks .mx-left .ct-row:hover{ background:#F3F5F8; }
+    #view-matriks .mx-left .ct-row.on{ background:var(--accent-soft); font-weight:600; box-shadow:inset 3px 0 0 var(--accent-2); }
+    #view-matriks .mx-left .ct-row svg{ width:20px; height:20px; stroke:var(--accent); fill:none; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
+    #view-matriks .mx-left .ct-nav-k{ display:none; }
+    #view-matriks .mx-left .mx-ops{ flex-direction:column; align-items:stretch; padding:4px 14px 0; gap:12px; }
+    #view-matriks .mx-left .mx-fld.grow{ flex:none; }
+    #view-matriks .mx-left .mx-fld .plain-input{ width:100%; }
+    #view-matriks .mx-left .select-input{ font-size:13px; padding-left:10px; }
+    #view-matriks .mx-left .mx-fld label{ font-size:13px; font-weight:600; }
+    #view-matriks .mx-left .mx-fld .btn-primary, #view-matriks .mx-left .mx-fld .btn-ghost{ width:100%; }
+    #view-matriks .mx-left .error-msg{ margin:10px 14px 0; }
+    /* Panel kanan: hasil */
+    #view-matriks .mx-right{ background:#F8FAFC; border:1px solid var(--rule); border-radius:10px; overflow:hidden; }
+    #view-matriks .mx-right-head{ background:#fff; border-bottom:1px solid var(--rule); height:44px; padding:0 14px; display:flex; align-items:center; font-size:14px; font-weight:700; }
+    #view-matriks .mx-right-body{ padding:14px; min-width:0; }
+    #view-matriks .mx-empty{ color:var(--ink-faint); font-size:13.5px; text-align:center; padding:16px 0; margin:0; }
+    #view-matriks .mx-right .mx-actions{ margin-top:14px; padding-top:12px; border-top:1px solid #E1E6EC; }
+    #view-matriks .mx-stepcard{ padding:20px; }
+    #view-matriks .mx-stepcard .mx-steps{ margin-top:0; border-top:0; padding-top:0; }
+    #view-matriks .mx-opdesc{ margin:-4px 0 0; font-size:12px; line-height:1.4; color:var(--ink-faint); }
+    #view-matriks .mx-size{ display:grid; grid-template-columns:1fr 1fr; gap:10px 14px; }
+    #view-matriks .mx-size .mx-sz{ flex-direction:column; align-items:flex-start; gap:4px; min-width:0; }
+    #view-matriks .mx-sz label{ font-size:13px; font-weight:600; text-align:left; }
+    #view-matriks .mx-sz .stepper{ height:40px; border-radius:10px; max-width:100%; }
+    #view-matriks .mx-sz .stepper button{ width:36px; font-size:18px; }
+    #view-matriks .mx-sz .stepper input{ width:44px; padding:6px 2px; }
+    @media (min-width:1024px){
+      #view-matriks .chapter-inner{ grid-template-columns:208px minmax(0,1fr) 270px; gap:16px 20px; max-width:none; }
+      #view-matriks .chapter-inner > .chapter-head{ grid-column:1 / -1; }
+      #view-matriks .mx-left{ grid-column:1; grid-row:2 / span 2; position:sticky; top:112px; align-self:start; }
+      #view-matriks .mx-pair{ grid-column:2; grid-row:2; }
+      #view-matriks .mx-stepcard{ grid-column:2; grid-row:3; }
+      #view-matriks .mx-right{ grid-column:3; grid-row:2 / span 2; align-self:start; position:sticky; top:112px; max-height:calc(100vh - 140px); display:flex; flex-direction:column; }
+      #view-matriks .mx-right-body{ overflow:auto; }
+    }
+    @media (min-width:1280px){
+      #view-matriks .chapter-inner{ grid-template-columns:232px minmax(0,1fr) 320px; gap:16px 24px; }
+      #view-matriks .mx-left .ct-row{ display:flex; }
+      #view-matriks .mx-left .ct-nav-k{ display:block; }
+    }
     #view-matriks .mx-card{ padding:20px 20px 22px; min-width:0; }
     #view-matriks .mx-card h2{ margin:0 0 12px; font-size:22px; }
     #view-matriks .mx-size{ display:flex; flex-wrap:wrap; gap:10px 18px; margin-bottom:14px; }
     #view-matriks .mx-sz{ display:flex; align-items:center; gap:8px; }
-    #view-matriks .mx-sz .stepper input{ width:48px; }
     #view-matriks .mx-scroll{ overflow-x:auto; padding:2px 0 8px; text-align:center; }
     #view-matriks .mx-grid{ display:inline-grid; gap:6px; padding:8px 10px; border-left:3px solid var(--accent); border-right:3px solid var(--accent); border-radius:10px; }
     #view-matriks .mx-grid input{ width:64px; height:42px; text-align:center; font-family:var(--font-mono); font-size:15px; border:1px solid var(--rule-strong); border-radius:8px; background:#fff; color:var(--ink); padding:0 4px; }
@@ -759,33 +805,45 @@
         <h1>Kalkulator Matriks</h1>
         <p class="lede">Isi matriks A dan B, pilih operasi, lalu hitung: penjumlahan, perkalian, determinan, invers, rank, nilai eigen, SPL, hingga regresi OLS.</p>
       </div>
-      <div class="mx-pair">${matCard('A')}${matCard('B')}</div>
-
-      <section class="card mx-card">
-        <h2>Operasi</h2>
+      <aside class="mx-left" aria-label="Alat hitung">
+        <div class="ct-k ct-nav-k">Alat hitung</div>
+        <button type="button" class="ct-row" data-go="kalkulator"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="2.5" width="14" height="19" rx="2.4"/><path d="M8 7h8M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01"/></svg>Kalkulator ilmiah</button>
+        <button type="button" class="ct-row on" data-go="matriks"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4H5v16h3M16 4h3v16h-3"/><circle cx="10" cy="9" r=".8"/><circle cx="14" cy="9" r=".8"/><circle cx="10" cy="15" r=".8"/><circle cx="14" cy="15" r=".8"/></svg>Kalkulator matriks</button>
+        <div class="ct-k ct-k2">Operasi</div>
         <div class="mx-ops">
           <div class="mx-fld grow"><label for="mxOp">Pilih operasi</label>
             <select id="mxOp" class="select-input">${OPS.map((g) =>
               `<optgroup label="${esc(g.group)}">${g.items.map((o) => `<option value="${o.id}">${esc(o.label)}</option>`).join('')}</optgroup>`).join('')}</select></div>
+          <p class="mx-opdesc" id="mxOpDesc"></p>
           <div class="mx-fld" id="mxTargetWrap" hidden><label for="mxTarget">Terapkan pada</label>
             <select id="mxTarget" class="select-input"><option value="A">Matriks A</option><option value="B">Matriks B</option></select></div>
           <div class="mx-fld" id="mxParWrap" hidden><label for="mxPar" id="mxParLbl">Nilai</label>
             <input id="mxPar" class="plain-input" type="text" inputmode="decimal" value="2"></div>
+          <div class="mx-fld"><label for="mxDec">Angka desimal (hasil)</label>
+            <select id="mxDec" class="select-input"><option value="">Otomatis</option>${[0, 1, 2, 3, 4, 5, 6].map((n) => `<option value="${n}">${n}</option>`).join('')}</select></div>
           <div class="mx-fld"><button type="button" class="btn-primary" id="mxRun">Hitung</button></div>
           <div class="mx-fld"><button type="button" class="btn-ghost" id="mxSwap">Tukar A ↔ B</button></div>
         </div>
         <div class="error-msg" id="mxErr" role="alert" hidden></div>
-      </section>
+      </aside>
 
-      <section class="card mx-card" id="mxResCard" hidden>
-        <h2>Hasil</h2>
-        <div id="mxRes"></div>
-        <div class="mx-actions" id="mxActions">
-          <button type="button" class="btn-ghost" id="mxCopy">Salin hasil</button>
-          <button type="button" class="btn-ghost" id="mxToA">Jadikan matriks A</button>
-          <button type="button" class="btn-ghost" id="mxToB">Jadikan matriks B</button>
-          <span class="mx-status" id="mxStatus" role="status"></span>
+      <div class="mx-pair">${matCard('A')}${matCard('B')}</div>
+
+      <aside class="mx-right" id="mxResCard" aria-label="Hasil">
+        <div class="mx-right-head">Hasil</div>
+        <div class="mx-right-body">
+          <p class="mx-empty" id="mxEmpty">Belum ada hasil. Pilih operasi lalu ketuk Hitung.</p>
+          <div id="mxRes"></div>
+          <div class="mx-actions" id="mxActions" hidden>
+            <button type="button" class="btn-ghost" id="mxCopy">Salin hasil</button>
+            <button type="button" class="btn-ghost" id="mxToA">Jadikan matriks A</button>
+            <button type="button" class="btn-ghost" id="mxToB">Jadikan matriks B</button>
+            <span class="mx-status" id="mxStatus" role="status"></span>
+          </div>
         </div>
+      </aside>
+
+      <section class="card mx-stepcard" id="mxStepCard" hidden>
         <div id="mxSteps"></div>
       </section>
     </div>`;
@@ -876,6 +934,7 @@
   const findOp = (id) => OPS.reduce((f, g) => f || g.items.find((o) => o.id === id), null);
   function syncOp() {
     const o = findOp(opSel.value);
+    opSel.title = o.label; $('#mxOpDesc').textContent = o.label; $('#mxOpDesc').hidden = o.label.length < 24;
     $('#mxTargetWrap').hidden = !o.unary;
     $('#mxParWrap').hidden = !o.par;
     if (o.par === 'k') { $('#mxParLbl').textContent = 'Skalar (k)'; if (parIn.dataset.for !== 'k') parIn.value = '2'; }
@@ -900,6 +959,30 @@
     return out;
   }
 
+  /* ---- Angka desimal (dibagikan dengan kalkulator ilmiah lewat localStorage) ---- */
+  const DEC_KEY = 'statcalc.calc.decimals';
+  const decSel = $('#mxDec');
+  try { const sv = localStorage.getItem(DEC_KEY); if (sv !== null) decSel.value = sv; } catch (e) { /* abaikan */ }
+  const decVal = () => (decSel.value === '' ? null : +decSel.value);
+  function fmtD(x) {
+    const d = decVal();
+    if (d === null || !isFinite(x)) return fmt(x);
+    const r = parseFloat(x.toFixed(d));
+    return String(Object.is(r, -0) || Math.abs(r) === 0 ? 0 : r);
+  }
+  const NUMSTR = /^-?\d+(?:\.\d+)?(?:e[+-]?\d+)?$/i;
+  const fmtS = (str) => (decVal() !== null && NUMSTR.test(String(str)) ? fmtD(Number(str)) : str);
+  decSel.addEventListener('change', () => {
+    try { localStorage.setItem(DEC_KEY, decSel.value); } catch (e) { /* abaikan */ }
+    if (window.StatCalcCalc && window.StatCalcCalc.setDecimals) window.StatCalcCalc.setDecimals(decSel.value === '' ? null : decSel.value);
+    document.dispatchEvent(new CustomEvent('statcalc:decimals', { detail: { value: decSel.value, from: 'matriks' } }));
+    if (last) showResult(last, true);
+  });
+  document.addEventListener('statcalc:decimals', (e) => {
+    if (e.detail && e.detail.from === 'matriks') return;
+    decSel.value = e.detail.value; if (last) showResult(last, true);
+  });
+
   const showErr = (msg) => { const el = $('#mxErr'); el.textContent = msg; el.hidden = !msg; };
 
   /* spec: { cells:[[string]], rowLabels?, colLabels?, sep? }  (sep = indeks kolom pertama setelah garis pemisah) */
@@ -915,7 +998,7 @@
     }
     return h + '</tbody></table></div>';
   }
-  const matTable = (res) => tableHTML({ cells: res.matrix.map((r) => r.map(fmt)), rowLabels: res.rowLabels, colLabels: res.colLabels });
+  const matTable = (res) => tableHTML({ cells: res.matrix.map((r) => r.map(fmtD)), rowLabels: res.rowLabels, colLabels: res.colLabels });
 
   function stepsHTML(steps) {
     return '<details class="mx-steps" open><summary>Langkah-langkah perhitungan</summary>' + steps.map((st, i) =>
@@ -927,18 +1010,20 @@
       '</div>').join('') + '</details>';
   }
 
-  function showResult(res) {
+  function showResult(res, keep) {
     last = res;
     const dup = res.scalars && res.scalars.length === 1 && res.scalars[0][0] === res.title && !res.matrix;
     let h = dup ? '' : `<p class="mx-title">${esc(res.title)}</p>`;
-    if (res.scalars) h += '<div class="mx-scalars">' + res.scalars.map(([l, v]) => `<span class="mx-chip"><b>${esc(l)}</b> ${esc(v)}</span>`).join('') + '</div>';
+    if (res.scalars) h += '<div class="mx-scalars">' + res.scalars.map(([l, v]) => `<span class="mx-chip"><b>${esc(l)}</b> ${esc(fmtS(v))}</span>`).join('') + '</div>';
     if (res.matrix) h += matTable(res);
     if (res.note) h += `<p class="mx-note">${esc(res.note)}</p>`;
     $('#mxRes').innerHTML = h;
     $('#mxSteps').innerHTML = res.steps && res.steps.length ? stepsHTML(res.steps) : '';
     $('#mxToA').hidden = $('#mxToB').hidden = !res.matrix;
-    $('#mxStatus').textContent = '';
-    $('#mxResCard').hidden = false;
+    if (!keep) $('#mxStatus').textContent = '';
+    $('#mxEmpty').hidden = true;
+    $('#mxActions').hidden = false;
+    $('#mxStepCard').hidden = !(res.steps && res.steps.length);
   }
 
   function run() {
@@ -956,10 +1041,12 @@
         },
       };
       showResult(o.run(ctx));
-      $('#mxResCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      if (!window.matchMedia('(min-width:1280px)').matches) $('#mxResCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     } catch (err) {
       showErr(err.message || String(err));
-      $('#mxResCard').hidden = true;
+      last = null;
+      $('#mxRes').innerHTML = ''; $('#mxEmpty').hidden = false;
+      $('#mxActions').hidden = true; $('#mxStepCard').hidden = true;
     }
   }
   $('#mxRun').addEventListener('click', run);
@@ -998,6 +1085,11 @@
   }
   $('#mxToA').addEventListener('click', () => sendTo('A'));
   $('#mxToB').addEventListener('click', () => sendTo('B'));
+
+  $('.mx-left').addEventListener('click', (e) => {
+    const r = e.target.closest('.ct-row'); if (!r || r.dataset.go === 'matriks') return;
+    if (window.StatCalc && window.StatCalc.navigate) window.StatCalc.navigate(r.dataset.go);
+  });
 
   renderGrid('A'); renderGrid('B');
   window.StatCalcMatriks = { reset: () => { showErr(''); } };

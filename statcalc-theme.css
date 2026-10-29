@@ -563,3 +563,23 @@ body.pf-on .top-avatar{ box-shadow:0 0 0 2px #7FA8D6; }
   .pf-card > h2{ padding:14px 18px 8px; }
   .pf-st{ padding:8px 18px; }
 }
+
+/* ===== LEBAR PENUH: semua halaman memakai seluruh lebar layar (tampilan aplikasi) ===== */
+@media (min-width:700px){
+  :root{ --content:100%; }
+  #view-petunjuk .chapter-inner{ max-width:none; }
+  .tentang-body{ max-width:none; }
+  #view-kalkulator .chapter-inner{ max-width:none; }
+  #view-profil .chapter-inner{ max-width:none; grid-template-columns:232px minmax(0,1fr); justify-content:stretch; }
+}
+@media (min-width:1024px){
+  html body #view-metode-calc .chapter-inner{ max-width:none; }
+  .chapter-inner:has(.gr-chart){ max-width:none; }
+  html body #view-materi-detail .mt-wrap{ max-width:none; }
+}
+@media (min-width:1360px){
+  html body #view-materi-detail .mt-wrap{ max-width:none; grid-template-columns:264px minmax(0,1fr) 320px; justify-content:stretch; }
+}
+@media (min-width:1440px){
+  .chapter-inner:has(.gr-chart){ max-width:none; }
+}
