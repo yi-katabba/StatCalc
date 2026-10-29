@@ -709,7 +709,7 @@
     }
   }
 
-  /* ---- API untuk pemakai luar (tab Grafik di Calc) ----
+  /* ---- API untuk pemakai luar (tab Grafik di Dataset) ----
      info(id)    -> {id, title, types, columns, minRows, wide, opts, style}
      defaults(id)-> nilai bawaan semua opsi grafik
      render(id, data, o, st) -> {svg, summary}

@@ -94,7 +94,7 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{ outline-color
   .top-avatar{ display:none; }
 }
 
-/* Label ganda: mobile (Lembar/Analisis/Hitung) vs desktop (Data/Stat/Fungsi) */
+/* Nav ponsel/tablet (<1024px): hanya Beranda, Dataset, Stat, Grafik. Materi & Fungsi (.desk-only) hanya tampil di desktop */
 .nav-item .d-l,.nav-item.desk-only{ display:none !important; }
 @media (min-width:1024px){
   .nav-item .m-l{ display:none !important; }
@@ -168,7 +168,7 @@ button:focus-visible,input:focus-visible,[tabindex]:focus-visible{ outline-color
   #view-materi-detail .mt-sec{ scroll-margin-top:112px; }
 }
 
-/* Lembar kerja (Method/Calc): gaya mengikuti rancangan. Spesifisitas dinaikkan karena sheet.js menyuntik gayanya sendiri. */
+/* Dataset (Method/Calc): gaya mengikuti rancangan. Spesifisitas dinaikkan karena sheet.js menyuntik gayanya sendiri. */
 html body #view-metode-calc .sc-main{ border-radius:10px; }
 html body #view-metode-calc .sc-tabs{ background:var(--paper-2); padding:6px 8px 0; }
 html body #view-metode-calc .sc-tab{ border:0; border-radius:0; flex:0 0 auto; max-width:none; min-height:36px; font-size:13px; font-weight:600; color:var(--ink-soft); }
@@ -192,7 +192,7 @@ html body #view-metode-calc .sc-msg.ok{ background:#E3F0E8; }
   html body #view-metode-calc .sc-scroll{ height:calc(clamp(320px,62vh,640px) / var(--scz,1)); }
 }
 
-/* Materi: kartu "Coba di lembar" */
+/* Materi: kartu "Coba di Dataset" */
 #view-materi-detail .mt-try{ margin:16px 0 4px; padding:14px 16px; background:#F8FAFC; border:1px solid var(--rule); border-radius:10px; }
 #view-materi-detail .mt-try h3{ margin:0 0 4px; font-size:15px; font-weight:700; color:var(--ink); }
 #view-materi-detail .mt-try p{ margin:0 0 10px; font-size:13px; line-height:1.5; color:var(--ink-soft); }
@@ -207,7 +207,7 @@ html body #view-metode-calc .sc-msg.ok{ background:#E3F0E8; }
   html body #view-materi-detail .mt-wrap > .mt-try{ grid-column:3; grid-row:1 / span 60; align-self:start; position:sticky; top:112px; margin:16px 0 0; }
 }
 
-/* Panel Variabel di samping Lembar (desktop lebar) */
+/* Panel Variabel di samping Dataset (desktop lebar) */
 .sc-vars{ display:none; }
 @media (min-width:1280px){
   html body #view-metode-calc .chapter-inner{ display:grid; grid-template-columns:232px minmax(0,1fr); grid-auto-flow:dense; gap:16px 24px; align-items:start; }
@@ -355,11 +355,11 @@ html body #view-metode-calc .sc-msg.ok{ background:#E3F0E8; }
 .gk-head:first-child{ margin-top:0; }
 .gk-head span{ font-weight:600; font-size:11px; padding:1px 7px; border-radius:100px; background:var(--paper-2); color:var(--ink-soft); letter-spacing:0; }
 
-/* Tab Statistik di Lembar: tombol metode terpilih */
+/* Tab Statistik di Dataset: tombol metode terpilih */
 #view-metode-calc .sc-mb[aria-checked="true"]{ background:var(--accent-soft); border-color:var(--accent-2); }
 #view-metode-calc .sc-mb[aria-checked="true"] span{ color:var(--accent-2); }
 
-/* ---------- Hasil di dalam Lembar: panel kanan (desktop) / segmen Data | Hasil | Grafik (ponsel) ---------- */
+/* ---------- Hasil di dalam Dataset: panel kanan (desktop) / segmen Dataset | Hasil | Grafik (ponsel) ---------- */
 .sc-seg,.sc-res{ display:none; }
 .sc-res{ flex-direction:column; background:#F8FAFC; border:1px solid var(--rule); border-radius:10px; overflow:hidden; }
 .sc-res .sr-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:8px; padding:12px 14px 8px; background:#fff; }
@@ -492,7 +492,7 @@ html body #view-metode-calc .sc-msg.ok{ background:#E3F0E8; }
   .hm .pj-section .pj-actions #pjScp{ grid-column:1 / -1; min-height:44px; }
 }
 
-/* ===== Ponsel: kartu "Variabel yang dipakai" di Analisis (analisis-vars.js) ===== */
+/* ===== Ponsel: kartu "Variabel yang dipakai" di Stat (analisis-vars.js) ===== */
 .av-card{ display:none; }
 @media (max-width:1023.98px){
   .av-card{ display:block; background:var(--paper); border:1px solid var(--rule); border-radius:10px; padding:14px 16px; margin:0 0 16px; }

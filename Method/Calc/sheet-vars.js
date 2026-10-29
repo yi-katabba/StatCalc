@@ -70,7 +70,7 @@
     var order = id === 'scatter' ? xs.concat([y]) : [y].concat(xs);
     return { rows: rows.map(function (r) { return order.map(function (c) { return r[c] == null ? '' : r[c]; }); }), C: order.length };
   };
-  /* ringkasan peran untuk layar Analisis di ponsel (analisis-vars.js): Y, X, faktor (kolom kategorik pertama), n */
+  /* ringkasan peran untuk layar Stat di ponsel (analisis-vars.js): Y, X, faktor (kolom kategorik pertama), n */
   var listeners = [];
   window.StatCalcVars = {
     summary: function () {

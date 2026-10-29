@@ -3,7 +3,7 @@
    -------------------------------------------------------------------------
    Input: satu atau banyak variabel (satu kolom = satu variabel, panjang tiap
    kolom boleh berbeda; sel kosong diabaikan). Bisa diketik, ditempel dari
-   Excel, diunggah dari file, atau dikirim dari menu Calc.
+   Excel, diunggah dari file, atau dikirim dari menu Dataset.
    Hasil: tabel ringkasan, langkah perhitungan, dan interpretasi otomatis.
    Muat SETELAH Method/Shared/impor-data.js (memakai StatCalcImport.register).
    Halaman dibuat otomatis (#view-deskriptif).
@@ -128,7 +128,7 @@
       <section class="card step-card" id="ds-data-card">
         <div class="step-tag">Langkah 1</div>
         <h2>Masukkan data</h2>
-        <p class="hint">Setiap kolom adalah satu variabel; ubah nama variabel pada judul kolom. Panjang tiap kolom boleh berbeda (sel kosong diabaikan). Minimal <strong><span id="dsMin">2</span> data</strong> per variabel; maksimal ${MAX_VARS} variabel. Data bisa diketik, ditempel dari Excel, diunggah dari file, atau dikirim dari menu Calc.</p>
+        <p class="hint">Setiap kolom adalah satu variabel; ubah nama variabel pada judul kolom. Panjang tiap kolom boleh berbeda (sel kosong diabaikan). Minimal <strong><span id="dsMin">2</span> data</strong> per variabel; maksimal ${MAX_VARS} variabel. Data bisa diketik, ditempel dari Excel, diunggah dari file, atau dikirim dari menu Dataset.</p>
         <div class="table-scroll">
           <table class="data-table">
             <thead id="dsHead"></thead>

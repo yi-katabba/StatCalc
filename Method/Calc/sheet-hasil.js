@@ -1,10 +1,10 @@
 /* =========================================================================
    CALC > HASIL DI DALAM LEMBAR (Method/Calc/sheet-hasil.js)
    -------------------------------------------------------------------------
-   Hasil metode Stat tampil di panel kanan layar Lembar, bukan di halaman
+   Hasil metode Stat tampil di panel kanan layar Dataset, bukan di halaman
    metode terpisah:
    - Desktop (>= 1280px): panel kanan dengan tab Ringkasan | Tabel | Langkah | Grafik.
-   - Ponsel / tablet: segmen Data | Hasil di atas lembar.
+   - Ponsel / tablet: segmen Data | Hasil di atas Dataset.
    Cara kerja: sheet.js mengirim data ke halaman metode (tanpa berpindah halaman)
    dan menekan tombol hitungnya; modul ini menunggu hasil muncul di halaman metode
    lalu menyalin tampilannya ke panel. Interaksi lanjutan (pilihan uji asumsi,
@@ -41,8 +41,8 @@
 
   /* ------------------------------ kerangka panel ------------------------------ */
   var seg = document.createElement('div');
-  seg.className = 'sc-seg'; seg.setAttribute('role', 'tablist'); seg.setAttribute('aria-label', 'Tampilan Lembar');
-  seg.innerHTML = '<button type="button" role="tab" data-s="proyek" aria-selected="false" title="Proyek tersimpan, hasil dan grafik, serta daftar variabel">Proyek</button><button type="button" role="tab" data-s="data" aria-selected="true">Data</button><button type="button" role="tab" data-s="hasil" aria-selected="false">Hasil</button>';
+  seg.className = 'sc-seg'; seg.setAttribute('role', 'tablist'); seg.setAttribute('aria-label', 'Tampilan Dataset');
+  seg.innerHTML = '<button type="button" role="tab" data-s="proyek" aria-selected="false" title="Proyek tersimpan, hasil dan grafik, serta daftar variabel">Proyek</button><button type="button" role="tab" data-s="data" aria-selected="true">Dataset</button><button type="button" role="tab" data-s="hasil" aria-selected="false">Hasil</button>';
   var head = $('.chapter-head', host);
   if (head && head.nextSibling) host.insertBefore(seg, head.nextSibling); else host.insertBefore(seg, host.firstChild);
   host.setAttribute('data-seg', 'data');
@@ -114,11 +114,11 @@
   }
   function paint() {
     if (state.status === 'loading') { body.innerHTML = '<p class="sr-msg">Menghitung…</p>'; return; }
-    if (state.status === 'error') { body.innerHTML = '<p class="sr-msg err" role="alert">' + esc(state.error || 'Analisis gagal dijalankan.') + '</p><p class="sr-msg">Periksa data di Lembar, atau buka halaman lengkap untuk mengatur parameter metode.</p>'; return; }
+    if (state.status === 'error') { body.innerHTML = '<p class="sr-msg err" role="alert">' + esc(state.error || 'Analisis gagal dijalankan.') + '</p><p class="sr-msg">Periksa data di Dataset, atau buka halaman lengkap untuk mengatur parameter metode.</p>'; return; }
     var h = state.parts && state.parts[state.tab];
     body.innerHTML = h || '<p class="sr-msg">Tidak ada isi untuk tab ini pada metode ' + esc(M[state.id] ? M[state.id].title : '') + '.</p>';
   }
-  /* Hasil muncul di kanan ATAS: gulir halaman ke atas agar panel sejajar dengan bagian atas lembar
+  /* Hasil muncul di kanan ATAS: gulir halaman ke atas agar panel sejajar dengan bagian atas Dataset
      (halaman bisa sedang tergulir ke bawah) */
   function toTop() {
     try {
@@ -198,7 +198,7 @@
   function dims() {
     try { var b = sh.usedBounds(); return Math.max(0, b.R - (sh.state.header ? 1 : 0)); } catch (e) { return 0; }
   }
-  function sub(id) { return 'n = ' + dims() + ' · dari data Lembar'; }
+  function sub(id) { return 'n = ' + dims() + ' · dari data Dataset'; }
 
   function record(id, parts) {
     var n = 1; results.forEach(function (r) { if (r.id === id && r.n >= n) n = r.n + 1; });

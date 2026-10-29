@@ -1,5 +1,5 @@
-/* Panel Proyek (desktop): daftar isi proyek aktif di kiri layar Lembar, mengikuti rancangan:
-   "Lembar 1", "Hasil: Regresi 1", "Grafik: Pencar 1". Mengetuk butir membuka isinya.
+/* Panel Proyek (desktop): daftar isi proyek aktif di kiri layar Dataset, mengikuti rancangan:
+   "Dataset 1", "Hasil: Regresi 1", "Grafik: Pencar 1". Mengetuk butir membuka isinya.
    Juga mendaftarkan hasil dan grafik ke penyimpanan proyek (statcalc.proj.x.<id>) dan berkas .scp.
    Dimuat SETELAH projects.js. Bergantung pada StatCalcProjects, StatCalcHasil, StatCalcGraph. */
 (function () {
@@ -17,10 +17,10 @@
   function render() {
     var hs = H.list(), gs = G.list(), hc = H.current(), gc = G.selected(), nm = ($('scFname') && $('scFname').value.trim()) || '';
     var html = '<div class="pp-head"><span class="sv-k">Proyek</span></div>' +
-      '<div class="pp-act"><button type="button" class="pp-b" data-a="save" title="Simpan proyek ke berkas .scp (Lembar, hasil, dan grafik)">Simpan .scp</button>' +
+      '<div class="pp-act"><button type="button" class="pp-b" data-a="save" title="Simpan proyek ke berkas .scp (Dataset, hasil, dan grafik)">Simpan .scp</button>' +
       '<button type="button" class="pp-b" data-a="open" title="Buka berkas proyek .scp">Buka .scp</button></div>';
     if (nm) html += '<div class="pp-file" title="' + esc(nm) + '.scp">' + esc(nm) + '.scp</div>';
-    html += row('sheet', 'sheet', 'Lembar 1', !hc && !gc, false);
+    html += row('sheet', 'sheet', 'Dataset 1', !hc && !gc, false);
     hs.forEach(function (h) { html += row('h', h.uid, 'Hasil: ' + h.name, hc === h.uid && !gc, true); });
     gs.forEach(function (g) { html += row('g', g.uid, 'Grafik: ' + g.name, gc === g.uid, true, g.err ? 'Grafik ini gagal digambar dari data saat ini' : ''); });
     if (!hs.length && !gs.length) html += '<div class="pp-empty">Hasil analisis dan grafik yang Anda buat tampil di sini dan ikut tersimpan di proyek.</div>';

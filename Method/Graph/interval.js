@@ -1,5 +1,5 @@
 /* Interval Plot - rata-rata + selang kepercayaan (atau ±SE / ±SD) per variabel (kolom = variabel) atau per kelompok.
-   Mengikuti pola boxplot.js. Dipakai di halaman Graph dan tab Grafik di Calc (lewat GraphCore.render). */
+   Mengikuti pola boxplot.js. Dipakai di halaman Graph dan tab Grafik di Dataset (lewat GraphCore.render). */
 (function () {
   'use strict';
   const u = GraphCore.u;

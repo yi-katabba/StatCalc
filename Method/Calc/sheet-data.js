@@ -164,7 +164,7 @@
   function bounds() { return { f: SH.firstDataRow(), last: SH.lastDataRow(), C: SH.usedBounds().C }; }
   function need() {
     const b = bounds();
-    if (b.last < b.f || b.C < 1) { err('Belum ada baris data pada lembar kerja. Impor atau ketik data terlebih dahulu.'); return null; }
+    if (b.last < b.f || b.C < 1) { err('Belum ada baris data pada Dataset. Impor atau ketik data terlebih dahulu.'); return null; }
     return b;
   }
   function selCols(b) {
@@ -569,7 +569,7 @@
     const dName = key === 'other' ? `“${d}”` : DELIMS.find((x) => x[0] === key)[2].replace(/ \(.*\)/, '').toLowerCase();
     if (n < 2) { err(`Tidak ditemukan pemisah ${dName} pada ${colLabel(c).split(' - ')[0].toLowerCase()}. Pilih pemisah lain.`); return; }
     const add = n - 1;
-    if (b.C + add > A.MAX_C) { err(`Butuh ${add} kolom baru, tetapi lembar hanya memuat ${A.MAX_C} kolom (terpakai ${b.C}).`); return; }
+    if (b.C + add > A.MAX_C) { err(`Butuh ${add} kolom baru, tetapi Dataset hanya memuat ${A.MAX_C} kolom (terpakai ${b.C}).`); return; }
     A.pushUndo();
     insertColsRaw(c + 1, add);
     const base = S.header && SH.raw(0, c).charAt(0) !== '=' && SH.raw(0, c).trim() ? SH.raw(0, c).trim() : colName(c);

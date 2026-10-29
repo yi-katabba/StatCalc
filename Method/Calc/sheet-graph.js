@@ -2,14 +2,14 @@
    CALC > TAB GRAFIK (Method/Calc/sheet-graph.js)
    -------------------------------------------------------------------------
    Menambah tab "Grafik" di pita Calc: grafik digambar langsung dari data
-   lembar kerja (tanpa pindah ke menu Graph).
+   Dataset (tanpa pindah ke menu Graph).
 
    - Ikon tiap grafik di tab Grafik. Klik ikon -> grafik dibuat dari seleksi sel
      (satu sel terpilih = seluruh tabel). Grafik yang butuh label (Bar, Pie,
      Time Series, Boxplot Kelompok) menanyakan dulu kolom label & nilainya.
-   - Tampilan "Di dalam lembar kerja": grafik melayang di atas sel, bisa diseret
+   - Tampilan "Di dalam Dataset": grafik melayang di atas sel, bisa diseret
      dan diubah ukurannya (8 pegangan; sentuh pun bisa).
-   - Tampilan "Di luar lembar kerja": grafik di panel hasil di kanan lembar (desktop) atau di segmen
+   - Tampilan "Di luar Dataset": grafik di panel hasil di kanan Dataset (desktop) atau di segmen
      Hasil (ponsel),
      lengkap dengan tombol Unduh PNG / SVG dan ringkasan.
    - Klik sebuah grafik -> muncul tab "Edit Grafik": data (kolom, baris), teks,
@@ -239,10 +239,10 @@
     return { cols: map, ok: info.columns.every((d, j) => d.optional || map[j] >= 0) };
   }
 
-  /* Baca data grafik dari lembar kerja */
+  /* Baca data grafik dari Dataset */
   function getData(ch, info) {
     const first = SH.firstDataRow(), last = SH.lastDataRow();
-    if (last < first) throw new Error('Lembar kerja belum berisi data.');
+    if (last < first) throw new Error('Dataset belum berisi data.');
     const a = Math.max(first, ch.r1 ? ch.r1 - 1 : first), b = Math.min(last, ch.r2 ? ch.r2 - 1 : last);
     if (a > b) throw new Error('Rentang baris kosong. Periksa isian \u201CDari baris\u201D dan \u201CSampai baris\u201D.');
     const rd = (r, c) => {
@@ -383,7 +383,7 @@
       select(ch.uid, true);
       try { el.focus({ preventScroll: true }); } catch (err) { /* abaikan */ }
       const hd = e.target.closest('.sg-h');
-      const zf = elScroll.offsetWidth ? elScroll.getBoundingClientRect().width / elScroll.offsetWidth : 1;   // skala zoom lembar
+      const zf = elScroll.offsetWidth ? elScroll.getBoundingClientRect().width / elScroll.offsetWidth : 1;   // skala zoom Dataset
       const st = { px: e.clientX, py: e.clientY, x: ch.x, y: ch.y, w: ch.w, h: ch.h, hd: hd ? hd.dataset.h : '', z: zf || 1 };
       try { el.setPointerCapture(e.pointerId); } catch (err) { /* abaikan */ }
       el.classList.add('drag');
@@ -421,9 +421,9 @@
     });
   }
 
-  /* --------------------------- Grafik di bawah lembar ------------------------ */
+  /* --------------------------- Grafik di bawah Dataset ------------------------ */
   function dlName(ch) { return ((($('#scFname', section) || {}).value || 'data-calc').trim() || 'data-calc').replace(/[\\/:*?"<>|]+/g, '_') + '-' + ch.key; }
-  /* grafik di luar lembar yang diciutkan (disimpan per grafik agar tidak hilang saat daftar dibangun ulang) */
+  /* grafik di luar Dataset yang diciutkan (disimpan per grafik agar tidak hilang saat daftar dibangun ulang) */
   const minSet = new Set();
   function minUi(t, on) {
     if (!t) return;
@@ -520,7 +520,7 @@
       const t0 = elScroll.getBoundingClientRect().top;
       SH.showTab('editgrafik');
       const dy = elScroll.getBoundingClientRect().top - t0, se = document.scrollingElement;
-      if (dy && se && se.scrollTop > 0) window.scrollBy(0, dy);   // jaga posisi lembar bila tinggi pita berubah
+      if (dy && se && se.scrollTop > 0) window.scrollBy(0, dy);   // jaga posisi Dataset bila tinggi pita berubah
     }
   }
   function deselect() {
@@ -575,7 +575,7 @@
     else rolesOf(ch.gid, 'long').forEach((r, j) => df.push(fld(esc(r.l), selH('map:' + j, ch.cols[j], colOptions(info.columns[j].optional ? (r.none || '(tidak ada)') : null)))));
     df.push(fld('Dari baris', inH('r1', ch.r1, 'otomatis')));
     df.push(fld('Sampai baris', inH('r2', ch.r2, 'otomatis')));
-    h += grp('Data', grid(df, df.length > 4 ? 3 : 2) + rbH('usesel', 'sel', 'Pakai seleksi', 'Ambil kolom & baris dari sel yang sedang dipilih di lembar kerja'));
+    h += grp('Data', grid(df, df.length > 4 ? 3 : 2) + rbH('usesel', 'sel', 'Pakai seleksi', 'Ambil kolom & baris dari sel yang sedang dipilih di Dataset'));
 
     /* Teks */
     const tf = [fld('Judul grafik', inH('opt:title', o.title, info.title))];
@@ -608,7 +608,7 @@
     if (GS.grid) h += grp('Garis kisi', grid([chkH('st:h', st.h, 'Garis horizontal'), chkH('st:v', st.v, 'Garis vertikal'), colH('st:gc', st.gc, 'Warna garis kisi')], 2));
 
     /* Tampilan */
-    const pf = [fld('Tampilkan grafik', selH('place', ch.place, [['above', 'Di dalam lembar kerja'], ['below', 'Di luar lembar kerja (bisa diunduh)']]))];
+    const pf = [fld('Tampilkan grafik', selH('place', ch.place, [['above', 'Di dalam Dataset'], ['below', 'Di luar Dataset (bisa diunduh)']]))];
     if (ch.place === 'above') pf.push(chkH('lock', ch.lock, 'Kunci rasio ukuran'));
     h += grp('Tampilan', grid(pf, 1));
     h += grp('Grafik', rbH('dup', 'copy', 'Duplikat', 'Gandakan grafik ini') + rbH('del', 'trash', 'Hapus', 'Hapus grafik ini', 'danger') + rbH('close', 'done', 'Selesai', 'Tutup tab Edit Grafik'));
@@ -674,7 +674,7 @@
       charts.push(c2); compute(c2); if (c2.place === 'above') clampPos(c2);
       mountAll(c2); select(c2.uid, true); gNotify();
     } else if (a === 'usesel') {
-      const ctx = analyze(); if (!ctx) { msg('err', 'Lembar kerja masih kosong.', 5000); return; }
+      const ctx = analyze(); if (!ctx) { msg('err', 'Dataset masih kosong.', 5000); return; }
       const g = guess(ch.gid, ch.mode, ctx);
       if (!g.ok) { msg('err', 'Seleksi saat ini tidak memuat kolom yang cocok untuk grafik ini. Pilih sel yang berisi data lalu coba lagi.', 6000); return; }
       if (g.cols) ch.cols = g.cols; if (g.vcols) ch.vcols = g.vcols;
@@ -711,7 +711,7 @@
 
   function insert(entry) {
     const ctx = analyze();
-    if (!ctx) { msg('err', 'Lembar kerja masih kosong. Isi atau impor data terlebih dahulu, lalu pilih grafik.', 6000); return; }
+    if (!ctx) { msg('err', 'Dataset masih kosong. Isi atau impor data terlebih dahulu, lalu pilih grafik.', 6000); return; }
     if (!ctx.cols.some((c) => c.numeric)) { msg('err', 'Tidak ditemukan kolom angka pada data / seleksi. Grafik membutuhkan minimal satu kolom angka.', 6000); return; }
     const mode = entry.mode === 'wide' ? 'wide' : 'long', g = guess(entry.gid, mode, ctx);
     if (mode === 'long' && (entry.dialog || !g.ok)) { openDialog(entry, g, ctx); return; }
@@ -775,7 +775,7 @@
     const groups = [];
     CATALOG.forEach((e) => { let g = groups.find((x) => x.l === e.group); if (!g) { g = { l: e.group, items: [] }; groups.push(g); } g.items.push(e); });
     insertBody.innerHTML = groups.map((g) => `<div class="sc-grp"><div class="sc-gbody">${g.items.map((e) => `<button type="button" class="sc-rb" data-g="${e.key}" title="${esc(e.tip)}" aria-label="${esc(e.tip)}">${svgI(e.key)}<span>${esc(e.label)}</span></button>`).join('')}</div><div class="sc-glabel">${esc(g.l)}</div></div>`).join('') +
-      `<div class="sc-grp"><div class="sc-gbody"><div class="sc-fld"><label for="sgPlace">Tampilkan grafik</label><select id="sgPlace" class="select-input" style="width:230px"><option value="above">Di dalam lembar kerja</option><option value="below">Di luar lembar kerja (bisa diunduh)</option></select></div></div><div class="sc-glabel">Tampilan</div></div>`;
+      `<div class="sc-grp"><div class="sc-gbody"><div class="sc-fld"><label for="sgPlace">Tampilkan grafik</label><select id="sgPlace" class="select-input" style="width:230px"><option value="above">Di dalam Dataset</option><option value="below">Di luar Dataset (bisa diunduh)</option></select></div></div><div class="sc-glabel">Tampilan</div></div>`;
     insertBody.addEventListener('click', (e) => {
       const b = e.target.closest('[data-g]'); if (!b) return;
       const en = entryOf(b.dataset.g); if (en) insert(en);
@@ -808,7 +808,7 @@
     }
   });
 
-  /* ------------- Ekspor .xlsx: grafik "di dalam lembar kerja" -> gambar PNG ------------- */
+  /* ------------- Ekspor .xlsx: grafik "di dalam Dataset" -> gambar PNG ------------- */
   /* Dipanggil tombol .xlsx di sheet.js. Tiap grafik melayang diubah jadi PNG lalu disisipkan
      ke berkas xlsx (xl/media + xl/drawings) pada sel yang sama dengan posisinya di layar. */
   const EMU = 9525;                                   // 1 piksel = 9525 EMU
@@ -943,7 +943,7 @@
           };
           if (!ch.cols.length) ch.cols = info.columns.map(() => -1);
           compute(ch);
-          /* lembar bisa sedang tersembunyi (ukuran 0): jangan menggeser posisi tersimpan */
+          /* Dataset bisa sedang tersembunyi (ukuran 0): jangan menggeser posisi tersimpan */
           if (ch.place === 'above') { if (!ch.w || !ch.h) initGeom(ch); else if (elInner.offsetWidth > 0) clampPos(ch); }
           charts.push(ch); mountAll(ch);
         } catch (e) { /* grafik yang rusak dilewati */ }

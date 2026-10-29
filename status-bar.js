@@ -31,7 +31,7 @@
     try { t = stats(); } catch (e) { t = null; }
     data.textContent = t && t.n > 0
       ? 'n = ' + t.n + ' \u00B7 ' + t.num + ' variabel numerik' + (t.cat ? ' \u00B7 ' + t.cat + ' kategorik' : '') + ' \u00B7 ' + t.miss + ' data hilang'
-      : 'Lembar kosong';
+      : 'Dataset kosong';
   }
   function updSoon() { clearTimeout(tm); tm = setTimeout(upd, 150); }
   upd();

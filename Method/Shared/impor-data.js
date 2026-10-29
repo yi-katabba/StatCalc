@@ -23,7 +23,7 @@
   const XLSX_URL = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
   const MAX_FILE_BYTES = 8 * 1024 * 1024;
   const MAX_ROWS = 2000;
-  const INSTANCES = {};   // card selector -> { ingest, wrap } (dipakai menu Calc untuk mengirim data)
+  const INSTANCES = {};   // card selector -> { ingest, wrap } (dipakai menu Dataset untuk mengirim data)
 
   /* Metode yang didukung. Tabel harus berisi <input> per sel data, dengan
      tombol tambah/hapus baris yang sudah ada di metode tersebut. */
@@ -399,7 +399,7 @@
   function send(cardSel, rows, source, opt) {
     const inst = INSTANCES[cardSel];
     if (!inst) return false;
-    inst.ingest(rows, source || 'lembar kerja Calc', opt);
+    inst.ingest(rows, source || 'Dataset', opt);
     try { inst.wrap.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* abaikan */ }
     return true;
   }

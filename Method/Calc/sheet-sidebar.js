@@ -1,9 +1,9 @@
 /* =========================================================================
-   SHEET-SIDEBAR.JS - Panel samping Lembar Calc bisa diciutkan (minimize)
+   SHEET-SIDEBAR.JS - Panel samping Dataset bisa diciutkan (minimize)
    -------------------------------------------------------------------------
    - Panel kiri (Proyek & Variabel) dan panel kanan (Hasil analisis) masing-
      masing punya tombol ‹ / › di bilah atasnya.
-   - Diciutkan = panel jadi rel sempit (44 px) dengan judul tegak; lembar
+   - Diciutkan = panel jadi rel sempit (44 px) dengan judul tegak; Dataset
      kerja di tengah otomatis melebar mengisi ruang (kiri, kanan, atau
      keduanya).
    - Dibuka lagi = lebar kembali persis seperti sebelum diciutkan (termasuk
@@ -57,7 +57,7 @@
 
   function relayout() {
     if (window.StatCalcCols && window.StatCalcCols.refresh) window.StatCalcCols.refresh();
-    /* beri tahu lembar kerja (virtual grid) bahwa lebarnya berubah */
+    /* beri tahu Dataset (virtual grid) bahwa lebarnya berubah */
     window.dispatchEvent(new Event('resize'));
   }
 
@@ -96,7 +96,7 @@
   var res = host.querySelector(':scope > .sc-res');
   var L = vars ? make('l', vars, 'Proyek & Variabel') : null;
   var R = res ? make('r', res, 'Hasil analisis') : null;
-  /* panel Grafik "di luar lembar kerja" menempati kolom kanan yang sama: ikut diciutkan bersama panel hasil */
+  /* panel Grafik "di luar Dataset" menempati kolom kanan yang sama: ikut diciutkan bersama panel hasil */
   var gres = host.querySelector(':scope > .sg-below');
   var G = null;
   if (gres) G = make('r', gres, 'Grafik');

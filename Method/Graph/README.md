@@ -98,7 +98,7 @@ Di `stat-charts.js`, ambil warna lewat `ST.c1` / `ST.c2` / `palAt(i)`, bukan kod
 
 ## Tab Grafik di Calc (`Method/Calc/sheet-graph.js`)
 
-Pita Calc punya tab **Grafik**: grafik digambar langsung dari data lembar kerja lewat `GraphCore.render()`,
+Pita Calc punya tab **Grafik**: grafik digambar langsung dari data Dataset lewat `GraphCore.render()`,
 tanpa membuka halaman Graph. Dimuat **setelah** `Method/Calc/sheet.js`.
 
 - `GraphCore.info(id)`, `GraphCore.defaults(id)`, `GraphCore.render(id, data, opsi, gaya)` adalah API-nya
@@ -106,8 +106,8 @@ tanpa membuka halaman Graph. Dimuat **setelah** `Method/Calc/sheet.js`.
   tinggal menambah entri di `CATALOG` (dan ikon di `ICON`) pada `sheet-graph.js`.
 - Peran kolom (label, nilai, X, Y) dibaca dari `columns` tiap grafik. Entri katalog berflag `dialog: true`
   (Bar, Pie, Time Series, Boxplot Kelompok) menanyakan kolom label dulu sebelum grafik dibuat.
-- Tampilan **di dalam lembar kerja**: melayang di atas sel, bisa diseret dan diubah ukurannya. **Di luar lembar kerja**:
-  panel di kanan lembar (segmen Hasil di ponsel) dengan tombol Unduh PNG / SVG dan ringkasan.
+- Tampilan **di dalam Dataset**: melayang di atas sel, bisa diseret dan diubah ukurannya. **Di luar Dataset**:
+  panel di kanan Dataset (segmen Hasil di ponsel) dengan tombol Unduh PNG / SVG dan ringkasan.
 - Klik grafik membuka tab **Edit Grafik** (data, teks, opsi, warna, garis kisi, tampilan).
 - `StatCalcSheet` menyediakan kait `onChange` dan `onStructure` agar grafik ikut berubah saat data diedit
   atau kolom/baris disisip dan dihapus.

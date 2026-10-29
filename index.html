@@ -1302,7 +1302,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
   .calc-btn{ min-height:62px; }
 }
 </style>
-<link rel="stylesheet" href="statcalc-theme.css?v=32">
+<link rel="stylesheet" href="statcalc-theme.css?v=34">
 <link rel="stylesheet" href="Method/Materi/katex/katex.min.css">
 </head>
 <body class="pre-auth">
@@ -1387,7 +1387,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
     </div>
     <aside class="hm-side">
       <section class="hm-sec" aria-labelledby="hmLearnH">
-        <div class="hm-lab"><h2 id="hmLearnH">Lanjutkan belajar</h2></div>
+        <div class="hm-lab"><h2 id="hmLearnH">Lanjutkan belajar</h2><button type="button" class="hm-link" data-nav="materi">Semua materi &rsaquo;</button></div>
         <div class="hm-learn" id="hmLearn"></div>
       </section>
       <section class="hm-sec hm-quick" aria-labelledby="hmQuickH">
@@ -1407,13 +1407,13 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
   <section class="cover">
     <span class="eyebrow">Kalkulator Statistik</span>
     <h1>Pilih Metode</h1>
-    <p class="lede">Pilih kategori terlebih dahulu: <strong>Calc</strong> untuk mengolah data seperti di Excel, <strong>Stat</strong> untuk perhitungan statistik, atau <strong>Graph</strong> untuk visualisasi data.</p>
+    <p class="lede">Pilih kategori terlebih dahulu: <strong>Dataset</strong> untuk mengolah data seperti di Excel, <strong>Stat</strong> untuk perhitungan statistik, atau <strong>Graph</strong> untuk visualisasi data.</p>
   </section>
 
   <div class="hub-grid" id="catGrid">
     <button type="button" class="hub-card" data-cat="metode-calc">
       <span class="hc-icon tone-gold" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M9.2 9.5v10M14.8 9.5v10M3.5 14.5h17"/></svg></span>
-      <div class="hc-title">Calc</div>
+      <div class="hc-title">Dataset</div>
       <div class="hc-desc">Impor data Excel, hitung seperti di Excel (log, akar, rumus bebas), lalu ekspor kembali.</div>
     </button>
     <button type="button" class="hub-card" data-cat="metode-stat">
@@ -2333,11 +2333,11 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 <!-- ===================== BOTTOM NAVIGATION ===================== -->
 <nav class="bottom-nav" id="bottomNav">
   <button type="button" class="nav-item active" data-tab="home"><svg viewBox="0 0 24 24"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9a1 1 0 0 0 1 1h3v-5h4v5h3a1 1 0 0 0 1-1v-9"/></svg><span>Beranda</span></button>
-  <button type="button" class="nav-item" data-tab="metode-calc"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 10h17M10 4.5v15"/></svg><span class="m-l">Lembar</span><span class="d-l">Data</span></button>
-  <button type="button" class="nav-item" data-tab="metode-stat"><svg viewBox="0 0 24 24"><path d="M4 4v16h16M7 16l4-5 3 2 5-7"/></svg><span class="m-l">Analisis</span><span class="d-l">Stat</span></button>
-  <button type="button" class="nav-item desk-only" data-tab="metode-graph"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 15l3-4 2 2 3-5"/></svg><span>Grafik</span></button>
-  <button type="button" class="nav-item" data-tab="materi"><svg viewBox="0 0 24 24"><path d="M12 6.5C10.3 5.2 8 4.5 4.5 4.5v13c3.5 0 5.8.7 7.5 2 1.7-1.3 4-2 7.5-2v-13c-3.5 0-5.8.7-7.5 2ZM12 6.5v13"/></svg><span>Materi</span></button>
-  <button type="button" class="nav-item" data-tab="kalkulator"><svg viewBox="0 0 24 24"><rect x="5" y="2.5" width="14" height="19" rx="2.4"/><path d="M8 7h8M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01"/></svg><span class="m-l">Hitung</span><span class="d-l">Fungsi</span></button>
+  <button type="button" class="nav-item" data-tab="metode-calc"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 10h17M10 4.5v15"/></svg><span>Dataset</span></button>
+  <button type="button" class="nav-item" data-tab="metode-stat"><svg viewBox="0 0 24 24"><path d="M4 4v16h16M7 16l4-5 3 2 5-7"/></svg><span>Stat</span></button>
+  <button type="button" class="nav-item" data-tab="metode-graph"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 15l3-4 2 2 3-5"/></svg><span>Grafik</span></button>
+  <button type="button" class="nav-item desk-only" data-tab="materi"><svg viewBox="0 0 24 24"><path d="M12 6.5C10.3 5.2 8 4.5 4.5 4.5v13c3.5 0 5.8.7 7.5 2 1.7-1.3 4-2 7.5-2v-13c-3.5 0-5.8.7-7.5 2ZM12 6.5v13"/></svg><span>Materi</span></button>
+  <button type="button" class="nav-item desk-only" data-tab="kalkulator"><svg viewBox="0 0 24 24"><rect x="5" y="2.5" width="14" height="19" rx="2.4"/><path d="M8 7h8M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01"/></svg><span>Fungsi</span></button>
   <span class="nav-proj" id="navProj" hidden></span>
 </nav>
 
@@ -2560,7 +2560,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
     materi: 'view-materi', 'materi-detail': 'view-materi-detail',
   };
   const PAGE_TITLES = {
-    profil: 'Profil', metode: 'Pilih Metode', 'metode-calc': 'Lembar', 'metode-stat': 'Metode Stat', 'metode-graph': 'Metode Graph', tentang: 'Tentang StatCalc',
+    profil: 'Profil', metode: 'Pilih Metode', 'metode-calc': 'Dataset', 'metode-stat': 'Metode Stat', 'metode-graph': 'Metode Graph', tentang: 'Tentang StatCalc',
     matriks: 'Kalkulator Matriks', kalkulator: 'Kalkulator Ilmiah', petunjuk: 'Petunjuk', materi: 'Materi Statistik',
   };
   let backTarget = 'home';
@@ -2959,7 +2959,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 
 <!-- ===================== METODE: RESPONSE SURFACE METHODOLOGY (inti hitung di Method/Stat/rsm-core.js, UI di Method/Stat/rsm.js; mandiri) ===================== -->
 <script src="Method/Stat/rsm-core.js"></script>
-<script src="Method/Stat/rsm.js?v=25"></script>
+<script src="Method/Stat/rsm.js?v=26"></script>
 
 <!-- ===================== METODE: UJI STASIONERITAS / Box-Cox + ADF/PP/KPSS (logika di Method/Stat/stasioner.js; butuh regresi.js) ===================== -->
 <script src="Method/Stat/stasioner.js"></script>
@@ -2968,14 +2968,14 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 <script src="Method/Stat/arima.js"></script>
 
 <!-- ===================== IMPOR DATA: tempel dari Excel & unggah file (Method/Shared/impor-data.js; dipakai Stat & Graph; muat SETELAH semua file Method/Stat/, SEBELUM file Method/Graph/) ===================== -->
-<script src="Method/Shared/impor-data.js?v=2"></script>
+<script src="Method/Shared/impor-data.js?v=3"></script>
 
 <!-- ===================== METODE: STATISTIKA DESKRIPTIF (Method/Stat/deskriptif.js; muat SETELAH impor-data.js; membuat #view-deskriptif sendiri) ===================== -->
 <script src="Method/Stat/deskriptif.js"></script>
 <script src="Method/Shared/stat-layout.js"></script>
 
 <!-- ===================== METODE GRAPH (logika di Method/Graph/; graph-core.js HARUS dimuat paling awal, setelah impor-data.js) ===================== -->
-<script src="Method/Graph/graph-core.js?v=2"></script>
+<script src="Method/Graph/graph-core.js?v=3"></script>
 <script src="Method/Graph/scatter.js"></script>
 <script src="Method/Graph/histogram.js"></script>
 <script src="Method/Graph/probplot.js"></script>
@@ -2986,17 +2986,17 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 <script src="Method/Graph/piechart.js"></script>
 <script src="Method/Graph/timeseries.js"></script>
 
-<!-- ===================== METODE CALC: lembar kerja ala Excel (Method/Calc/sheet.js; membuat #view-metode-calc sendiri) ===================== -->
-<script src="Method/Calc/sheet.js?v=25"></script>
-<script src="Method/Calc/sheet-graph.js?v=27"></script>
-<script src="Method/Calc/sheet-hasil.js?v=25"></script>
+<!-- ===================== METODE CALC: Dataset ala Excel (Method/Calc/sheet.js; membuat #view-metode-calc sendiri) ===================== -->
+<script src="Method/Calc/sheet.js?v=26"></script>
+<script src="Method/Calc/sheet-graph.js?v=28"></script>
+<script src="Method/Calc/sheet-hasil.js?v=26"></script>
 <script src="Method/Calc/sheet-data.js"></script>
 <script src="Method/Calc/sheet-vars.js"></script>
 <script src="Method/Calc/sheet-sidebar.js?v=29"></script>
 <script src="Method/Calc/ribbon-menu.js?v=24"></script>
-<script src="analisis-vars.js?v=4"></script>
-<script src="Method/Shared/isi-lembar.js?v=5"></script>
-<script src="Method/Shared/geser-pita.js?v=1"></script>
+<script src="analisis-vars.js?v=5"></script>
+<script src="Method/Shared/isi-lembar.js?v=6"></script>
+<script src="Method/Shared/geser-pita.js?v=2"></script>
 <script src="status-bar.js"></script>
 <script src="projects.js"></script>
 <script src="project-panel.js"></script>

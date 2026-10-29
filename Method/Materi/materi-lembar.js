@@ -1,4 +1,4 @@
-/* "Coba di lembar" - kartu data contoh di halaman baca Materi; memuat data ke Lembar kerja Calc */
+/* "Coba di Dataset" - kartu data contoh di halaman baca Materi; memuat data ke Dataset */
 (function () {
   'use strict';
   var T = ['Hari', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
@@ -22,11 +22,11 @@
     var shown = d.rows.slice(0, 5), more = d.rows.length - 5;
     var card = document.createElement('section');
     card.className = 'mt-try';
-    card.innerHTML = '<h3>Coba di lembar</h3><p>Buka data contoh ini di lembar kerja, lalu jalankan analisisnya sendiri.</p>' +
+    card.innerHTML = '<h3>Coba di Dataset</h3><p>Buka data contoh ini di Dataset, lalu jalankan analisisnya sendiri.</p>' +
       '<div class="mt-try-tbl"><table><thead><tr>' + shown[0].map(function (h) { return '<th>' + esc(h) + '</th>'; }).join('') + '</tr></thead><tbody>' +
       shown.slice(1).map(function (r) { return '<tr>' + r.map(function (v) { return '<td>' + esc(v) + '</td>'; }).join('') + '</tr>'; }).join('') +
       (more > 0 ? '<tr><td colspan="' + shown[0].length + '" class="more">\u2026 ' + (d.rows.length - 1) + ' baris</td></tr>' : '') + '</tbody></table></div>' +
-      '<button type="button" class="mt-try-go">Buka di Lembar</button>';
+      '<button type="button" class="mt-try-go">Buka di Dataset</button>';
     head.insertAdjacentElement('afterend', card);
     card.querySelector('.mt-try-go').addEventListener('click', function () {
       var S = window.StatCalcSheet, A = window.StatCalc;

@@ -10,7 +10,7 @@
     var s = localStorage.getItem(K_SEP); if (s === '.' || s === ',') st.sep = s;
   } catch (e) { /* penyimpanan tidak tersedia */ }
 
-  /* area yang dirapikan: hasil metode, bukan kalkulator / lembar / materi / rumus KaTeX */
+  /* area yang dirapikan: hasil metode, bukan kalkulator / Dataset / materi / rumus KaTeX */
   var SCOPE = '.equation-wrap,.table-scroll,.steps-wrap,.stat-card,.chart-wrap,.test-note,.rs-plot-wrap';
   var SKIP = '.katex,.calc-card,.calc-hist-card,.sc-main,.sc-quick,.sc-vars,.chapter-head,#view-materi-detail,#view-materi,#view-matriks,#view-kalkulator';
   var TOKEN = /(\d+)\.(\d+)(e[+-]?\d+)?/gi;

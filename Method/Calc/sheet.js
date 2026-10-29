@@ -1,5 +1,5 @@
 /* =========================================================================
-   CALC - lembar kerja ala Excel (Method > Calc)
+   CALC - Dataset ala Excel (Method > Calc)
    -------------------------------------------------------------------------
    - Impor data: tempel dari Excel / unggah .xlsx, .csv (memakai pustaka
      SheetJS yang sama dengan Method/Shared/impor-data.js).
@@ -10,7 +10,7 @@
    - Ekspor: .xlsx (rumus ikut tersimpan) dan .csv (nilai).
   - Seleksi rentang (seret mouse / Shift+klik / Shift+panah / klik kolom-baris / kotak nama),
     Salin-Potong-Tempel, Isi ke bawah-kanan, serta sisip & hapus baris/kolom di posisi sel
-    terpilih (rumus ikut menyesuaikan). Lembar digambar memenuhi lebar & tinggi area kerja.
+    terpilih (rumus ikut menyesuaikan). Dataset digambar memenuhi lebar & tinggi area kerja.
   - Tab Grafik / Edit Grafik: isinya dibuat oleh Method/Calc/sheet-graph.js (grafik langsung dari data sheet).
    Halaman dibuat otomatis (#view-metode-calc); tidak ada markup di index.html.
    ========================================================================= */
@@ -72,7 +72,7 @@
   let aggCache = new Map();
   const evaluating = new Set();
   const changeListeners = [];
-  function invalidate() { valCache = new Map(); aggCache = new Map(); changeListeners.forEach((fn) => { try { fn(); } catch (e) { /* pendengar tidak boleh mengganggu lembar */ } }); }
+  function invalidate() { valCache = new Map(); aggCache = new Map(); changeListeners.forEach((fn) => { try { fn(); } catch (e) { /* pendengar tidak boleh mengganggu Dataset */ } }); }
 
   /* Tokenizer + parser (recursive descent) */
   function tokenize(src) {
@@ -462,7 +462,7 @@
       #view-metode-calc .sc-scroll{ height:calc(clamp(340px,60vh,760px) / var(--scz,1)); }
     }
 
-    /* ---------------------- Zoom lembar kerja + pita ---------------------- */
+    /* ---------------------- Zoom Dataset + pita ---------------------- */
     #view-metode-calc .sc-zoomhost{ position:relative; overflow:hidden; }
     #view-metode-calc .sc-zoomer{ transform-origin:0 0; }
     #view-metode-calc .sc-zoomer .sc-body{ padding-bottom:10px; }
@@ -519,9 +519,9 @@
   section.innerHTML = `
     <div class="chapter-inner">
       <div class="chapter-head">
-        <span class="eyebrow">Metode &rsaquo; Calc</span>
-        <h1>Lembar Kerja Calc</h1>
-        <p class="lede">Impor, ubah, hitung, dan ekspor data seperti di Excel. Semua perintah ada di pita tab di atas lembar kerja.</p>
+        <span class="eyebrow">Metode &rsaquo; Dataset</span>
+        <h1>Dataset</h1>
+        <p class="lede">Impor, ubah, hitung, dan ekspor data seperti di Excel. Semua perintah ada di pita tab di atas Dataset.</p>
       </div>
 
       <section class="card sc-main">
@@ -685,7 +685,7 @@
                 ${mb('arima', 'ARIMA', 'ARIMA dan SARIMA', '<path d="M3 18l5-8 4 4 9-10M16 4h5v5"/>')}
               </div><div class="sc-glabel">Deret waktu</div></div>
               <div class="sc-grp last"><div class="sc-gbody" style="align-items:center">
-                ${rb('scSend', 'send', 'Jalankan analisis', 'Jalankan metode terpilih pada data lembar kerja', 'pri')}
+                ${rb('scSend', 'send', 'Jalankan analisis', 'Jalankan metode terpilih pada data Dataset', 'pri')}
               </div><div class="sc-glabel">Aksi</div></div>
             </div>
           </div>
@@ -719,11 +719,11 @@
           </div>
           <p class="sc-note" id="scInfo"></p>
           <div class="sc-tips">
-            <p class="sc-tip" data-tip="file">Tempel blok sel dari Excel, unggah .xlsx / .csv, atau buat tabel baru lalu isi langsung di lembar kerja.</p>
+            <p class="sc-tip" data-tip="file">Tempel blok sel dari Excel, unggah .xlsx / .csv, atau buat tabel baru lalu isi langsung di Dataset.</p>
             <p class="sc-tip" data-tip="edit" hidden>Pilih rentang dengan menyeret mouse, Shift+klik, Shift+panah, klik huruf kolom / nomor baris, atau ketik alamat (mis. A1:C10) di kotak nama. Delete mengosongkan rentang; Ctrl+C / X / V menyalin, memotong, menempel; Ctrl+D / R mengisi ke bawah / kanan. Awali dengan = untuk rumus.</p>
             <p class="sc-tip" data-tip="fungsi" hidden>Hasil berupa rumus yang diisi ke bawah, jadi ikut berubah bila data sumber diedit. Rumus bebas: tulis huruf kolom saja, mis. LOG10(A), (A-B)^2, IF(A&gt;100,A,0).</p>
-            <p class="sc-tip" data-tip="grafik" hidden>Pilih sel data (atau biarkan satu sel agar seluruh tabel dipakai), lalu klik ikon grafik. Grafik muncul di dalam lembar kerja (melayang di atas sel): seret untuk memindahkan, tarik pegangan di tepi/sudut untuk mengubah ukuran. Klik grafik untuk membuka tab <strong>Edit Grafik</strong> (data, label, warna, garis kisi, tampilan). Pilih <em>Di luar lembar kerja</em> bila ingin grafik tampil di panel kanan dan bisa diunduh PNG / SVG.</p>
-            <p class="sc-tip" data-tip="kirim" hidden>Data (termasuk kolom hasil rumus) dibawa ke metode terpilih; tombol kembali membawa Anda ke lembar ini dengan data utuh. ANOVA belum menerima data dari Calc: salin kolom lalu tempel ke tabel ANOVA.</p>
+            <p class="sc-tip" data-tip="grafik" hidden>Pilih sel data (atau biarkan satu sel agar seluruh tabel dipakai), lalu klik ikon grafik. Grafik muncul di dalam Dataset (melayang di atas sel): seret untuk memindahkan, tarik pegangan di tepi/sudut untuk mengubah ukuran. Klik grafik untuk membuka tab <strong>Edit Grafik</strong> (data, label, warna, garis kisi, tampilan). Pilih <em>Di luar Dataset</em> bila ingin grafik tampil di panel kanan dan bisa diunduh PNG / SVG.</p>
+            <p class="sc-tip" data-tip="kirim" hidden>Data (termasuk kolom hasil rumus) dibawa ke metode terpilih; tombol kembali membawa Anda ke Dataset ini dengan data utuh. ANOVA belum menerima data dari Dataset: salin kolom lalu tempel ke tabel ANOVA.</p>
           </div>
         </div>
       </section>
@@ -734,8 +734,8 @@
   const elScroll = q('scScroll'), elHead = q('scHead'), elInner = q('scInner'), elRows = q('scRows');
   const elName = q('scName'), elFx = q('scFx'), elInfo = q('scInfo');
 
-  /* ------------------- Zoom lembar kerja + pita (pojok kanan bawah) ------------------- */
-  // Pita, kotak rumus, dan lembar diskalakan bersama (transform) di dalam .sc-zoomer; bilah status zoom tidak ikut membesar.
+  /* ------------------- Zoom Dataset + pita (pojok kanan bawah) ------------------- */
+  // Pita, kotak rumus, dan Dataset diskalakan bersama (transform) di dalam .sc-zoomer; bilah status zoom tidak ikut membesar.
   const ZMIN = 50, ZMAX = 200, ZKEY = 'statcalc.calc.zoom';
   let zoomPct = 100;
   const zCard = $('.sc-main', section);
@@ -746,9 +746,9 @@
   zHost.appendChild(zBox);
   const zStatus = document.createElement('div'); zStatus.className = 'sc-status';
   zStatus.innerHTML = `
-    <div class="sc-zoom" role="group" aria-label="Zoom lembar kerja dan pita">
+    <div class="sc-zoom" role="group" aria-label="Zoom Dataset dan pita">
       <button type="button" class="sc-zb" id="scZoomOut" title="Perkecil" aria-label="Perkecil">&minus;</button>
-      <input type="range" class="sc-zr" id="scZoomRange" min="${ZMIN}" max="${ZMAX}" step="10" value="100" aria-label="Tingkat zoom" title="Geser untuk zoom (atau Ctrl + gulir di lembar)">
+      <input type="range" class="sc-zr" id="scZoomRange" min="${ZMIN}" max="${ZMAX}" step="10" value="100" aria-label="Tingkat zoom" title="Geser untuk zoom (atau Ctrl + gulir di Dataset)">
       <button type="button" class="sc-zb" id="scZoomIn" title="Perbesar" aria-label="Perbesar">+</button>
       <button type="button" class="sc-zp" id="scZoomPct" title="Klik untuk kembali ke 100%" aria-label="Kembalikan zoom ke 100 persen">100%</button>
     </div>`;
@@ -800,7 +800,7 @@
 
   /* ----------------------------- Render grid ------------------------------ */
   let rStart = -1, rEnd = -1, rafId = 0, prevMulti = false;
-  // Baris/kolom yang digambar minimal selebar & setinggi area lembar kerja, jadi tidak ada ruang kosong di kanan/bawah.
+  // Baris/kolom yang digambar minimal selebar & setinggi area Dataset, jadi tidak ada ruang kosong di kanan/bawah.
   function vC() { return Math.min(MAX_C, Math.max(S.C, Math.ceil((elScroll.clientWidth - GUT) / CW))); }
   function vR() { return Math.min(MAX_R, Math.max(S.R, Math.ceil((elScroll.clientHeight - 32) / RH))); }
   function totalW() { return GUT + vC() * CW; }
@@ -886,14 +886,14 @@
     if (keepScroll) { elScroll.scrollTop = st; elScroll.scrollLeft = sl; }
     updateInfo(); updateSelects(); updateSelUI(true);
   }
-  // Dipakai saat ukuran area berubah (jendela diubah / sidebar dibuka): isi ulang kolom & baris agar lembar tetap penuh.
+  // Dipakai saat ukuran area berubah (jendela diubah / sidebar dibuka): isi ulang kolom & baris agar Dataset tetap penuh.
   function refit() { layout(); buildHead(); renderRows(true); updateSelUI(true); }
   elScroll.addEventListener('scroll', () => { if (rafId) return; rafId = requestAnimationFrame(() => { rafId = 0; renderRows(false); }); });
 
   function updateInfo() {
     const last = lastDataRow(), ub = usedBounds();
     let extra = ''; try { extra = infoHook ? infoHook() : ''; } catch (e) { extra = ''; }
-    elInfo.textContent = (last < 0 ? `Lembar masih kosong. Batas lembar: ${MAX_R} baris × ${MAX_C} kolom.` : `Data terisi: ${last + 1} baris × ${ub.C} kolom. Batas lembar: ${MAX_R} baris × ${MAX_C} kolom.`) + extra;
+    elInfo.textContent = (last < 0 ? `Dataset masih kosong. Batas Dataset: ${MAX_R} baris × ${MAX_C} kolom.` : `Data terisi: ${last + 1} baris × ${ub.C} kolom. Batas Dataset: ${MAX_R} baris × ${MAX_C} kolom.`) + extra;
   }
   function updateUndoBtn() { q('scUndo').disabled = undoStack.length === 0; q('scRedo').disabled = redoStack.length === 0; }
 
@@ -1178,7 +1178,7 @@
     if (!grid.length) return;
     const w = Math.max.apply(null, grid.map((x) => x.length));
     const nR = r0 + grid.length, nC = c0 + w;
-    if (nR > MAX_R || nC > MAX_C) flash('scErr', `Data tempelan dipotong sesuai batas lembar (${MAX_R} baris × ${MAX_C} kolom).`, 6000);
+    if (nR > MAX_R || nC > MAX_C) flash('scErr', `Data tempelan dipotong sesuai batas Dataset (${MAX_R} baris × ${MAX_C} kolom).`, 6000);
     pushUndo();
     if (clearR) for (let r = clearR.r1; r <= clearR.r2; r++) for (let c = clearR.c1; c <= clearR.c2; c++) if (r < S.R && c < S.C) S.cells[r][c] = '';
     ensure(nR, nC);
@@ -1424,7 +1424,7 @@
     S.header = detectHeader(rows); q('scHeader').checked = S.header;
     sel.r = ext.r = 0; sel.c = ext.c = 0; invalidate(); fullRender(false); elScroll.scrollTop = 0; elScroll.scrollLeft = 0;
     hide('scErr');
-    flash('scOk', `Data dimuat: ${rows.length} baris × ${Math.min(maxC, MAX_C)} kolom.${S.header ? ' Baris 1 dikenali sebagai judul kolom.' : ''}${clipped ? ' (Sebagian data dipotong karena melebihi batas lembar.)' : ''}`, 9000);
+    flash('scOk', `Data dimuat: ${rows.length} baris × ${Math.min(maxC, MAX_C)} kolom.${S.header ? ' Baris 1 dikenali sebagai judul kolom.' : ''}${clipped ? ' (Sebagian data dipotong karena melebihi batas Dataset.)' : ''}`, 9000);
     void auto;
   }
   q('scPasteBtn').addEventListener('click', () => { const p = q('scPastePanel'); p.hidden = !p.hidden; if (!p.hidden) q('scPasteArea').focus(); });
@@ -1530,7 +1530,7 @@
   }
   function applyFormulas(dc, titleText, makeFormula) {
     const f = firstDataRow(), last = lastDataRow();
-    if (last < f) { return 'Belum ada data pada lembar kerja. Impor atau ketik data terlebih dahulu.'; }
+    if (last < f) { return 'Belum ada data pada Dataset. Impor atau ketik data terlebih dahulu.'; }
     if (dc < 0) return `Batas ${MAX_C} kolom tercapai.`;
     const overwrite = dc < S.C && (() => { for (let r = f; r <= last; r++) if (raw(r, dc) !== '') return true; return false; })();
     pushUndo();
@@ -1618,10 +1618,10 @@
   }
   $$('.sc-mb', section).forEach((b) => b.addEventListener('click', () => pickMethod(b.dataset.m)));
   pickMethod('regresi');
-  /* Kirim data ke halaman metode. silent = jangan pindah halaman (hasil ditampilkan di panel Hasil Lembar).
+  /* Kirim data ke halaman metode. silent = jangan pindah halaman (hasil ditampilkan di panel Hasil Dataset).
      Mengembalikan true bila data terkirim. */
   const CALC_BTN = { regresi: '#calcBtn', smoothing: '#smCalcBtn', anova: '#anCalcBtn', rsm: '#rsCalcBtn', stasioner: '#stCalcBtn', arima: '#arCalcBtn', deskriptif: '#dsCalc' };
-  /* fill = true: hanya MENGISI tabel halaman metode dari Lembar (tombol "Isi dari Lembar" di halaman metode / grafik);
+  /* fill = true: hanya MENGISI tabel halaman metode dari Dataset (tombol "Isi dari Dataset" di halaman metode / grafik);
      tanpa pindah halaman, tanpa menghitung. Pesan galat tampil di kartu data halaman itu. cardSel dipakai bila id bukan metode Stat (Graph). */
   function sendTo(id, silent, fill, cardSel) {
     hide('scErr4');
@@ -1640,7 +1640,7 @@
         if (opt && C < ins.length && C >= ins.length - opt) { const pad = ins.length - C; rows = rows.map((r) => r.concat(Array(pad).fill(''))); C = ins.length; }
       }
     }
-    if (rows.length <= first) { fail(fill ? 'Lembar kerja masih kosong. Isi atau impor data di Lembar terlebih dahulu.' : 'Belum ada data pada lembar kerja. Isi atau impor data terlebih dahulu.'); return false; }
+    if (rows.length <= first) { fail(fill ? 'Dataset masih kosong. Isi atau impor data di Dataset terlebih dahulu.' : 'Belum ada data pada Dataset. Isi atau impor data terlebih dahulu.'); return false; }
     if (!window.StatCalc || !window.StatCalcImport || !window.StatCalcImport.has(t.card) && !t.build) { fail('Halaman tujuan belum siap. Muat ulang halaman lalu coba lagi.'); return false; }
     // jumlah kolom angka -> jumlah variabel X untuk regresi
     let numCols = 0;
@@ -1653,13 +1653,13 @@
       else if (t.build && (!t.onlyIfHidden || $(t.card).hidden)) $(t.build).click();
     } catch (e) { /* tabel tujuan tetap bisa dibuat manual */ }
     setTimeout(() => {
-      const ok = window.StatCalcImport.send(t.card, rows, 'lembar kerja Calc', { hasHeader: S.header });
+      const ok = window.StatCalcImport.send(t.card, rows, 'Dataset', { hasHeader: S.header });
       if (fill) {
         if (!ok) { fail('Tabel tujuan belum tersedia. Selesaikan Langkah 1 pada halaman ini.'); return; }
         const ap = $(t.card + ' [data-act="apply"]');          /* langkah Terapkan ke Tabel otomatis */
         if (!ap) {                                            /* importer sudah menulis penyebab (mis. jumlah kolom kurang): jangan ditimpa */
           const er = $(t.card + ' [data-msg="err"]');
-          if (!(er && !er.hidden && er.textContent.trim())) fail('Data Lembar tidak dapat diterapkan ke tabel ini. Periksa jumlah kolom angka di Lembar.');
+          if (!(er && !er.hidden && er.textContent.trim())) fail('Data di Dataset tidak dapat diterapkan ke tabel ini. Periksa jumlah kolom angka di Dataset.');
           return;
         }
         ap.click();
@@ -1668,7 +1668,7 @@
       if (silent) {
         if (!ok) { window.StatCalcHasil.fail(id, 'Tabel tujuan belum tersedia. Buka halaman metode lalu selesaikan Langkah 1.'); return; }
         const ap = $(t.card + ' [data-act="apply"]');          /* langkah "Terapkan ke Tabel" otomatis */
-        if (!ap) { window.StatCalcHasil.fail(id, 'Data tidak dapat diterapkan ke tabel metode. Periksa jumlah kolom angka di Lembar.'); return; }
+        if (!ap) { window.StatCalcHasil.fail(id, 'Data tidak dapat diterapkan ke tabel metode. Periksa jumlah kolom angka di Dataset.'); return; }
         ap.click();
         const cb = $(CALC_BTN[id]); if (cb) cb.click();
         window.StatCalcHasil.collect(id);
@@ -1679,12 +1679,12 @@
   q('scTarget').addEventListener('change', () => pickMethod(q('scTarget').value));
   /* Ada data untuk dianalisis? (baris di bawah judul + minimal satu kolom terisi) */
   function hasData() { const b = usedBounds(); return b.C > 0 && b.R > (S.header ? 1 : 0); }
-  /* Pilih metode, buka tab Statistik, lalu jalankan: metode Stat menampilkan hasil di panel Hasil Lembar
-     (tanpa pindah halaman). Dipakai tombol "Jalankan analisis" dan kartu metode di layar Analisis. */
+  /* Pilih metode, buka tab Statistik, lalu jalankan: metode Stat menampilkan hasil di panel Hasil Dataset
+     (tanpa pindah halaman). Dipakai tombol "Jalankan analisis" dan kartu metode di layar Stat. */
   function runMethod(id) {
     if (!SEND[id]) return false;
     pickMethod(id); showTab('kirim');
-    if (!hasData()) { flash('scErr4', 'Belum ada data pada lembar kerja. Isi atau impor data terlebih dahulu.', 6000); return false; }
+    if (!hasData()) { flash('scErr4', 'Belum ada data pada Dataset. Isi atau impor data terlebih dahulu.', 6000); return false; }
     if (CALC_BTN[id] && window.StatCalcHasil) { window.StatCalcHasil.start(id); return sendTo(id, true); }
     return sendTo(id, false);
   }
@@ -1706,7 +1706,7 @@
   q('scCsv').addEventListener('click', () => {
     hide('scErr3');
     const b = usedBounds();
-    if (!b.R) { flash('scErr3', 'Lembar kerja masih kosong.', 5000); return; }
+    if (!b.R) { flash('scErr3', 'Dataset masih kosong.', 5000); return; }
     const out = [];
     for (let r = 0; r < b.R; r++) {
       const row = [];
@@ -1723,7 +1723,7 @@
   q('scXlsx').addEventListener('click', async () => {
     hide('scErr3');
     const b = usedBounds();
-    if (!b.R) { flash('scErr3', 'Lembar kerja masih kosong.', 5000); return; }
+    if (!b.R) { flash('scErr3', 'Dataset masih kosong.', 5000); return; }
     try {
       const X = await loadXLSX();
       const ws = {};
@@ -1743,7 +1743,7 @@
       const wb = X.utils.book_new();
       X.utils.book_append_sheet(wb, ws, 'Data');
       let out = X.write(wb, { bookType: 'xlsx', type: 'array' });
-      /* grafik "di dalam lembar kerja" ikut tersimpan sebagai gambar PNG (sheet-graph.js) */
+      /* grafik "di dalam Dataset" ikut tersimpan sebagai gambar PNG (sheet-graph.js) */
       if (window.StatCalcGraph && window.StatCalcGraph.embedInXlsx) {
         try { out = await window.StatCalcGraph.embedInXlsx(X, out); } catch (e) { /* tetap unduh data tanpa gambar */ }
       }
@@ -1769,9 +1769,9 @@
     firstDataRow, showTab, onChange: (fn) => { changeListeners.push(fn); }, onStructure: (fn) => { structureListeners.push(fn); },
     /* dipakai Method/Calc/sheet-data.js (tab Data) */
     api: {
-      /* dipakai analisis-vars.js (layar Analisis): pilih / jalankan metode dari luar Lembar */
+      /* dipakai analisis-vars.js (layar Stat): pilih / jalankan metode dari luar Dataset */
       hasData, runMethod, pickMethod,
-      /* dipakai Method/Shared/isi-lembar.js: isi tabel halaman metode / grafik dari Lembar */
+      /* dipakai Method/Shared/isi-lembar.js: isi tabel halaman metode / grafik dari Dataset */
       fillFromSheet: (id, cardSel) => sendTo(id, true, true, cardSel), getMethod: () => q('scTarget').value,
       canRun: (id) => !!(SEND[id] && CALC_BTN[id]),
       methodList: () => Object.keys(SEND).map((id) => ({ id, title: SEND[id].title })),
@@ -1780,7 +1780,7 @@
       sendTo, MAX_R, MAX_C, ensure, pushUndo, invalidate, fullRender, flash, hide, normalizeInput,
       shiftFormula, adjustFormula, adjustAll,
       registerState: (get, set) => { extraGet = get; extraSet = set; },
-      /* dipakai projects.js: simpan/buka proyek (isi lembar + status ekstra seperti filter) */
+      /* dipakai projects.js: simpan/buka proyek (isi Dataset + status ekstra seperti filter) */
       exportState: () => snapshot(),
       importState: (js, name) => { undoStack = []; redoStack = []; resetExtra(); applySnapshot(js); if (name != null) q('scFname').value = name; updateUndoBtn(); },
       blankState: () => JSON.stringify({ R: 20, C: 6, header: true, cells: emptyCells(20, 6) }),

@@ -2,10 +2,10 @@
    ISI DARI LEMBAR (Method/Shared/isi-lembar.js)
    -------------------------------------------------------------------------
    Di tiap halaman metode Stat dan Graph, tombol "Isi contoh data" kini ditemani
-   tombol "Isi dari Lembar". Tombol ini memuat data Lembar kerja ke tabel input
-   halaman itu (tanpa menghitung dan tanpa pindah halaman). Bila Lembar kosong,
+   tombol "Isi dari Dataset". Tombol ini memuat data Dataset ke tabel input
+   halaman itu (tanpa menghitung dan tanpa pindah halaman). Bila Dataset kosong,
    muncul peringatan di kartu data dan sebagai toast.
-   Peran X / Y dari panel Variabel Lembar ikut dipakai (Regresi, RSM, Scatter).
+   Peran X / Y dari panel Variabel Dataset ikut dipakai (Regresi, RSM, Scatter).
    Dimuat SETELAH Method/Calc/sheet.js, Method/Shared/impor-data.js, dan semua
    modul metode / grafik (tombol dicari di kartu data yang sudah terdaftar).
    ========================================================================= */
@@ -13,10 +13,10 @@
   'use strict';
   var IMP = window.StatCalcImport, SH = window.StatCalcSheet;
   if (!IMP || !IMP.cards || !SH || !SH.api || !SH.api.fillFromSheet) return;
-  var EMPTY = 'Lembar kerja masih kosong. Isi atau impor data di Lembar terlebih dahulu, lalu coba lagi.';
+  var EMPTY = 'Dataset masih kosong. Isi atau impor data di Dataset terlebih dahulu, lalu coba lagi.';
   function toast(m) { if (window.StatCalc && window.StatCalc.showToast) window.StatCalc.showToast(m); }
 
-  /* ---- Satu baris tombol ikon: Tempel dari Excel, Unggah file, Isi contoh data, Isi dari Lembar ---- */
+  /* ---- Satu baris tombol ikon: Tempel dari Excel, Unggah file, Isi contoh data, Isi dari Dataset ---- */
   var ICON = {
     paste: '<rect x="8" y="3" width="8" height="4" rx="1"/><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/><path d="M8 12h8M8 16h8"/>',
     upload: '<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>',
@@ -54,7 +54,7 @@
       holders.push(sb.parentNode);
       setBtn(sb, 'sample', txt); bar.appendChild(sb);
     });
-    setBtn(fillBtn, 'sheet', 'Isi dari Lembar'); holders.push(fillBtn.parentNode); bar.appendChild(fillBtn);
+    setBtn(fillBtn, 'sheet', 'Isi dari Dataset'); holders.push(fillBtn.parentNode); bar.appendChild(fillBtn);
     var all = bar.querySelectorAll('.imp-ib');
     bar.setAttribute('data-n', String(all.length));
     Array.prototype.forEach.call(all, function (x) {
@@ -74,14 +74,14 @@
     var last = samples[samples.length - 1];
     var b = document.createElement('button');
     b.type = 'button'; b.className = 'btn-ghost'; b.setAttribute('data-sheet-fill', '1');
-    b.textContent = 'Isi dari Lembar';
-    b.title = 'Muat data dari Lembar kerja ke tabel ini';
+    b.textContent = 'Isi dari Dataset';
+    b.title = 'Muat data dari Dataset ke tabel ini';
     last.parentNode.insertBefore(b, last.nextSibling);
     barUp(card, samples, b);
     b.addEventListener('click', function () {
       var view = card.closest('.view'), id = view ? view.id.replace(/^view-/, '') : '';
-      if (!SH.api.hasData()) { IMP.notify(sel, 'err', EMPTY); toast('Lembar kerja masih kosong.'); return; }
-      if (SH.api.fillFromSheet(id, sel)) toast('Data dari Lembar dimuat ke tabel.');
+      if (!SH.api.hasData()) { IMP.notify(sel, 'err', EMPTY); toast('Dataset masih kosong.'); return; }
+      if (SH.api.fillFromSheet(id, sel)) toast('Data dari Dataset dimuat ke tabel.');
     });
   });
 })();

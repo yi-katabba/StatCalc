@@ -2,7 +2,7 @@
    GESER-PITA.JS - Semua pita bisa digeser kiri-kanan seperti tab Hasil
    -------------------------------------------------------------------------
    Berlaku untuk:
-   - pita Lembar (.sc-rbody: File, Edit, Data, Fungsi, Grafik, Statistik, Edit Grafik);
+   - pita Dataset (.sc-rbody: File, Edit, Data, Fungsi, Grafik, Statistik, Edit Grafik);
    - pita halaman metode Stat dan "Pengaturan grafik" halaman Graph, termasuk pita
      Warna / Garis kisi pada grafik pendukung hasil (.rb-body, StatRibbon.mount).
    Bila lebar pita tidak cukup, isi pita:
@@ -13,7 +13,7 @@
    - dilengkapi panah ‹ › di tepi yang muncul hanya bila masih ada isi di sisi itu;
    - tanpa bilah gulir bawaan; geser sentuh di layar tetap bekerja.
    Pita yang dibuat belakangan (mis. panel grafik hasil) ikut dikenali otomatis.
-   Dimuat SETELAH semua modul metode, grafik, dan Lembar.
+   Dimuat SETELAH semua modul metode, grafik, dan Dataset.
    ========================================================================= */
 (function () {
   'use strict';
@@ -69,7 +69,7 @@
 
     /* roda mouse: vertikal -> horizontal, hanya bila memang masih bisa bergeser ke arah itu */
     body.addEventListener('wheel', function (e) {
-      if (e.ctrlKey || e.metaKey) return;                          /* Ctrl + roda = zoom lembar */
+      if (e.ctrlKey || e.metaKey) return;                          /* Ctrl + roda = zoom Dataset */
       var m = max(); if (m <= 1) return;
       var d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
       if (!d) return;

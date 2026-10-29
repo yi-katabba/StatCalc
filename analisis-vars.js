@@ -1,6 +1,6 @@
-/* Layar Analisis (ponsel/tablet): kartu "Variabel yang dipakai" (Y, X, Faktor) dan ringkasan n.
-   Kartu juga jadi pintu masuk ke Lembar: tombol "Jalankan di Lembar" membuka Lembar dengan metode terpilih.
-   Kartu metode di bawahnya selalu membuka halaman metode; data Lembar dimuat lewat tombol "Isi dari Lembar" di halaman itu.
+/* Layar Stat (ponsel/tablet): kartu "Variabel yang dipakai" (Y, X, Faktor) dan ringkasan n.
+   Kartu juga jadi pintu masuk ke Dataset: tombol "Jalankan di Dataset" membuka Dataset dengan metode terpilih.
+   Kartu metode di bawahnya selalu membuka halaman metode; data Dataset dimuat lewat tombol "Isi dari Dataset" di halaman itu.
    Sumber: StatCalcVars (Method/Calc/sheet-vars.js), StatCalcSheet.api (sheet.js). Dimuat SETELAH sheet-vars.js. */
 (function () {
   'use strict';
@@ -16,7 +16,7 @@
   function methodSelect() {
     if (!A || !A.methodList) return '';
     var cur = A.getMethod();
-    return '<label class="av-meth"><span>Metode</span><select class="av-sel" aria-label="Metode untuk dijalankan di Lembar">' +
+    return '<label class="av-meth"><span>Metode</span><select class="av-sel" aria-label="Metode untuk dijalankan di Dataset">' +
       A.methodList().filter(function (m) { return A.canRun(m.id); }).map(function (m) {
         return '<option value="' + esc(m.id) + '"' + (m.id === cur ? ' selected' : '') + '>' + esc(m.title) + '</option>';
       }).join('') + '</select></label>';
@@ -24,8 +24,8 @@
   function html(graph) {
     var s = V.summary(), h = '<div class="av-k">Variabel yang dipakai</div>';
     if (!s.n || !(s.num || s.cat)) {
-      return h + '<div class="av-empty">Belum ada data. Isi atau impor data di Lembar, lalu variabel muncul di sini.</div>' +
-        '<button type="button" class="av-link" data-av="sheet">Buka Lembar</button>';
+      return h + '<div class="av-empty">Belum ada data. Isi atau impor data di Dataset, lalu variabel muncul di sini.</div>' +
+        '<button type="button" class="av-link" data-av="sheet">Buka Dataset</button>';
     }
     h += '<div class="av-chips">';
     if (s.y) h += chip('Y', s.y);
@@ -35,14 +35,14 @@
     h += '</div><div class="av-sum">n = ' + s.n + ' \u00B7 ' + s.num + ' variabel numerik' + (s.cat ? ' \u00B7 ' + s.cat + ' kategorik' : '') + '</div>';
     /* pintu masuk: data belum otomatis dipakai oleh halaman metode, jadi jelaskan dua jalannya */
     if (graph) {
-      /* layar Graph: grafik dibuat dari tab Grafik di Lembar, atau lewat kartu grafik di bawah (Isi dari Lembar) */
-      return h + '<button type="button" class="av-go" data-av="graph">Buat grafik di Lembar</button>' +
-        '<button type="button" class="av-link" data-av="sheet">Ubah di Lembar</button>' +
-        '<div class="av-hint">Atau pilih grafik di bawah, lalu ketuk <strong>Isi dari Lembar</strong> di halaman grafik itu.</div>';
+      /* layar Graph: grafik dibuat dari tab Grafik di Dataset, atau lewat kartu grafik di bawah (Isi dari Dataset) */
+      return h + '<button type="button" class="av-go" data-av="graph">Buat grafik di Dataset</button>' +
+        '<button type="button" class="av-link" data-av="sheet">Ubah di Dataset</button>' +
+        '<div class="av-hint">Atau pilih grafik di bawah, lalu ketuk <strong>Isi dari Dataset</strong> di halaman grafik itu.</div>';
     }
     h += methodSelect() +
-      '<button type="button" class="av-go" data-av="go">Jalankan di Lembar</button>' +
-      '<button type="button" class="av-link" data-av="sheet">Ubah di Lembar</button>';
+      '<button type="button" class="av-go" data-av="go">Jalankan di Dataset</button>' +
+      '<button type="button" class="av-link" data-av="sheet">Ubah di Dataset</button>';
     return h;
   }
   var cards = hosts.map(function (v) {
@@ -61,7 +61,7 @@
         return;
       }
       if (b.dataset.av === 'go') {
-        /* buka Lembar dengan metode terpilih di tab Statistik; pengguna menekan "Jalankan analisis" sendiri */
+        /* buka Dataset dengan metode terpilih di tab Statistik; pengguna menekan "Jalankan analisis" sendiri */
         var sel = c.querySelector('.av-sel');
         SC.navigate('metode-calc', { backTo: back });
         if (A) { if (sel && A.canRun(sel.value)) A.pickMethod(sel.value); A.openStatTab(); }
@@ -79,7 +79,7 @@
   function render() { var h = html(false), g = html(true); cards.forEach(function (c) { c.innerHTML = c.dataset.graph ? g : h; }); }
   render();
   V.onChange(render);
-  /* pilihan metode bisa berubah di Lembar: samakan tiap kali layar Analisis ditampilkan */
+  /* pilihan metode bisa berubah di Dataset: samakan tiap kali layar Stat ditampilkan */
   hosts.forEach(function (v) { new MutationObserver(function () { if (v.classList.contains('active')) syncSelects(); }).observe(v, { attributes: true, attributeFilter: ['class'] }); });
   window.StatCalcAnalisisVars = { render: render };
 })();

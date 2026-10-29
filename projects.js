@@ -1,7 +1,7 @@
-/* Proyek: simpan otomatis isi Lembar ke perangkat, daftar "Proyek terakhir" di Beranda,
+/* Proyek: simpan otomatis isi Dataset ke perangkat, daftar "Proyek terakhir" di Beranda,
    proyek baru / impor, nama proyek di bilah status, jumlah proyek di Profil.
-   Penyimpanan: statcalc.proj.index (daftar), statcalc.proj.d.<id> (isi Lembar), statcalc.proj.x.<id> (hasil + grafik),
-   statcalc.proj.cur (aktif). Berkas proyek .scp (JSON) memuat Lembar, hasil, dan grafik sekaligus.
+   Penyimpanan: statcalc.proj.index (daftar), statcalc.proj.d.<id> (isi Dataset), statcalc.proj.x.<id> (hasil + grafik),
+   statcalc.proj.cur (aktif). Berkas proyek .scp (JSON) memuat Dataset, hasil, dan grafik sekaligus.
    Ikut dalam ekspor cadangan dan "Hapus semua data" karena berawalan "statcalc". */
 (function () {
   'use strict';
@@ -162,7 +162,7 @@
             '<span class="pj-m">' + esc(p.method || '-') + '</span><span class="pj-t">' + esc(when(p.opened)) + '</span>' +
             '<button type="button" class="pj-del" aria-label="Hapus proyek ' + esc(p.name) + '" title="Hapus">&times;</button></div>';
         }).join('')
-        : '<p class="pj-empty">Belum ada proyek. Buat proyek baru atau impor data Excel/CSV; isi Lembar tersimpan otomatis di perangkat ini.</p>';
+        : '<p class="pj-empty">Belum ada proyek. Buat proyek baru atau impor data Excel/CSV; isi Dataset tersimpan otomatis di perangkat ini.</p>';
     }
     if (countEl) countEl.textContent = idx.length ? idx.length + ' proyek' : '';
     var pr = $('profileStatProj'); if (pr) pr.textContent = idx.length;
@@ -182,7 +182,7 @@
     new MutationObserver(function () { if (home.classList.contains('active')) refresh(); }).observe(home, { attributes: true, attributeFilter: ['class'] });
   }
   list = $('pjList'); countEl = $('pjCount');
-  /* pulihkan proyek aktif ke Lembar saat aplikasi dibuka */
+  /* pulihkan proyek aktif ke Dataset saat aplikasi dibuka */
   var id0 = cur();
   if (id0 && find(id0)) { var snap0 = rd(K_D + id0); if (snap0) { loading = true; try { sh.api.importState(snap0, find(id0).name); applyExtras(readExtras(id0)); } catch (e) { /* abaikan */ } setTimeout(function () { loading = false; queue(); refresh(); }, 600); } }
   refresh();
@@ -216,7 +216,7 @@
     var o; try { o = JSON.parse(text); } catch (e) { toast('Berkas .scp tidak dapat dibaca (bukan format proyek StatCalc).'); return null; }
     if (!o || o.app !== 'StatCalc' || o.format !== 'scp' || !o.sheet) { toast('Berkas ini bukan proyek StatCalc.'); return null; }
     if (+o.version > 1) { toast('Berkas .scp dibuat oleh versi StatCalc yang lebih baru.'); return null; }
-    var sd = cleanSheet(o.sheet); if (!sd) { toast('Isi Lembar pada berkas .scp tidak valid.'); return null; }
+    var sd = cleanSheet(o.sheet); if (!sd) { toast('Isi Dataset pada berkas .scp tidak valid.'); return null; }
     save();
     var id = newId(), snap = JSON.stringify(sd), nm = uniqueName(String(o.name || 'Proyek impor').slice(0, 80)), now = Date.now(), idx = index(),
       xs = JSON.stringify(o.extras && typeof o.extras === 'object' ? o.extras : {});

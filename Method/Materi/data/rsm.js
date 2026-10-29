@@ -179,7 +179,7 @@ $$r_i = \dfrac{e_i}{\sqrt{\text{KTG}\,(1-h_{ii})}},\qquad D_i = \dfrac{r_i^2}{p}
         html: String.raw`
 <ol class="mt-steps">
   <li>Pilih jumlah faktor dan bentuk model (disarankan kuadratik penuh), lalu buat tabel.</li>
-  <li>Masukkan data percobaan: kolom faktor dalam satuan asli, kolom terakhir respon. Anda juga dapat menempel dari Excel, mengunggah file, atau mengirim dari Calc.</li>
+  <li>Masukkan data percobaan: kolom faktor dalam satuan asli, kolom terakhir respon. Anda juga dapat menempel dari Excel, mengunggah file, atau mengirim dari Dataset.</li>
   <li>Periksa tab <strong>Model &amp; ANOVA</strong>: model signifikan, lack of fit tidak signifikan, $R^2_{\text{pred}}$ wajar.</li>
   <li>Lihat <strong>Koefisien &amp; Persamaan</strong> untuk suku yang berpengaruh.</li>
   <li>Telusuri <strong>Grafik Respon</strong> (kontur, 3D) untuk memahami bentuk permukaan.</li>
