@@ -653,45 +653,40 @@ body.pf-on .top-avatar{ box-shadow:0 0 0 2px #7FA8D6; }
   .st-view[data-stab="hasil"] .st-side{ display:none !important; }
 }
 
-/* ---------- Beranda: animasi kurva normal + simbol statistik (statcalc-hero.js) ---------- */
+/* ---------- Beranda: animasi header bergantian (kurva normal, regresi, time series) + simbol statistik (statcalc-hero.js) ---------- */
 .hero-stat{ position:absolute; inset:0; z-index:1; pointer-events:none; overflow:hidden; }
-.hero-curve{ position:absolute; right:0; bottom:0; height:100%; width:min(64%, 820px); overflow:visible; }
+.hero-curve{ position:absolute; right:0; bottom:0; height:100%; width:min(64%, 820px); overflow:visible; transition:opacity .8s ease; }
 .hc-axis{ stroke:rgba(255,255,255,.28); stroke-width:1; }
 .hc-line{ fill:none; stroke:#BFD8FA; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; }
 .hc-band{ fill:rgba(141,185,242,.16); }
 .hc-mean{ stroke:rgba(255,255,255,.4); stroke-width:1; stroke-dasharray:3 4; }
 .hc-dot{ fill:#fff; }
 .hc-tick{ fill:rgba(255,255,255,.5); font:italic 12px Georgia,'Cambria Math','Times New Roman',serif; }
+.hc-lab{ fill:rgba(255,255,255,.62); font:italic 14px Georgia,'Cambria Math','Times New Roman',serif; }
+.hc-pt{ fill:#fff; fill-opacity:.92; }
+.hc-res{ stroke:rgba(255,255,255,.6); stroke-width:1.2; stroke-dasharray:3 3; }
+.hc-ci{ fill:rgba(141,185,242,.22); }
+.hc-fc{ fill:none; stroke:#fff; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:6 5; }
+.hc-ring{ fill:none; stroke:rgba(255,255,255,.55); stroke-width:1; opacity:0; }
 .hero-sym{
   position:absolute; color:#fff; opacity:var(--o,.14);
   font-family:Georgia,'Cambria Math','Times New Roman',serif; font-style:italic; line-height:1;
-  animation:heroSymFloat var(--dur,10s) ease-in-out var(--del,0s) infinite alternate; will-change:transform;
+  animation:heroSymFloat calc(var(--dur,10s) / var(--spd,2.5)) ease-in-out var(--del,0s) infinite alternate; will-change:transform;
 }
-@keyframes heroSymFloat{ from{ transform:translate(0,0) rotate(-3deg); } to{ transform:translate(var(--dx,8px),var(--dy,-10px)) rotate(3deg); } }
-
-/* gambar garis saat pertama muncul, lalu area & elemen lain memudar masuk */
-.hero-stat.is-intro .hc-line{ stroke-dasharray:1; stroke-dashoffset:1; animation:heroDraw 2.4s cubic-bezier(.4,0,.2,1) .2s forwards; }
-.hero-stat.is-intro .hc-area, .hero-stat.is-intro .hc-band, .hero-stat.is-intro .hc-mean,
-.hero-stat.is-intro .hc-dot, .hero-stat.is-intro .hc-ticks{ opacity:0; animation:heroFade 1.2s ease 1.6s forwards; }
-@keyframes heroDraw{ to{ stroke-dashoffset:0; } }
-@keyframes heroFade{ to{ opacity:1; } }
+@keyframes heroSymFloat{ from{ transform:translate(0,0) rotate(-5deg); } to{ transform:translate(calc(var(--dx,8px) * var(--amp,1.8)),calc(var(--dy,-10px) * var(--amp,1.8))) rotate(5deg); } }
 .hero-stat.is-paused .hero-sym{ animation-play-state:paused; }
-.hc-ring{ fill:none; stroke:rgba(255,255,255,.55); stroke-width:1; opacity:0; animation:heroPulse 3s ease-out 2.4s infinite; transform-box:fill-box; transform-origin:center; }
-@keyframes heroPulse{ 0%{ transform:scale(.6); opacity:.9; } 100%{ transform:scale(2.4); opacity:0; } }
-.hero-stat.is-paused .hc-ring{ animation-play-state:paused; }
 
 @media (max-width:700px){
-  /* HP: kurva kecil di pojok kanan atas (sebaris dengan sapaan) agar teks tetap bersih */
+  /* HP: ilustrasi kecil di pojok kanan atas (sebaris dengan sapaan) agar teks tetap bersih */
   .hero-curve{ top:10px; bottom:auto; right:10px; height:66px; width:48%; opacity:.85; }
+  .hc-lab{ display:none; }
   .hero-stat .hero-sym{ display:none; }
   .hero-stat .hero-sym:nth-child(5), .hero-stat .hero-sym:nth-child(12){ display:block; }
   .login-stat .hero-sym:nth-child(n+19){ display:none; }
 }
 @media (prefers-reduced-motion: reduce){
-  .hero-sym, .hc-ring, .hero-stat .hc-line, .hero-stat .hc-area, .hero-stat .hc-band,
-  .hero-stat .hc-mean, .hero-stat .hc-ticks{ animation:none !important; stroke-dasharray:none !important; stroke-dashoffset:0 !important; }
-  .hc-ring{ display:none; }
-  .hero-sym{ opacity:var(--o,.14) !important; }
+  .hero-sym{ animation:none !important; opacity:var(--o,.14) !important; }
+  .hero-curve{ transition:none; }
 }
 
 /* ---------- Halaman masuk: simbol statistik menyebar di belakang kartu putih ---------- */
