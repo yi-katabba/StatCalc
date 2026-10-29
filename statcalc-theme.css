@@ -369,8 +369,14 @@ html body #view-metode-calc .sc-msg.ok{ background:#E3F0E8; }
 .sc-res .sr-x:hover{ background:var(--paper-2); color:var(--ink); }
 .sc-res > *{ flex-shrink:0; }
 .sc-res > .sr-body{ flex-shrink:1; }
-.sc-res .sr-tabs{ display:flex; flex:0 0 auto; min-height:40px; background:#fff; border-bottom:1px solid var(--rule); overflow-x:auto; scrollbar-width:none; }
-.sc-res .sr-tabs button{ flex:1 1 auto; flex-shrink:0; border:0; background:none; padding:0 8px; height:40px; white-space:nowrap; font:inherit; font-size:13px; font-weight:600; color:var(--ink-soft); cursor:pointer; }
+.sc-res .sr-tabwrap{ position:relative; display:flex; flex:0 0 44px; height:44px; min-height:44px; max-height:44px; background:#fff; border-bottom:1px solid var(--rule); }
+.sc-res .sr-tabs{ display:flex; flex:1 1 auto; flex-wrap:nowrap; min-width:0; height:44px; overflow-x:auto; overflow-y:hidden; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+.sc-res .sr-tabs::-webkit-scrollbar{ display:none; }
+.sc-res .sr-tabs button{ flex:1 0 auto; display:flex; align-items:center; justify-content:center; border:0; background:none; padding:0 16px; height:44px; min-height:44px; line-height:1; white-space:nowrap; font:inherit; font-size:13px; font-weight:600; color:var(--ink-soft); cursor:pointer; }
+.sc-res .sr-arr{ position:absolute; top:0; bottom:0; width:30px; display:none; align-items:center; justify-content:center; border:0; padding:0; font-size:22px; line-height:1; color:var(--accent); cursor:pointer; z-index:2; }
+.sc-res .sr-arr.l{ left:0; background:linear-gradient(90deg,#fff 60%,rgba(255,255,255,0)); }
+.sc-res .sr-arr.r{ right:0; background:linear-gradient(270deg,#fff 60%,rgba(255,255,255,0)); }
+.sc-res .sr-tabwrap.ovf-l .sr-arr.l,.sc-res .sr-tabwrap.ovf-r .sr-arr.r{ display:flex; }
 .sc-res .sr-tabs button[aria-selected="true"]{ color:var(--accent); box-shadow:inset 0 -3px 0 var(--accent-2); }
 .sc-res .sr-body{ padding:12px 14px; overflow:auto; flex:1 1 auto; min-height:120px; }
 .sc-res .sr-sec + .sr-sec{ margin-top:16px; }
@@ -389,8 +395,8 @@ html body #view-metode-calc .sc-msg.ok{ background:#E3F0E8; }
 
 @media (max-width:1279.98px){
   #view-metode-calc .chapter-inner > .sc-seg{ display:flex; margin:0 0 12px; }
-  #view-metode-calc .chapter-inner[data-seg="hasil"] > *:not(.chapter-head):not(.sc-seg):not(.sc-res),
-  #view-metode-calc .chapter-inner[data-seg="grafik"] > *:not(.chapter-head):not(.sc-seg):not(.sc-res){ display:none !important; }
+  #view-metode-calc .chapter-inner[data-seg="hasil"] > *:not(.chapter-head):not(.sc-seg):not(.sc-res):not(.sg-below),
+  #view-metode-calc .chapter-inner[data-seg="grafik"] > *:not(.chapter-head):not(.sc-seg):not(.sc-res):not(.sg-below){ display:none !important; }
   #view-metode-calc .chapter-inner[data-seg="hasil"] > .sc-res,
   #view-metode-calc .chapter-inner[data-seg="grafik"] > .sc-res{ display:flex; }
   #view-metode-calc .chapter-inner:not([data-seg="data"]) > .sc-seg{ position:sticky; top:calc(var(--safe-t) + 56px); z-index:12; }
@@ -399,6 +405,20 @@ html body #view-metode-calc .sc-msg.ok{ background:#E3F0E8; }
   html body #view-metode-calc .chapter-inner.has-res{ grid-template-columns:232px minmax(0,1fr) 380px; }
   html body #view-metode-calc .chapter-inner.has-res > .sc-res{ grid-column:3; grid-row:2 / span 30; align-self:start; display:flex; position:sticky; top:76px; max-height:calc(100vh - 116px); }
   html body #view-metode-calc .chapter-inner.has-res > .chapter-head{ grid-column:1 / -1; }
+}
+
+/* Grafik "di panel hasil": kolom kanan di desktop, segmen Hasil di ponsel */
+@media (max-width:1279.98px){
+  #view-metode-calc .chapter-inner > .sg-below{ display:none; }
+  #view-metode-calc .chapter-inner[data-seg="hasil"] > .sg-below:not([hidden]){ display:block !important; margin-top:12px; }
+  #view-metode-calc .chapter-inner:not(.has-res)[data-seg="hasil"] > .sc-res{ display:none; }
+}
+@media (min-width:1280px){
+  html body #view-metode-calc .chapter-inner.has-below{ grid-template-columns:232px minmax(0,1fr) 380px; }
+  html body #view-metode-calc .chapter-inner.has-below > .sg-below:not([hidden]){ grid-column:3; grid-row:1 / span 30; align-self:start; position:sticky; top:76px; margin:0; max-height:calc(100vh - 116px); overflow:auto; }
+  html body #view-metode-calc .chapter-inner.has-res > .sg-below{ display:none; }
+  #view-metode-calc .sg-below .sg-bbtns{ display:grid; grid-template-columns:1fr 1fr; }
+  #view-metode-calc .sg-below .sg-bbtns .btn-ghost{ width:100%; padding:0 8px; }
 }
 
 /* Panel Proyek (di atas daftar Variabel, desktop lebar) */

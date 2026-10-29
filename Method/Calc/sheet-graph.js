@@ -7,9 +7,10 @@
    - Ikon tiap grafik di tab Grafik. Klik ikon -> grafik dibuat dari seleksi sel
      (satu sel terpilih = seluruh tabel). Grafik yang butuh label (Bar, Pie,
      Time Series, Boxplot Kelompok) menanyakan dulu kolom label & nilainya.
-   - Tampilan "Di atas lembar kerja": grafik melayang di atas sel, bisa diseret
+   - Tampilan "Di dalam lembar kerja": grafik melayang di atas sel, bisa diseret
      dan diubah ukurannya (8 pegangan; sentuh pun bisa).
-   - Tampilan "Di bawah lembar kerja": grafik di panel di bawah lembar kerja,
+   - Tampilan "Di luar lembar kerja": grafik di panel hasil di kanan lembar (desktop) atau di segmen
+     Hasil (ponsel),
      lengkap dengan tombol Unduh PNG / SVG dan ringkasan.
    - Klik sebuah grafik -> muncul tab "Edit Grafik": data (kolom, baris), teks,
      opsi grafik, warna, garis kisi, tampilan.
@@ -163,7 +164,7 @@
   const below = document.createElement('section');
   below.className = 'card sg-below';
   below.hidden = true;
-  below.innerHTML = '<h2>Grafik di bawah lembar kerja</h2><p class="hint">Setiap grafik di sini bisa diunduh sebagai gambar PNG atau SVG. Klik grafik atau tombol Edit grafik untuk mengubahnya lewat tab Edit Grafik di pita.</p><div class="sg-blist"></div>';
+  below.innerHTML = '<h2>Grafik</h2><p class="hint">Setiap grafik di sini bisa diunduh sebagai gambar PNG atau SVG. Klik grafik atau tombol Edit grafik untuk mengubahnya lewat tab Edit Grafik di pita.</p><div class="sg-blist"></div>';
   $('.sc-main', section).insertAdjacentElement('afterend', below);
   const blist = $('.sg-blist', below);
 
@@ -433,6 +434,13 @@
     blist.innerHTML = list.map(blockHTML).join('');
     list.forEach(paintBelow);
     below.hidden = !list.length;
+    if (below.parentNode) below.parentNode.classList.toggle('has-below', !!list.length);
+  }
+  /* grafik di panel hasil: desktop = menggantikan panel hasil Stat di kolom kanan; ponsel = pindah ke segmen Hasil */
+  function revealBelow() {
+    const H = window.StatCalcHasil; if (!H) return;
+    if (window.matchMedia && window.matchMedia('(min-width:1280px)').matches) { if (H.current()) H.hide(); }
+    else if (H.showSeg) H.showSeg('hasil');
   }
   blist.addEventListener('click', (e) => {
     const b = e.target.closest('.sg-blk'); if (!b) return;
@@ -453,6 +461,7 @@
     const f = floatEl(ch); if (f) f.remove();
     if (ch.place === 'above') mountFloat(ch);
     rebuildBelow();
+    if (ch.place === 'below') revealBelow();
   }
   function syncSelClass() {
     $$('.sg-chart', layer).forEach((e) => e.classList.toggle('sel', e.dataset.uid === selId));
@@ -564,7 +573,7 @@
     if (GS.grid) h += grp('Garis kisi', grid([chkH('st:h', st.h, 'Garis horizontal'), chkH('st:v', st.v, 'Garis vertikal'), colH('st:gc', st.gc, 'Warna garis kisi')], 2));
 
     /* Tampilan */
-    const pf = [fld('Tampilkan grafik', selH('place', ch.place, [['above', 'Di atas lembar kerja'], ['below', 'Di bawah lembar kerja']]))];
+    const pf = [fld('Tampilkan grafik', selH('place', ch.place, [['above', 'Di dalam lembar kerja'], ['below', 'Di luar lembar kerja (bisa diunduh)']]))];
     if (ch.place === 'above') pf.push(chkH('lock', ch.lock, 'Kunci rasio ukuran'));
     h += grp('Tampilan', grid(pf, 1));
     h += grp('Grafik', rbH('dup', 'copy', 'Duplikat', 'Gandakan grafik ini') + rbH('del', 'trash', 'Hapus', 'Hapus grafik ini', 'danger') + rbH('close', 'done', 'Selesai', 'Tutup tab Edit Grafik'));
@@ -731,7 +740,7 @@
     const groups = [];
     CATALOG.forEach((e) => { let g = groups.find((x) => x.l === e.group); if (!g) { g = { l: e.group, items: [] }; groups.push(g); } g.items.push(e); });
     insertBody.innerHTML = groups.map((g) => `<div class="sc-grp"><div class="sc-gbody">${g.items.map((e) => `<button type="button" class="sc-rb" data-g="${e.key}" title="${esc(e.tip)}" aria-label="${esc(e.tip)}">${svgI(e.key)}<span>${esc(e.label)}</span></button>`).join('')}</div><div class="sc-glabel">${esc(g.l)}</div></div>`).join('') +
-      `<div class="sc-grp"><div class="sc-gbody"><div class="sc-fld"><label for="sgPlace">Tampilkan grafik</label><select id="sgPlace" class="select-input" style="width:230px"><option value="above">Di atas lembar kerja</option><option value="below">Di bawah lembar kerja (bisa diunduh)</option></select></div></div><div class="sc-glabel">Tampilan</div></div>`;
+      `<div class="sc-grp"><div class="sc-gbody"><div class="sc-fld"><label for="sgPlace">Tampilkan grafik</label><select id="sgPlace" class="select-input" style="width:230px"><option value="above">Di dalam lembar kerja</option><option value="below">Di luar lembar kerja (bisa diunduh)</option></select></div></div><div class="sc-glabel">Tampilan</div></div>`;
     insertBody.addEventListener('click', (e) => {
       const b = e.target.closest('[data-g]'); if (!b) return;
       const en = entryOf(b.dataset.g); if (en) insert(en);
@@ -764,7 +773,7 @@
     }
   });
 
-  /* ------------- Ekspor .xlsx: grafik "di atas lembar kerja" -> gambar PNG ------------- */
+  /* ------------- Ekspor .xlsx: grafik "di dalam lembar kerja" -> gambar PNG ------------- */
   /* Dipanggil tombol .xlsx di sheet.js. Tiap grafik melayang diubah jadi PNG lalu disisipkan
      ke berkas xlsx (xl/media + xl/drawings) pada sel yang sama dengan posisinya di layar. */
   const EMU = 9525;                                   // 1 piksel = 9525 EMU

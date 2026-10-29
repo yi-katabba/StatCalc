@@ -22,7 +22,7 @@
     { sel: '#view-kalkulator > .chapter-inner', left: '.calc-tools' },
     { sel: '#view-kalkulator .calc-layout', right: '.calc-hist-card' },
     { sel: '#view-matriks > .chapter-inner', left: '.mx-left', right: '.mx-right' },
-    { sel: '#view-metode-calc > .chapter-inner', left: '.sc-vars', right: '.sc-res' },
+    { sel: '#view-metode-calc > .chapter-inner', left: '.sc-vars', right: '.sc-res, .sg-below' },
     { sel: '.chapter-inner:has(.gr-chart)', left: '[id$="data-card"]', right: '.rb-main' },
     { sel: '#view-materi-detail .mt-wrap', left: '.mt-toc', right: '.mt-try' },
     { sel: '#view-home .hm', right: '.hm-side' },
@@ -105,7 +105,7 @@
     if (n >= 3) { if (def.left) li = 0; if (def.right) ri = n - 1; }
     else if (def.left) li = 0; else if (def.right) ri = 1;
     if (li >= 0 && !shown(c.querySelector(def.left))) li = -1;
-    if (ri >= 0 && !shown(c.querySelector(def.right))) ri = -1;
+    if (ri >= 0 && !Array.prototype.some.call(c.querySelectorAll(':scope > ' + def.right.split(',').join(', :scope > ')), shown)) ri = -1;
     var gap = pf(cs.columnGap), pl = pf(cs.paddingLeft), pr = pf(cs.paddingRight);
     var info = st.info = { n: n, li: li, ri: ri, gap: gap, pl: pl, content: c.clientWidth - pl - pr };
     st.cur = { l: li >= 0 ? arr[li] : 0, r: ri >= 0 ? arr[ri] : 0 };

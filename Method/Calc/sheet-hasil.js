@@ -52,7 +52,9 @@
   panel.innerHTML =
     '<div class="sr-top"><div><div class="sr-title" id="srTitle">Hasil analisis</div><div class="sr-sub" id="srSub"></div></div>' +
     '<button type="button" class="sr-x" id="srClose" aria-label="Tutup panel hasil" title="Tutup">&times;</button></div>' +
+    '<div class="sr-tabwrap"><button type="button" class="sr-arr l" aria-label="Geser tab ke kiri" tabindex="-1">&#8249;</button>' +
     '<div class="sr-tabs" role="tablist">' + TABS.map(function (t, i) { return '<button type="button" role="tab" data-t="' + t[0] + '" aria-selected="' + (i === 0) + '">' + t[1] + '</button>'; }).join('') + '</div>' +
+    '<button type="button" class="sr-arr r" aria-label="Geser tab ke kanan" tabindex="-1">&#8250;</button></div>' +
     '<div class="sr-body" id="srBody"></div>' +
     '<div class="sr-foot"><button type="button" class="btn-ghost" id="srOpen">Buka halaman lengkap</button></div>';
   host.appendChild(panel);
@@ -81,9 +83,33 @@
     host.setAttribute('data-seg', s);
     $$('button', seg).forEach(function (b) { b.setAttribute('aria-selected', b.dataset.s === s ? 'true' : 'false'); });
   }
+  /* Tab: tinggi tetap; bila lebar tidak cukup, digeser kiri-kanan (tombol panah, gulir mouse, atau sentuh) */
+  var tabsEl = $('.sr-tabs', panel), wrapEl = $('.sr-tabwrap', panel);
+  function tabOverflow() {
+    var max = tabsEl.scrollWidth - tabsEl.clientWidth;
+    wrapEl.classList.toggle('ovf-l', max > 1 && tabsEl.scrollLeft > 1);
+    wrapEl.classList.toggle('ovf-r', max > 1 && tabsEl.scrollLeft < max - 1);
+  }
+  function tabIntoView(b) {
+    if (!b) return;
+    var l = b.offsetLeft, r = l + b.offsetWidth, v = tabsEl.scrollLeft, w = tabsEl.clientWidth;
+    if (l < v) tabsEl.scrollLeft = Math.max(0, l - 28); else if (r > v + w) tabsEl.scrollLeft = r - w + 28;
+    tabOverflow();
+  }
+  tabsEl.addEventListener('scroll', tabOverflow);
+  tabsEl.addEventListener('wheel', function (e) {
+    if (tabsEl.scrollWidth <= tabsEl.clientWidth) return;
+    var d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    if (d) { tabsEl.scrollLeft += d; e.preventDefault(); }
+  }, { passive: false });
+  $$('.sr-arr', panel).forEach(function (a) {
+    a.addEventListener('click', function () { tabsEl.scrollBy({ left: (a.classList.contains('l') ? -1 : 1) * Math.max(80, tabsEl.clientWidth * 0.6), behavior: 'smooth' }); });
+  });
+  if (window.ResizeObserver) new ResizeObserver(tabOverflow).observe(tabsEl); else window.addEventListener('resize', tabOverflow);
+
   function setTab(t) {
     state.tab = t;
-    $$('.sr-tabs button', panel).forEach(function (b) { b.setAttribute('aria-selected', b.dataset.t === t ? 'true' : 'false'); });
+    $$('.sr-tabs button', panel).forEach(function (b) { b.setAttribute('aria-selected', b.dataset.t === t ? 'true' : 'false'); if (b.dataset.t === t) tabIntoView(b); });
     paint();
   }
   function paint() {
@@ -93,7 +119,7 @@
     body.innerHTML = h || '<p class="sr-msg">Tidak ada isi untuk tab ini pada metode ' + esc(M[state.id] ? M[state.id].title : '') + '.</p>';
   }
   /* Hasil muncul di kanan ATAS: gulir halaman ke atas agar panel sejajar dengan bagian atas lembar
-     (tombol Analisis cepat ada di bawah lembar, jadi halaman biasanya sedang tergulir ke bawah) */
+     (halaman bisa sedang tergulir ke bawah) */
   function toTop() {
     try {
       for (var n = host.parentNode; n && n !== document.body; n = n.parentNode) if (n.scrollTop) n.scrollTop = 0;
@@ -106,7 +132,7 @@
     var b = e.target.closest('button'); if (!b) return;
     var s = b.dataset.s; setSeg(s);
   });
-  $('.sr-tabs', panel).addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) setTab(b.dataset.t); });
+  tabsEl.addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) setTab(b.dataset.t); });
   function hidePanel() { host.classList.remove('has-res'); setSeg('data'); notify(); }
   $('#srClose', panel).addEventListener('click', hidePanel);
   $('#srOpen', panel).addEventListener('click', function () {
@@ -211,6 +237,7 @@
       return results.map(function (r) { return { uid: r.uid, id: r.id, name: (SHORT[r.id] || r.title) + ' ' + r.n, t: r.t }; });
     },
     current: function () { return host.classList.contains('has-res') ? state.uid : null; },
+    showSeg: function (x) { setSeg(x); toTop(); },
     show: showResult, hide: hidePanel, remove: removeResult,
     exportAll: exportResults, importAll: importResults,
     onChange: function (fn) { listeners.push(fn); },

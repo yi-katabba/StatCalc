@@ -670,9 +670,6 @@
                 <option value="anova">ANOVA Satu Arah</option><option value="rsm">Response Surface (RSM)</option>
                 <option value="smoothing">Metode Smoothing</option><option value="stasioner">Uji Stasioneritas (ADF)</option>
                 <option value="arima">ARIMA &amp; SARIMA</option>
-                <option value="histogram">Histogram</option><option value="boxplot">Boxplot</option><option value="scatter">Scatter Plot</option>
-                <option value="probplot">Probability Plot</option><option value="timeseries">Time Series Plot</option>
-                <option value="barchart">Bar Chart</option><option value="piechart">Pie Chart</option>
               </select>
               <div class="sc-grp"><div class="sc-gbody" role="radiogroup" aria-label="Metode Ringkasan">
                 ${mb('deskriptif', 'Deskriptif', 'Statistika deskriptif: ringkasan data', '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>')}
@@ -687,15 +684,6 @@
                 ${mb('stasioner', 'Stasioner', 'Uji stasioneritas (ADF)', '<path d="M3 12h18M3 8c4 0 4 8 8 8s4-8 10-8"/>')}
                 ${mb('arima', 'ARIMA', 'ARIMA dan SARIMA', '<path d="M3 18l5-8 4 4 9-10M16 4h5v5"/>')}
               </div><div class="sc-glabel">Deret waktu</div></div>
-              <div class="sc-grp"><div class="sc-gbody">
-                <div class="sc-fld"><label for="scTargetG">Halaman Graph</label>
-                  <select id="scTargetG" class="select-input" style="width:170px">
-                    <option value="">Pilih grafik&hellip;</option><option value="histogram">Histogram</option><option value="boxplot">Boxplot</option>
-                    <option value="scatter">Scatter Plot</option><option value="probplot">Probability Plot</option><option value="timeseries">Time Series Plot</option>
-                    <option value="barchart">Bar Chart</option><option value="piechart">Pie Chart</option>
-                  </select>
-                </div>
-              </div><div class="sc-glabel">Graph</div></div>
               <div class="sc-grp last"><div class="sc-gbody" style="align-items:center">
                 ${rb('scSend', 'send', 'Jalankan analisis', 'Jalankan metode terpilih pada data lembar kerja', 'pri')}
               </div><div class="sc-glabel">Aksi</div></div>
@@ -734,7 +722,7 @@
             <p class="sc-tip" data-tip="file">Tempel blok sel dari Excel, unggah .xlsx / .csv, atau buat tabel baru lalu isi langsung di lembar kerja.</p>
             <p class="sc-tip" data-tip="edit" hidden>Pilih rentang dengan menyeret mouse, Shift+klik, Shift+panah, klik huruf kolom / nomor baris, atau ketik alamat (mis. A1:C10) di kotak nama. Delete mengosongkan rentang; Ctrl+C / X / V menyalin, memotong, menempel; Ctrl+D / R mengisi ke bawah / kanan. Awali dengan = untuk rumus.</p>
             <p class="sc-tip" data-tip="fungsi" hidden>Hasil berupa rumus yang diisi ke bawah, jadi ikut berubah bila data sumber diedit. Rumus bebas: tulis huruf kolom saja, mis. LOG10(A), (A-B)^2, IF(A&gt;100,A,0).</p>
-            <p class="sc-tip" data-tip="grafik" hidden>Pilih sel data (atau biarkan satu sel agar seluruh tabel dipakai), lalu klik ikon grafik. Grafik muncul di atas lembar kerja: seret untuk memindahkan, tarik pegangan di tepi/sudut untuk mengubah ukuran. Klik grafik untuk membuka tab <strong>Edit Grafik</strong> (data, label, warna, garis kisi, tampilan). Pilih <em>Di bawah lembar kerja</em> bila ingin mengunduh PNG / SVG.</p>
+            <p class="sc-tip" data-tip="grafik" hidden>Pilih sel data (atau biarkan satu sel agar seluruh tabel dipakai), lalu klik ikon grafik. Grafik muncul di dalam lembar kerja (melayang di atas sel): seret untuk memindahkan, tarik pegangan di tepi/sudut untuk mengubah ukuran. Klik grafik untuk membuka tab <strong>Edit Grafik</strong> (data, label, warna, garis kisi, tampilan). Pilih <em>Di luar lembar kerja</em> bila ingin grafik tampil di panel kanan dan bisa diunduh PNG / SVG.</p>
             <p class="sc-tip" data-tip="kirim" hidden>Data (termasuk kolom hasil rumus) dibawa ke metode terpilih; tombol kembali membawa Anda ke lembar ini dengan data utuh. ANOVA belum menerima data dari Calc: salin kolom lalu tempel ke tabel ANOVA.</p>
           </div>
         </div>
@@ -1613,13 +1601,6 @@
     stasioner: { title: 'Uji Stasioneritas', card: '#st-data-card', build: '#stBuildTableBtn', onlyIfHidden: true },
     arima: { title: 'ARIMA & SARIMA', card: '#ar-data-card' },
     rsm: { title: 'Response Surface (RSM)', card: '#rs-data-card', build: '#rsBuildTableBtn', kv: '#rsVarCount' },
-    histogram: { title: 'Histogram', card: '#gr-histogram-data-card' },
-    boxplot: { title: 'Boxplot', card: '#gr-boxplot-wdata-card' },
-    scatter: { title: 'Scatter Plot', card: '#gr-scatter-data-card' },
-    probplot: { title: 'Probability Plot', card: '#gr-probplot-data-card' },
-    timeseries: { title: 'Time Series Plot', card: '#gr-timeseries-data-card' },
-    barchart: { title: 'Bar Chart', card: '#gr-barchart-data-card' },
-    piechart: { title: 'Pie Chart', card: '#gr-piechart-data-card' },
   };
   function exportRows() {
     const b = usedBounds(), rows = [];
@@ -1634,10 +1615,8 @@
   function pickMethod(id) {
     q('scTarget').value = id;
     $$('.sc-mb', section).forEach((b) => b.setAttribute('aria-checked', b.dataset.m === id ? 'true' : 'false'));
-    const g = q('scTargetG'); if (g) g.value = g.querySelector(`option[value="${id}"]`) ? id : '';
   }
   $$('.sc-mb', section).forEach((b) => b.addEventListener('click', () => pickMethod(b.dataset.m)));
-  q('scTargetG').addEventListener('change', (e) => { if (e.target.value) pickMethod(e.target.value); });
   pickMethod('regresi');
   /* Kirim data ke halaman metode. silent = jangan pindah halaman (hasil ditampilkan di panel Hasil Lembar).
      Mengembalikan true bila data terkirim. */
@@ -1676,7 +1655,7 @@
   q('scTarget').addEventListener('change', () => pickMethod(q('scTarget').value));
   q('scSend').addEventListener('click', () => {
     const id = q('scTarget').value;
-    /* metode Stat: hasil tampil di panel Hasil pada Lembar; Graph: buka halaman Graph */
+    /* metode Stat: hasil tampil di panel Hasil pada Lembar (tanpa pindah halaman) */
     if (CALC_BTN[id] && window.StatCalcHasil) { window.StatCalcHasil.start(id); sendTo(id, true); } else sendTo(id, false);
   });
 
@@ -1733,7 +1712,7 @@
       const wb = X.utils.book_new();
       X.utils.book_append_sheet(wb, ws, 'Data');
       let out = X.write(wb, { bookType: 'xlsx', type: 'array' });
-      /* grafik "di atas lembar kerja" ikut tersimpan sebagai gambar PNG (sheet-graph.js) */
+      /* grafik "di dalam lembar kerja" ikut tersimpan sebagai gambar PNG (sheet-graph.js) */
       if (window.StatCalcGraph && window.StatCalcGraph.embedInXlsx) {
         try { out = await window.StatCalcGraph.embedInXlsx(X, out); } catch (e) { /* tetap unduh data tanpa gambar */ }
       }
