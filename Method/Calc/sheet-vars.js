@@ -51,14 +51,14 @@
   }
   aside.addEventListener('click', function (e) {
     var b = e.target.closest('.sv-r'), rs = e.target.closest('.sv-reset');
-    if (rs) { manual = false; roles = {}; render(); return; }
+    if (rs) { manual = false; roles = {}; renderAll(); return; }
     if (!b) return;
     var c = +b.dataset.c, eff = effective(cols);
     if (!manual) { roles = eff; manual = true; }
     var cur = roles[c] || '', nxt = cur === '' ? 'X' : cur === 'X' ? 'Y' : '';
     if (nxt === 'Y') Object.keys(roles).forEach(function (k) { if (roles[k] === 'Y') roles[k] = ''; });
     roles[c] = nxt;
-    render();
+    renderAll();
   });
   /* dipakai sheet.js saat "Buka & analisis": kembalikan {rows, C} bertata ulang, atau null bila tidak berlaku */
   window.StatCalcSheetRoles = function (id, rows) {
@@ -70,7 +70,28 @@
     var order = id === 'scatter' ? xs.concat([y]) : [y].concat(xs);
     return { rows: rows.map(function (r) { return order.map(function (c) { return r[c] == null ? '' : r[c]; }); }), C: order.length };
   };
+  /* ringkasan peran untuk layar Analisis di ponsel (analisis-vars.js): Y, X, faktor (kolom kategorik pertama), n */
+  var listeners = [];
+  window.StatCalcVars = {
+    summary: function () {
+      var list = scan(), eff = effective(list), out = { n: 0, num: 0, cat: 0, y: null, xs: [], factor: null };
+      list.forEach(function (it) {
+        if (it.num) {
+          out.num++;
+          if (eff[it.c] === 'Y') out.y = it.name; else if (eff[it.c] === 'X') out.xs.push(it.name);
+        } else {
+          out.cat++;
+          if (out.factor === null) out.factor = it.name;
+        }
+      });
+      try { out.n = list.length ? Math.max(0, sh.usedBounds().R - (sh.state.header ? 1 : 0)) : 0; } catch (e) { out.n = 0; }
+      return out;
+    },
+    onChange: function (fn) { listeners.push(fn); }
+  };
+  function notify() { listeners.forEach(function (fn) { try { fn(); } catch (e) { /* abaikan */ } }); }
+  function renderAll() { render(); notify(); }
   render();
-  if (sh.onChange) sh.onChange(render);
-  if (sh.onStructure) sh.onStructure(render);
+  if (sh.onChange) sh.onChange(renderAll);
+  if (sh.onStructure) sh.onStructure(renderAll);
 })();

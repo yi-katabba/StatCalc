@@ -4,6 +4,7 @@ Menu utama **Materi** (penjelasan konsep + rumus LaTeX untuk metode di menu Stat
 
 ## Struktur
 - `materi.js` - mesin halaman (daftar, pencarian, halaman baca, tautan "Lihat materi untuk pemahaman").
+- `materi-nav.js` - daftar semua topik + sub-bagian di kiri halaman baca (desktop) dan indikator "Bagian k dari N · m menit baca" (judul, bilah status, bilah atas ponsel). Menit baca dihitung dari teks yang tampil (180 kata/menit).
 - `data/*.js` - isi materi, satu file per topik.
 - `katex/` - KaTeX 0.16.11 lokal (tanpa internet), lisensi MIT.
 

@@ -478,3 +478,88 @@ html body #view-metode-calc .sc-msg.ok{ background:#E3F0E8; }
   .hm .pj-section .pj-actions .btn-primary,.hm .pj-section .pj-actions .btn-ghost{ max-width:none; min-height:48px; font-size:14px; }
   .hm .pj-section .pj-actions #pjScp{ grid-column:1 / -1; min-height:44px; }
 }
+
+/* ===== Ponsel: kartu "Variabel yang dipakai" di Analisis (analisis-vars.js) ===== */
+.av-card{ display:none; }
+@media (max-width:1023.98px){
+  .av-card{ display:block; background:var(--paper); border:1px solid var(--rule); border-radius:10px; padding:14px 16px; margin:0 0 16px; }
+  .av-k{ font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:8px; }
+  .av-chips{ display:flex; flex-wrap:wrap; gap:8px; }
+  .av-role{ display:inline-flex; align-items:center; gap:6px; min-height:32px; padding:0 10px; border-radius:100px; border:1px solid var(--rule-strong); background:#fff; font-size:12.5px; font-weight:600; color:var(--accent); max-width:100%; }
+  .av-role i{ font-style:normal; font-size:10.5px; font-weight:700; padding:1px 6px; border-radius:4px; background:#E6ECF2; color:#33475B; font-family:var(--font-mono); }
+  .av-role .av-n{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .av-role.dashed{ color:var(--ink-faint); border-style:dashed; }
+  .av-role.dashed i{ font-family:var(--font-body); }
+  .av-sum,.av-empty,.av-none{ font-size:12px; color:var(--ink-faint); margin-top:8px; line-height:1.5; }
+  .av-link{ border:0; background:none; padding:0; margin-top:8px; min-height:32px; color:var(--accent-2); font-size:12.5px; font-weight:600; font-family:inherit; cursor:pointer; text-decoration:underline; display:block; }
+}
+
+/* ===== Ponsel: segmen Ilmiah | Matriks + satuan sudut di Hitung (hitung-seg.js) ===== */
+.hs-bar{ display:none; }
+@media (max-width:1279.98px){
+  .hs-bar{ display:flex; align-items:center; gap:10px; margin:0 0 14px; }
+  .hs-seg{ flex:1; display:flex; background:var(--paper-2); padding:4px; gap:4px; border-radius:12px; }
+  .hs-seg button{ flex:1; min-height:44px; border:0; border-radius:8px; background:none; font-family:inherit; font-size:14px; font-weight:600; color:var(--ink-soft); cursor:pointer; }
+  .hs-seg button.on{ background:#fff; color:var(--accent); font-weight:700; }
+  .hs-ang{ min-height:44px; padding:0 14px; border:1px solid var(--rule-strong); border-radius:12px; background:#fff; font-family:inherit; font-size:13px; font-weight:600; color:var(--accent); cursor:pointer; }
+}
+
+/* ===== Materi: daftar semua topik + sub-bagian (materi-nav.js) dan indikator posisi baca ===== */
+.mt-tree{ display:none; }
+.top-pos{ display:none; font-size:12.5px; opacity:.85; white-space:nowrap; color:inherit; }
+body.mt-reading .top-pos{ display:inline; }
+.status-bar #sbMateri,.status-bar #sbBagian{ white-space:nowrap; }
+@media (min-width:1024px){
+  .top-pos{ display:none !important; }
+  html body #view-materi-detail .mt-wrap.has-tree > .mt-toc{ display:none; }
+  html body #view-materi-detail .mt-wrap > .mt-tree{ display:block; grid-column:1; grid-row:1 / span 60; position:sticky; top:112px; margin:16px 0 0; max-height:calc(100vh - 150px); overflow:auto; background:#fff; border:1px solid var(--rule); border-radius:10px; padding:0 0 8px; }
+  .mt-tree .mtt-k{ font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint); padding:12px 14px 6px; }
+  .mt-tree .mtt-tp{ display:flex; align-items:center; width:100%; min-height:40px; padding:0 14px; border:0; background:none; text-align:left; font-family:inherit; font-size:13.5px; font-weight:600; color:var(--ink); cursor:pointer; }
+  .mt-tree .mtt-tp:hover{ background:#F3F5F8; }
+  .mt-tree .mtt-tp.on{ background:var(--accent-soft); box-shadow:inset 3px 0 0 var(--accent-2); }
+  .mt-tree .mtt-sb{ display:block; width:100%; min-height:34px; padding:7px 14px 7px 30px; border:0; background:none; text-align:left; font-family:inherit; font-size:13px; line-height:1.35; color:#33475B; cursor:pointer; }
+  .mt-tree .mtt-sb:hover{ background:#F3F5F8; }
+  .mt-tree .mtt-sb.on{ font-weight:600; color:var(--accent-2); }
+  .mt-tree .mtt-n{ font-family:var(--font-mono); font-size:12px; }
+}
+
+/* ===== Halaman Profil penuh (menggantikan panel geser) ===== */
+.pf-menu{ display:none; }
+.pf-main{ display:flex; flex-direction:column; gap:16px; min-width:0; }
+.pf-card{ padding:0; overflow:hidden; }
+.pf-card > h2{ margin:0; font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint); padding:14px 16px 8px; }
+.pf-id{ display:flex; align-items:center; gap:14px; padding:18px 16px; }
+.pf-av{ width:60px; height:60px; border-radius:50%; background:var(--accent); color:#fff; font-weight:700; font-size:20px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.pf-who{ flex:1; min-width:0; }
+.pf-name{ font-size:18px; font-weight:700; color:var(--accent); overflow-wrap:anywhere; }
+.pf-sub{ font-size:12.5px; color:var(--ink-faint); line-height:1.5; }
+.pf-sub b{ font-family:var(--font-mono); color:var(--ink-soft); }
+.pf-st{ display:flex; align-items:center; gap:12px; min-height:56px; padding:8px 16px; border-top:1px solid #E1E6EC; font-size:14px; }
+.pf-st .k{ flex:1; min-width:0; font-weight:500; color:var(--ink); }
+.pf-st .s{ display:block; font-size:12px; line-height:1.45; color:var(--ink-faint); font-weight:400; }
+.pf-st .select-input{ width:auto; min-width:132px; height:40px; padding:0 10px; border:1px solid var(--rule-strong); border-radius:6px; background:#fff; font-size:13.5px; font-weight:500; font-family:var(--font-mono); flex-shrink:0; }
+.pf-ob{ min-height:44px; padding:0 16px; border:1px solid var(--rule-strong); border-radius:8px; background:#fff; color:var(--accent); font-family:inherit; font-size:13.5px; font-weight:600; cursor:pointer; flex-shrink:0; }
+.pf-ob:hover{ background:var(--accent-soft); border-color:var(--accent-2); }
+.pf-ob.pf-bad{ color:var(--bad); border-color:#D9B3A8; }
+.pf-ob.pf-bad:hover{ background:var(--bad-bg); }
+.pf-st .k.pf-bad{ color:var(--bad); }
+body.pf-on .top-avatar{ box-shadow:0 0 0 2px #7FA8D6; }
+@media (max-width:520px){
+  .pf-st .select-input{ min-width:110px; }
+  .pf-id{ flex-wrap:wrap; }
+  .pf-id .pf-ob{ margin-left:74px; }
+}
+@media (min-width:1024px){
+  #view-profil .chapter-inner{ display:grid; grid-template-columns:232px minmax(0,640px); justify-content:center; gap:24px; align-items:start; max-width:1100px; }
+  #view-profil .pf-menu{ display:block; position:sticky; top:112px; background:#fff; border:1px solid var(--rule); border-radius:10px; padding:0 0 8px; }
+  .pf-menu .pf-k{ font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint); padding:12px 14px 6px; }
+  .pf-menu .pf-mi{ display:flex; align-items:center; width:100%; min-height:44px; padding:0 14px; border:0; background:none; text-align:left; font-family:inherit; font-size:13.5px; color:var(--ink); cursor:pointer; }
+  .pf-menu .pf-mi:hover{ background:#F3F5F8; }
+  .pf-menu .pf-mi.on{ background:var(--accent-soft); font-weight:600; box-shadow:inset 3px 0 0 var(--accent-2); }
+  #view-profil .pf-card{ scroll-margin-top:112px; }
+  .pf-id{ padding:20px 18px; gap:18px; }
+  .pf-av{ width:64px; height:64px; font-size:22px; }
+  .pf-name{ font-size:20px; }
+  .pf-card > h2{ padding:14px 18px 8px; }
+  .pf-st{ padding:8px 18px; }
+}
