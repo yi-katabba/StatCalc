@@ -589,3 +589,17 @@ body.pf-on .top-avatar{ box-shadow:0 0 0 2px #7FA8D6; }
 @media (min-width:700px){
   .chapter-inner{ padding-top:20px; }
 }
+
+/* Header jenis "cover" (Pilih Metode, Metode Stat, Visualisasi Data, Tentang) ikut disembunyikan; banner Beranda tetap */
+.view > .cover:not(.on-sky){ display:none !important; }
+
+/* Karena header disembunyikan, panel samping mulai dari baris 1 (bukan baris 2) */
+@media (min-width:1024px){
+  .chapter-inner:has(.gr-chart) > [id$="data-card"]{ grid-row:1 / span 4; }
+  .chapter-inner:has(.gr-chart) > .rb-main{ grid-row:1 / span 4; }
+  html body #view-metode-calc .chapter-inner > .sc-vars{ grid-row:1 / span 30; }
+  html body #view-metode-calc .chapter-inner.has-res > .sc-res{ grid-row:1 / span 30; }
+  #view-kalkulator .chapter-inner > .calc-tools{ grid-row:1; }
+}
+/* Jarak atas untuk halaman yang kehilangan header */
+.view > .gf-wrap, .view > .toc-section, .view > .hub-grid, .view > .tentang-body{ padding-top:20px; }
