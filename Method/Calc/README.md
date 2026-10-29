@@ -38,3 +38,26 @@ Setiap kelompok `label.sc-chk` di pita dijadikan satu tombol dropdown (mis. **Ju
 ## Panel samping dapat diciutkan (`sheet-sidebar.js`)
 
 Di layar ≥ 1280 px, panel kiri dan kanan punya tombol ‹ / › di bilah atasnya. Diciutkan = rel 44 px berjudul tegak (klik di mana saja pada rel untuk membuka). Lembar di tengah melebar mengisi ruang untuk kasus: kiri saja, kanan saja, atau keduanya. Lebar custom hasil geseran (`kolom-geser.js`) tidak dihapus, jadi lebar semula kembali persis saat dibuka. Titik biru di rel kanan menandai hasil baru yang masuk saat diciutkan. API: `StatCalcSide.get()` / `StatCalcSide.set({left, right})`. Pilihan tersimpan di `localStorage` (`statcalc.calc.side`).
+
+## Pintu masuk dari layar Analisis (`analisis-vars.js` + `sheet.js`)
+
+Halaman metode tidak membaca data Lembar sendiri, jadi kartu **Variabel yang dipakai** kini menjelaskan dan menyediakan dua jalan:
+
+| Aksi | Hasil |
+|---|---|
+| **Jalankan di Lembar** (setelah memilih *Metode* di kartu) | Membuka Lembar, tab Statistik aktif, metode terpilih sudah dicentang. Analisis dijalankan lewat *Jalankan analisis*. |
+| Ketuk **kartu metode** (Metode Stat) saat data ada | Data dikirim, hasil langsung tampil di Hasil (segmen Hasil di ponsel, panel kanan di desktop). Tanpa data, halaman metode dibuka seperti biasa. |
+
+API di `StatCalcSheet.api`: `hasData()`, `canRun(id)`, `methodList()`, `getMethod()`, `pickMethod(id)`, `openStatTab()`, `runMethod(id)`. Tombol *Jalankan analisis* di pita memakai `runMethod` yang sama; bila lembar kosong kini muncul pesan galat, bukan panel Hasil yang menggantung pada "Menghitung…".
+
+## Tombol "Isi dari Lembar" di halaman metode & grafik (`Method/Shared/isi-lembar.js`)
+
+Di tiap kartu data halaman Stat dan Graph, tombol **Isi contoh data** kini ditemani **Isi dari Lembar** (ditambahkan otomatis untuk setiap kartu yang terdaftar di `StatCalcImport`).
+
+| Kondisi | Hasil |
+|---|---|
+| Lembar berisi data | Data dimuat ke tabel halaman itu (jumlah baris/kolom disesuaikan, peran X/Y dari panel Variabel ikut dipakai). Tidak pindah halaman dan tidak langsung menghitung. |
+| Lembar kosong | Peringatan "Lembar kerja masih kosong..." di kartu data dan sebagai toast. |
+| Kolom data kurang dari kolom tabel | Pesan dari importer (mis. RSM butuh minimal 3 kolom) tetap tampil. |
+
+Graph dengan kolom opsional di ujung (mis. *Kelompok warna* pada Scatter) dilengkapi kolom kosong otomatis. API: `StatCalcSheet.api.fillFromSheet(id, cardSel)`, `StatCalcImport.cards()`, `StatCalcImport.notify(kartu, 'ok'|'err', pesan)`.

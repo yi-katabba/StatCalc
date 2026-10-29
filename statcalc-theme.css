@@ -505,6 +505,11 @@ html body #view-metode-calc .sc-msg.ok{ background:#E3F0E8; }
   .av-role.dashed i{ font-family:var(--font-body); }
   .av-sum,.av-empty,.av-none{ font-size:12px; color:var(--ink-faint); margin-top:8px; line-height:1.5; }
   .av-link{ border:0; background:none; padding:0; margin-top:8px; min-height:32px; color:var(--accent-2); font-size:12.5px; font-weight:600; font-family:inherit; cursor:pointer; text-decoration:underline; display:block; }
+  .av-meth{ display:flex; align-items:center; gap:10px; margin-top:12px; font-size:12.5px; font-weight:600; color:var(--ink-soft); }
+  .av-sel{ flex:1; min-width:0; min-height:44px; padding:0 10px; border:1px solid var(--rule-strong); border-radius:10px; background:#fff; color:var(--ink); font:inherit; font-size:14px; }
+  .av-go{ width:100%; min-height:48px; margin-top:10px; border:0; border-radius:12px; background:var(--accent); color:#fff; font:inherit; font-size:14px; font-weight:700; cursor:pointer; }
+  .av-go:active{ filter:brightness(.92); }
+  .av-hint{ font-size:12px; color:var(--ink-faint); margin-top:8px; line-height:1.5; }
 }
 
 /* ===== Ponsel: segmen Ilmiah | Matriks + satuan sudut di Hitung (hitung-seg.js) ===== */

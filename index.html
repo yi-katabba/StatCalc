@@ -1302,7 +1302,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
   .calc-btn{ min-height:62px; }
 }
 </style>
-<link rel="stylesheet" href="statcalc-theme.css?v=25">
+<link rel="stylesheet" href="statcalc-theme.css?v=26">
 <link rel="stylesheet" href="Method/Materi/katex/katex.min.css">
 </head>
 <body class="pre-auth">
@@ -2623,6 +2623,8 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
       const method = list.find((c) => c.id === id);
       if (isAvailable) {
         trackMethodUse(id);
+        /* Metode Stat + data sudah ada di Lembar: kirim data, hasil tampil di Hasil (lihat analisis-vars.js) */
+        if (backTo === 'metode-stat' && window.StatCalcAnalisisVars && window.StatCalcAnalisisVars.run(id)) return;
         goToMethod(id, method.title, backTo);
       } else {
         showToast(`\u201C${method.title}\u201D sedang disiapkan - nantikan pembaruan berikutnya.`);
@@ -2966,7 +2968,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 <script src="Method/Stat/arima.js"></script>
 
 <!-- ===================== IMPOR DATA: tempel dari Excel & unggah file (Method/Shared/impor-data.js; dipakai Stat & Graph; muat SETELAH semua file Method/Stat/, SEBELUM file Method/Graph/) ===================== -->
-<script src="Method/Shared/impor-data.js"></script>
+<script src="Method/Shared/impor-data.js?v=2"></script>
 
 <!-- ===================== METODE: STATISTIKA DESKRIPTIF (Method/Stat/deskriptif.js; muat SETELAH impor-data.js; membuat #view-deskriptif sendiri) ===================== -->
 <script src="Method/Stat/deskriptif.js"></script>
@@ -2982,14 +2984,15 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 <script src="Method/Graph/timeseries.js"></script>
 
 <!-- ===================== METODE CALC: lembar kerja ala Excel (Method/Calc/sheet.js; membuat #view-metode-calc sendiri) ===================== -->
-<script src="Method/Calc/sheet.js?v=23"></script>
+<script src="Method/Calc/sheet.js?v=25"></script>
 <script src="Method/Calc/sheet-graph.js?v=23"></script>
 <script src="Method/Calc/sheet-hasil.js?v=25"></script>
 <script src="Method/Calc/sheet-data.js"></script>
 <script src="Method/Calc/sheet-vars.js"></script>
 <script src="Method/Calc/sheet-sidebar.js?v=25"></script>
 <script src="Method/Calc/ribbon-menu.js?v=24"></script>
-<script src="analisis-vars.js"></script>
+<script src="analisis-vars.js?v=2"></script>
+<script src="Method/Shared/isi-lembar.js?v=1"></script>
 <script src="status-bar.js"></script>
 <script src="projects.js"></script>
 <script src="project-panel.js"></script>

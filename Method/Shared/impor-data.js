@@ -314,7 +314,7 @@
       parsed = null;
     }
 
-    INSTANCES[cfg.card] = { ingest, wrap };
+    INSTANCES[cfg.card] = { ingest, wrap, ok: showOk, err: showErr };
 
     wrap.addEventListener('click', (e) => {
       const b = e.target.closest('[data-act]');
@@ -403,5 +403,8 @@
     try { inst.wrap.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* abaikan */ }
     return true;
   }
-  window.StatCalcImport = { register: (cfg) => { CONFIGS.push(cfg); setup(cfg); }, normNum, parseGrid, detectHeader, send, has: (c) => !!INSTANCES[c] };
+  window.StatCalcImport = { register: (cfg) => { CONFIGS.push(cfg); setup(cfg); }, normNum, parseGrid, detectHeader, send, has: (c) => !!INSTANCES[c],
+    /* dipakai Method/Shared/isi-lembar.js: daftar kartu terdaftar + tampilkan pesan di kartu itu */
+    cards: () => Object.keys(INSTANCES),
+    notify: (c, kind, msg) => { const i = INSTANCES[c]; if (!i) return false; (kind === 'ok' ? i.ok : i.err)(msg); try { i.wrap.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) { /* abaikan */ } return true; } };
 })();

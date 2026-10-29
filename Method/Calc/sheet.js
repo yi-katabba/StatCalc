@@ -1621,18 +1621,31 @@
   /* Kirim data ke halaman metode. silent = jangan pindah halaman (hasil ditampilkan di panel Hasil Lembar).
      Mengembalikan true bila data terkirim. */
   const CALC_BTN = { regresi: '#calcBtn', smoothing: '#smCalcBtn', anova: '#anCalcBtn', rsm: '#rsCalcBtn', stasioner: '#stCalcBtn', arima: '#arCalcBtn', deskriptif: '#dsCalc' };
-  function sendTo(id, silent) {
+  /* fill = true: hanya MENGISI tabel halaman metode dari Lembar (tombol "Isi dari Lembar" di halaman metode / grafik);
+     tanpa pindah halaman, tanpa menghitung. Pesan galat tampil di kartu data halaman itu. cardSel dipakai bila id bukan metode Stat (Graph). */
+  function sendTo(id, silent, fill, cardSel) {
     hide('scErr4');
-    const t = SEND[id];
+    const t = SEND[id] || { title: id, card: cardSel };
+    const fail = (m) => { if (fill) window.StatCalcImport && window.StatCalcImport.notify(t.card, 'err', m); else flash('scErr4', m, 6000); };
     let { rows, C } = exportRows();
     if (typeof window.StatCalcSheetRoles === 'function') { const ro = window.StatCalcSheetRoles(id, rows); if (ro) { rows = ro.rows; C = ro.C; } }
     const first = S.header ? 1 : 0;
-    if (rows.length <= first) { flash('scErr4', 'Belum ada data pada lembar kerja. Isi atau impor data terlebih dahulu.', 6000); return false; }
-    if (!window.StatCalc || !window.StatCalcImport || !window.StatCalcImport.has(t.card) && !t.build) { flash('scErr4', 'Halaman tujuan belum siap. Muat ulang halaman lalu coba lagi.', 6000); return false; }
+    /* tabel Graph dengan kolom opsional di ujung (mis. Kelompok warna pada Scatter): lengkapi dengan kolom kosong
+       agar data X, Y saja tetap bisa diisikan */
+    if (fill && !SEND[id]) {
+      const tr0 = $(t.card + ' tbody tr');
+      if (tr0) {
+        const ins = Array.from(tr0.querySelectorAll('input')); let opt = 0;
+        for (let k = ins.length - 1; k >= 0 && /opsional/i.test(ins[k].placeholder || ''); k--) opt++;
+        if (opt && C < ins.length && C >= ins.length - opt) { const pad = ins.length - C; rows = rows.map((r) => r.concat(Array(pad).fill(''))); C = ins.length; }
+      }
+    }
+    if (rows.length <= first) { fail(fill ? 'Lembar kerja masih kosong. Isi atau impor data di Lembar terlebih dahulu.' : 'Belum ada data pada lembar kerja. Isi atau impor data terlebih dahulu.'); return false; }
+    if (!window.StatCalc || !window.StatCalcImport || !window.StatCalcImport.has(t.card) && !t.build) { fail('Halaman tujuan belum siap. Muat ulang halaman lalu coba lagi.'); return false; }
     // jumlah kolom angka -> jumlah variabel X untuk regresi
     let numCols = 0;
     for (let c = 0; c < C; c++) { let n = 0, tot = 0; for (let r = first; r < rows.length; r++) { if (rows[r][c] !== '') { tot++; if (!Number.isNaN(parseNum(rows[r][c]))) n++; } } if (tot && n / tot >= 0.8) numCols++; }
-    if (!silent) window.StatCalc.goToMethod(id, t.title, 'metode-calc');
+    if (!silent && !fill) window.StatCalc.goToMethod(id, t.title, 'metode-calc');
     try {
       if (t.k) { const k = Math.max(1, Math.min(6, numCols - 1)); $('#varCount').value = k; $(t.build).click(); }
       else if (t.kg) { const m = $('#anMethod'); if (m && m.value !== 'one') { m.value = 'one'; m.dispatchEvent(new Event('change')); } $(t.kg).value = Math.max(2, Math.min(8, numCols)); $(t.build).click(); }
@@ -1641,6 +1654,17 @@
     } catch (e) { /* tabel tujuan tetap bisa dibuat manual */ }
     setTimeout(() => {
       const ok = window.StatCalcImport.send(t.card, rows, 'lembar kerja Calc', { hasHeader: S.header });
+      if (fill) {
+        if (!ok) { fail('Tabel tujuan belum tersedia. Selesaikan Langkah 1 pada halaman ini.'); return; }
+        const ap = $(t.card + ' [data-act="apply"]');          /* langkah Terapkan ke Tabel otomatis */
+        if (!ap) {                                            /* importer sudah menulis penyebab (mis. jumlah kolom kurang): jangan ditimpa */
+          const er = $(t.card + ' [data-msg="err"]');
+          if (!(er && !er.hidden && er.textContent.trim())) fail('Data Lembar tidak dapat diterapkan ke tabel ini. Periksa jumlah kolom angka di Lembar.');
+          return;
+        }
+        ap.click();
+        return;
+      }
       if (silent) {
         if (!ok) { window.StatCalcHasil.fail(id, 'Tabel tujuan belum tersedia. Buka halaman metode lalu selesaikan Langkah 1.'); return; }
         const ap = $(t.card + ' [data-act="apply"]');          /* langkah "Terapkan ke Tabel" otomatis */
@@ -1653,11 +1677,18 @@
     return true;
   }
   q('scTarget').addEventListener('change', () => pickMethod(q('scTarget').value));
-  q('scSend').addEventListener('click', () => {
-    const id = q('scTarget').value;
-    /* metode Stat: hasil tampil di panel Hasil pada Lembar (tanpa pindah halaman) */
-    if (CALC_BTN[id] && window.StatCalcHasil) { window.StatCalcHasil.start(id); sendTo(id, true); } else sendTo(id, false);
-  });
+  /* Ada data untuk dianalisis? (baris di bawah judul + minimal satu kolom terisi) */
+  function hasData() { const b = usedBounds(); return b.C > 0 && b.R > (S.header ? 1 : 0); }
+  /* Pilih metode, buka tab Statistik, lalu jalankan: metode Stat menampilkan hasil di panel Hasil Lembar
+     (tanpa pindah halaman). Dipakai tombol "Jalankan analisis" dan kartu metode di layar Analisis. */
+  function runMethod(id) {
+    if (!SEND[id]) return false;
+    pickMethod(id); showTab('kirim');
+    if (!hasData()) { flash('scErr4', 'Belum ada data pada lembar kerja. Isi atau impor data terlebih dahulu.', 6000); return false; }
+    if (CALC_BTN[id] && window.StatCalcHasil) { window.StatCalcHasil.start(id); return sendTo(id, true); }
+    return sendTo(id, false);
+  }
+  q('scSend').addEventListener('click', () => runMethod(q('scTarget').value));
 
   /* -------------------------------- Ekspor -------------------------------- */
   function download(blob, name) {
@@ -1738,6 +1769,13 @@
     firstDataRow, showTab, onChange: (fn) => { changeListeners.push(fn); }, onStructure: (fn) => { structureListeners.push(fn); },
     /* dipakai Method/Calc/sheet-data.js (tab Data) */
     api: {
+      /* dipakai analisis-vars.js (layar Analisis): pilih / jalankan metode dari luar Lembar */
+      hasData, runMethod, pickMethod,
+      /* dipakai Method/Shared/isi-lembar.js: isi tabel halaman metode / grafik dari Lembar */
+      fillFromSheet: (id, cardSel) => sendTo(id, true, true, cardSel), getMethod: () => q('scTarget').value,
+      canRun: (id) => !!(SEND[id] && CALC_BTN[id]),
+      methodList: () => Object.keys(SEND).map((id) => ({ id, title: SEND[id].title })),
+      openStatTab: () => showTab('kirim'),
       sendTo, MAX_R, MAX_C, ensure, pushUndo, invalidate, fullRender, flash, hide, normalizeInput,
       shiftFormula, adjustFormula, adjustAll,
       registerState: (get, set) => { extraGet = get; extraSet = set; },

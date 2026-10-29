@@ -1,5 +1,7 @@
 /* Layar Analisis (ponsel/tablet): kartu "Variabel yang dipakai" (Y, X, Faktor) dan ringkasan n.
-   Sumber: StatCalcVars (Method/Calc/sheet-vars.js). Dimuat SETELAH sheet-vars.js. */
+   Kartu juga jadi pintu masuk ke Lembar: tombol "Jalankan di Lembar" membuka Lembar dengan metode terpilih,
+   dan menekan kartu metode (Metode Stat) mengirim data lalu menampilkan hasil di Hasil.
+   Sumber: StatCalcVars (Method/Calc/sheet-vars.js), StatCalcSheet.api (sheet.js). Dimuat SETELAH sheet-vars.js. */
 (function () {
   'use strict';
   var V = window.StatCalcVars, SC = window.StatCalc;
@@ -9,6 +11,15 @@
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   function chip(tag, name, dashed) {
     return '<span class="av-role' + (dashed ? ' dashed' : '') + '"><i>' + tag + '</i><span class="av-n">' + esc(name) + '</span></span>';
+  }
+  var A = (window.StatCalcSheet && window.StatCalcSheet.api) || null;
+  function methodSelect() {
+    if (!A || !A.methodList) return '';
+    var cur = A.getMethod();
+    return '<label class="av-meth"><span>Metode</span><select class="av-sel" aria-label="Metode untuk dijalankan di Lembar">' +
+      A.methodList().filter(function (m) { return A.canRun(m.id); }).map(function (m) {
+        return '<option value="' + esc(m.id) + '"' + (m.id === cur ? ' selected' : '') + '>' + esc(m.title) + '</option>';
+      }).join('') + '</select></label>';
   }
   function html() {
     var s = V.summary(), h = '<div class="av-k">Variabel yang dipakai</div>';
@@ -21,7 +32,11 @@
     s.xs.forEach(function (x) { h += chip('X', x); });
     if (s.factor) h += chip('Faktor', s.factor, true);
     if (!s.y && !s.xs.length && !s.factor) h += '<span class="av-none">Belum ada kolom numerik.</span>';
-    h += '</div><div class="av-sum">n = ' + s.n + ' \u00B7 ' + s.num + ' variabel numerik' + (s.cat ? ' \u00B7 ' + s.cat + ' kategorik' : '') + '</div>' +
+    h += '</div><div class="av-sum">n = ' + s.n + ' \u00B7 ' + s.num + ' variabel numerik' + (s.cat ? ' \u00B7 ' + s.cat + ' kategorik' : '') + '</div>';
+    /* pintu masuk: data belum otomatis dipakai oleh halaman metode, jadi jelaskan dua jalannya */
+    h += methodSelect() +
+      '<button type="button" class="av-go" data-av="go">Jalankan di Lembar</button>' +
+      '<div class="av-hint">Atau ketuk salah satu kartu metode di bawah: data dikirim dan hasilnya tampil di Hasil.</div>' +
       '<button type="button" class="av-link" data-av="sheet">Ubah di Lembar</button>';
     return h;
   }
@@ -30,13 +45,40 @@
     c.className = 'av-card'; c.setAttribute('aria-label', 'Variabel yang dipakai');
     var cover = v.querySelector('.cover');
     if (cover && cover.nextSibling) v.insertBefore(c, cover.nextSibling); else v.appendChild(c);
+    var back = v.id === 'view-metode-stat' ? 'metode-stat' : 'metode';
     c.addEventListener('click', function (e) {
-      if (e.target.closest('[data-av="sheet"]') && SC && SC.navigate) SC.navigate('metode-calc', { backTo: 'metode' });
+      var b = e.target.closest('[data-av]'); if (!b || !SC || !SC.navigate) return;
+      if (b.dataset.av === 'sheet') { SC.navigate('metode-calc', { backTo: back }); return; }
+      if (b.dataset.av === 'go') {
+        /* buka Lembar dengan metode terpilih di tab Statistik; pengguna menekan "Jalankan analisis" sendiri */
+        var sel = c.querySelector('.av-sel');
+        SC.navigate('metode-calc', { backTo: back });
+        if (A) { if (sel && A.canRun(sel.value)) A.pickMethod(sel.value); A.openStatTab(); }
+      }
+    });
+    c.addEventListener('change', function (e) {
+      if (e.target.classList.contains('av-sel') && A && A.canRun(e.target.value)) { A.pickMethod(e.target.value); syncSelects(); }
     });
     return c;
   });
+  function syncSelects() {
+    if (!A || !A.getMethod) return;
+    cards.forEach(function (c) { var s = c.querySelector('.av-sel'); if (s) s.value = A.getMethod(); });
+  }
+  /* Kartu metode ditekan: kirim data lalu tampilkan hasil di Hasil (Lembar). Mengembalikan true bila ditangani;
+     tanpa data / metode tidak didukung -> false, sehingga halaman metode dibuka seperti biasa. */
+  function runFromCard(id) {
+    var s = V.summary();
+    if (!A || !A.canRun || !A.canRun(id) || !s.n || !s.num) return false;
+    if (SC && SC.navigate) SC.navigate('metode-calc', { backTo: 'metode-stat' });
+    A.runMethod(id);
+    syncSelects();
+    return true;
+  }
   function render() { var h = html(); cards.forEach(function (c) { c.innerHTML = h; }); }
   render();
   V.onChange(render);
-  window.StatCalcAnalisisVars = { render: render };
+  /* pilihan metode bisa berubah di Lembar: samakan tiap kali layar Analisis ditampilkan */
+  hosts.forEach(function (v) { new MutationObserver(function () { if (v.classList.contains('active')) syncSelects(); }).observe(v, { attributes: true, attributeFilter: ['class'] }); });
+  window.StatCalcAnalisisVars = { render: render, run: runFromCard };
 })();
