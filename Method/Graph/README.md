@@ -15,6 +15,9 @@ JS untuk menu **Graph**. Urutan `<script>` di `index.html` harus:
 | `barchart.js` | Bar Chart | Kategorik |
 | `piechart.js` | Pie Chart | Kategorik |
 | `timeseries.js` | Time Series Plot | Deret waktu |
+| `multitimeseries.js` | Multiple Time Series (satu panel / panel terpisah; skala asli, indeks, z-score) | Kolom Periode + 2-8 kolom deret |
+| `dekomposisi.js` | Decomposition Plot (tren + musiman + sisa, aditif / multiplikatif, kekuatan tren & musiman) | Periode + Nilai (min. 2 siklus) |
+| `acfpacf.js` | ACF / PACF Plot (batas signifikansi, differencing biasa & musiman, Ljung-Box) | Satu kolom Nilai |
 | `matrixplot.js` | Matrix Plot (scatter semua pasangan variabel + r) | Per variabel saja (2-8 kolom) |
 | `heatmapkorelasi.js` | Heatmap Korelasi (Pearson / Spearman) | Per variabel saja (2-12 kolom) |
 
@@ -135,3 +138,12 @@ Matrix Plot dan Heatmap Korelasi memakai `wide: { only: true, ... }`: halaman ti
 (langsung tabel per variabel), dan di tab Grafik Dataset pilihan "Format data" disembunyikan. Fungsi `wide.draw(d, o)` menerima
 `d.aligned` = larik per variabel yang **sejajar menurut baris** (sel kosong = `null`) sehingga pasangan data lengkap
 dapat dibentuk untuk tiap pasang variabel; `d.series` tetap berisi nilai tanpa sel kosong.
+
+## Grafik Waktu: ACF/PACF, Dekomposisi, Multiple Time Series
+
+Ketiganya berkategori **Waktu** (`types: ['waktu']`). `multitimeseries.js` memakai `wide: { only: true, labels: true, labelName: 'Periode' }`:
+`labels: true` menambah kolom teks **Periode** di depan tabel per variabel (impor Excel memetakannya sebagai kolom teks, kolom angka
+menyesuaikan jumlah deret). `wide.draw(d, o)` menerima `d.labels` (label per baris, `null` bila kosong) dan `d.aligned` (per baris, `null` = celah).
+Di tab Grafik Dataset, kolom label dipilih otomatis (kolom teks pertama, atau kolom angka berjudul Tahun/Periode/Bulan dst) dan bisa diganti di
+tab Edit Grafik (**Kolom periode**); disimpan di proyek sebagai `lcol`.
+`acfpacf.js` dan `dekomposisi.js` adalah grafik biasa (kolom `Nilai`, serta `Periode` untuk dekomposisi) dan memakai dialog pemilihan kolom.

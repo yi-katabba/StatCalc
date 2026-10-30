@@ -2467,6 +2467,12 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
       icon: '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5V12l6 6"/>' },
     { id: 'timeseries', kind: 'Waktu', title: 'Time Series Plot', subtitle: 'Grafik Deret Waktu', types: ['waktu'], desc: 'Lihat tren, pola musiman, dan lonjakan data menurut urutan waktu.', status: 'available', tone: 'navy',
       icon: '<path d="M3 17l4-6 4 3 4-8 6 6"/><path d="M3 20h18"/>' },
+    { id: 'multitimeseries', kind: 'Waktu', title: 'Multiple Time Series', subtitle: 'Beberapa Deret Waktu', types: ['waktu'], desc: 'Bandingkan beberapa deret waktu pada sumbu yang sama, dalam satu panel atau panel terpisah, dengan skala asli, indeks, atau standar.', status: 'available', tone: 'teal',
+      icon: '<path d="M3 20h18"/><path d="M3 15l4-4 4 2.5 4-6 6 3"/><path d="M3 18l4-2.5 4 1 4-3 6 .5" stroke-dasharray="2.6 1.8"/>' },
+    { id: 'dekomposisi', kind: 'Waktu', title: 'Decomposition Plot', subtitle: 'Tren, Musiman, dan Sisa', types: ['waktu'], desc: 'Pisahkan deret waktu menjadi tren, pola musiman, dan sisa; ukur seberapa kuat tren dan musimannya.', status: 'available', tone: 'gold',
+      icon: '<path d="M4 7.5l3.5-1.5 3 1.2 3-2.2 3.5 1"/><path d="M4 13c1.3-2.6 2.6-2.6 3.9 0s2.6 2.6 3.9 0 2.6-2.6 3.9 0 2.6 2.6 3.9 0"/><path d="M4 19h16"/><path d="M6.5 19v-2M9.5 19v2M12.5 19v-1.4M15.5 19v2.2M18.5 19v-2.2"/>' },
+    { id: 'acfpacf', kind: 'Waktu', title: 'ACF / PACF Plot', subtitle: 'Autokorelasi dan Parsial', types: ['waktu'], desc: 'Identifikasi tren, musiman, dan orde AR/MA lewat grafik autokorelasi sebelum memodelkan dengan ARIMA.', status: 'available', tone: 'plum',
+      icon: '<path d="M4 4v16"/><path d="M4 12h16"/><path d="M7 12V5.5M10 12V8.5M13 12v4M16 12v-2M19 12v2.4"/><path d="M4 9.3h16M4 14.7h16" stroke-dasharray="2 2" stroke-opacity=".6"/>' },
     { id: 'interval', kind: 'Sebaran', title: 'Interval Plot',    subtitle: 'Selang Kepercayaan', types: ['kelompok'], desc: 'Bandingkan rata-rata dan selang kepercayaan antar kelompok.', status: 'available', tone: 'teal',
       icon: '<path d="M7 5v14M17 5v14M5 5h4M5 19h4M15 5h4M15 19h4"/><circle cx="7" cy="12" r="1.3"/><circle cx="17" cy="9" r="1.3"/>' },
     { id: 'ecdf', kind: 'Sebaran', title: 'Empirical CDF',    subtitle: 'Fungsi Sebaran Empiris', types: ['numerik1'], desc: 'Tampilkan proporsi data yang kurang dari atau sama dengan setiap nilai.', status: 'available', tone: 'plum',
@@ -3027,7 +3033,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 <script src="Method/Shared/stat-layout.js"></script>
 
 <!-- ===================== METODE GRAPH (logika di Method/Graph/; graph-core.js HARUS dimuat paling awal, setelah impor-data.js) ===================== -->
-<script src="Method/Graph/graph-core.js?v=4"></script>
+<script src="Method/Graph/graph-core.js?v=5"></script>
 <script src="Method/Graph/scatter.js"></script>
 <script src="Method/Graph/histogram.js"></script>
 <script src="Method/Graph/probplot.js"></script>
@@ -3037,13 +3043,16 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 <script src="Method/Graph/barchart.js"></script>
 <script src="Method/Graph/piechart.js"></script>
 <script src="Method/Graph/timeseries.js"></script>
+<script src="Method/Graph/multitimeseries.js"></script>
+<script src="Method/Graph/dekomposisi.js"></script>
+<script src="Method/Graph/acfpacf.js"></script>
 <script src="Method/Graph/matrixplot.js"></script>
 <script src="Method/Graph/heatmapkorelasi.js"></script>
 <script src="Method/Shared/penjelasan-judul.js"></script>
 
 <!-- ===================== METODE CALC: Dataset ala Excel (Method/Calc/sheet.js; membuat #view-metode-calc sendiri) ===================== -->
 <script src="Method/Calc/sheet.js?v=26"></script>
-<script src="Method/Calc/sheet-graph.js?v=28"></script>
+<script src="Method/Calc/sheet-graph.js?v=29"></script>
 <script src="Method/Calc/sheet-hasil.js?v=26"></script>
 <script src="Method/Calc/sheet-data.js"></script>
 <script src="Method/Calc/sheet-vars.js"></script>

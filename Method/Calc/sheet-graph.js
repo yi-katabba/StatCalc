@@ -48,6 +48,9 @@
     barchart: `<path d="M3.5 20.5h17"/><rect x="4.8" y="11" width="3.8" height="9.5" rx=".6" ${F}/><rect x="10.1" y="5" width="3.8" height="15.5" rx=".6" ${F}/><rect x="15.4" y="13.5" width="3.8" height="7" rx=".6" ${F}/>`,
     piechart: `<circle cx="12" cy="12" r="8.5"/><path d="M12 12V3.5M12 12l7.2 4.6M12 12 5.4 17.2"/><path d="M12 12V3.5A8.5 8.5 0 0 1 19.2 16.6Z" ${F}/>`,
     timeseries: '<path d="M4 3.5v17h16.5"/><path d="M5.5 16.5 9 11.5l3 3 3.6-7 3.4 3.5"/><circle cx="9" cy="11.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="12" cy="14.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="15.6" cy="7.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="19" cy="11" r="1.1" fill="currentColor" stroke="none"/>',
+    acfpacf: '<path d="M4 3.5v17"/><path d="M4 12h16.5"/><path d="M7 12V5.5M10 12V8.4M13 12v4.2M16 12V9.8M19 12v2.4"/><path d="M4 9.4h16.5M4 14.6h16.5" stroke-dasharray="2 2" stroke-opacity=".55"/><circle cx="7" cy="5.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="10" cy="8.4" r="1.1" fill="currentColor" stroke="none"/><circle cx="13" cy="16.2" r="1.1" fill="currentColor" stroke="none"/>',
+    dekomposisi: '<path d="M3.5 3.5v17"/><path d="M5.5 8.2 9 6.6l3 1.2 3.4-2.4 4 .9"/><path d="M5.5 13.6c1.2-2.6 2.4-2.6 3.6 0s2.4 2.6 3.6 0 2.4-2.6 3.6 0 2.4 2.6 3.6 0"/><path d="M5.5 18.5h14" stroke-dasharray="2 2" stroke-opacity=".55"/><path d="M7 18.5v-1.6M9.6 18.5v1.5M12.2 18.5v-1M14.8 18.5v1.8M17.4 18.5v-1.9"/>',
+    multitimeseries: '<path d="M4 3.5v17h16.5"/><path d="M5.5 15.8 9 11.6l3 2.6 3.6-6 3.4 2.2"/><path d="M5.5 18.4 9 15.8l3 1 3.6-3.4 3.4.6" stroke-dasharray="2.6 1.8"/><path d="M5.5 12.6 9 8.4l3 1.2 3.6-3.4 3.4 1.4" stroke-opacity=".6"/>',
     copy: '<rect x="8.5" y="8.5" width="11.5" height="12" rx="2"/><path d="M15.5 8.5V6a2 2 0 0 0-2-2H6.5a2 2 0 0 0-2 2v8.5a2 2 0 0 0 2 2h2"/>',
     trash: '<path d="M4.5 7h15M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/><path d="M10 11v5.5M14 11v5.5"/>',
     done: '<circle cx="12" cy="12" r="8.5"/><path d="m8.3 12.3 2.7 2.7 4.8-5.4"/>',
@@ -65,6 +68,8 @@
     barchart: [{ l: 'Label kategori', hint: 'nama tiap batang (teks)' }, { l: 'Nilai', hint: 'tinggi batang (angka)' }],
     piechart: [{ l: 'Label kategori', hint: 'nama tiap irisan (teks)' }, { l: 'Nilai', hint: 'ukuran irisan (angka tidak negatif)' }],
     timeseries: [{ l: 'Label periode', hint: 'urutan waktu, mis. Jan, Feb, 2024-Q1' }, { l: 'Nilai', hint: 'nilai pada tiap periode (angka)' }],
+    dekomposisi: [{ l: 'Label periode', hint: 'urutan waktu, mis. Jan 23, Feb 23 (teks)' }, { l: 'Nilai', hint: 'nilai pada tiap periode (angka)' }],
+    acfpacf: [{ l: 'Kolom data', hint: 'kolom angka deret waktu, urut dari periode paling awal' }],
     'interval:long': [{ l: 'Label kelompok', hint: 'kolom yang menentukan kelompok tiap nilai', none: '(tanpa kelompok)' }, { l: 'Nilai', hint: 'angka yang dihitung rata-rata dan selangnya' }],
     'boxplot:long': [{ l: 'Label kelompok', hint: 'kolom yang menentukan kelompok tiap nilai (faktor ANOVA)', none: '(tanpa kelompok)' }, { l: 'Nilai', hint: 'angka yang dibandingkan antar kelompok' }],
   };
@@ -82,11 +87,14 @@
     { key: 'barchart', gid: 'barchart', label: 'Bar Chart', tip: 'Bar Chart: bandingkan nilai antar kategori', group: 'Kategori', dialog: true, why: 'Pilih kolom yang berisi nama kategori (label tiap batang) dan kolom nilainya. Kategori yang sama akan dijumlahkan.' },
     { key: 'piechart', gid: 'piechart', label: 'Pie Chart', tip: 'Pie Chart: komposisi bagian terhadap total', group: 'Kategori', dialog: true, why: 'Pilih kolom yang berisi nama kategori (label tiap irisan) dan kolom nilainya. Kategori yang sama akan dijumlahkan.' },
     { key: 'timeseries', gid: 'timeseries', label: 'Time Series', tip: 'Time Series Plot: data menurut urutan waktu', group: 'Waktu', dialog: true, why: 'Pilih kolom periode (label sumbu waktu) dan kolom nilainya. Urutkan data dari periode paling awal ke paling akhir.' },
+    { key: 'multitimeseries', gid: 'multitimeseries', mode: 'wide', label: 'Multiple Series', tip: 'Multiple Time Series: beberapa deret waktu dalam satu grafik (kolom periode + 2-8 kolom angka)', group: 'Waktu' },
+    { key: 'dekomposisi', gid: 'dekomposisi', label: 'Dekomposisi', tip: 'Decomposition Plot: pisahkan tren, pola musiman, dan sisa dari deret waktu', group: 'Waktu', dialog: true, why: 'Pilih kolom periode (label waktu) dan kolom nilainya. Dibutuhkan minimal dua siklus penuh (mis. 24 bulan untuk data bulanan); periode musiman diatur di tab Edit Grafik.' },
+    { key: 'acfpacf', gid: 'acfpacf', label: 'ACF / PACF', tip: 'ACF/PACF Plot: autokorelasi dan autokorelasi parsial untuk identifikasi model ARIMA', group: 'Waktu', dialog: true, why: 'Pilih kolom angka deret waktu yang akan dianalisis. Urutkan data dari periode paling awal ke paling akhir.' },
   ];
   const entryOf = (key) => CATALOG.find((e) => e.key === key);
   const rolesOf = (gid, mode) => ROLES[gid + ':long'] || (mode === 'long' && ROLES[gid]) || [];
   /* peran kolom -> label sumbu otomatis (dari judul kolom): [indeks peran sumbu X, indeks peran sumbu Y] */
-  const AXSRC = { histogram: [0, null], probplot: [null, null], ecdf: [0, null], scatter: [0, 1], barchart: [0, 1], timeseries: [0, 1], boxplot: [0, 1], interval: [0, 1], piechart: [null, null], matrixplot: [null, null], heatmapkorelasi: [null, null] };
+  const AXSRC = { histogram: [0, null], probplot: [null, null], ecdf: [0, null], scatter: [0, 1], barchart: [0, 1], timeseries: [0, 1], boxplot: [0, 1], interval: [0, 1], piechart: [null, null], matrixplot: [null, null], heatmapkorelasi: [null, null], dekomposisi: [0, 1], acfpacf: [null, null], multitimeseries: [null, null] };
 
   /* --------------------------------- Gaya --------------------------------- */
   const style = document.createElement('style');
@@ -196,6 +204,7 @@
   const colLabel = (c) => hdrText(c) || 'Kolom ' + cn(c);
   function colOpt(c) { const t = hdrText(c); return cn(c) + (t ? ' \u2013 ' + (t.length > 18 ? t.slice(0, 17) + '\u2026' : t) : ''); }
   const isNum = (v) => typeof v === 'number' && Number.isFinite(v);
+  const TIMEHDR = /^(no|nomor|no\.|periode|tahun|bulan|tanggal|tgl|date|waktu|time|period|year|month|kuartal|quarter|minggu|week|hari|day)$/i;
 
   /* Telaah seleksi: satu sel = seluruh tabel; rentang = kolom/baris terpilih */
   function analyze() {
@@ -221,8 +230,13 @@
   function guess(gid, mode, ctx) {
     const info = GC.info(gid), cols = ctx.cols;
     if (mode === 'wide') {
-      const v = cols.filter((x) => x.numeric).map((x) => x.c).slice(0, (info.wide && info.wide.maxCols) || 12);
-      return { vcols: v, ok: v.length > 0 };
+      let lab = -1, pool = cols;
+      if (info.wide && info.wide.labels) {   // grafik deret waktu: kolom teks (atau kolom angka berjudul Tahun/Periode/dst) = label waktu
+        const hit = cols.find((x) => !x.numeric) || cols.find((x) => TIMEHDR.test(hdrText(x.c)));
+        if (hit) { lab = hit.c; pool = cols.filter((x) => x.c !== lab); }
+      }
+      const v = pool.filter((x) => x.numeric).map((x) => x.c).slice(0, (info.wide && info.wide.maxCols) || 12);
+      return { vcols: v, lcol: lab, ok: v.length > 0 };
     }
     const used = new Set(), map = info.columns.map(() => -1);
     const order = info.columns.map((_, j) => j).sort((a, b) => (info.columns[b].text ? 1 : 0) - (info.columns[a].text ? 1 : 0));
@@ -276,7 +290,13 @@
       if (!names.length) throw new Error('Kolom yang dipilih belum berisi angka.');
       const mp = info.wide.minPerSeries || 2, sh = series.findIndex((x) => x.length < mp);
       if (sh !== -1) throw new Error(`Variabel \u201C${names[sh]}\u201D baru berisi ${series[sh].length} data; minimal ${mp} data per variabel.`);
-      return { data: { wide: true, d: { names, series, aligned, n } }, note: '' };
+      let labels = null;
+      if (info.wide.labels && ch.lcol >= 0) {
+        labels = [];
+        for (let r = a; r <= b; r++) { const v = rd(r, ch.lcol); labels.push(v === '' ? '' : (typeof v === 'string' ? v : SH.display(v))); }
+        labels = labels.some((t) => t !== '') ? labels.map((t, i) => t || String(i + 1)) : null;
+      }
+      return { data: { wide: true, d: { names, series, aligned, labels, n } }, note: '' };
     }
 
     const roles = rolesOf(ch.gid, 'long');
@@ -575,7 +595,10 @@
     /* Data */
     const df = [];
     if (info.wide && !info.wide.only) df.push(fld('Format data', selH('mode', ch.mode, [['wide', 'Per variabel (kolom = variabel)'], ['long', 'Per kelompok (label + nilai)']])));
-    if (ch.mode === 'wide') df.push(fld('Kolom variabel', inH('vcols', specOf(ch.vcols), 'mis. B:D atau A,C')));
+    if (ch.mode === 'wide') {
+      if (info.wide && info.wide.labels) df.push(fld('Kolom periode (label)', selH('lcol', ch.lcol, colOptions('(nomor urut)'))));
+      df.push(fld('Kolom variabel', inH('vcols', specOf(ch.vcols), 'mis. B:D atau A,C')));
+    }
     else rolesOf(ch.gid, 'long').forEach((r, j) => df.push(fld(esc(r.l), selH('map:' + j, ch.cols[j], colOptions(info.columns[j].optional ? (r.none || '(tidak ada)') : null)))));
     df.push(fld('Dari baris', inH('r1', ch.r1, 'otomatis')));
     df.push(fld('Sampai baris', inH('r2', ch.r2, 'otomatis')));
@@ -630,10 +653,11 @@
     if (k === 'mode') {
       ch.mode = val;
       const ctx = analyze();
-      if (ctx) { const g = guess(ch.gid, ch.mode, ctx); if (g.cols) ch.cols = g.cols; if (g.vcols) ch.vcols = g.vcols; }
+      if (ctx) { const g = guess(ch.gid, ch.mode, ctx); if (g.cols) ch.cols = g.cols; if (g.vcols) ch.vcols = g.vcols; if (g.lcol !== undefined) ch.lcol = g.lcol; }
       compute(ch); paint(ch); buildEdit(); return;
     }
     if (k.indexOf('map:') === 0) ch.cols[+k.slice(4)] = +val;
+    else if (k === 'lcol') ch.lcol = +val;
     else if (k === 'vcols') {
       const v = parseSpec(val);
       el.classList.toggle('invalid', !v && String(val).trim() !== '');
@@ -673,7 +697,7 @@
     if (a === 'del') removeChart(ch.uid);
     else if (a === 'close') deselect();
     else if (a === 'dup') {
-      const c2 = JSON.parse(JSON.stringify({ key: ch.key, gid: ch.gid, mode: ch.mode, label: ch.label, cols: ch.cols, vcols: ch.vcols, r1: ch.r1, r2: ch.r2, opts: ch.opts, style: ch.style, place: ch.place, lock: ch.lock, ratio: ch.ratio, w: ch.w, h: ch.h, x: ch.x + 28, y: ch.y + 28 }));
+      const c2 = JSON.parse(JSON.stringify({ key: ch.key, gid: ch.gid, mode: ch.mode, label: ch.label, cols: ch.cols, vcols: ch.vcols, lcol: ch.lcol, r1: ch.r1, r2: ch.r2, opts: ch.opts, style: ch.style, place: ch.place, lock: ch.lock, ratio: ch.ratio, w: ch.w, h: ch.h, x: ch.x + 28, y: ch.y + 28 }));
       c2.uid = 'g' + (++seq);
       charts.push(c2); compute(c2); if (c2.place === 'above') clampPos(c2);
       mountAll(c2); select(c2.uid, true); gNotify();
@@ -681,7 +705,7 @@
       const ctx = analyze(); if (!ctx) { msg('err', 'Dataset masih kosong.', 5000); return; }
       const g = guess(ch.gid, ch.mode, ctx);
       if (!g.ok) { msg('err', 'Seleksi saat ini tidak memuat kolom yang cocok untuk grafik ini. Pilih sel yang berisi data lalu coba lagi.', 6000); return; }
-      if (g.cols) ch.cols = g.cols; if (g.vcols) ch.vcols = g.vcols;
+      if (g.cols) ch.cols = g.cols; if (g.vcols) ch.vcols = g.vcols; if (g.lcol !== undefined) ch.lcol = g.lcol;
       ch.r1 = ctx.explicit ? ctx.r1 + 1 : null; ch.r2 = ctx.explicit ? ctx.r2 + 1 : null;
       compute(ch); paint(ch); buildEdit();
     }
@@ -699,7 +723,7 @@
     const info = GC.info(entry.gid), mode = entry.mode === 'wide' ? 'wide' : 'long';
     const ch = {
       uid: 'g' + (++seq), key: entry.key, gid: entry.gid, mode, label: entry.label,
-      cols: g.cols || info.columns.map(() => -1), vcols: g.vcols || [],
+      cols: g.cols || info.columns.map(() => -1), vcols: g.vcols || [], lcol: g.lcol !== undefined ? g.lcol : -1,
       r1: ctx.explicit ? ctx.r1 + 1 : null, r2: ctx.explicit ? ctx.r2 + 1 : null,
       opts: GC.defaults(entry.gid), style: defStyle(info), place: curPlace(), lock: true,
       x: 0, y: 0, w: 0, h: 0, ratio: 1.6,
@@ -797,7 +821,7 @@
   SH.onStructure((axis, kind, at, n) => {
     if (axis === 'c') {
       const mv = (c) => (c < 0 ? c : kind === 'ins' ? (c >= at ? c + n : c) : (c >= at && c <= at + n - 1 ? -1 : (c > at + n - 1 ? c - n : c)));
-      charts.forEach((ch) => { ch.cols = ch.cols.map(mv); ch.vcols = ch.vcols.map(mv).filter((c) => c >= 0); });
+      charts.forEach((ch) => { ch.cols = ch.cols.map(mv); ch.vcols = ch.vcols.map(mv).filter((c) => c >= 0); ch.lcol = mv(Number.isInteger(ch.lcol) ? ch.lcol : -1); });
     } else {
       const end = at + n - 1;
       const mvr = (r, isEnd) => {   // r = nomor baris (1-based) atau null
@@ -910,8 +934,8 @@
     return X.CFB.write(cfb, { type: 'array', fileType: 'zip' });
   }
   /* ---------------- API Proyek: daftar, pilih, simpan, pulihkan ---------------- */
-  const SHORT = { scatter: 'Pencar', histogram: 'Histogram', probplot: 'Plot probabilitas', ecdf: 'ECDF', boxplot: 'Boxplot', interval: 'Interval', barchart: 'Batang', piechart: 'Pie', timeseries: 'Deret waktu', matrixplot: 'Matriks', heatmapkorelasi: 'Korelasi' };
-  const KEYS = ['key', 'gid', 'mode', 'label', 'cols', 'vcols', 'r1', 'r2', 'opts', 'style', 'place', 'lock', 'ratio', 'w', 'h', 'x', 'y'];
+  const SHORT = { scatter: 'Pencar', histogram: 'Histogram', probplot: 'Plot probabilitas', ecdf: 'ECDF', boxplot: 'Boxplot', interval: 'Interval', barchart: 'Batang', piechart: 'Pie', timeseries: 'Deret waktu', matrixplot: 'Matriks', heatmapkorelasi: 'Korelasi', multitimeseries: 'Multi deret', dekomposisi: 'Dekomposisi', acfpacf: 'ACF/PACF' };
+  const KEYS = ['key', 'gid', 'mode', 'label', 'cols', 'vcols', 'lcol', 'r1', 'r2', 'opts', 'style', 'place', 'lock', 'ratio', 'w', 'h', 'x', 'y'];
   const nameOf = (ch) => (SHORT[ch.gid] || ch.label) + (ch.key === 'boxgroup' || ch.key === 'intervalgroup' ? ' kelompok' : '');
   function listCharts() {
     const cnt = {};
@@ -939,7 +963,7 @@
           const info = GC.info(o.gid), num = (v, d) => (Number.isFinite(v) ? v : d), ints = (a) => (Array.isArray(a) ? a.filter((v) => Number.isInteger(v)).slice(0, 60) : []);
           const ch = {
             uid: 'g' + (++seq), key: String(o.key || o.gid), gid: o.gid, mode: o.mode === 'wide' ? 'wide' : 'long', label: String(o.label || o.gid),
-            cols: ints(o.cols), vcols: ints(o.vcols), r1: Number.isInteger(o.r1) ? o.r1 : null, r2: Number.isInteger(o.r2) ? o.r2 : null,
+            cols: ints(o.cols), vcols: ints(o.vcols), lcol: Number.isInteger(o.lcol) ? o.lcol : -1, r1: Number.isInteger(o.r1) ? o.r1 : null, r2: Number.isInteger(o.r2) ? o.r2 : null,
             opts: Object.assign(GC.defaults(o.gid), o.opts && typeof o.opts === 'object' ? o.opts : {}),
             style: Object.assign(defStyle(info), o.style && typeof o.style === 'object' ? o.style : {}),
             place: o.place === 'below' ? 'below' : 'above', lock: o.lock !== false,

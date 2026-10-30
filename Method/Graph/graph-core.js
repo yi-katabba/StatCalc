@@ -45,6 +45,9 @@
     barchart: { grid: { h: 1, v: 0 }, c1: 'Warna batang', pal: true },
     piechart: { grid: null, pal: true },
     timeseries: { grid: { h: 1, v: 0 }, c1: 'Warna garis data', c2: 'Warna garis tren' },
+    acfpacf: { grid: { h: 1, v: 0 }, c1: 'Warna batang (tidak signifikan)', c2: 'Warna batang signifikan', pal: false },
+    dekomposisi: { grid: { h: 1, v: 0 }, c1: 'Warna data asli', c2: 'Warna tren', pal: true },
+    multitimeseries: { grid: { h: 1, v: 0 }, pal: true },
     matrixplot: { grid: null, c1: 'Warna titik', c2: 'Warna garis regresi' },
     heatmapkorelasi: { grid: null, c1: 'Warna korelasi positif', c2: 'Warna korelasi negatif' },
   };
@@ -506,13 +509,14 @@
       const wh = q('whead');
       const defName = (j) => (W_.namePrefix || 'Variabel') + ' ' + (j + 1);
       const renderHead = () => {
-        wh.innerHTML = '<tr><th>#</th>' + wNames.map((nm, j) => `<th><input type="text" class="gr-vname" data-j="${j}" value="${esc(nm)}" aria-label="Nama variabel ${j + 1}" autocomplete="off"></th>`).join('') + '</tr>';
+        wh.innerHTML = '<tr><th>#</th>' + (W_.labels ? `<th>${esc(W_.labelName || 'Periode')}</th>` : '') + wNames.map((nm, j) => `<th><input type="text" class="gr-vname" data-j="${j}" value="${esc(nm)}" aria-label="Nama variabel ${j + 1}" autocomplete="off"></th>`).join('') + '</tr>';
       };
       wh.addEventListener('input', (e) => { const t = e.target; if (t && t.matches && t.matches('.gr-vname')) wNames[+t.dataset.j] = t.value; });
       const cellHTML = (j) => `<td><input type="text" inputmode="decimal" autocomplete="off" data-col="${j}" placeholder="${esc(wNames[j] || defName(j))}"></td>`;
+      const labCell = () => `<td><input type="text" inputmode="text" autocomplete="off" data-lab="1" placeholder="${esc(W_.labelName || 'Periode')}"></td>`;
       const wAddRow = () => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td class="rownum">${wb.rows.length + 1}</td>` + wNames.map((_, j) => cellHTML(j)).join('');
+        tr.innerHTML = `<td class="rownum">${wb.rows.length + 1}</td>` + (W_.labels ? labCell() : '') + wNames.map((_, j) => cellHTML(j)).join('');
         wb.appendChild(tr);
       };
       const wSetRows = (n) => { while (wb.rows.length < n) wAddRow(); while (wb.rows.length > n && wb.rows.length > 1) wb.deleteRow(-1); };
@@ -523,7 +527,7 @@
         wNames.length = n;
         renderHead();
         Array.prototype.forEach.call(wb.rows, (tr) => {
-          const have = tr.querySelectorAll('input').length;
+          const have = tr.querySelectorAll('input[data-col]').length;
           if (have > n) { for (let k = have; k > n; k--) tr.deleteCell(-1); }
           else for (let j = have; j < n; j++) tr.insertAdjacentHTML('beforeend', cellHTML(j));
         });
@@ -542,7 +546,11 @@
         wb.innerHTML = '';
         renderHead();
         wSetRows(sm.rows.length);
-        sm.rows.forEach((r, i) => $$('input', wb.rows[i]).forEach((inp, j) => { inp.value = r[j] === undefined || r[j] === null ? '' : String(r[j]); inp.classList.remove('invalid'); }));
+        sm.rows.forEach((r, i) => {
+          const li = wb.rows[i].querySelector('input[data-lab]');
+          if (li) { li.value = (sm.labels && sm.labels[i]) || ''; li.classList.remove('invalid'); }
+          $$('input[data-col]', wb.rows[i]).forEach((inp, j) => { inp.value = r[j] === undefined || r[j] === null ? '' : String(r[j]); inp.classList.remove('invalid'); });
+        });
         hideErr();
       });
       const syncMode = () => {
@@ -556,11 +564,13 @@
       q('wsample').click();
     }
     function readWide() {
-      const used = [];
       const series = wNames.map(() => []);
-      const alRaw = wNames.map(() => []);   /* sejajar per baris (null = sel kosong), untuk grafik berpasangan */
+      const alRaw = wNames.map(() => []);   /* sejajar per baris (null = sel kosong), untuk grafik berpasangan / deret waktu */
+      const labRaw = [];
       for (let i = 0; i < wb.rows.length; i++) {
-        $$('input', wb.rows[i]).forEach((x, j) => {
+        const li = wb.rows[i].querySelector('input[data-lab]');
+        labRaw[i] = li ? li.value.trim() : '';
+        $$('input[data-col]', wb.rows[i]).forEach((x, j) => {
           x.classList.remove('invalid');
           const v = x.value.trim();
           alRaw[j][i] = null;
@@ -570,17 +580,22 @@
           series[j].push(num); alRaw[j][i] = num;
         });
       }
+      /* dengan kolom label (deret waktu), buang baris kosong di ujung bawah agar sumbu waktu tidak melebar */
+      let rowsN = wb.rows.length;
+      if (W_.labels) while (rowsN > 1 && labRaw[rowsN - 1] === '' && alRaw.every((a) => a[rowsN - 1] === null)) rowsN--;
       const names = [], vals = [], seen = {}, aligned = [];
       series.forEach((arr, j) => {
         if (!arr.length) return;
         let nm = (wNames[j] || '').trim() || ((W_.namePrefix || 'Variabel') + ' ' + (j + 1));
         if (seen[nm]) { seen[nm]++; nm += ' (' + seen[nm] + ')'; } else seen[nm] = 1;
-        names.push(nm); vals.push(arr); aligned.push(alRaw[j]);
+        names.push(nm); vals.push(arr); aligned.push(W_.labels ? alRaw[j].slice(0, rowsN) : alRaw[j]);
       });
       if (!names.length) throw new Error('Belum ada data. Isi minimal satu kolom variabel.');
       const short = vals.findIndex((a) => a.length < wMinPer);
       if (short !== -1) throw new Error(`Variabel \u201C${names[short]}\u201D baru berisi ${vals[short].length} data; minimal ${wMinPer} data per variabel.`);
-      return { names, series: vals, aligned, n: vals.reduce((s, a) => s + a.length, 0) };
+      const out = { names, series: vals, aligned, n: vals.reduce((s, a) => s + a.length, 0) };
+      if (W_.labels) out.labels = labRaw.slice(0, rowsN).some((t) => t !== '') ? labRaw.slice(0, rowsN).map((t, i) => t || String(i + 1)) : null;
+      return out;
     }
 
     /* ---- pita (ribbon): teks, opsi, warna, garis kisi ---- */
@@ -702,11 +717,11 @@
         window.StatCalcImport.register({
           card: '#' + P + 'wdata-card', body: '#' + P + 'wbody',
           add: '#' + P + 'wadd', remove: '#' + P + 'wremove', minHint: '#' + P + 'wmin',
-          text: [],
+          text: W_.labels ? [0] : [],
           fitCols: (n) => { const h = q('waddcol'); let g = 0; while (wNames.length < Math.min(n, wMax) && g++ < 30) h.click(); g = 0; const r = q('wremcol'); while (wNames.length > Math.max(1, Math.min(n, wMax)) && g++ < 30) r.click(); },
           onApply: (info) => {
             const nm = info.names || [], off = info.offset || 0;
-            nm.forEach((t, k) => { const j = off + k; const v = String(t || '').trim(); const inp = $$('.gr-vname', section)[j]; if (inp && v) { inp.value = v; wNames[j] = v; } });
+            nm.forEach((t, k) => { const j = off + k - (W_.labels ? 1 : 0); if (j < 0) return; const v = String(t || '').trim(); const inp = $$('.gr-vname', section)[j]; if (inp && v) { inp.value = v; wNames[j] = v; } });
           },
         });
       }
