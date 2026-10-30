@@ -561,7 +561,6 @@
       };
       modeEl.addEventListener('change', syncMode);
       syncMode();
-      q('wsample').click();
     }
     function readWide() {
       const series = wNames.map(() => []);
