@@ -405,8 +405,8 @@
           <div class="gr-chart" id="${P}chart"></div>
           <div class="control-row gr-actions ib-row">
             ${window.StatIconBtn('png', 'Unduh PNG', `id="${P}png"`)}
-            ${window.StatIconBtn('copy', 'Salin gambar', `id="${P}copy"`)}
             ${window.StatIconBtn('svg', 'Unduh SVG', `id="${P}svg"`)}
+            ${window.StatIconBtn('copy', 'Salin gambar', `id="${P}copy"`)}
           </div>
           <div class="gr-sum" id="${P}sum"></div>
         </section>

@@ -466,8 +466,8 @@
         ${window.StatIconBtn(minSet.has(ch.uid) ? 'down' : 'up', minSet.has(ch.uid) ? 'Tampilkan grafik' : 'Ciutkan grafik (hanya judul)', `data-bact="min" aria-expanded="${minSet.has(ch.uid) ? 'false' : 'true'}"`)}
         ${window.StatIconBtn('edit', 'Edit grafik', 'data-bact="edit"')}
         ${window.StatIconBtn('png', 'Unduh PNG', 'data-bact="png"')}
-        ${window.StatIconBtn('copy', 'Salin gambar', 'data-bact="copy"')}
         ${window.StatIconBtn('svg', 'Unduh SVG', 'data-bact="svg"')}
+        ${window.StatIconBtn('copy', 'Salin gambar', 'data-bact="copy"')}
         ${window.StatIconBtn('del', 'Hapus grafik', 'data-bact="del"')}
       </div></div>
       <div class="sg-bchart"></div>
