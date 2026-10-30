@@ -99,6 +99,7 @@
     #view-deskriptif .ds-bar{ display:grid; gap:10px; margin-top:10px; }
     #view-deskriptif .ds-bar.c1{ grid-template-columns:1fr; }
     #view-deskriptif .ds-bar.c2{ grid-template-columns:repeat(2,1fr); }
+    #view-deskriptif .ds-bar.c5{ grid-template-columns:repeat(5,1fr); gap:6px; }
     #view-deskriptif .ds-bar.c3{ grid-template-columns:repeat(3,1fr); }
     #view-deskriptif .ds-bar .btn-ghost, #view-deskriptif .ds-bar .btn-primary{ width:100%; flex:none; padding-left:6px; padding-right:6px; line-height:1.25; }
     @media (max-width:480px){ #view-deskriptif .ds-bar .btn-ghost{ font-size:13px; } }
@@ -135,14 +136,12 @@
             <tbody id="dsBody"></tbody>
           </table>
         </div>
-        <div class="ds-bar c3">
-          <button type="button" class="btn-ghost" id="dsAdd">+ Tambah baris</button>
-          <button type="button" class="btn-ghost" id="dsRemove">&minus; Hapus baris terakhir</button>
-          <button type="button" class="btn-ghost" id="dsClear">Kosongkan</button>
-        </div>
-        <div class="ds-bar c2">
-          <button type="button" class="btn-ghost" id="dsAddCol">+ Tambah variabel</button>
-          <button type="button" class="btn-ghost" id="dsRemCol">&minus; Hapus variabel terakhir</button>
+        <div class="ds-bar c5">
+          ${window.StatSlateBtn('rowadd', 'Tambah baris', '', 'dsAdd')}
+          ${window.StatSlateBtn('rowdel', 'Hapus baris terakhir', '', 'dsRemove')}
+          ${window.StatSlateBtn('clear', 'Kosongkan', '', 'dsClear')}
+          ${window.StatSlateBtn('coladd', 'Tambah variabel', '', 'dsAddCol')}
+          ${window.StatSlateBtn('coldel', 'Hapus variabel terakhir', '', 'dsRemCol')}
         </div>
         <div class="ds-bar c1">
           <button type="button" class="btn-ghost" id="dsSample">Isi contoh data</button>

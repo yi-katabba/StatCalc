@@ -49,6 +49,7 @@
     .imp-panel{ border:1px dashed var(--rule-strong); border-radius:var(--radius); padding:14px 16px; background:var(--paper-2); margin:6px 0 14px; }
     .btn-grid{ display:grid; gap:10px; margin-top:10px; }
     .btn-grid-3{ grid-template-columns:repeat(3,1fr); }
+    .btn-grid-5{ grid-template-columns:repeat(5,1fr); gap:6px; }
     .btn-grid-2{ grid-template-columns:repeat(2,1fr); }
     .btn-grid-1{ grid-template-columns:1fr; }
     .btn-grid .btn-primary{ width:100%; flex:none; }

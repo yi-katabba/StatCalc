@@ -331,14 +331,12 @@
               <tbody id="${P}wbody"></tbody>
             </table>
           </div>
-          <div class="btn-grid btn-grid-3">
-            <button type="button" class="btn-ghost" id="${P}wadd">+ Tambah baris</button>
-            <button type="button" class="btn-ghost" id="${P}wremove">&minus; Hapus baris terakhir</button>
-            <button type="button" class="btn-ghost" id="${P}wclear">Kosongkan</button>
-          </div>
-          <div class="btn-grid btn-grid-2">
-            <button type="button" class="btn-ghost" id="${P}waddcol">+ Tambah variabel</button>
-            <button type="button" class="btn-ghost" id="${P}wremcol">&minus; Hapus variabel terakhir</button>
+          <div class="btn-grid btn-grid-5">
+            ${window.StatSlateBtn('rowadd', 'Tambah baris', '', `${P}wadd`)}
+            ${window.StatSlateBtn('rowdel', 'Hapus baris terakhir', '', `${P}wremove`)}
+            ${window.StatSlateBtn('clear', 'Kosongkan', '', `${P}wclear`)}
+            ${window.StatSlateBtn('coladd', 'Tambah variabel', '', `${P}waddcol`)}
+            ${window.StatSlateBtn('coldel', 'Hapus variabel terakhir', '', `${P}wremcol`)}
           </div>
           <div class="btn-grid btn-grid-1">
             <button type="button" class="btn-ghost" id="${P}wsample">Isi contoh data</button>
@@ -378,9 +376,9 @@
             </table>
           </div>
           <div class="btn-grid btn-grid-3">
-            <button type="button" class="btn-ghost" id="${P}add">+ Tambah baris</button>
-            <button type="button" class="btn-ghost" id="${P}remove">&minus; Hapus baris terakhir</button>
-            <button type="button" class="btn-ghost" id="${P}clear">Kosongkan</button>
+            ${window.StatSlateBtn('rowadd', 'Tambah baris', '', `${P}add`)}
+            ${window.StatSlateBtn('rowdel', 'Hapus baris terakhir', '', `${P}remove`)}
+            ${window.StatSlateBtn('clear', 'Kosongkan', '', `${P}clear`)}
           </div>
           <div class="btn-grid btn-grid-1">
             <button type="button" class="btn-ghost" id="${P}sample">Isi contoh data</button>

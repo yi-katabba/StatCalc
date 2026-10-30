@@ -69,6 +69,44 @@
       '<circle cx="45" cy="46" r="12" fill="#7144E0" stroke="#F1EBFF" stroke-width="2.8"/>' + TILE_ARROW +
       '<path d="M52 12l1.4-4.2M57 17l4.2-2.6M59 24.5h4.4" stroke="#7A52E6" stroke-width="2.4" stroke-linecap="round" fill="none"/>']
   };
+
+  /* ---- Ikon tabel (tambah/hapus baris & variabel, kosongkan): satu warna biru-baja, tanpa teks ---- */
+  var SC = '#2F5A8C';
+  function tbl(kind, vert) {
+    /* tabel 3x3; baris/kolom terakhir diberi warna lebih pekat agar baris dan variabel dapat dibedakan */
+    var hi = vert
+      ? '<rect x="25.5" y="11.5" width="8.5" height="30" fill="#7F9CC4" opacity=".55"/>'
+      : '<rect x="6" y="32" width="28" height="9.5" fill="#7F9CC4" opacity=".55"/>';
+    var plus = kind === 'add';
+    return '<rect x="6" y="11" width="28" height="30" rx="2.6" fill="#fff" stroke="' + SC + '" stroke-width="3.4"/>' + hi +
+      '<path d="M6 21.5h28M6 32h28M16 11.5v29.5M25.5 11.5v29.5" stroke="' + SC + '" stroke-width="2" opacity=".6" fill="none"/>' +
+      '<rect x="6" y="11" width="28" height="30" rx="2.6" fill="none" stroke="' + SC + '" stroke-width="3.4"/>' +
+      '<circle cx="42" cy="41" r="12" fill="' + SC + '" stroke="#EAF0F8" stroke-width="2.8"/>' +
+      '<path d="' + (plus ? 'M42 35v12M36 41h12' : 'M36 41h12') + '" stroke="#fff" stroke-width="3.4" stroke-linecap="round" fill="none"/>';
+  }
+  var SLATE = {
+    rowadd: tbl('add', false), rowdel: tbl('del', false), coladd: tbl('add', true), coldel: tbl('del', true),
+    clear: '<g transform="translate(-9 -7) scale(1.28)"><path d="M43 9L33.5 24" stroke="' + SC + '" stroke-width="4.4" stroke-linecap="round" fill="none"/>' +
+      '<path d="M30.5 22.5l8 5.2-4.2 7.6-4.5 6.6L13 36l5.8-6.2z" fill="' + SC + '" stroke="' + SC + '" stroke-width="2.4" stroke-linejoin="round"/>' +
+      '<path d="M21.5 37.5l-3.8 8M27 38.5l-2 8.5M32 35.5l1.6 5" stroke="#EAF0F8" stroke-width="2.2" stroke-linecap="round" fill="none"/>' +
+      '<path d="M50 24.5l1.8 4.4 4.4 1.8-4.4 1.8-1.8 4.4-1.8-4.4-4.4-1.8 4.4-1.8zM49 42.5l1.1 2.7 2.7 1.1-2.7 1.1-1.1 2.7-1.1-2.7-2.7-1.1 2.7-1.1z" fill="' + SC + '"/></g>'
+  };
+  /* tombol bertipe "slate": kartu biru muda berisi ikon saja; label hanya jadi tooltip & aria-label */
+  window.StatSlateBtn = function (n, label, extra, id) {
+    var l = String(label).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+    return '<button type="button" class="btn-ghost ib-sl"' + (id ? ' id="' + id + '"' : '') + ' title="' + l + '" aria-label="' + l + '"' + (extra ? ' ' + extra : '') + '><svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">' + SLATE[n] + '</svg></button>';
+  };
+  /* Ubah tombol statis bertanda data-sic="nama" (dipakai di index.html) menjadi tombol ikon. */
+  window.StatSlateUpgrade = function (root) {
+    var list = (root || document).querySelectorAll('button[data-sic]');
+    for (var i = 0; i < list.length; i++) {
+      var b = list[i], n = b.getAttribute('data-sic'); if (!SLATE[n]) continue;
+      var l = b.getAttribute('data-label') || b.getAttribute('title') || '';
+      b.classList.add('ib-sl'); b.setAttribute('title', l); b.setAttribute('aria-label', l);
+      b.innerHTML = '<svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">' + SLATE[n] + '</svg>';
+      b.removeAttribute('data-sic');
+    }
+  };
   /* HTML satu tombol ikon; extra = atribut tambahan (mis. data-ex="png"). docx / share / zip tampil sebagai ubin berwarna. */
   window.StatIconBtn = function (n, label, extra, cls) {
     var l = String(label).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
@@ -80,14 +118,24 @@
     '.ib{display:inline-flex !important;align-items:center;justify-content:center;flex:1 1 0 !important;width:auto !important;min-width:44px;max-width:120px;padding-left:0 !important;padding-right:0 !important;min-height:44px !important;padding:0 !important;}' +
     '.ib svg{width:21px;height:21px;flex:0 0 auto;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;pointer-events:none;}' +
     '.ib:disabled{opacity:.45;cursor:not-allowed;}' +
-    '.ib.ib-tile{width:76px !important;max-width:none !important;min-width:0 !important;height:auto !important;min-height:0 !important;aspect-ratio:1/1.1;padding:2px !important;flex:0 0 auto !important;border:2px solid var(--tb) !important;border-radius:16px !important;background:linear-gradient(160deg,var(--t1),var(--t2)) !important;box-shadow:0 2px 7px rgba(30,40,60,.10);color:inherit;transition:transform .12s ease,box-shadow .12s ease,filter .12s ease;}' +
-    '.ib.ib-tile svg{width:96%;max-width:none;flex:0 0 auto;height:auto;stroke:none;fill:none;stroke-width:0;overflow:visible;}' +
+    '.ib.ib-tile{width:60px !important;max-width:none !important;min-width:0 !important;height:auto !important;min-height:0 !important;aspect-ratio:1/1;padding:2px !important;flex:0 0 auto !important;border:2px solid var(--tb) !important;border-radius:14px !important;background:linear-gradient(160deg,var(--t1),var(--t2)) !important;box-shadow:0 2px 7px rgba(30,40,60,.10);color:inherit;transition:transform .12s ease,box-shadow .12s ease,filter .12s ease;}' +
+    '.ib.ib-tile svg{width:80%;max-width:none;flex:0 0 auto;height:auto;stroke:none;fill:none;stroke-width:0;overflow:visible;}' +
     '.ib.ib-tile:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 14px rgba(30,40,60,.18);filter:saturate(1.08);}' +
     '.ib.ib-tile:active:not(:disabled){transform:none;box-shadow:0 1px 4px rgba(30,40,60,.18);}' +
     '.ib.ib-tile:focus-visible{outline:3px solid var(--accent-2,#2F7F79);outline-offset:2px;}' +
     '.ib-t-blue{--t1:#E5F1FE;--t2:#BEDBFB;--tb:#7DB6F5;}.ib-t-green{--t1:#E4FAEB;--t2:#BFF3D2;--tb:#85DDA9;}.ib-t-purple{--t1:#F1EBFF;--t2:#D8CCFF;--tb:#B3A0F5;}' +
-    '.ib-row.ex-main-btns .ib.ib-tile{width:76px !important;}.ib-row.ex-bar-btns .ib.ib-tile{width:54px !important;padding:4px !important;border-radius:13px !important;}' +
-    '.sg-bbtns .ib.ib-tile{width:52px !important;padding:3px !important;border-radius:13px !important;}.sg-bbtns{align-items:center;}' +
+    '.ib-row.ex-main-btns .ib.ib-tile{width:60px !important;}.ib-row.ex-bar-btns .ib.ib-tile{width:46px !important;padding:3px !important;border-radius:12px !important;}' +
+    '.sg-bbtns .ib.ib-tile{flex:1 1 0 !important;width:auto !important;min-width:0 !important;overflow:hidden;max-width:120px !important;height:44px !important;min-height:44px !important;aspect-ratio:auto !important;box-sizing:border-box !important;padding:0 !important;border-radius:10px !important;border-width:1px !important;box-shadow:none;}.sg-bbtns .ib.ib-tile svg{width:auto !important;height:100% !important;max-width:100%;}.sg-bbtns{align-items:center;}' +
+    '.ib[hidden],.ib-sl[hidden]{display:none !important;}' +
+    '.ib-sl{display:inline-flex !important;align-items:center;justify-content:center;width:100%;min-height:56px !important;padding:6px !important;background:linear-gradient(160deg,#EEF3FA,#E3EBF6) !important;border:1.5px solid #B4C6E0 !important;border-radius:16px !important;color:#2F5A8C;transition:transform .12s ease,box-shadow .12s ease;}' +
+    '.ib-sl svg{width:36px;height:36px;flex:0 0 auto;pointer-events:none;}' +
+    '.ib-sl{padding:4px !important;border-radius:14px !important;}.btn-grid:has(.ib-sl),.ds-bar:has(.ib-sl){gap:6px;}' +
+    '.ib-sl:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 10px rgba(47,90,140,.18);}' +
+    '.ib-sl:active:not(:disabled){transform:none;box-shadow:none;}' +
+    '.ib-sl:focus-visible{outline:3px solid var(--accent-2,#2F7F79);outline-offset:2px;}' +
+    '.ib-sl:disabled{opacity:.45;cursor:not-allowed;}' +
     '.ib-row,.ib-row.control-row{display:flex !important;flex-direction:row !important;flex-wrap:nowrap !important;gap:8px;align-items:stretch;}';
   document.head.appendChild(st);
+  window.StatSlateUpgrade();
+  document.addEventListener('DOMContentLoaded', function () { window.StatSlateUpgrade(); });
 })();

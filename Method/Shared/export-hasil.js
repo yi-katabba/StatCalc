@@ -381,9 +381,9 @@
   style.textContent = `
     .ex-bar{ display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; margin:4px 0 14px; padding:10px 14px; border:1px solid var(--rule); border-radius:var(--radius); background:var(--accent-soft); }
     .ex-main-btns{ justify-content:flex-start; }
-    .ex-main-btns .ib{ flex:0 0 auto !important; width:64px !important; max-width:none; }
+    .ex-main-btns .ib{ flex:0 0 auto !important; width:60px !important; max-width:none; }
     .ex-bar-btns{ flex:0 1 auto; }
-    .ex-bar-btns .ib{ flex:0 0 auto !important; width:52px !important; }
+    .ex-bar-btns .ib{ flex:0 0 auto !important; width:46px !important; }
     .ex-bar a{ font-size:13.5px; font-weight:600; color:var(--accent); }
     .ex-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr)); gap:18px; margin-top:16px; }
     .ex-fig{ margin:0; border:1px solid var(--rule); border-radius:var(--radius); background:#fff; overflow:hidden; display:flex; flex-direction:column; }
@@ -599,8 +599,8 @@
       <p class="hint">Grafik dibuat dari data yang baru dihitung. Unduh tiap grafik sebagai PNG/SVG, atau unduh <strong>seluruh hasil</strong> (pengaturan, tabel, uji, kesimpulan, grafik, dan data input) dalam satu dokumen Word.</p>
       <div class="control-row ib-row ex-main-btns">
         ${window.StatIconBtn('docx', 'Unduh Hasil (.docx)', `data-ex="docx" data-ex-id="${id}"`, 'btn-primary')}
-        ${window.StatIconBtn('share', 'Bagikan', 'data-ex="share"')}
         ${spec.resolved.length ? window.StatIconBtn('zip', 'Unduh semua grafik (.zip)', 'data-ex="zip"') : ''}
+        ${window.StatIconBtn('share', 'Bagikan', 'data-ex="share"')}
       </div>
       <p class="ex-status" hidden></p>
       ${spec.resolved.length ? '<div class="ex-rib" data-rib-slot></div>' : ''}
