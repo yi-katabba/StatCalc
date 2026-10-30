@@ -18,7 +18,7 @@
    ========================================================================= */
 (function () {
   'use strict';
-  var SEL = '#view-metode-calc .sc-rbody, .rb-body, #view-metode-calc .sg-bbtns';
+  var SEL = '#view-metode-calc .sc-rbody, .rb-body, #view-metode-calc .sg-bbtns, .btn-grid:has(> .ib-sl):not(#anBtnGrid), .ds-bar:has(> .ib-sl)';
 
   var css = document.createElement('style');
   css.textContent =
@@ -35,7 +35,11 @@
     /* deretan tombol ikon pada blok grafik hasil (Dataset): satu baris, digeser bila sempit */
     '.rg-wrap:has(> .sg-bbtns){flex:1 1 100%;}' +
     '.rg-wrap > .sg-bbtns{flex-wrap:nowrap !important;}' +
-    '.rg-wrap > .sg-bbtns > *{flex:0 0 auto !important;min-width:52px !important;}'
+    '.rg-wrap > .sg-bbtns > *{flex:0 0 auto !important;min-width:52px !important;}' +
+    /* baris tombol ikon tabel (tambah/hapus baris & variabel, kosongkan): satu baris, digeser bila sempit */
+    '.rg-wrap:has(> .btn-grid > .ib-sl),.rg-wrap:has(> .ds-bar > .ib-sl){display:flex;margin-top:10px;}' +
+    '.rg-wrap > .btn-grid.rg-body,.rg-wrap > .ds-bar.rg-body{display:flex !important;flex-wrap:nowrap;gap:6px;margin-top:0 !important;}' +
+    '.rg-wrap > .btn-grid.rg-body > .ib-sl,.rg-wrap > .ds-bar.rg-body > .ib-sl{flex:1 0 56px;width:auto !important;min-width:56px;}'
   document.head.appendChild(css);
 
   /* elemen yang harus tetap menerima klik / ketikan sendiri: tarik tidak dimulai dari sini */

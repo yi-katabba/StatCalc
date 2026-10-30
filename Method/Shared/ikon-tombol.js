@@ -107,6 +107,17 @@
       b.removeAttribute('data-sic');
     }
   };
+  /* ---- Seragamkan warna ubin ke palet biru-baja (sama dengan ikon tabel): tiap warna heksa dipetakan menurut terang-gelapnya ---- */
+  (function () {
+    var D = [47, 90, 140], Lt = [234, 240, 248];
+    function map(h) {
+      var r = parseInt(h.substr(0, 2), 16), g = parseInt(h.substr(2, 2), 16), b = parseInt(h.substr(4, 2), 16);
+      var L = 0.299 * r + 0.587 * g + 0.114 * b, k = Math.max(0, Math.min(1, (L - 95) / 135)), o = '#';
+      for (var i = 0; i < 3; i++) { var v = Math.round(D[i] + (Lt[i] - D[i]) * k); o += (v < 16 ? '0' : '') + v.toString(16); }
+      return o.toUpperCase();
+    }
+    for (var n in TILE) { TILE[n][1] = TILE[n][1].replace(/#([0-9A-Fa-f]{6})\b/g, function (m, h) { return map(h); }); }
+  })();
   /* HTML satu tombol ikon; extra = atribut tambahan (mis. data-ex="png"). docx / share / zip tampil sebagai ubin berwarna. */
   window.StatIconBtn = function (n, label, extra, cls) {
     var l = String(label).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
@@ -123,7 +134,7 @@
     '.ib.ib-tile:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 14px rgba(30,40,60,.18);filter:saturate(1.08);}' +
     '.ib.ib-tile:active:not(:disabled){transform:none;box-shadow:0 1px 4px rgba(30,40,60,.18);}' +
     '.ib.ib-tile:focus-visible{outline:3px solid var(--accent-2,#2F7F79);outline-offset:2px;}' +
-    '.ib-t-blue{--t1:#E5F1FE;--t2:#BEDBFB;--tb:#7DB6F5;}.ib-t-green{--t1:#E4FAEB;--t2:#BFF3D2;--tb:#85DDA9;}.ib-t-purple{--t1:#F1EBFF;--t2:#D8CCFF;--tb:#B3A0F5;}' +
+    '.ib-t-blue,.ib-t-green,.ib-t-purple{--t1:#EEF3FA;--t2:#E3EBF6;--tb:#B4C6E0;}' +
     '.ib-row.ex-main-btns .ib.ib-tile{width:60px !important;}.ib-row.ex-bar-btns .ib.ib-tile{width:46px !important;padding:3px !important;border-radius:12px !important;}' +
     '.sg-bbtns .ib.ib-tile{flex:1 1 0 !important;width:auto !important;min-width:0 !important;overflow:hidden;max-width:120px !important;height:44px !important;min-height:44px !important;aspect-ratio:auto !important;box-sizing:border-box !important;padding:0 !important;border-radius:10px !important;border-width:1px !important;box-shadow:none;}.sg-bbtns .ib.ib-tile svg{width:auto !important;height:100% !important;max-width:100%;}.sg-bbtns{align-items:center;}' +
     '.ib[hidden],.ib-sl[hidden]{display:none !important;}' +
