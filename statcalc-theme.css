@@ -251,7 +251,7 @@ html body #view-metode-calc .sc-msg.ok{ background:#E3F0E8; }
   .chapter-inner:has(.gr-chart) > .rb-main .rb-body{ flex-direction:column; overflow:visible; padding:12px 14px 6px; gap:14px; }
   .chapter-inner:has(.gr-chart) > .rb-main .rb-grp{ flex-direction:column; padding:0 0 14px; border-right:0; border-bottom:1px solid var(--rule); }
   .chapter-inner:has(.gr-chart) > .rb-main .rb-grp:last-child{ border-bottom:0; padding-bottom:0; }
-  .chapter-inner:has(.gr-chart) > .rb-main .rb-gbody{ grid-template-columns:minmax(0,1fr); }
+  .chapter-inner:has(.gr-chart) > .rb-main .rb-gbody{ grid-template-rows:none; grid-auto-flow:row; grid-auto-columns:auto; grid-template-columns:minmax(0,1fr); }
   .chapter-inner:has(.gr-chart) > .rb-main .rb-glabel{ order:-1; text-align:left; padding:0 0 8px; text-transform:uppercase; letter-spacing:.06em; font-size:11px; }
   .chapter-inner:has(.gr-chart) > .rb-main .select-input,
   .chapter-inner:has(.gr-chart) > .rb-main .plain-input{ width:100%; }

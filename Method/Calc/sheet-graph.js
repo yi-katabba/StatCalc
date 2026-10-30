@@ -42,6 +42,8 @@
     boxplot: `<path d="M3.5 20.5h17"/><path d="M8 4.5v3M8 15v3.5M5.8 4.5h4.4M5.8 18.5h4.4"/><rect x="5" y="7.5" width="6" height="7.5" rx=".6" ${F}/><path d="M5 11.2h6"/><path d="M16.5 3.5v5M16.5 13.5v5M14.3 3.5h4.4M14.3 18.5h4.4"/><rect x="13.5" y="8.5" width="6" height="5" rx=".6" ${F}/><path d="M13.5 11h6"/>`,
     interval: `<path d="M3.5 20.5h17"/><path d="M7 4.5v13M5 4.5h4M5 17.5h4"/><circle cx="7" cy="11" r="1.7" fill="currentColor" stroke="none"/><path d="M12.5 7.5v11M10.5 7.5h4M10.5 18.5h4"/><circle cx="12.5" cy="13" r="1.7" fill="currentColor" stroke="none"/><path d="M18 3.5v9M16 3.5h4M16 12.5h4"/><circle cx="18" cy="8" r="1.7" fill="currentColor" stroke="none"/>`,
     boxgroup: `<path d="M3.5 17h17"/><path d="M6.2 3.5v2.5M6.2 11v3M4.7 3.5h3M4.7 14h3"/><rect x="4" y="6" width="4.4" height="5" rx=".5" ${F}/><path d="M12 5.5v2M12 12v2.5M10.5 5.5h3M10.5 14.5h3"/><rect x="9.8" y="7.5" width="4.4" height="4.5" rx=".5" ${F}/><path d="M17.8 7v2M17.8 13.5v1M16.3 7h3M16.3 14.5h3"/><rect x="15.6" y="9" width="4.4" height="4.5" rx=".5" ${F}/><path d="M4.6 20.5h3.2M10.4 20.5h3.2M16.2 20.5h3.2"/>`,
+    matrixplot: '<rect x="3.5" y="3.5" width="17" height="17" rx="1"/><path d="M9.2 3.5v17M14.8 3.5v17M3.5 9.2h17M3.5 14.8h17"/><circle cx="12" cy="6.3" r="1" fill="currentColor" stroke="none"/><circle cx="6.3" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="17.7" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="17.7" r="1" fill="currentColor" stroke="none"/>',
+    heatmapkorelasi: `<rect x="3.5" y="3.5" width="17" height="17" rx="1"/><path d="M9.2 3.5v17M14.8 3.5v17M3.5 9.2h17M3.5 14.8h17"/><rect x="3.5" y="3.5" width="5.7" height="5.7" ${F}/><rect x="9.2" y="9.2" width="5.6" height="5.6" ${F}/><rect x="14.8" y="14.8" width="5.7" height="5.7" ${F}/><rect x="14.8" y="3.5" width="5.7" height="5.7" ${F}/><rect x="3.5" y="14.8" width="5.7" height="5.7" ${F}/>`,
     scatter: '<path d="M4 3.5v17h16.5"/><path d="M6.5 16.5 19 7.5" stroke-dasharray="2.4 2"/><circle cx="7.4" cy="14.4" r="1.25" fill="currentColor" stroke="none"/><circle cx="10" cy="15.6" r="1.25" fill="currentColor" stroke="none"/><circle cx="11.6" cy="11.4" r="1.25" fill="currentColor" stroke="none"/><circle cx="14.4" cy="12.6" r="1.25" fill="currentColor" stroke="none"/><circle cx="16.2" cy="8.2" r="1.25" fill="currentColor" stroke="none"/><circle cx="18.6" cy="9.6" r="1.25" fill="currentColor" stroke="none"/>',
     barchart: `<path d="M3.5 20.5h17"/><rect x="4.8" y="11" width="3.8" height="9.5" rx=".6" ${F}/><rect x="10.1" y="5" width="3.8" height="15.5" rx=".6" ${F}/><rect x="15.4" y="13.5" width="3.8" height="7" rx=".6" ${F}/>`,
     piechart: `<circle cx="12" cy="12" r="8.5"/><path d="M12 12V3.5M12 12l7.2 4.6M12 12 5.4 17.2"/><path d="M12 12V3.5A8.5 8.5 0 0 1 19.2 16.6Z" ${F}/>`,
@@ -68,6 +70,8 @@
   };
   const CATALOG = [
     { key: 'scatter', gid: 'scatter', label: 'Scatter Plot', tip: 'Scatter Plot: hubungan dua kolom angka (X dan Y)', group: 'Hubungan' },
+    { key: 'matrixplot', gid: 'matrixplot', mode: 'wide', label: 'Matrix Plot', tip: 'Matrix Plot: scatter plot semua pasangan kolom angka (2-8 kolom)', group: 'Hubungan' },
+    { key: 'heatmapkorelasi', gid: 'heatmapkorelasi', mode: 'wide', label: 'Heatmap Korelasi', tip: 'Heatmap Korelasi: matriks korelasi antar kolom angka (2-12 kolom)', group: 'Hubungan' },
     { key: 'histogram', gid: 'histogram', label: 'Histogram', tip: 'Histogram: sebaran satu kolom angka', group: 'Sebaran' },
     { key: 'probplot', gid: 'probplot', label: 'Probability Plot', tip: 'Probability Plot (Q-Q normal): cek kenormalan satu kolom angka', group: 'Sebaran' },
     { key: 'ecdf', gid: 'ecdf', label: 'Empirical CDF', tip: 'Empirical CDF: proporsi data \u2264 x untuk satu kolom angka', group: 'Sebaran' },
@@ -82,7 +86,7 @@
   const entryOf = (key) => CATALOG.find((e) => e.key === key);
   const rolesOf = (gid, mode) => ROLES[gid + ':long'] || (mode === 'long' && ROLES[gid]) || [];
   /* peran kolom -> label sumbu otomatis (dari judul kolom): [indeks peran sumbu X, indeks peran sumbu Y] */
-  const AXSRC = { histogram: [0, null], probplot: [null, null], ecdf: [0, null], scatter: [0, 1], barchart: [0, 1], timeseries: [0, 1], boxplot: [0, 1], interval: [0, 1], piechart: [null, null] };
+  const AXSRC = { histogram: [0, null], probplot: [null, null], ecdf: [0, null], scatter: [0, 1], barchart: [0, 1], timeseries: [0, 1], boxplot: [0, 1], interval: [0, 1], piechart: [null, null], matrixplot: [null, null], heatmapkorelasi: [null, null] };
 
   /* --------------------------------- Gaya --------------------------------- */
   const style = document.createElement('style');
@@ -254,25 +258,25 @@
     const numOf = (v) => (isNum(v) ? v : GC.parseNum(String(v)));
 
     if (ch.mode === 'wide') {
-      const names = [], series = [], seen = {}; let n = 0;
+      const names = [], series = [], seen = {}, aligned = []; let n = 0;
       if (!ch.vcols.length) throw new Error('Pilih minimal satu kolom variabel (mis. B:D).');
       ch.vcols.forEach((c) => {
-        const arr = [];
+        const arr = [], al = [];
         for (let r = a; r <= b; r++) {
-          const v = rd(r, c); if (v === '') continue;
+          const v = rd(r, c); if (v === '') { al.push(null); continue; }
           const x = numOf(v);
           if (!Number.isFinite(x)) throw new Error(`Sel ${cn(c)}${r + 1}: \u201C${SH.display(v)}\u201D bukan angka (kolom ${colLabel(c)}).`);
-          arr.push(x);
+          arr.push(x); al.push(x);
         }
         if (!arr.length) return;
         let nm = colLabel(c);
         if (seen[nm]) { seen[nm]++; nm += ' (' + seen[nm] + ')'; } else seen[nm] = 1;
-        names.push(nm); series.push(arr); n += arr.length;
+        names.push(nm); series.push(arr); aligned.push(al); n += arr.length;
       });
       if (!names.length) throw new Error('Kolom yang dipilih belum berisi angka.');
       const mp = info.wide.minPerSeries || 2, sh = series.findIndex((x) => x.length < mp);
       if (sh !== -1) throw new Error(`Variabel \u201C${names[sh]}\u201D baru berisi ${series[sh].length} data; minimal ${mp} data per variabel.`);
-      return { data: { wide: true, d: { names, series, n } }, note: '' };
+      return { data: { wide: true, d: { names, series, aligned, n } }, note: '' };
     }
 
     const roles = rolesOf(ch.gid, 'long');
@@ -570,7 +574,7 @@
 
     /* Data */
     const df = [];
-    if (info.wide) df.push(fld('Format data', selH('mode', ch.mode, [['wide', 'Per variabel (kolom = variabel)'], ['long', 'Per kelompok (label + nilai)']])));
+    if (info.wide && !info.wide.only) df.push(fld('Format data', selH('mode', ch.mode, [['wide', 'Per variabel (kolom = variabel)'], ['long', 'Per kelompok (label + nilai)']])));
     if (ch.mode === 'wide') df.push(fld('Kolom variabel', inH('vcols', specOf(ch.vcols), 'mis. B:D atau A,C')));
     else rolesOf(ch.gid, 'long').forEach((r, j) => df.push(fld(esc(r.l), selH('map:' + j, ch.cols[j], colOptions(info.columns[j].optional ? (r.none || '(tidak ada)') : null)))));
     df.push(fld('Dari baris', inH('r1', ch.r1, 'otomatis')));
@@ -906,7 +910,7 @@
     return X.CFB.write(cfb, { type: 'array', fileType: 'zip' });
   }
   /* ---------------- API Proyek: daftar, pilih, simpan, pulihkan ---------------- */
-  const SHORT = { scatter: 'Pencar', histogram: 'Histogram', probplot: 'Plot probabilitas', ecdf: 'ECDF', boxplot: 'Boxplot', interval: 'Interval', barchart: 'Batang', piechart: 'Pie', timeseries: 'Deret waktu' };
+  const SHORT = { scatter: 'Pencar', histogram: 'Histogram', probplot: 'Plot probabilitas', ecdf: 'ECDF', boxplot: 'Boxplot', interval: 'Interval', barchart: 'Batang', piechart: 'Pie', timeseries: 'Deret waktu', matrixplot: 'Matriks', heatmapkorelasi: 'Korelasi' };
   const KEYS = ['key', 'gid', 'mode', 'label', 'cols', 'vcols', 'r1', 'r2', 'opts', 'style', 'place', 'lock', 'ratio', 'w', 'h', 'x', 'y'];
   const nameOf = (ch) => (SHORT[ch.gid] || ch.label) + (ch.key === 'boxgroup' || ch.key === 'intervalgroup' ? ' kelompok' : '');
   function listCharts() {

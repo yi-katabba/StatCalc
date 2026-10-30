@@ -15,6 +15,8 @@ JS untuk menu **Graph**. Urutan `<script>` di `index.html` harus:
 | `barchart.js` | Bar Chart | Kategorik |
 | `piechart.js` | Pie Chart | Kategorik |
 | `timeseries.js` | Time Series Plot | Deret waktu |
+| `matrixplot.js` | Matrix Plot (scatter semua pasangan variabel + r) | Per variabel saja (2-8 kolom) |
+| `heatmapkorelasi.js` | Heatmap Korelasi (Pearson / Spearman) | Per variabel saja (2-12 kolom) |
 
 ## Menambah grafik baru
 
@@ -126,3 +128,10 @@ judul langkah (`<h2>` di `.step-card`) pada semua metode Stat dan semua halaman 
 penjelasannya, yaitu `p.hint` dan `.gr-format` yang menjadi anak langsung kartu. Judul tanpa penjelasan (mis. "Hasil") tidak diberi
 tombol. Halaman grafik baru dari `GraphCore.add` otomatis ikut, selama kartunya memakai pola `h2` + `p.hint`. Setelan awal:
 penjelasan tersembunyi (`DEFAULT_OPEN = false` di file itu).
+
+## Grafik "per variabel saja" (`wide.only`)
+
+Matrix Plot dan Heatmap Korelasi memakai `wide: { only: true, ... }`: halaman tidak menampilkan pilihan format data
+(langsung tabel per variabel), dan di tab Grafik Dataset pilihan "Format data" disembunyikan. Fungsi `wide.draw(d, o)` menerima
+`d.aligned` = larik per variabel yang **sejajar menurut baris** (sel kosong = `null`) sehingga pasangan data lengkap
+dapat dibentuk untuk tiap pasang variabel; `d.series` tetap berisi nilai tanpa sel kosong.

@@ -1302,7 +1302,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
   .calc-btn{ min-height:62px; }
 }
 </style>
-<link rel="stylesheet" href="statcalc-theme.css?v=34">
+<link rel="stylesheet" href="statcalc-theme.css?v=35">
 <link rel="stylesheet" href="Method/Materi/katex/katex.min.css">
 <style>
 .ar-sep{border-top:1px solid var(--rule);padding-top:16px !important;margin-top:16px !important;flex-basis:100%;}
@@ -2280,9 +2280,10 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
           <option value="recursive">Rekursif (satu-satu)</option>
           <option value="direct">Rentang (langsung per horizon)</option>
         </select>
-        <p class="field-note" id="arFcModeHint"></p>
+        
       </div>
       </div>
+      <p class="field-note" style="margin:0 0 8px;" id="arFcModeHint"></p>
       <p class="field-note" id="arNeedHint"></p>
       <div class="btn-grid btn-grid-1">
         <button type="button" class="btn-primary" id="arCalcBtn">Hitung Model &rarr;</button>
@@ -2439,6 +2440,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
     { id: 'all',       label: 'Semua',                 short: 'Semua', desc: 'Menampilkan semua grafik. Pilih jenis data Anda di atas untuk melihat grafik yang cocok.' },
     { id: 'numerik1',  label: 'Numerik 1 variabel',    short: 'Numerik', desc: 'Satu kolom angka, mis. nilai ujian 30 siswa atau tinggi badan. Cocok untuk melihat sebaran dan memeriksa kenormalan.' },
     { id: 'numerik2',  label: 'Dua variabel numerik',  short: '2 variabel', desc: 'Dua kolom angka berpasangan (X dan Y), mis. jam belajar dan nilai ujian. Cocok untuk melihat hubungan antar variabel.' },
+    { id: 'multinumerik', label: 'Beberapa variabel numerik', short: 'Banyak variabel', desc: 'Tiga atau lebih kolom angka (satu kolom = satu variabel), mis. jam belajar, nilai, jam tidur. Cocok untuk melihat hubungan antar banyak variabel sekaligus.' },
     { id: 'kelompok',  label: 'Numerik per kelompok',  short: 'Per kelompok', desc: 'Satu kolom kelompok + satu kolom angka, mis. metode mengajar dan nilai. Cocok untuk membandingkan beberapa kelompok.' },
     { id: 'kategorik', label: 'Kategorik',             short: 'Kategorik', desc: 'Satu kolom kategori + satu kolom jumlah/frekuensi, mis. semester dan banyak mahasiswa. Cocok untuk komposisi dan perbandingan kategori.' },
     { id: 'waktu',     label: 'Deret waktu',           short: 'Deret waktu', desc: 'Data berurutan menurut waktu, mis. penjualan per bulan. Cocok untuk melihat tren dan pola.' },
@@ -2449,6 +2451,10 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
   const GRAPH_METHODS = [
     { id: 'scatter', kind: 'Hubungan', title: 'Scatter Plot',     subtitle: 'Diagram Pencar', types: ['numerik2'], desc: 'Lihat hubungan dua variabel numerik, lengkap dengan garis regresi dan korelasi Pearson.', status: 'available', tone: 'plum',
       icon: '<path d="M4 4v16h16"/><circle cx="8" cy="15" r="1.3"/><circle cx="11.5" cy="11" r="1.3"/><circle cx="14" cy="14" r="1.3"/><circle cx="17.5" cy="7.5" r="1.3"/>' },
+    { id: 'matrixplot', kind: 'Hubungan', title: 'Matrix Plot',      subtitle: 'Matriks Scatter Plot', types: ['multinumerik'], desc: 'Scatter plot semua pasangan variabel dalam satu matriks, lengkap dengan korelasi tiap pasangan.', status: 'available', tone: 'teal',
+      icon: '<rect x="4" y="4" width="16" height="16" rx="1"/><path d="M9.3 4v16M14.7 4v16M4 9.3h16M4 14.7h16"/><circle cx="12" cy="6.7" r="0.9"/><circle cx="6.7" cy="12" r="0.9"/><circle cx="17.3" cy="12" r="0.9"/><circle cx="12" cy="17.3" r="0.9"/>' },
+    { id: 'heatmapkorelasi', kind: 'Hubungan', title: 'Heatmap Korelasi', subtitle: 'Matriks Korelasi Berwarna', types: ['multinumerik'], desc: 'Lihat kekuatan korelasi antar banyak variabel lewat warna; berguna memeriksa multikolinearitas.', status: 'available', tone: 'rust',
+      icon: '<rect x="4" y="4" width="16" height="16" rx="1"/><path d="M9.3 4v16M14.7 4v16M4 9.3h16M4 14.7h16"/><rect x="4" y="4" width="5.3" height="5.3" fill="currentColor" fill-opacity=".55"/><rect x="9.3" y="9.3" width="5.4" height="5.4" fill="currentColor" fill-opacity=".55"/><rect x="14.7" y="14.7" width="5.3" height="5.3" fill="currentColor" fill-opacity=".55"/><rect x="14.7" y="4" width="5.3" height="5.3" fill="currentColor" fill-opacity=".22"/><rect x="4" y="14.7" width="5.3" height="5.3" fill="currentColor" fill-opacity=".22"/>' },
     { id: 'histogram', kind: 'Sebaran', title: 'Histogram',        subtitle: 'Distribusi Frekuensi', types: ['numerik1'], desc: 'Lihat bentuk sebaran data numerik, tabel frekuensi, dan statistik deskriptifnya.', status: 'available', tone: 'navy',
       icon: '<path d="M4 20V4M4 20h16"/><rect x="6.5" y="12" width="3" height="8"/><rect x="10.5" y="7" width="3" height="13"/><rect x="14.5" y="10" width="3" height="10"/>' },
     { id: 'probplot', kind: 'Sebaran', title: 'Probability Plot', subtitle: 'Q-Q Plot Normal', types: ['numerik1'], desc: 'Periksa apakah data mendekati sebaran normal, berguna untuk asumsi regresi dan ANOVA.', status: 'available', tone: 'rust',
@@ -3021,7 +3027,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 <script src="Method/Shared/stat-layout.js"></script>
 
 <!-- ===================== METODE GRAPH (logika di Method/Graph/; graph-core.js HARUS dimuat paling awal, setelah impor-data.js) ===================== -->
-<script src="Method/Graph/graph-core.js?v=3"></script>
+<script src="Method/Graph/graph-core.js?v=4"></script>
 <script src="Method/Graph/scatter.js"></script>
 <script src="Method/Graph/histogram.js"></script>
 <script src="Method/Graph/probplot.js"></script>
@@ -3031,6 +3037,8 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 <script src="Method/Graph/barchart.js"></script>
 <script src="Method/Graph/piechart.js"></script>
 <script src="Method/Graph/timeseries.js"></script>
+<script src="Method/Graph/matrixplot.js"></script>
+<script src="Method/Graph/heatmapkorelasi.js"></script>
 <script src="Method/Shared/penjelasan-judul.js"></script>
 
 <!-- ===================== METODE CALC: Dataset ala Excel (Method/Calc/sheet.js; membuat #view-metode-calc sendiri) ===================== -->
@@ -3043,7 +3051,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 <script src="Method/Calc/ribbon-menu.js?v=24"></script>
 <script src="analisis-vars.js?v=5"></script>
 <script src="Method/Shared/isi-lembar.js?v=6"></script>
-<script src="Method/Shared/geser-pita.js?v=2"></script>
+<script src="Method/Shared/geser-pita.js?v=3"></script>
 <script src="status-bar.js"></script>
 <script src="projects.js"></script>
 <script src="project-panel.js"></script>

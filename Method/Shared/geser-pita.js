@@ -12,12 +12,13 @@
      (kolom isian / pilihan tidak ikut menarik, agar tetap bisa diketik);
    - dilengkapi panah ‹ › di tepi yang muncul hanya bila masih ada isi di sisi itu;
    - tanpa bilah gulir bawaan; geser sentuh di layar tetap bekerja.
+   - deretan tombol ikon pada blok grafik hasil di Dataset (.sg-bbtns) diperlakukan sama.
    Pita yang dibuat belakangan (mis. panel grafik hasil) ikut dikenali otomatis.
    Dimuat SETELAH semua modul metode, grafik, dan Dataset.
    ========================================================================= */
 (function () {
   'use strict';
-  var SEL = '#view-metode-calc .sc-rbody, .rb-body';
+  var SEL = '#view-metode-calc .sc-rbody, .rb-body, #view-metode-calc .sg-bbtns';
 
   var css = document.createElement('style');
   css.textContent =
@@ -30,7 +31,11 @@
     '.rg-arr.l{left:0;background:linear-gradient(90deg,#fff 55%,rgba(255,255,255,0));}' +
     '.rg-arr.r{right:0;background:linear-gradient(270deg,#fff 55%,rgba(255,255,255,0));}' +
     '.rg-wrap.ovf-l > .rg-arr.l,.rg-wrap.ovf-r > .rg-arr.r{display:flex;}' +
-    '.rg-arr:hover{color:var(--accent-2);}';
+    '.rg-arr:hover{color:var(--accent-2);}' +
+    /* deretan tombol ikon pada blok grafik hasil (Dataset): satu baris, digeser bila sempit */
+    '.rg-wrap:has(> .sg-bbtns){flex:1 1 100%;}' +
+    '.rg-wrap > .sg-bbtns{flex-wrap:nowrap !important;}' +
+    '.rg-wrap > .sg-bbtns > *{flex:0 0 auto !important;min-width:52px !important;}'
   document.head.appendChild(css);
 
   /* elemen yang harus tetap menerima klik / ketikan sendiri: tarik tidak dimulai dari sini */

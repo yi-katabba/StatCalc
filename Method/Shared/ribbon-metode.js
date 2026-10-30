@@ -49,7 +49,7 @@
 .rb-body{ display:flex; flex-wrap:nowrap; align-items:stretch; padding:10px 8px 4px; overflow-x:auto; scrollbar-width:thin; -webkit-overflow-scrolling:touch; overscroll-behavior-x:contain; }
 .rb-grp{ flex:0 0 auto; display:flex; flex-direction:column; padding:0 12px; border-right:1px solid var(--rule); }
 .rb-grp:last-child{ border-right:none; }
-.rb-gbody{ flex:1; display:grid; grid-template-columns:repeat(var(--rb-cols,2),max-content); gap:6px 8px; align-items:center; align-content:center; }
+.rb-gbody{ flex:1; display:grid; grid-template-rows:repeat(var(--rb-rows,2),auto); grid-auto-flow:column; grid-auto-columns:max-content; gap:6px 8px; align-items:center; align-content:center; }
 .rb-glabel{ text-align:center; font-size:11px; font-weight:700; letter-spacing:.04em; color:var(--ink-faint); padding:6px 0 4px; }
 .rb-fld{ display:flex; flex-direction:column; gap:3px; min-width:0; }
 .rb-fld > label{ font-size:11.5px; font-weight:600; color:var(--ink-soft); line-height:1.2; }
@@ -107,7 +107,7 @@
     const panelsHTML = cfg.tabs.map((t, i) => `
       <div class="rb-panel${i === 0 ? ' on' : ''}" data-rbpanel="${t.id}" role="tabpanel">
         <div class="rb-body">${t.groups.map((g) => `
-          <div class="rb-grp"><div class="rb-gbody" style="--rb-cols:${g.cols || (g.items.length > 3 ? 2 : g.items.length)}">${g.items.map(itemHTML).join('')}</div><div class="rb-glabel">${esc(g.label)}</div></div>`).join('')}
+          <div class="rb-grp"><div class="rb-gbody" style="--rb-rows:${Math.max(1, Math.min(2, g.items.length))}">${g.items.map(itemHTML).join('')}</div><div class="rb-glabel">${esc(g.label)}</div></div>`).join('')}
         </div>
         ${t.tip ? `<p class="rb-tip"${t.tipId ? ` id="${t.tipId}"` : ''}>${t.tip}</p>` : ''}
       </div>`).join('');

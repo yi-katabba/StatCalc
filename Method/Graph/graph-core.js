@@ -45,10 +45,12 @@
     barchart: { grid: { h: 1, v: 0 }, c1: 'Warna batang', pal: true },
     piechart: { grid: null, pal: true },
     timeseries: { grid: { h: 1, v: 0 }, c1: 'Warna garis data', c2: 'Warna garis tren' },
+    matrixplot: { grid: null, c1: 'Warna titik', c2: 'Warna garis regresi' },
+    heatmapkorelasi: { grid: null, c1: 'Warna korelasi positif', c2: 'Warna korelasi negatif' },
   };
   const TYPE_LABEL = {
     numerik1: 'Numerik 1 variabel', numerik2: 'Dua variabel numerik',
-    kelompok: 'Numerik per kelompok', kategorik: 'Kategorik', waktu: 'Deret waktu',
+    kelompok: 'Numerik per kelompok', kategorik: 'Kategorik', waktu: 'Deret waktu', multinumerik: 'Beberapa variabel numerik',
   };
 
   /* ----------------------------- Utilitas umum ----------------------------- */
@@ -300,8 +302,8 @@
       return `<div class="gr-opt"><label for="${oid}">${esc(o.label)}</label><input type="text" class="plain-input" id="${oid}" ${o.type === 'number' ? 'inputmode="decimal"' : ''} placeholder="${esc(o.placeholder || '')}" value="${o.def !== undefined ? esc(o.def) : ''}" autocomplete="off"></div>`;
     }
 
-    const W_ = cfg.wide || null, S = W_ ? 1 : 0;
-    const wideModeCard = W_ ? `
+    const W_ = cfg.wide || null, S = W_ && !W_.only ? 1 : 0;
+    const wideModeCard = W_ && !W_.only ? `
         <section class="card step-card gr-pane-data">
           <div class="step-tag">Langkah 1</div>
           <h2>Pilih format data</h2>
@@ -316,7 +318,7 @@
         </section>` : '';
     const wideDataCard = W_ ? `
         <section class="card step-card gr-pane-data" id="${P}wdata-card">
-          <div class="step-tag">Langkah 2</div>
+          <div class="step-tag">Langkah ${S + 1}</div>
           <h2>Masukkan data (per variabel)</h2>
           <div class="gr-format"><strong>Jenis data:</strong> ${esc(typeText)}. ${W_.format || ''}</div>
           <p class="hint">Setiap kolom adalah satu variabel; ubah nama variabel pada judul kolom. Panjang tiap kolom boleh berbeda (sel kosong diabaikan). Minimal <strong><span id="${P}wmin">2</span> baris</strong>; maksimal ${W_.maxCols || 12} variabel.</p>
@@ -497,7 +499,7 @@
     let wNames = [], wRows = 0, wb = null;
     const wMax = W_ ? (W_.maxCols || 12) : 0;
     const wMinPer = W_ ? (W_.minPerSeries || 2) : 0;
-    const modeEl = W_ ? q('mode') : null;
+    const modeEl = W_ ? (W_.only ? { value: 'wide', addEventListener() {} } : q('mode')) : null;
     const isWide = () => !!W_ && modeEl.value === 'wide';
     if (W_) {
       wb = q('wbody');
@@ -556,27 +558,29 @@
     function readWide() {
       const used = [];
       const series = wNames.map(() => []);
+      const alRaw = wNames.map(() => []);   /* sejajar per baris (null = sel kosong), untuk grafik berpasangan */
       for (let i = 0; i < wb.rows.length; i++) {
         $$('input', wb.rows[i]).forEach((x, j) => {
           x.classList.remove('invalid');
           const v = x.value.trim();
+          alRaw[j][i] = null;
           if (v === '') return;
           const num = parseNum(v);
           if (!Number.isFinite(num)) { x.classList.add('invalid'); throw new Error(`Baris ${i + 1}, kolom \u201C${wNames[j] || j + 1}\u201D: \u201C${v}\u201D bukan angka.`); }
-          series[j].push(num);
+          series[j].push(num); alRaw[j][i] = num;
         });
       }
-      const names = [], vals = [], seen = {};
+      const names = [], vals = [], seen = {}, aligned = [];
       series.forEach((arr, j) => {
         if (!arr.length) return;
         let nm = (wNames[j] || '').trim() || ((W_.namePrefix || 'Variabel') + ' ' + (j + 1));
         if (seen[nm]) { seen[nm]++; nm += ' (' + seen[nm] + ')'; } else seen[nm] = 1;
-        names.push(nm); vals.push(arr);
+        names.push(nm); vals.push(arr); aligned.push(alRaw[j]);
       });
       if (!names.length) throw new Error('Belum ada data. Isi minimal satu kolom variabel.');
       const short = vals.findIndex((a) => a.length < wMinPer);
       if (short !== -1) throw new Error(`Variabel \u201C${names[short]}\u201D baru berisi ${vals[short].length} data; minimal ${wMinPer} data per variabel.`);
-      return { names, series: vals, n: vals.reduce((s, a) => s + a.length, 0) };
+      return { names, series: vals, aligned, n: vals.reduce((s, a) => s + a.length, 0) };
     }
 
     /* ---- pita (ribbon): teks, opsi, warna, garis kisi ---- */
