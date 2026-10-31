@@ -15,11 +15,18 @@
   var A = (window.StatCalcSheet && window.StatCalcSheet.api) || null;
   function methodSelect() {
     if (!A || !A.methodList) return '';
-    var cur = A.getMethod();
-    return '<label class="av-meth"><span>Metode</span><select class="av-sel" aria-label="Metode untuk dijalankan di Dataset">' +
-      A.methodList().filter(function (m) { return A.canRun(m.id); }).map(function (m) {
-        return '<option value="' + esc(m.id) + '"' + (m.id === cur ? ' selected' : '') + '>' + esc(m.title) + '</option>';
-      }).join('') + '</select></label>';
+    var cur = A.getMethod(), K = window.StatCalcKategori;
+    var list = A.methodList().filter(function (m) { return A.canRun(m.id); });
+    function opt(m) { return '<option value="' + esc(m.id) + '"' + (m.id === cur ? ' selected' : '') + '>' + esc(m.title) + '</option>'; }
+    var body;
+    if (K && K.order) {   /* dikelompokkan menurut kategori (nama & urutan Minitab) */
+      var byId = {}; list.forEach(function (m) { byId[m.id] = m; });
+      body = K.order(list.map(function (m) { return m.id; })).map(function (g) {
+        var opts = g.ids.map(function (id) { return opt(byId[id]); }).join('');
+        return g.cat ? '<optgroup label="' + esc(g.cat.label) + '">' + opts + '</optgroup>' : opts;
+      }).join('');
+    } else body = list.map(opt).join('');
+    return '<label class="av-meth"><span>Metode</span><select class="av-sel" aria-label="Metode untuk dijalankan di Dataset">' + body + '</select></label>';
   }
   function html(graph) {
     var s = V.summary(), h = '<div class="av-k">Variabel yang dipakai</div>';

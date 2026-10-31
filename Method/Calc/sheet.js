@@ -509,6 +509,8 @@
   const svgI = (k) => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICO[k]}</svg>`;
   const rb = (id, ico, label, tip, cls, dis) => `<button type="button" class="sc-rb ${cls || ''}" id="${id}" title="${tip || label}" aria-label="${tip || label}"${dis ? ' disabled' : ''}>${svgI(ico)}<span>${label}</span></button>`;
 
+  /* nama kategori (Method/Shared/kategori-metode.js); cadangan bila file itu tidak termuat */
+  const katL = (id) => (window.StatCalcKategori && window.StatCalcKategori.label(id)) || ({ basic: 'Basic Statistics', regresi: 'Regression', anova: 'ANOVA', doe: 'DOE', waktu: 'Time Series' })[id];
   /* tombol pilihan metode (tab Statistik): satu terpilih (aria-checked) */
   const mb = (m, label, tip, path) => `<button type="button" class="sc-rb sc-mb" role="radio" aria-checked="false" data-m="${m}" title="${tip}" aria-label="${tip}"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${path}</svg><span>${label}</span></button>`;
 
@@ -671,19 +673,23 @@
                 <option value="smoothing">Metode Smoothing</option><option value="stasioner">Uji Stasioneritas (ADF)</option>
                 <option value="arima">ARIMA &amp; SARIMA</option>
               </select>
-              <div class="sc-grp"><div class="sc-gbody" role="radiogroup" aria-label="Metode Ringkasan">
+              <div class="sc-grp"><div class="sc-gbody" role="radiogroup" aria-label="Metode ${katL('basic')}">
                 ${mb('deskriptif', 'Deskriptif', 'Statistika deskriptif: ringkasan data', '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>')}
-              </div><div class="sc-glabel">Ringkasan</div></div>
-              <div class="sc-grp"><div class="sc-gbody" role="radiogroup" aria-label="Metode Model">
+              </div><div class="sc-glabel">${katL('basic')}</div></div>
+              <div class="sc-grp"><div class="sc-gbody" role="radiogroup" aria-label="Metode ${katL('regresi')}">
                 ${mb('regresi', 'Regresi', 'Regresi linear sederhana / berganda', '<path d="M4 4v16h16"/><path d="M7 16l4-5 3 2 5-7"/>')}
+              </div><div class="sc-glabel">${katL('regresi')}</div></div>
+              <div class="sc-grp"><div class="sc-gbody" role="radiogroup" aria-label="Metode ${katL('anova')}">
                 ${mb('anova', 'ANOVA', 'ANOVA satu arah', '<rect x="4" y="10" width="4" height="10"/><rect x="10" y="4" width="4" height="16"/><rect x="16" y="13" width="4" height="7"/>')}
+              </div><div class="sc-glabel">${katL('anova')}</div></div>
+              <div class="sc-grp"><div class="sc-gbody" role="radiogroup" aria-label="Metode ${katL('doe')}">
                 ${mb('rsm', 'RSM', 'Response Surface Methodology', '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>')}
-              </div><div class="sc-glabel">Model</div></div>
-              <div class="sc-grp"><div class="sc-gbody" role="radiogroup" aria-label="Metode Deret waktu">
+              </div><div class="sc-glabel">${katL('doe')}</div></div>
+              <div class="sc-grp"><div class="sc-gbody" role="radiogroup" aria-label="Metode ${katL('waktu')}">
                 ${mb('smoothing', 'Smoothing', 'Metode smoothing / pemulusan', '<path d="M3 15c3-8 5 4 8-3s5 3 10-6"/>')}
                 ${mb('stasioner', 'Stasioner', 'Uji stasioneritas (ADF)', '<path d="M3 12h18M3 8c4 0 4 8 8 8s4-8 10-8"/>')}
                 ${mb('arima', 'ARIMA', 'ARIMA dan SARIMA', '<path d="M3 18l5-8 4 4 9-10M16 4h5v5"/>')}
-              </div><div class="sc-glabel">Deret waktu</div></div>
+              </div><div class="sc-glabel">${katL('waktu')}</div></div>
               <div class="sc-grp last"><div class="sc-gbody" style="align-items:center">
                 ${rb('scSend', 'send', 'Jalankan analisis', 'Jalankan metode terpilih pada data Dataset', 'pri')}
               </div><div class="sc-glabel">Aksi</div></div>

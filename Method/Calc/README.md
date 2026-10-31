@@ -69,3 +69,9 @@ Tiap grafik di panel hasil punya tombol **Ciutkan / Buka** (atau ketuk judulnya)
 ## Pita bisa digeser (`Method/Shared/geser-pita.js`)
 
 Berlaku untuk pita Dataset (`.sc-rbody`) dan pita halaman Stat / "Pengaturan grafik" halaman Graph (`.rb-body`, termasuk pita Warna / Garis kisi pada grafik pendukung hasil; pita yang dibuat belakangan dikenali otomatis). Bila lebar tidak cukup: gulir mouse biasa menggeser ke kiri/kanan (Ctrl + roda tetap zoom; di ujung, halaman bergulir seperti biasa), tahan klik kiri pada bagian kosong lalu tarik (kolom isian dan pilihan tidak ikut menarik), serta panah ‹ › di tepi yang muncul hanya bila masih ada isi di sisi itu. Bilah gulir bawaan disembunyikan; geser sentuh tetap bekerja.
+
+## Kategori metode (`Method/Shared/kategori-metode.js`)
+
+Satu sumber daftar kategori Stat (nama & urutan mengikuti menu Stat Minitab): Basic Statistics, Regression, ANOVA, DOE, Control Charts, Quality Tools, Multivariate, Time Series, Tables, Nonparametrics, Power and Sample Size. Dipakai oleh menu Stat (`index.html`: header per kategori + chip filter), pita **Statistik** di Dataset (grup per kategori), dan dropdown **Metode** di `analisis-vars.js` (`<optgroup>`).
+
+Metode baru: daftarkan kartunya di `METHODS` (`index.html`), petakan id-nya di `OF` pada file kategori, lalu hapus namanya dari `planned` kategori itu. Metode yang masih `planned` tampil sebagai baris "Segera hadir" di menu Stat (tanpa kartu). Pita Statistik di `sheet.js` memakai `katL(id)` untuk label grup; tombol metode baru ditambah manual di grup kategorinya.

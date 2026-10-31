@@ -700,3 +700,14 @@ body.pf-on .top-avatar{ box-shadow:0 0 0 2px #7FA8D6; }
 /* ---------- Halaman masuk: simbol statistik menyebar di belakang kartu putih ---------- */
 .login-stat{ position:absolute; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
 .login-stat .hero-sym{ color:#BFD8FA; }
+
+/* ---------- Menu Stat per kategori (Minitab) ---------- */
+.menu-grid .gk-head.kat-h{ margin-top:22px; }
+.menu-grid .gk-head.kat-h:first-child{ margin-top:0; }
+.kat-plan{ grid-column:1 / -1; margin:0 0 2px; padding:0 2px; font-size:12.5px; line-height:1.5; color:var(--ink-faint); }
+.kat-plan strong{ color:var(--ink-soft); font-weight:700; }
+@media (max-width:699px){
+  .kat-chips{ flex-wrap:nowrap; overflow-x:auto; margin:0 -16px; padding:0 16px 4px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+  .kat-chips::-webkit-scrollbar{ display:none; }
+  .kat-chips .gf-chip{ flex:none; white-space:nowrap; }
+}

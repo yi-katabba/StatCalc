@@ -1302,7 +1302,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
   .calc-btn{ min-height:62px; }
 }
 </style>
-<link rel="stylesheet" href="statcalc-theme.css?v=35">
+<link rel="stylesheet" href="statcalc-theme.css?v=36">
 <link rel="stylesheet" href="Method/Materi/katex/katex.min.css">
 <style>
 .ar-sep{border-top:1px solid var(--rule);padding-top:16px !important;margin-top:16px !important;flex-basis:100%;}
@@ -1462,6 +1462,10 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
     <span class="eyebrow">Metode &rsaquo; Stat</span>
     <h1>Metode Statistik</h1>
     <p class="lede">Pilih metode statistik yang ingin Anda gunakan. Setiap metode dilengkapi tabel bantu, langkah manual, dan interpretasi hasil.</p>
+  </section>
+
+  <section class="gf-wrap">
+    <div class="gf-chips kat-chips" id="statFilter" role="group" aria-label="Kategori metode"></div>
   </section>
 
   <section class="toc-section">
@@ -2394,6 +2398,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 
 
 
+<script src="Method/Shared/kategori-metode.js"></script>
 <script>
 /* =========================================================================
    1. ROUTING - TAB BERANDA/METODE/TENTANG + HALAMAN DETAIL METODE
@@ -2625,8 +2630,6 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
   let backOpts = null;
   let navHook = null;   // dipanggil setiap kali halaman berpindah (router URL)
 
-  const available = METHODS.filter((c) => c.status === 'available').length;
-  tocCount.textContent = `${available} tersedia \u00B7 ${METHODS.length - available} segera hadir`;
 
   function cardHTML(c) {
     const isAvailable = c.status === 'available';
@@ -2646,7 +2649,46 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
       </button>`;
   }
 
-  tocList.innerHTML = METHODS.map(cardHTML).join('');
+  /* ---- Menu Stat: dikelompokkan per kategori (nama & urutan Minitab; sumber: Method/Shared/kategori-metode.js) ---- */
+  const KAT = window.StatCalcKategori;
+  const statFilter = $('#statFilter');
+  let statCat = 'all';
+  function renderStatList() {
+    if (!KAT) {   /* cadangan bila file kategori tidak termuat: grid datar seperti semula */
+      const av0 = METHODS.filter((c) => c.status === 'available').length;
+      tocCount.textContent = `${av0} tersedia \u00B7 ${METHODS.length - av0} segera hadir`;
+      tocList.innerHTML = METHODS.map(cardHTML).join('');
+      statFilter.parentNode.hidden = true;
+      return;
+    }
+    const groups = KAT.order(METHODS.map((m) => m.id));
+    let av = 0, soon = 0;
+    KAT.cats.forEach((c) => { soon += c.planned.length; });
+    METHODS.forEach((m) => { if (m.status === 'available') av++; else soon++; });
+    tocCount.textContent = `${av} tersedia \u00B7 ${soon} segera hadir`;
+    /* kategori tanpa kartu tetap tampil (hanya baris "Segera hadir") agar peta menunya lengkap */
+    const sections = KAT.cats.map((c) => ({ cat: c, ids: (groups.find((g) => g.cat && g.cat.id === c.id) || { ids: [] }).ids }));
+    const extra = groups.find((g) => !g.cat);
+    if (extra) sections.push({ cat: { id: 'lain', label: 'Lainnya', planned: [] }, ids: extra.ids });
+    const shown = sections.filter((x) => statCat === 'all' || x.cat.id === statCat);
+    tocList.innerHTML = shown.map((x) => {
+      const cards = x.ids.map((id) => METHODS.find((m) => m.id === id));
+      const nAv = cards.filter((m) => m.status === 'available').length;
+      const total = cards.length + x.cat.planned.length;
+      return `<h3 class="gk-head kat-h" role="heading" aria-level="3">${x.cat.label}<span>${nAv} dari ${total}</span></h3>` +
+        cards.map(cardHTML).join('') +
+        (x.cat.planned.length ? `<p class="kat-plan"><strong>Segera hadir:</strong> ${x.cat.planned.join(' \u00B7 ')}</p>` : '');
+    }).join('');
+    statFilter.innerHTML = [{ id: 'all', label: 'Semua' }].concat(sections.map((x) => ({ id: x.cat.id, label: x.cat.label }))).map((t) =>
+      `<button type="button" class="gf-chip ${t.id === statCat ? 'active' : ''}" data-cat="${t.id}" aria-pressed="${t.id === statCat}">${t.label}</button>`).join('');
+  }
+  statFilter.addEventListener('click', (e) => {
+    const b = e.target.closest('.gf-chip');
+    if (!b) return;
+    statCat = b.dataset.cat;
+    renderStatList();
+  });
+  renderStatList();
 
   /* ---- Menu Graph: filter berdasarkan jenis data ---- */
   const graphFilter = $('#graphFilter');
@@ -3051,14 +3093,14 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 <script src="Method/Shared/penjelasan-judul.js"></script>
 
 <!-- ===================== METODE CALC: Dataset ala Excel (Method/Calc/sheet.js; membuat #view-metode-calc sendiri) ===================== -->
-<script src="Method/Calc/sheet.js?v=26"></script>
+<script src="Method/Calc/sheet.js?v=27"></script>
 <script src="Method/Calc/sheet-graph.js?v=29"></script>
 <script src="Method/Calc/sheet-hasil.js?v=26"></script>
 <script src="Method/Calc/sheet-data.js"></script>
 <script src="Method/Calc/sheet-vars.js"></script>
 <script src="Method/Calc/sheet-sidebar.js?v=29"></script>
 <script src="Method/Calc/ribbon-menu.js?v=24"></script>
-<script src="analisis-vars.js?v=5"></script>
+<script src="analisis-vars.js?v=6"></script>
 <script src="Method/Shared/isi-lembar.js?v=12"></script>
 <script src="Method/Shared/geser-pita.js?v=4"></script>
 <script src="status-bar.js"></script>
