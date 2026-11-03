@@ -2432,10 +2432,52 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
       icon: '<path d="M3 12c2-6 4-6 6 0s4 6 6 0 4-6 6 0"/><path d="M3 20h18" stroke-dasharray="2 3"/>' },
     { id: 'arima',       title: 'ARIMA & SARIMA',         subtitle: 'Peramalan Box-Jenkins', desc: 'Ramalkan deret waktu dengan ARIMA bila data tanpa pola musiman, atau SARIMA bila data berpola musiman, lengkap dengan ACF/PACF, ramalan, selang kepercayaan, dan diagnostik residu.', status: 'available', tone: 'rust',
       icon: '<path d="M3 15c2-4 3-7 5-7s2 6 4 6 3-8 5-8 2 6 4 6"/><path d="M15 17h6M18 14v6" />' },
-    { id: 'uji-t',       title: 'Uji t',                  subtitle: 'Satu & Dua Sampel', desc: 'Bandingkan rata-rata satu kelompok terhadap nilai acuan, atau antar dua kelompok.', status: 'soon', tone: 'gold',
+    { id: 'korelasi',    title: 'Korelasi',              subtitle: 'Pearson, Spearman & Kendall', desc: 'Kekuatan dan arah hubungan antar variabel: matriks koefisien, p-value tiap pasangan, dan selang kepercayaan.', status: 'available', tone: 'gold',
+      icon: '<path d="M4 4v16h16"/><circle cx="8" cy="15" r="1.3"/><circle cx="12" cy="11" r="1.3"/><circle cx="17" cy="7.5" r="1.3"/>' },
+    { id: 'uji-t',       title: 'Uji t',                  subtitle: 'Satu, Dua & Berpasangan', desc: 'Bandingkan rata-rata satu kelompok terhadap nilai acuan, dua kelompok independen (Welch atau gabungan), atau dua pengukuran berpasangan.', status: 'available', tone: 'rust',
       icon: '<path d="M12 4v16M6 4h12M8 20h8"/>' },
-    { id: 'chi-square',  title: 'Uji Chi-Square',         subtitle: null, desc: 'Uji independensi dan kesesuaian (goodness of fit) untuk data kategorik.', status: 'soon', tone: 'rust',
+    { id: 'uji-z',       title: 'Uji z',                  subtitle: 'σ Diketahui', desc: 'Uji rata-rata satu atau dua sampel dengan distribusi normal baku, bila simpangan baku populasi (σ) diketahui.', status: 'available', tone: 'navy',
+      icon: '<path d="M3 19c3 0 3-14 9-14s6 14 9 14"/><path d="M12 5v14"/>' },
+    { id: 'proporsi',   title: 'Uji Proporsi',           subtitle: 'Satu & Dua Proporsi', desc: 'Uji z untuk satu atau dua proporsi (dengan uji binomial eksak untuk satu proporsi), cukup dari jumlah sukses dan ukuran sampel.', status: 'available', tone: 'green',
+      icon: '<circle cx="12" cy="12" r="8"/><path d="M12 12V4M12 12l6 4"/>' },
+    { id: 'ragam',      title: 'Uji Kesamaan Ragam',     subtitle: 'F, Levene & Bartlett', desc: 'Periksa apakah ragam beberapa kelompok sama sebelum memakai uji t atau ANOVA.', status: 'available', tone: 'teal',
+      icon: '<path d="M3 12h6M15 12h6M9 8l-4 4 4 4M15 8l4 4-4 4"/>' },
+    { id: 'normalitas', title: 'Uji Normalitas',         subtitle: 'Shapiro-Wilk, Anderson-Darling & Jarque-Bera', desc: 'Uji apakah data berdistribusi normal, dengan tiga uji sekaligus untuk satu atau banyak variabel.', status: 'available', tone: 'plum',
+      icon: '<path d="M3 19c3 0 3-14 9-14s6 14 9 14"/><path d="M3 19h18"/>' },
+    { id: 'chi-square',  title: 'Uji Chi-Square',         subtitle: 'Independensi & Kesesuaian', desc: 'Uji independensi dua variabel kategorik dari tabel kontingensi, atau kesesuaian frekuensi terhadap proporsi harapan, lengkap dengan Cramér\u2019s V dan residual.', status: 'available', tone: 'rust',
       icon: '<path d="M6 6h12v12H6z"/><path d="M6 12h12M12 6v12"/>' },
+    { id: 'fisher',      title: 'Uji Eksak Fisher',       subtitle: 'Tabel 2 \u00D7 2', desc: 'Uji independensi eksak untuk tabel 2 \u00D7 2 pada sampel kecil, dengan rasio odds dan selang kepercayaannya.', status: 'available', tone: 'plum',
+      icon: '<path d="M5 5h14v14H5z"/><path d="M5 12h14M12 5v14"/><circle cx="8.5" cy="8.5" r="1"/>' },
+    { id: 'mann-whitney', title: 'Uji Mann-Whitney',      subtitle: 'Dua Sampel Independen', desc: 'Alternatif nonparametrik uji t dua sampel berdasarkan peringkat, dengan p-value eksak atau pendekatan normal.', status: 'available', tone: 'navy',
+      icon: '<path d="M4 20V12M9 20V6M15 20v-5M20 20V9"/>' },
+    { id: 'wilcoxon',    title: 'Uji Wilcoxon',           subtitle: 'Satu Sampel & Berpasangan', desc: 'Uji peringkat bertanda: alternatif nonparametrik uji t satu sampel dan berpasangan.', status: 'available', tone: 'teal',
+      icon: '<path d="M4 12h16M8 8v8M12 5v14M16 9v6"/>' },
+    { id: 'kruskal',     title: 'Uji Kruskal-Wallis',     subtitle: 'Beberapa Kelompok', desc: 'Alternatif nonparametrik ANOVA satu arah untuk dua atau lebih kelompok independen.', status: 'available', tone: 'gold',
+      icon: '<path d="M4 20h16M6 20V10M11 20V5M16 20v-7"/>' },
+    { id: 'friedman',    title: 'Uji Friedman',           subtitle: 'Blok & Perlakuan', desc: 'Alternatif nonparametrik ANOVA pengukuran berulang / acak kelompok, dengan koefisien konkordansi Kendall.', status: 'available', tone: 'green',
+      icon: '<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8" cy="6" r="1.3"/><circle cx="14" cy="12" r="1.3"/><circle cx="10" cy="18" r="1.3"/>' },
+    { id: 'uji-lanjut',   title: 'Uji Lanjut ANOVA',       subtitle: 'Tukey, Bonferroni, Dunnett & BNT', desc: 'Tentukan kelompok mana yang berbeda setelah ANOVA, dengan selang kepercayaan simultan dan huruf notasi.', status: 'available', tone: 'green',
+      icon: '<path d="M4 20V10M10 20V4M16 20v-7M4 20h16"/><path d="M3 7l4 4 4-3 4 3 6-5"/>' },
+    { id: 'ral-rak',     title: 'RAL & RAK',              subtitle: 'Rancangan Percobaan', desc: 'Sidik ragam Rancangan Acak Lengkap dan Rancangan Acak Kelompok, dengan KK, uji BNT/BNJ, dan huruf notasi.', status: 'available', tone: 'gold',
+      icon: '<rect x="4" y="4" width="16" height="16" rx="1.5"/><path d="M4 10h16M4 15h16M10 4v16M15 4v16"/>' },
+    { id: 'anova-berulang', title: 'ANOVA Pengukuran Berulang', subtitle: 'Mauchly, Greenhouse-Geisser', desc: 'Bandingkan beberapa kondisi atau waktu pada subjek yang sama, dengan uji sphericity dan koreksi derajat bebas.', status: 'available', tone: 'teal',
+      icon: '<path d="M4 6h16M4 12h16M4 18h16"/><path d="M8 4v16M14 4v16"/>' },
+    { id: 'polinomial',  title: 'Regresi Polinomial',     subtitle: 'Derajat 1\u20136', desc: 'Hubungan melengkung X\u2013Y dengan perbandingan derajat (R\u00B2 terkoreksi, AIC, BIC), prediksi, dan grafik.', status: 'available', tone: 'plum',
+      icon: '<path d="M4 4v16h16"/><path d="M5 17c3-1 4-10 8-10s4 8 7 9"/>' },
+    { id: 'stepwise',    title: 'Stepwise & Best Subsets', subtitle: 'Seleksi Variabel', desc: 'Pilih prediktor terbaik dengan stepwise, forward, backward, atau memeriksa semua kombinasi (Cp, AIC, BIC).', status: 'available', tone: 'rust',
+      icon: '<path d="M5 19h4v-4h4v-4h4V7h2"/><path d="M5 5v14h14"/>' },
+    { id: 'logistik',    title: 'Regresi Logistik',       subtitle: 'Respon Biner (0/1)', desc: 'Peluang kejadian terhadap prediktor: odds ratio, uji rasio kemungkinan, R\u00B2 semu, tabel klasifikasi, dan AUC.', status: 'available', tone: 'navy',
+      icon: '<path d="M4 4v16h16"/><path d="M5 18c6 0 8-1 10-6s3-6 5-6"/>' },
+    { id: 'pca',          title: 'PCA',                    subtitle: 'Komponen Utama', desc: 'Ringkas banyak variabel menjadi beberapa komponen: nilai eigen, scree plot, loading, dan skor komponen.', status: 'available', tone: 'navy',
+      icon: '<path d="M4 20L20 4"/><path d="M6 8l4 4M12 14l4 4"/><circle cx="7" cy="7" r="1.5"/><circle cx="17" cy="17" r="1.5"/>' },
+    { id: 'faktor',      title: 'Analisis Faktor',        subtitle: 'KMO, Bartlett & Varimax', desc: 'Temukan faktor laten di balik korelasi variabel, dengan uji kelayakan, rotasi varimax, dan skor faktor.', status: 'available', tone: 'plum',
+      icon: '<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.3 11l7.4-3.7M8.3 13l7.4 3.7"/>' },
+    { id: 'klaster',     title: 'Analisis Klaster',       subtitle: 'Hierarki & K-means', desc: 'Kelompokkan pengamatan yang mirip: dendrogram, pusat klaster, silhouette, dan tabel siku.', status: 'available', tone: 'green',
+      icon: '<circle cx="7" cy="8" r="2"/><circle cx="10" cy="11" r="2"/><circle cx="16" cy="15" r="2"/><circle cx="18" cy="9" r="2"/><circle cx="8" cy="17" r="2"/>' },
+    { id: 'butir',       title: 'Analisis Butir',         subtitle: 'Validitas & Cronbach Alpha', desc: 'Uji validitas tiap butir, reliabilitas Cronbach\u2019s alpha, alpha jika butir dihapus, dan split-half.', status: 'available', tone: 'gold',
+      icon: '<path d="M5 6h14M5 12h14M5 18h14"/><path d="M8 4l-2 2 2 2M8 10l-2 2 2 2M8 16l-2 2 2 2"/>' },
+    { id: 'dekomposisi', title: 'Dekomposisi Deret Waktu', subtitle: 'Tren, Musiman & Sisa', desc: 'Uraikan deret waktu aditif atau multiplikatif menjadi tren, indeks musiman, dan sisa, lengkap dengan ramalan.', status: 'available', tone: 'teal',
+      icon: '<path d="M3 9c2-4 4-4 6 0s4 4 6 0 4-4 6 0"/><path d="M3 15h18M3 19h18"/>' },
     { id: 'deskriptif',  title: 'Statistika Deskriptif',  subtitle: 'Ringkasan Data', desc: 'Mean, median, modus, ragam, simpangan baku, kuartil, skewness, kurtosis, CI 95%, dan pencilan untuk satu atau banyak variabel.', status: 'available', tone: 'green',
       icon: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>' },
   ];
@@ -3072,6 +3114,39 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 
 <!-- ===================== METODE: STATISTIKA DESKRIPTIF (Method/Stat/deskriptif.js; muat SETELAH impor-data.js; membuat #view-deskriptif sendiri) ===================== -->
 <script src="Method/Stat/deskriptif.js"></script>
+
+<!-- ===================== BASIC STATISTICS: Uji t & Korelasi (inti hitungan: Method/Stat/basic-core.js, diuji terhadap SciPy; muat SETELAH impor-data.js & deskriptif.js) ===================== -->
+<script src="Method/Shared/stat-dist.js"></script>
+<script src="Method/Stat/basic-core.js"></script>
+<script src="Method/Stat/basic-ui.js"></script>
+<script src="Method/Stat/ujit.js"></script>
+<script src="Method/Stat/korelasi.js"></script>
+<script src="Method/Stat/ujiz.js"></script>
+<script src="Method/Stat/proporsi.js"></script>
+<script src="Method/Stat/ragam.js"></script>
+<script src="Method/Stat/normalitas.js"></script>
+<script src="Method/Stat/nonpar-core.js"></script>
+<script src="Method/Stat/chisq.js"></script>
+<script src="Method/Stat/fisher.js"></script>
+<script src="Method/Stat/mannwhitney.js"></script>
+<script src="Method/Stat/wilcoxon.js"></script>
+<script src="Method/Stat/kruskal.js"></script>
+<script src="Method/Stat/friedman.js"></script>
+<script src="Method/Stat/anova-core.js"></script>
+<script src="Method/Stat/reg-core.js"></script>
+<script src="Method/Stat/ujilanjut.js"></script>
+<script src="Method/Stat/ralrak.js"></script>
+<script src="Method/Stat/anovaberulang.js"></script>
+<script src="Method/Stat/polinomial.js"></script>
+<script src="Method/Stat/stepwise.js"></script>
+<script src="Method/Stat/logistik.js"></script>
+<script src="Method/Stat/multi-core.js"></script>
+<script src="Method/Stat/svg-helpers.js"></script>
+<script src="Method/Stat/pca.js"></script>
+<script src="Method/Stat/faktor.js"></script>
+<script src="Method/Stat/klaster.js"></script>
+<script src="Method/Stat/butir.js"></script>
+<script src="Method/Stat/dekomposisi.js"></script>
 <script src="Method/Shared/stat-layout.js"></script>
 
 <!-- ===================== METODE GRAPH (logika di Method/Graph/; graph-core.js HARUS dimuat paling awal, setelah impor-data.js) ===================== -->

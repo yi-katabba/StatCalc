@@ -23,6 +23,29 @@
   /* rc = kartu hasil; extra = kartu tambahan [selektor, tab tujuan]; err = elemen pesan galat */
   var M = {
     deskriptif: { title: 'Statistika Deskriptif', rc: '#ds-results-card', extra: [], err: '#dsErr' },
+    'uji-t': { title: 'Uji t', rc: '#ut-results-card', extra: [], err: '#utErr' },
+    korelasi: { title: 'Korelasi', rc: '#kr-results-card', extra: [], err: '#krErr' },
+    'uji-z': { title: 'Uji z', rc: '#uz-results-card', extra: [], err: '#uzErr' },
+    proporsi: { title: 'Uji Proporsi', rc: '#pr-results-card', extra: [], err: '#prErr' },
+    ragam: { title: 'Uji Kesamaan Ragam', rc: '#rg-results-card', extra: [], err: '#rgErr' },
+    normalitas: { title: 'Uji Normalitas', rc: '#nm-results-card', extra: [], err: '#nmErr' },
+    'chi-square': { title: 'Uji Chi-Square', rc: '#cs-results-card', extra: [], err: '#csErr' },
+    fisher: { title: 'Uji Eksak Fisher', rc: '#fs-results-card', extra: [], err: '#fsErr' },
+    'mann-whitney': { title: 'Uji Mann-Whitney', rc: '#mw-results-card', extra: [], err: '#mwErr' },
+    wilcoxon: { title: 'Uji Wilcoxon', rc: '#wl-results-card', extra: [], err: '#wlErr' },
+    kruskal: { title: 'Uji Kruskal-Wallis', rc: '#kw-results-card', extra: [], err: '#kwErr' },
+    friedman: { title: 'Uji Friedman', rc: '#fr-results-card', extra: [], err: '#frErr' },
+    'uji-lanjut': { title: 'Uji Lanjut ANOVA', rc: '#ph-results-card', extra: [], err: '#phErr' },
+    'ral-rak': { title: 'RAL & RAK', rc: '#rk-results-card', extra: [], err: '#rkErr' },
+    'anova-berulang': { title: 'ANOVA Pengukuran Berulang', rc: '#rm-results-card', extra: [], err: '#rmErr' },
+    polinomial: { title: 'Regresi Polinomial', rc: '#pn-results-card', extra: [], err: '#pnErr' },
+    stepwise: { title: 'Regresi Stepwise & Best Subsets', rc: '#sw-results-card', extra: [], err: '#swErr' },
+    logistik: { title: 'Regresi Logistik Biner', rc: '#lg-results-card', extra: [], err: '#lgErr' },
+    pca: { title: 'PCA (Komponen Utama)', rc: '#pc-results-card', extra: [], err: '#pcErr' },
+    faktor: { title: 'Analisis Faktor', rc: '#fk-results-card', extra: [], err: '#fkErr' },
+    klaster: { title: 'Analisis Klaster', rc: '#kl-results-card', extra: [], err: '#klErr' },
+    butir: { title: 'Analisis Butir', rc: '#bt-results-card', extra: [], err: '#btErr' },
+    dekomposisi: { title: 'Dekomposisi Deret Waktu', rc: '#dk-results-card', extra: [], err: '#dkErr' },
     regresi: { title: 'Regresi Linear', rc: '#results-card', extra: [['#conclusion-card', 'ringkasan'], ['#assumptions-card', 'tabel']], err: '#dataError' },
     anova: { title: 'ANOVA Satu Arah', rc: '#an-results-card', extra: [['#an-conclusion-card', 'ringkasan']], err: '#anDataError' },
     rsm: { title: 'Response Surface (RSM)', rc: '#rs-results-card', extra: [['#rs-conclusion-card', 'ringkasan']], err: '#rsDataError' },
@@ -61,7 +84,7 @@
 
   var state = { id: null, tab: 'ringkasan', parts: null, status: 'idle', uid: null };
   /* daftar hasil proyek: tiap analisis yang selesai dicatat (maks. 12), dipakai Panel Proyek */
-  var results = [], listeners = [], MAXR = 12, SHORT = { deskriptif: 'Deskriptif', regresi: 'Regresi', anova: 'ANOVA', rsm: 'RSM', smoothing: 'Smoothing', stasioner: 'Stasioner', arima: 'ARIMA' };
+  var results = [], listeners = [], MAXR = 12, SHORT = { deskriptif: 'Deskriptif', 'uji-t': 'Uji t', korelasi: 'Korelasi', 'uji-z': 'Uji z', proporsi: 'Proporsi', ragam: 'Ragam', normalitas: 'Normalitas', 'chi-square': 'Chi-Square', fisher: 'Fisher', 'mann-whitney': 'Mann-Whitney', wilcoxon: 'Wilcoxon', kruskal: 'Kruskal-Wallis', friedman: 'Friedman', 'uji-lanjut': 'Uji Lanjut', 'ral-rak': 'RAL/RAK', 'anova-berulang': 'ANOVA Berulang', polinomial: 'Polinomial', stepwise: 'Stepwise', logistik: 'Logistik', pca: 'PCA', faktor: 'Faktor', klaster: 'Klaster', butir: 'Butir', dekomposisi: 'Dekomposisi', regresi: 'Regresi', anova: 'ANOVA', rsm: 'RSM', smoothing: 'Smoothing', stasioner: 'Stasioner', arima: 'ARIMA' };
   function notify() { listeners.forEach(function (f) { try { f(); } catch (e) { /* abaikan */ } }); }
   function newUid() { return 'h' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
   /* HTML hasil yang dipulihkan dari berkas dibersihkan: tanpa skrip, penangan on*, atau tautan javascript: */

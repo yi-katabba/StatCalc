@@ -17,27 +17,30 @@
 (function () {
   'use strict';
   var CATS = [
-    { id: 'basic',    label: 'Basic Statistics',      planned: ['Uji z', 'Uji proporsi', 'Uji kesamaan ragam (F, Levene)', 'Korelasi (Pearson, Spearman)', 'Uji normalitas'] },
-    { id: 'regresi',  label: 'Regression',            planned: ['Regresi Polinomial', 'Stepwise & Best Subsets', 'Regresi Logistik'] },
-    { id: 'anova',    label: 'ANOVA',                 planned: ['Uji lanjut (Tukey, Bonferroni, Dunnett)', 'RAL & RAK', 'ANOVA pengukuran berulang'] },
+    { id: 'basic',    label: 'Basic Statistics',      planned: [] },
+    { id: 'regresi',  label: 'Regression',            planned: [] },
+    { id: 'anova',    label: 'ANOVA',                 planned: [] },
     { id: 'doe',      label: 'DOE',                   planned: ['Faktorial 2^k'] },
     { id: 'control',  label: 'Control Charts',        planned: ['Peta kendali variabel (X-bar/R, I-MR)', 'Peta kendali atribut (p, np, c, u)'] },
     { id: 'quality',  label: 'Quality Tools',         planned: ['Kapabilitas proses (Cp, Cpk)', 'Diagram Pareto'] },
-    { id: 'multivar', label: 'Multivariate',          planned: ['PCA', 'Analisis Faktor', 'Klaster (hierarki, k-means)', 'Analisis Butir (validitas, Cronbach\u2019s alpha)'] },
-    { id: 'waktu',    label: 'Time Series',           planned: ['Dekomposisi'] },
-    { id: 'tabel',    label: 'Tables',                planned: ['Fisher exact'] },
-    { id: 'nonparam', label: 'Nonparametrics',        planned: ['Mann-Whitney', 'Wilcoxon', 'Kruskal-Wallis', 'Friedman'] },
+    { id: 'multivar', label: 'Multivariate',          planned: [] },
+    { id: 'waktu',    label: 'Time Series',           planned: [] },
+    { id: 'tabel',    label: 'Tables',                planned: [] },
+    { id: 'nonparam', label: 'Nonparametrics',        planned: [] },
     { id: 'power',    label: 'Power and Sample Size', planned: ['Power & ukuran sampel', 'Slovin, Cochran, Lemeshow'] }
   ];
   /* id metode -> id kategori */
   var OF = {
-    deskriptif: 'basic', 'uji-t': 'basic',
+    deskriptif: 'basic', 'uji-t': 'basic', korelasi: 'basic', 'uji-z': 'basic', proporsi: 'basic', ragam: 'basic', normalitas: 'basic',
     regresi: 'regresi',
     anova: 'anova',
     rsm: 'doe',
     smoothing: 'waktu', stasioner: 'waktu', arima: 'waktu',
-    'chi-square': 'tabel'
+    'chi-square': 'tabel', fisher: 'tabel', 'mann-whitney': 'nonparam', wilcoxon: 'nonparam', kruskal: 'nonparam', friedman: 'nonparam', 'uji-lanjut': 'anova', 'ral-rak': 'anova', 'anova-berulang': 'anova', polinomial: 'regresi', stepwise: 'regresi', logistik: 'regresi', pca: 'multivar', faktor: 'multivar', klaster: 'multivar', butir: 'multivar', dekomposisi: 'waktu'
   };
+  /* urutan tampil dalam satu kategori (id yang tidak tercantum di sini ditaruh di akhir) */
+  var SEQ = ['deskriptif', 'normalitas', 'korelasi', 'uji-z', 'uji-t', 'proporsi', 'ragam', 'regresi', 'polinomial', 'stepwise', 'logistik', 'anova', 'uji-lanjut', 'ral-rak', 'anova-berulang', 'rsm', 'smoothing', 'stasioner', 'arima', 'dekomposisi', 'pca', 'faktor', 'klaster', 'butir', 'chi-square', 'fisher', 'mann-whitney', 'wilcoxon', 'kruskal', 'friedman'];
+  function seq(id) { var i = SEQ.indexOf(id); return i < 0 ? 999 : i; }
   function catOf(id) { return OF[id] || null; }
   function label(catId) {
     for (var i = 0; i < CATS.length; i++) if (CATS[i].id === catId) return CATS[i].label;
@@ -48,6 +51,7 @@
     var out = [], used = {};
     CATS.forEach(function (c) {
       var g = ids.filter(function (id) { return OF[id] === c.id; });
+      g.sort(function (a, b) { return seq(a) - seq(b); });
       g.forEach(function (id) { used[id] = 1; });
       if (g.length) out.push({ cat: c, ids: g });
     });

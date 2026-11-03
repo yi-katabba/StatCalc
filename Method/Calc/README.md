@@ -75,3 +75,44 @@ Berlaku untuk pita Dataset (`.sc-rbody`) dan pita halaman Stat / "Pengaturan gra
 Satu sumber daftar kategori Stat (nama & urutan mengikuti menu Stat Minitab): Basic Statistics, Regression, ANOVA, DOE, Control Charts, Quality Tools, Multivariate, Time Series, Tables, Nonparametrics, Power and Sample Size. Dipakai oleh menu Stat (`index.html`: header per kategori + chip filter), pita **Statistik** di Dataset (grup per kategori), dan dropdown **Metode** di `analisis-vars.js` (`<optgroup>`).
 
 Metode baru: daftarkan kartunya di `METHODS` (`index.html`), petakan id-nya di `OF` pada file kategori, lalu hapus namanya dari `planned` kategori itu. Metode yang masih `planned` tampil sebagai baris "Segera hadir" di menu Stat (tanpa kartu). Pita Statistik di `sheet.js` memakai `katL(id)` untuk label grup; tombol metode baru ditambah manual di grup kategorinya.
+
+## Basic Statistics (Tahap 2)
+
+Metode: Uji t, Korelasi, Uji z, Uji Proporsi, Uji Kesamaan Ragam (F, Levene, Bartlett), Uji Normalitas (Shapiro-Wilk, Anderson-Darling, Jarque-Bera).
+
+- `Method/Shared/stat-dist.js`: distribusi t, normal, chi-square, F (+ kuantil F).
+- `Method/Stat/basic-core.js`: semua hitungan, tanpa DOM (bisa diuji di Node).
+- `Method/Stat/basic-ui.js`: gaya `.bs-*`, pemformat angka, dan `mountPage(cfg)` yang membuat kerangka halaman (kartu data, hasil 3 tab, pita, tabel data + impor). Halaman baru cukup memanggil `mountPage`, lalu mengisi `onCalc`/`onSample`.
+- Halaman: `ujit.js`, `korelasi.js` (kerangka sendiri), `ujiz.js`, `proporsi.js` (tanpa tabel: input ringkasan), `ragam.js`, `normalitas.js` (memakai `mountPage`).
+
+Pengujian terhadap SciPy/statsmodels (galat < 1e-9; Shapiro-Wilk < 1e-5):
+`python3 tests/make_ref.py && node tests/basic-core.test.js` dan `python3 tests/make_ref2.py && node tests/basic-core2.test.js` (butuh numpy, scipy, statsmodels).
+
+Menambah metode Basic Statistics baru: tambah fungsi di `basic-core.js` (+ kasus uji), buat halaman dengan `mountPage`, daftarkan kartu di `METHODS` (`index.html`), id di `OF`/`SEQ` (`kategori-metode.js`), `SEND`/`CALC_BTN`/tombol pita (`sheet.js`), dan `M`/`SHORT` (`sheet-hasil.js`), serta `IDS` (`stat-layout.js`) dan `VIEWS` (`penjelasan-judul.js`).
+
+## Tables & Nonparametrics (Tahap 3)
+
+Metode: Chi-Square (independensi + kesesuaian), Uji Eksak Fisher, Mann-Whitney, Wilcoxon (satu sampel / berpasangan), Kruskal-Wallis, Friedman.
+
+- `Method/Stat/nonpar-core.js`: semua hitungan, tanpa DOM. p-value eksak Mann-Whitney (N ≤ 40, tanpa nilai kembar) dan Wilcoxon (n ≤ 50, tanpa nol/kembar) dari distribusi eksak; selain itu pendekatan normal dengan koreksi nilai kembar dan kontinuitas.
+- Halaman (semua memakai `StatBasicUI.mountPage`): `chisq.js`, `fisher.js` (input ringkasan, tanpa tabel), `mannwhitney.js`, `wilcoxon.js`, `kruskal.js`, `friedman.js`.
+- Chi-Square dan Fisher tidak dikirim dari Dataset (inputnya tabel frekuensi/ringkasan); keempat uji nonparametrik bisa dijalankan dari Dataset.
+- Uji: `python3 tests/make_ref3.py && node tests/nonpar-core.test.js` (galat < 1e-9 terhadap SciPy).
+
+## ANOVA & Regression lanjutan (Tahap 4)
+
+Metode: Uji Lanjut ANOVA (Tukey, Bonferroni, Dunnett, BNT), RAL & RAK, ANOVA Pengukuran Berulang, Regresi Polinomial, Stepwise & Best Subsets, Regresi Logistik.
+
+- `Method/Stat/anova-core.js`: rentang terstudentisasi (Tukey) dan t-multivariat (Dunnett) lewat integrasi Gauss-Legendre, RAL/RAK, ANOVA berulang (Mauchly dengan koreksi orde kedua seperti `mauchly.test` R, Greenhouse-Geisser, Huynh-Feldt), huruf notasi.
+- `Method/Stat/reg-core.js`: OLS berbasis QR Householder (stabil), polinomial (x dipusatkan), stepwise/forward/backward, best subsets, logistik biner (IRLS).
+- Halaman (semua `StatBasicUI.mountPage`): `ujilanjut.js`, `ralrak.js`, `anovaberulang.js`, `polinomial.js` (ada grafik SVG), `stepwise.js`, `logistik.js`. Kolom pertama = Y pada stepwise & logistik.
+- Uji: `python3 tests/make_ref4.py && node tests/anova-core.test.js` dan `python3 tests/make_ref5.py && node tests/reg-core.test.js` (butuh numpy, scipy, pandas, statsmodels, pingouin). Dunnett dibandingkan dengan `scipy.stats.dunnett` yang memakai QMC (toleransi ±3e-3).
+
+## Multivariate, Analisis Butir & Dekomposisi (Tahap 5)
+
+Metode: PCA, Analisis Faktor, Analisis Klaster (hierarki + K-means), Analisis Butir (validitas & Cronbach alpha), Dekomposisi deret waktu.
+
+- `Method/Stat/multi-core.js`: nilai eigen (Jacobi), PCA, KMO & Bartlett, varimax (Kaiser, normalisasi baris), analisis faktor (ekstraksi komponen utama + skor regresi), klaster hierarki (single/complete/average/Ward lewat Lance-Williams), K-means (k-means++, multi-awalan, seed tetap sehingga hasil reproducible), silhouette, analisis butir (alpha, CI Feldt, item-total terkoreksi, split-half), dekomposisi klasik (rata-rata bergerak terpusat) + ramalan dari tren linier.
+- `Method/Stat/svg-helpers.js`: grafik SVG (garis, pencar, scree, dendrogram) yang mengikuti tema terang/gelap.
+- Halaman (semua `StatBasicUI.mountPage`): `pca.js`, `faktor.js`, `klaster.js`, `butir.js`, `dekomposisi.js`.
+- Uji: `python3 tests/make_ref6.py && node tests/multi-core.test.js` (butuh numpy, scipy, scikit-learn, factor_analyzer, pingouin, statsmodels; `make_ref6.py` menambal ketidakcocokan factor_analyzer dengan scikit-learn >= 1.6). Rotasi varimax dibandingkan dengan rotasi referensi yang dijalankan sampai konvergen penuh (galat ~5e-8).

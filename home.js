@@ -5,7 +5,7 @@
   var home = document.getElementById('view-home'), SC = window.StatCalc;
   if (!home || !SC) return;
   var $ = function (id) { return document.getElementById(id); };
-  var TITLES = { deskriptif: 'Statistika Deskriptif', regresi: 'Regresi Linear', anova: 'ANOVA Lengkap', rsm: 'Response Surface (RSM)', smoothing: 'Metode Smoothing', stasioner: 'Uji Stasioneritas', arima: 'ARIMA & SARIMA' };
+  var TITLES = { deskriptif: 'Statistika Deskriptif', regresi: 'Regresi Linear', anova: 'ANOVA Lengkap', rsm: 'Response Surface (RSM)', smoothing: 'Metode Smoothing', stasioner: 'Uji Stasioneritas', arima: 'ARIMA & SARIMA', 'uji-t': 'Uji t', korelasi: 'Korelasi', 'uji-z': 'Uji z', proporsi: 'Uji Proporsi', ragam: 'Uji Kesamaan Ragam', normalitas: 'Uji Normalitas', 'chi-square': 'Uji Chi-Square', fisher: 'Uji Eksak Fisher', 'mann-whitney': 'Uji Mann-Whitney', wilcoxon: 'Uji Wilcoxon', kruskal: 'Uji Kruskal-Wallis', friedman: 'Uji Friedman', 'uji-lanjut': 'Uji Lanjut ANOVA', 'ral-rak': 'RAL & RAK', 'anova-berulang': 'ANOVA Berulang', polinomial: 'Regresi Polinomial', stepwise: 'Stepwise & Best Subsets', logistik: 'Regresi Logistik', pca: 'PCA', faktor: 'Analisis Faktor', klaster: 'Analisis Klaster', butir: 'Analisis Butir', dekomposisi: 'Dekomposisi' };
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
   /* ---------------- navigasi ---------------- */

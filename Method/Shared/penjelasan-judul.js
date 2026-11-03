@@ -19,7 +19,7 @@
   'use strict';
 
   var DEFAULT_OPEN = false;
-  var VIEWS = ['regresi', 'smoothing', 'anova', 'rsm', 'stasioner', 'arima', 'deskriptif']
+  var VIEWS = ['regresi', 'smoothing', 'anova', 'rsm', 'stasioner', 'arima', 'deskriptif', 'uji-t', 'korelasi', 'uji-z', 'proporsi', 'ragam', 'normalitas', 'chi-square', 'fisher', 'mann-whitney', 'wilcoxon', 'kruskal', 'friedman', 'uji-lanjut', 'ral-rak', 'anova-berulang', 'polinomial', 'stepwise', 'logistik', 'pca', 'faktor', 'klaster', 'butir', 'dekomposisi']
     .map(function (id) { return '#view-' + id; }).concat(['.gr-view']);
   var CARD_SEL = VIEWS.map(function (v) { return v + ' .step-card'; }).join(',');
   /* panel Ekspor (export-hasil.js) menaruh judul + penjelasan di dalam .ex-dyn, bukan langsung di kartu */
