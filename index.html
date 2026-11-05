@@ -2476,8 +2476,20 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
       icon: '<circle cx="7" cy="8" r="2"/><circle cx="10" cy="11" r="2"/><circle cx="16" cy="15" r="2"/><circle cx="18" cy="9" r="2"/><circle cx="8" cy="17" r="2"/>' },
     { id: 'butir',       title: 'Analisis Butir',         subtitle: 'Validitas & Cronbach Alpha', desc: 'Uji validitas tiap butir, reliabilitas Cronbach\u2019s alpha, alpha jika butir dihapus, dan split-half.', status: 'available', tone: 'gold',
       icon: '<path d="M5 6h14M5 12h14M5 18h14"/><path d="M8 4l-2 2 2 2M8 10l-2 2 2 2M8 16l-2 2 2 2"/>' },
-    { id: 'dekomposisi', title: 'Dekomposisi Deret Waktu', subtitle: 'Tren, Musiman & Sisa', desc: 'Uraikan deret waktu aditif atau multiplikatif menjadi tren, indeks musiman, dan sisa, lengkap dengan ramalan.', status: 'available', tone: 'teal',
+    { id: 'dekomposisi-waktu', title: 'Dekomposisi Deret Waktu', subtitle: 'Tren, Musiman & Sisa', desc: 'Uraikan deret waktu aditif atau multiplikatif menjadi tren, indeks musiman, dan sisa, lengkap dengan ramalan.', status: 'available', tone: 'teal',
       icon: '<path d="M3 9c2-4 4-4 6 0s4 4 6 0 4-4 6 0"/><path d="M3 15h18M3 19h18"/>' },
+    { id: 'faktorial',    title: 'Faktorial 2^k',          subtitle: 'DOE Dua Taraf', desc: 'Efek utama dan interaksi percobaan faktorial 2\u20135 faktor: ANOVA, galat murni, analisis Lenth, plot efek, dan kombinasi terbaik.', status: 'available', tone: 'rust',
+      icon: '<rect x="4" y="4" width="16" height="16" rx="1.5"/><path d="M4 12h16M12 4v16"/><circle cx="8" cy="8" r="1.2"/><circle cx="16" cy="16" r="1.2"/>' },
+    { id: 'peta-kendali',  title: 'Peta Kendali',           subtitle: 'X\u0304\u2013R, X\u0304\u2013S, I\u2013MR, p, np, c, u', desc: 'Pantau kestabilan proses dengan batas \u00B13\u03C3 dan uji kondisi di luar kendali (Test 1\u20136).', status: 'available', tone: 'green',
+      icon: '<path d="M3 12h18" /><path d="M3 6h18M3 18h18" style="stroke-dasharray:3 3"/><path d="M4 13l4-3 3 4 4-6 3 5"/>' },
+    { id: 'kapabilitas',   title: 'Kapabilitas Proses',     subtitle: 'Cp, Cpk, Pp, Ppk', desc: 'Ukur kemampuan proses memenuhi spesifikasi: indeks kapabilitas, PPM, Z benchmark, dan histogram dengan kurva normal.', status: 'available', tone: 'teal',
+      icon: '<path d="M3 20c3 0 4-14 9-14s6 14 9 14"/><path d="M7 4v16M17 4v16" style="stroke-dasharray:3 3"/>' },
+    { id: 'pareto',        title: 'Diagram Pareto',         subtitle: 'Vital Few 80/20', desc: 'Urutkan penyebab menurut frekuensi dengan persentase kumulatif untuk menemukan prioritas perbaikan.', status: 'available', tone: 'gold',
+      icon: '<path d="M5 20V10M10 20V6M15 20v-6M20 20v-9"/><path d="M4 9l6-5 5 6 5-6"/>' },
+    { id: 'power',         title: 'Power & Ukuran Sampel',  subtitle: 'Uji t, ANOVA, Proporsi', desc: 'Hitung daya uji, ukuran sampel yang dibutuhkan, atau efek terkecil yang dapat dideteksi sebelum penelitian dimulai.', status: 'available', tone: 'navy',
+      icon: '<path d="M4 4v16h16"/><path d="M5 18c4 0 5-3 7-8s4-6 7-6"/><path d="M5 14h14" style="stroke-dasharray:3 3"/>' },
+    { id: 'sampel-survei', title: 'Ukuran Sampel Survei',   subtitle: 'Slovin, Cochran, Lemeshow', desc: 'Jumlah responden untuk survei proporsi atau rata-rata, dengan koreksi populasi, design effect, dan tingkat respons.', status: 'available', tone: 'plum',
+      icon: '<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 19c0-3.5 2.7-6 6-6s6 2.5 6 6M15 14c3 0 5 2 5 5"/>' },
     { id: 'deskriptif',  title: 'Statistika Deskriptif',  subtitle: 'Ringkasan Data', desc: 'Mean, median, modus, ragam, simpangan baku, kuartil, skewness, kurtosis, CI 95%, dan pencilan untuk satu atau banyak variabel.', status: 'available', tone: 'green',
       icon: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>' },
   ];
@@ -2707,7 +2719,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
     let av = 0, soon = 0;
     KAT.cats.forEach((c) => { soon += c.planned.length; });
     METHODS.forEach((m) => { if (m.status === 'available') av++; else soon++; });
-    tocCount.textContent = `${av} tersedia \u00B7 ${soon} segera hadir`;
+    tocCount.textContent = soon > 0 ? `${av} tersedia \u00B7 ${soon} segera hadir` : `${av} metode tersedia`;
     /* kategori tanpa kartu tetap tampil (hanya baris "Segera hadir") agar peta menunya lengkap */
     const sections = KAT.cats.map((c) => ({ cat: c, ids: (groups.find((g) => g.cat && g.cat.id === c.id) || { ids: [] }).ids }));
     const extra = groups.find((g) => !g.cat);
@@ -3147,6 +3159,14 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 <script src="Method/Stat/klaster.js"></script>
 <script src="Method/Stat/butir.js"></script>
 <script src="Method/Stat/dekomposisi.js"></script>
+<script src="Method/Stat/quality-core.js"></script>
+<script src="Method/Stat/power-core.js"></script>
+<script src="Method/Stat/faktorial.js"></script>
+<script src="Method/Stat/petakendali.js"></script>
+<script src="Method/Stat/kapabilitas.js"></script>
+<script src="Method/Stat/pareto.js"></script>
+<script src="Method/Stat/power.js"></script>
+<script src="Method/Stat/sampel.js"></script>
 <script src="Method/Shared/stat-layout.js"></script>
 
 <!-- ===================== METODE GRAPH (logika di Method/Graph/; graph-core.js HARUS dimuat paling awal, setelah impor-data.js) ===================== -->

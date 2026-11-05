@@ -45,7 +45,13 @@
     faktor: { title: 'Analisis Faktor', rc: '#fk-results-card', extra: [], err: '#fkErr' },
     klaster: { title: 'Analisis Klaster', rc: '#kl-results-card', extra: [], err: '#klErr' },
     butir: { title: 'Analisis Butir', rc: '#bt-results-card', extra: [], err: '#btErr' },
-    dekomposisi: { title: 'Dekomposisi Deret Waktu', rc: '#dk-results-card', extra: [], err: '#dkErr' },
+    'dekomposisi-waktu': { title: 'Dekomposisi Deret Waktu', rc: '#dk-results-card', extra: [], err: '#dkErr' },
+    faktorial: { title: 'Faktorial 2^k', rc: '#fc-results-card', extra: [], err: '#fcErr' },
+    'peta-kendali': { title: 'Peta Kendali', rc: '#cc-results-card', extra: [], err: '#ccErr' },
+    kapabilitas: { title: 'Kapabilitas Proses', rc: '#kp-results-card', extra: [], err: '#kpErr' },
+    pareto: { title: 'Diagram Pareto', rc: '#pt-results-card', extra: [], err: '#ptErr' },
+    power: { title: 'Power & Ukuran Sampel', rc: '#pw-results-card', extra: [], err: '#pwErr' },
+    'sampel-survei': { title: 'Ukuran Sampel Survei', rc: '#sv-results-card', extra: [], err: '#svErr' },
     regresi: { title: 'Regresi Linear', rc: '#results-card', extra: [['#conclusion-card', 'ringkasan'], ['#assumptions-card', 'tabel']], err: '#dataError' },
     anova: { title: 'ANOVA Satu Arah', rc: '#an-results-card', extra: [['#an-conclusion-card', 'ringkasan']], err: '#anDataError' },
     rsm: { title: 'Response Surface (RSM)', rc: '#rs-results-card', extra: [['#rs-conclusion-card', 'ringkasan']], err: '#rsDataError' },
@@ -84,7 +90,7 @@
 
   var state = { id: null, tab: 'ringkasan', parts: null, status: 'idle', uid: null };
   /* daftar hasil proyek: tiap analisis yang selesai dicatat (maks. 12), dipakai Panel Proyek */
-  var results = [], listeners = [], MAXR = 12, SHORT = { deskriptif: 'Deskriptif', 'uji-t': 'Uji t', korelasi: 'Korelasi', 'uji-z': 'Uji z', proporsi: 'Proporsi', ragam: 'Ragam', normalitas: 'Normalitas', 'chi-square': 'Chi-Square', fisher: 'Fisher', 'mann-whitney': 'Mann-Whitney', wilcoxon: 'Wilcoxon', kruskal: 'Kruskal-Wallis', friedman: 'Friedman', 'uji-lanjut': 'Uji Lanjut', 'ral-rak': 'RAL/RAK', 'anova-berulang': 'ANOVA Berulang', polinomial: 'Polinomial', stepwise: 'Stepwise', logistik: 'Logistik', pca: 'PCA', faktor: 'Faktor', klaster: 'Klaster', butir: 'Butir', dekomposisi: 'Dekomposisi', regresi: 'Regresi', anova: 'ANOVA', rsm: 'RSM', smoothing: 'Smoothing', stasioner: 'Stasioner', arima: 'ARIMA' };
+  var results = [], listeners = [], MAXR = 12, SHORT = { deskriptif: 'Deskriptif', 'uji-t': 'Uji t', korelasi: 'Korelasi', 'uji-z': 'Uji z', proporsi: 'Proporsi', ragam: 'Ragam', normalitas: 'Normalitas', 'chi-square': 'Chi-Square', fisher: 'Fisher', 'mann-whitney': 'Mann-Whitney', wilcoxon: 'Wilcoxon', kruskal: 'Kruskal-Wallis', friedman: 'Friedman', 'uji-lanjut': 'Uji Lanjut', 'ral-rak': 'RAL/RAK', 'anova-berulang': 'ANOVA Berulang', polinomial: 'Polinomial', stepwise: 'Stepwise', logistik: 'Logistik', pca: 'PCA', faktor: 'Faktor', klaster: 'Klaster', butir: 'Butir', 'dekomposisi-waktu': 'Dekomposisi', faktorial: 'Faktorial', 'peta-kendali': 'Peta Kendali', kapabilitas: 'Kapabilitas', pareto: 'Pareto', power: 'Power', 'sampel-survei': 'Sampel Survei', regresi: 'Regresi', anova: 'ANOVA', rsm: 'RSM', smoothing: 'Smoothing', stasioner: 'Stasioner', arima: 'ARIMA' };
   function notify() { listeners.forEach(function (f) { try { f(); } catch (e) { /* abaikan */ } }); }
   function newUid() { return 'h' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
   /* HTML hasil yang dipulihkan dari berkas dibersihkan: tanpa skrip, penangan on*, atau tautan javascript: */

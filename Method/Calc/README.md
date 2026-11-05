@@ -72,6 +72,8 @@ Berlaku untuk pita Dataset (`.sc-rbody`) dan pita halaman Stat / "Pengaturan gra
 
 ## Kategori metode (`Method/Shared/kategori-metode.js`)
 
+> Status: seluruh 11 kategori Minitab yang direncanakan sudah berisi metode (36 metode). Kategori kosong Reliability/Survival dan Equivalence Tests sengaja belum dibuat.
+
 Satu sumber daftar kategori Stat (nama & urutan mengikuti menu Stat Minitab): Basic Statistics, Regression, ANOVA, DOE, Control Charts, Quality Tools, Multivariate, Time Series, Tables, Nonparametrics, Power and Sample Size. Dipakai oleh menu Stat (`index.html`: header per kategori + chip filter), pita **Statistik** di Dataset (grup per kategori), dan dropdown **Metode** di `analisis-vars.js` (`<optgroup>`).
 
 Metode baru: daftarkan kartunya di `METHODS` (`index.html`), petakan id-nya di `OF` pada file kategori, lalu hapus namanya dari `planned` kategori itu. Metode yang masih `planned` tampil sebagai baris "Segera hadir" di menu Stat (tanpa kartu). Pita Statistik di `sheet.js` memakai `katL(id)` untuk label grup; tombol metode baru ditambah manual di grup kategorinya.
@@ -116,3 +118,20 @@ Metode: PCA, Analisis Faktor, Analisis Klaster (hierarki + K-means), Analisis Bu
 - `Method/Stat/svg-helpers.js`: grafik SVG (garis, pencar, scree, dendrogram) yang mengikuti tema terang/gelap.
 - Halaman (semua `StatBasicUI.mountPage`): `pca.js`, `faktor.js`, `klaster.js`, `butir.js`, `dekomposisi.js`.
 - Uji: `python3 tests/make_ref6.py && node tests/multi-core.test.js` (butuh numpy, scipy, scikit-learn, factor_analyzer, pingouin, statsmodels; `make_ref6.py` menambal ketidakcocokan factor_analyzer dengan scikit-learn >= 1.6). Rotasi varimax dibandingkan dengan rotasi referensi yang dijalankan sampai konvergen penuh (galat ~5e-8).
+
+## Control Charts, Quality Tools, DOE & Power (Tahap 6)
+
+Metode: Faktorial 2^k, Peta Kendali (X-bar/R, X-bar/S, I-MR, p, np, c, u), Kapabilitas Proses, Diagram Pareto, Power & Ukuran Sampel, Ukuran Sampel Survei (Slovin/Cochran/Lemeshow).
+
+- `Method/Stat/quality-core.js`: konstanta bagan kendali (d2, d3, c4, A2, A3, D3, D4, B3, B4) **dihitung** dari distribusi rentang normal (bukan tabel), bagan kendali + uji kondisi Test 1-6 + hitung ulang batas, kapabilitas (Cp/Cpk/Pp/Ppk/Cpm, PPM, Z bench, CI), Pareto, faktorial 2^k (efek, ANOVA, galat murni, lack-of-fit, Lenth PSE/ME/SME).
+- `Method/Stat/power-core.js`: daya uji t via t non-sentral, ANOVA via F non-sentral (deret Poisson), proporsi (pendekatan normal), pencari n / efek, rumus survei.
+- `Method/Stat/svg-helpers.js` ditambah: `controlChart`, `hist`, `pareto`, `effectBars`, `mainEffects`.
+- Halaman: `faktorial.js`, `petakendali.js`, `kapabilitas.js`, `pareto.js`, `power.js`, `sampel.js`.
+- Catatan id: halaman Stat dekomposisi memakai id `dekomposisi-waktu` karena `dekomposisi` sudah dipakai grafik Decomposition Plot di menu Graph (id view harus unik).
+- Uji: `python3 tests/make_ref7.py && node tests/quality-core.test.js`, `python3 tests/make_ref8.py && node tests/power-core.test.js`.
+
+### Menjalankan semua uji numerik
+```
+for t in basic-core basic-core2 nonpar-core anova-core reg-core multi-core quality-core power-core; do node tests/$t.test.js | tail -1; done
+```
+(file acuan *.json dibuat ulang dengan `python3 tests/make_ref*.py`; butuh numpy, scipy, pandas, statsmodels, scikit-learn, factor_analyzer, pingouin)

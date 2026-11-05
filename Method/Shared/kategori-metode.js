@@ -20,14 +20,14 @@
     { id: 'basic',    label: 'Basic Statistics',      planned: [] },
     { id: 'regresi',  label: 'Regression',            planned: [] },
     { id: 'anova',    label: 'ANOVA',                 planned: [] },
-    { id: 'doe',      label: 'DOE',                   planned: ['Faktorial 2^k'] },
-    { id: 'control',  label: 'Control Charts',        planned: ['Peta kendali variabel (X-bar/R, I-MR)', 'Peta kendali atribut (p, np, c, u)'] },
-    { id: 'quality',  label: 'Quality Tools',         planned: ['Kapabilitas proses (Cp, Cpk)', 'Diagram Pareto'] },
+    { id: 'doe',      label: 'DOE',                   planned: [] },
+    { id: 'control',  label: 'Control Charts',        planned: [] },
+    { id: 'quality',  label: 'Quality Tools',         planned: [] },
     { id: 'multivar', label: 'Multivariate',          planned: [] },
     { id: 'waktu',    label: 'Time Series',           planned: [] },
     { id: 'tabel',    label: 'Tables',                planned: [] },
     { id: 'nonparam', label: 'Nonparametrics',        planned: [] },
-    { id: 'power',    label: 'Power and Sample Size', planned: ['Power & ukuran sampel', 'Slovin, Cochran, Lemeshow'] }
+    { id: 'power',    label: 'Power and Sample Size', planned: [] }
   ];
   /* id metode -> id kategori */
   var OF = {
@@ -36,10 +36,10 @@
     anova: 'anova',
     rsm: 'doe',
     smoothing: 'waktu', stasioner: 'waktu', arima: 'waktu',
-    'chi-square': 'tabel', fisher: 'tabel', 'mann-whitney': 'nonparam', wilcoxon: 'nonparam', kruskal: 'nonparam', friedman: 'nonparam', 'uji-lanjut': 'anova', 'ral-rak': 'anova', 'anova-berulang': 'anova', polinomial: 'regresi', stepwise: 'regresi', logistik: 'regresi', pca: 'multivar', faktor: 'multivar', klaster: 'multivar', butir: 'multivar', dekomposisi: 'waktu'
+    'chi-square': 'tabel', fisher: 'tabel', 'mann-whitney': 'nonparam', wilcoxon: 'nonparam', kruskal: 'nonparam', friedman: 'nonparam', 'uji-lanjut': 'anova', 'ral-rak': 'anova', 'anova-berulang': 'anova', polinomial: 'regresi', stepwise: 'regresi', logistik: 'regresi', pca: 'multivar', faktor: 'multivar', klaster: 'multivar', butir: 'multivar', 'dekomposisi-waktu': 'waktu', faktorial: 'doe', 'peta-kendali': 'control', kapabilitas: 'quality', pareto: 'quality', power: 'power', 'sampel-survei': 'power'
   };
   /* urutan tampil dalam satu kategori (id yang tidak tercantum di sini ditaruh di akhir) */
-  var SEQ = ['deskriptif', 'normalitas', 'korelasi', 'uji-z', 'uji-t', 'proporsi', 'ragam', 'regresi', 'polinomial', 'stepwise', 'logistik', 'anova', 'uji-lanjut', 'ral-rak', 'anova-berulang', 'rsm', 'smoothing', 'stasioner', 'arima', 'dekomposisi', 'pca', 'faktor', 'klaster', 'butir', 'chi-square', 'fisher', 'mann-whitney', 'wilcoxon', 'kruskal', 'friedman'];
+  var SEQ = ['deskriptif', 'normalitas', 'korelasi', 'uji-z', 'uji-t', 'proporsi', 'ragam', 'rsm', 'faktorial', 'peta-kendali', 'kapabilitas', 'pareto', 'power', 'sampel-survei', 'regresi', 'polinomial', 'stepwise', 'logistik', 'anova', 'uji-lanjut', 'ral-rak', 'anova-berulang', 'rsm', 'smoothing', 'stasioner', 'arima', 'dekomposisi-waktu', 'pca', 'faktor', 'klaster', 'butir', 'chi-square', 'fisher', 'mann-whitney', 'wilcoxon', 'kruskal', 'friedman'];
   function seq(id) { var i = SEQ.indexOf(id); return i < 0 ? 999 : i; }
   function catOf(id) { return OF[id] || null; }
   function label(catId) {

@@ -510,7 +510,7 @@
   const rb = (id, ico, label, tip, cls, dis) => `<button type="button" class="sc-rb ${cls || ''}" id="${id}" title="${tip || label}" aria-label="${tip || label}"${dis ? ' disabled' : ''}>${svgI(ico)}<span>${label}</span></button>`;
 
   /* nama kategori (Method/Shared/kategori-metode.js); cadangan bila file itu tidak termuat */
-  const katL = (id) => (window.StatCalcKategori && window.StatCalcKategori.label(id)) || ({ basic: 'Basic Statistics', regresi: 'Regression', anova: 'ANOVA', doe: 'DOE', waktu: 'Time Series', nonparam: 'Nonparametrics', multivar: 'Multivariate' })[id];
+  const katL = (id) => (window.StatCalcKategori && window.StatCalcKategori.label(id)) || ({ basic: 'Basic Statistics', regresi: 'Regression', anova: 'ANOVA', doe: 'DOE', waktu: 'Time Series', nonparam: 'Nonparametrics', multivar: 'Multivariate', control: 'Control Charts', quality: 'Quality Tools' })[id];
   /* tombol pilihan metode (tab Statistik): satu terpilih (aria-checked) */
   const mb = (m, label, tip, path) => `<button type="button" class="sc-rb sc-mb" role="radio" aria-checked="false" data-m="${m}" title="${tip}" aria-label="${tip}"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${path}</svg><span>${label}</span></button>`;
 
@@ -671,7 +671,7 @@
                 <option value="deskriptif">Statistika Deskriptif</option><option value="regresi">Regresi Linear</option>
                 <option value="anova">ANOVA Satu Arah</option><option value="rsm">Response Surface (RSM)</option>
                 <option value="smoothing">Metode Smoothing</option><option value="stasioner">Uji Stasioneritas (ADF)</option>
-                <option value="arima">ARIMA &amp; SARIMA</option><option value="korelasi">Korelasi</option><option value="uji-t">Uji t</option><option value="uji-z">Uji z</option><option value="ragam">Uji Kesamaan Ragam</option><option value="normalitas">Uji Normalitas</option><option value="mann-whitney">Uji Mann-Whitney</option><option value="wilcoxon">Uji Wilcoxon</option><option value="kruskal">Uji Kruskal-Wallis</option><option value="friedman">Uji Friedman</option><option value="uji-lanjut">Uji Lanjut ANOVA</option><option value="ral-rak">RAL &amp; RAK</option><option value="anova-berulang">ANOVA Berulang</option><option value="polinomial">Regresi Polinomial</option><option value="stepwise">Stepwise &amp; Best Subsets</option><option value="logistik">Regresi Logistik</option><option value="pca">PCA</option><option value="faktor">Analisis Faktor</option><option value="klaster">Analisis Klaster</option><option value="butir">Analisis Butir</option><option value="dekomposisi">Dekomposisi</option>
+                <option value="arima">ARIMA &amp; SARIMA</option><option value="korelasi">Korelasi</option><option value="uji-t">Uji t</option><option value="uji-z">Uji z</option><option value="ragam">Uji Kesamaan Ragam</option><option value="normalitas">Uji Normalitas</option><option value="mann-whitney">Uji Mann-Whitney</option><option value="wilcoxon">Uji Wilcoxon</option><option value="kruskal">Uji Kruskal-Wallis</option><option value="friedman">Uji Friedman</option><option value="uji-lanjut">Uji Lanjut ANOVA</option><option value="ral-rak">RAL &amp; RAK</option><option value="anova-berulang">ANOVA Berulang</option><option value="polinomial">Regresi Polinomial</option><option value="stepwise">Stepwise &amp; Best Subsets</option><option value="logistik">Regresi Logistik</option><option value="pca">PCA</option><option value="faktor">Analisis Faktor</option><option value="klaster">Analisis Klaster</option><option value="butir">Analisis Butir</option><option value="dekomposisi-waktu">Dekomposisi</option><option value="faktorial">Faktorial 2^k</option><option value="peta-kendali">Peta Kendali</option><option value="kapabilitas">Kapabilitas Proses</option>
               </select>
               <div class="sc-grp"><div class="sc-gbody" role="radiogroup" aria-label="Metode ${katL('basic')}">
                 ${mb('deskriptif', 'Deskriptif', 'Statistika deskriptif: ringkasan data', '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>')}
@@ -695,7 +695,14 @@
               </div><div class="sc-glabel">${katL('anova')}</div></div>
               <div class="sc-grp"><div class="sc-gbody" role="radiogroup" aria-label="Metode ${katL('doe')}">
                 ${mb('rsm', 'RSM', 'Response Surface Methodology', '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>')}
+                ${mb('faktorial', 'Faktorial', 'Faktorial 2^k: efek utama dan interaksi', '<rect x="4" y="4" width="16" height="16"/><path d="M4 12h16M12 4v16"/>')}
               </div><div class="sc-glabel">${katL('doe')}</div></div>
+              <div class="sc-grp"><div class="sc-gbody" role="radiogroup" aria-label="Metode ${katL('control')}">
+                ${mb('peta-kendali', 'Peta Kendali', 'Peta kendali: X-bar/R, X-bar/S, I-MR, p, np, c, u', '<path d="M3 12h18"/><path d="M4 13l4-3 3 4 4-6 3 5"/>')}
+              </div><div class="sc-glabel">${katL('control')}</div></div>
+              <div class="sc-grp"><div class="sc-gbody" role="radiogroup" aria-label="Metode ${katL('quality')}">
+                ${mb('kapabilitas', 'Kapabilitas', 'Kapabilitas proses: Cp, Cpk, Pp, Ppk', '<path d="M3 20c3 0 4-14 9-14s6 14 9 14"/><path d="M7 4v16M17 4v16"/>')}
+              </div><div class="sc-glabel">${katL('quality')}</div></div>
               <div class="sc-grp"><div class="sc-gbody" role="radiogroup" aria-label="Metode ${katL('multivar')}">
                 ${mb('pca', 'PCA', 'Analisis komponen utama', '<path d="M4 20L20 4"/><circle cx="7" cy="7" r="1.5"/><circle cx="17" cy="17" r="1.5"/>')}
                 ${mb('faktor', 'Faktor', 'Analisis faktor dengan rotasi varimax', '<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/>')}
@@ -706,7 +713,7 @@
                 ${mb('smoothing', 'Smoothing', 'Metode smoothing / pemulusan', '<path d="M3 15c3-8 5 4 8-3s5 3 10-6"/>')}
                 ${mb('stasioner', 'Stasioner', 'Uji stasioneritas (ADF)', '<path d="M3 12h18M3 8c4 0 4 8 8 8s4-8 10-8"/>')}
                 ${mb('arima', 'ARIMA', 'ARIMA dan SARIMA', '<path d="M3 18l5-8 4 4 9-10M16 4h5v5"/>')}
-                ${mb('dekomposisi', 'Dekomposisi', 'Dekomposisi deret waktu: tren, musiman, sisa', '<path d="M3 9c2-4 4-4 6 0s4 4 6 0 4-4 6 0"/><path d="M3 16h18"/>')}
+                ${mb('dekomposisi-waktu', 'Dekomposisi', 'Dekomposisi deret waktu: tren, musiman, sisa', '<path d="M3 9c2-4 4-4 6 0s4 4 6 0 4-4 6 0"/><path d="M3 16h18"/>')}
               </div><div class="sc-glabel">${katL('waktu')}</div></div>
               <div class="sc-grp"><div class="sc-gbody" role="radiogroup" aria-label="Metode ${katL('nonparam')}">
                 ${mb('mann-whitney', 'Mann-Whitney', 'Uji Mann-Whitney: dua sampel independen', '<path d="M4 20V12M9 20V6M15 20v-5M20 20V9"/>')}
@@ -1644,7 +1651,10 @@
     faktor: { title: 'Analisis Faktor', card: '#fk-data-card' },
     klaster: { title: 'Analisis Klaster', card: '#kl-data-card' },
     butir: { title: 'Analisis Butir', card: '#bt-data-card' },
-    dekomposisi: { title: 'Dekomposisi Deret Waktu', card: '#dk-data-card' },
+    'dekomposisi-waktu': { title: 'Dekomposisi Deret Waktu', card: '#dk-data-card' },
+    faktorial: { title: 'Faktorial 2^k', card: '#fc-data-card' },
+    'peta-kendali': { title: 'Peta Kendali', card: '#cc-data-card' },
+    kapabilitas: { title: 'Kapabilitas Proses', card: '#kp-data-card' },
     anova: { title: 'ANOVA Lengkap', card: '#an-data-card', build: '#anBuildTableBtn', kg: '#anKOne' },
     regresi: { title: 'Regresi Linear', card: '#data-card', build: '#buildTableBtn', k: true },
     smoothing: { title: 'Metode Smoothing', card: '#sm-data-card', build: '#smBuildTableBtn', onlyIfHidden: true },
@@ -1670,7 +1680,7 @@
   pickMethod('regresi');
   /* Kirim data ke halaman metode. silent = jangan pindah halaman (hasil ditampilkan di panel Hasil Dataset).
      Mengembalikan true bila data terkirim. */
-  const CALC_BTN = { regresi: '#calcBtn', smoothing: '#smCalcBtn', anova: '#anCalcBtn', rsm: '#rsCalcBtn', stasioner: '#stCalcBtn', arima: '#arCalcBtn', deskriptif: '#dsCalc', 'uji-t': '#utCalc', korelasi: '#krCalc', 'uji-z': '#uzCalc', ragam: '#rgCalc', normalitas: '#nmCalc', 'mann-whitney': '#mwCalc', wilcoxon: '#wlCalc', kruskal: '#kwCalc', friedman: '#frCalc', 'uji-lanjut': '#phCalc', 'ral-rak': '#rkCalc', 'anova-berulang': '#rmCalc', polinomial: '#pnCalc', stepwise: '#swCalc', logistik: '#lgCalc', pca: '#pcCalc', faktor: '#fkCalc', klaster: '#klCalc', butir: '#btCalc', dekomposisi: '#dkCalc' };
+  const CALC_BTN = { regresi: '#calcBtn', smoothing: '#smCalcBtn', anova: '#anCalcBtn', rsm: '#rsCalcBtn', stasioner: '#stCalcBtn', arima: '#arCalcBtn', deskriptif: '#dsCalc', 'uji-t': '#utCalc', korelasi: '#krCalc', 'uji-z': '#uzCalc', ragam: '#rgCalc', normalitas: '#nmCalc', 'mann-whitney': '#mwCalc', wilcoxon: '#wlCalc', kruskal: '#kwCalc', friedman: '#frCalc', 'uji-lanjut': '#phCalc', 'ral-rak': '#rkCalc', 'anova-berulang': '#rmCalc', polinomial: '#pnCalc', stepwise: '#swCalc', logistik: '#lgCalc', pca: '#pcCalc', faktor: '#fkCalc', klaster: '#klCalc', butir: '#btCalc', 'dekomposisi-waktu': '#dkCalc', faktorial: '#fcCalc', 'peta-kendali': '#ccCalc', kapabilitas: '#kpCalc' };
   /* fill = true: hanya MENGISI tabel halaman metode dari Dataset (tombol "Isi dari Dataset" di halaman metode / grafik);
      tanpa pindah halaman, tanpa menghitung. Pesan galat tampil di kartu data halaman itu. cardSel dipakai bila id bukan metode Stat (Graph). */
   function sendTo(id, silent, fill, cardSel) {

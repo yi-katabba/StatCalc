@@ -1,6 +1,6 @@
 /* =========================================================================
    DEKOMPOSISI DERET WAKTU - klasik aditif / multiplikatif: tren (rata-rata bergerak), indeks musiman, sisa; ramalan (Time Series)
-   Hitungan: multi-core.js (decompose). Grafik: svg-helpers.js. Halaman otomatis: #view-dekomposisi
+   Hitungan: multi-core.js (decompose). Grafik: svg-helpers.js. Halaman otomatis: #view-dekomposisi-waktu
    ========================================================================= */
 (function () {
   'use strict';
@@ -9,7 +9,7 @@
   const { esc, toNum, fmt } = U;
   const g = (v, d) => (v === null || v === undefined || Number.isNaN(v) ? '-' : String(Number(v.toPrecision(d || 6))).replace('.', ','));
   const ui = U.mountPage({
-    id: 'dekomposisi', pre: 'dk', title: 'Dekomposisi Deret Waktu', eyebrow: 'Metode Statistik &rsaquo; Time Series', step1: 'Atur model &amp; masukkan data',
+    id: 'dekomposisi-waktu', pre: 'dk', title: 'Dekomposisi Deret Waktu', eyebrow: 'Metode Statistik &rsaquo; Time Series', step1: 'Atur model &amp; masukkan data',
     lede: 'Uraikan deret waktu menjadi tren, komponen musiman, dan sisa (acak), baik secara aditif (Y = T + S + I) maupun multiplikatif (Y = T × S × I). Tren diperoleh dari rata-rata bergerak terpusat, indeks musiman dari rata-rata per periode. Dilengkapi ukuran akurasi (MAPE, MAD, MSD) dan ramalan beberapa periode ke depan.',
     settings: `
       <label>Model dekomposisi<select id="dkModel" class="select-input"><option value="additive">Aditif (Y = T + S + I)</option><option value="multiplicative">Multiplikatif (Y = T × S × I)</option></select></label>
