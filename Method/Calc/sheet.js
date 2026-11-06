@@ -427,9 +427,9 @@
     #view-metode-calc .sc-rb:hover:not(:disabled){ background:var(--accent-soft); border-color:var(--rule-strong); }
     #view-metode-calc .sc-rb:active:not(:disabled){ transform:scale(.95); }
     #view-metode-calc .sc-rb:disabled{ opacity:.38; cursor:default; }
-    #view-metode-calc .sc-rb.pri{ background:var(--accent); color:#fff; }
-    #view-metode-calc .sc-rb.pri svg{ color:#fff; }
-    #view-metode-calc .sc-rb.pri:hover:not(:disabled){ background:var(--accent-hi); border-color:var(--accent-hi); }
+    #view-metode-calc .sc-rb.pri{ background:var(--accent-soft); color:var(--accent-2); border-color:#B9D0EA; }
+    #view-metode-calc .sc-rb.pri svg{ color:var(--accent-2); }
+    #view-metode-calc .sc-rb.pri:hover:not(:disabled){ background:#D3E3F6; border-color:#9DBFE3; }
     #view-metode-calc .sc-rb.danger svg{ color:var(--bad); }
     #view-metode-calc .sc-rb.sm{ min-height:0; flex-direction:row; gap:8px; padding:8px 12px; }
     #view-metode-calc .sc-rb.sm svg{ width:20px; height:20px; }
