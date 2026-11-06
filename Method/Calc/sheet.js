@@ -416,6 +416,9 @@
     #view-metode-calc .sc-rbody{ flex:1 1 auto; display:flex; flex-wrap:nowrap; align-items:stretch; gap:0; padding:10px 8px 4px; overflow-x:auto; scrollbar-width:thin; -webkit-overflow-scrolling:touch; overscroll-behavior-x:contain; }
     #view-metode-calc .sc-grp{ flex:0 0 auto; display:flex; flex-direction:column; padding:0 12px; border-right:1px solid var(--rule); }
     #view-metode-calc .sc-grp:last-child{ border-right:none; }
+    #view-metode-calc .sc-rrow{ display:flex; align-items:stretch; min-width:0; }
+    #view-metode-calc .sc-rrow > .rg-wrap, #view-metode-calc .sc-rrow > .sc-rbody{ flex:1 1 auto; min-width:0; }
+    #view-metode-calc .sc-aksi{ flex:0 0 auto; position:relative; z-index:4; background:#fff; padding:10px 14px 4px 12px; border-left:1px solid var(--rule); border-right:none; box-shadow:-8px 0 8px -8px rgba(27,36,48,.18); }
     #view-metode-calc .sc-gbody{ flex:1; display:flex; align-items:center; gap:6px; }
     #view-metode-calc .sc-glabel{ text-align:center; font-size:11px; font-weight:700; letter-spacing:.04em; color:var(--ink-faint); padding:6px 0 4px; }
     #view-metode-calc .sc-rb{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; min-width:64px; min-height:64px; padding:8px 8px 6px; border:1px solid transparent; border-radius:12px; background:transparent; color:var(--ink); cursor:pointer; font-family:var(--font-body); transition:background .12s ease, border-color .12s ease, transform .08s ease; }
@@ -666,6 +669,7 @@
 
           <!-- ============ TAB KIRIM (Statistik): pilih metode berkelompok + Jalankan analisis ============ -->
           <div class="sc-rpanel" data-panel="kirim" role="tabpanel">
+            <div class="sc-rrow">
             <div class="sc-rbody">
               <select id="scTarget" hidden aria-hidden="true" tabindex="-1">
                 <option value="deskriptif">Statistika Deskriptif</option><option value="regresi">Regresi Linear</option>
@@ -721,7 +725,8 @@
                 ${mb('kruskal', 'Kruskal-Wallis', 'Uji Kruskal-Wallis: beberapa kelompok', '<path d="M4 20h16M6 20V10M11 20V5M16 20v-7"/>')}
                 ${mb('friedman', 'Friedman', 'Uji Friedman: blok dan perlakuan', '<path d="M4 6h16M4 12h16M4 18h16"/>')}
               </div><div class="sc-glabel">${katL('nonparam')}</div></div>
-              <div class="sc-grp last"><div class="sc-gbody" style="align-items:center">
+            </div>
+            <div class="sc-grp sc-aksi"><div class="sc-gbody" style="align-items:center">
                 ${rb('scSend', 'send', 'Jalankan analisis', 'Jalankan metode terpilih pada data Dataset', 'pri')}
               </div><div class="sc-glabel">Aksi</div></div>
             </div>
