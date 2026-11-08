@@ -78,6 +78,52 @@
     } catch (e) { ui.err(e.message || String(e)); }
   };
 
+  /* ---------- diagram jalur (SVG), dipakai CB-SEM dan PLS-SEM ----------
+     g = { latents:[{name, ind:[{n, v, p}], formative, single}], regs:[{from,to,v,p}], covs:[{a,b,v}], note } ; v = angka pada panah, p = p-value (null = tidak diuji) */
+  function pathDiagram(g) {
+    const nf = (v) => (Number.isFinite(v) ? fmt(v, 2) : ''), lat = {}, isInd = {}, single = {};
+    g.latents.forEach((L) => { if (L.single) single[L.name] = 1; else lat[L.name] = L; L.ind.forEach((i) => { if (!L.single) isInd[i.n] = 1; }); });
+    const names = []; const addN = (v) => { if (names.indexOf(v) < 0) names.push(v); };
+    g.latents.forEach((L) => addN(L.name)); g.regs.forEach((e) => { addN(e.from); addN(e.to); });
+    const rank = {}; names.forEach((v) => { rank[v] = 0; });
+    for (let it = 0; it < names.length; it++) g.regs.forEach((e) => { rank[e.to] = Math.max(rank[e.to], rank[e.from] + 1); });
+    const maxR = Math.max.apply(null, names.map((v) => rank[v]).concat([0])), NW = 96, NH = 40, IW = 66, IH = 32, GX = 170, vgap = 28;
+    const cols = Array.from({ length: maxR + 1 }, (_, c) => names.filter((v) => rank[v] === c));
+    const side = (f) => (rank[f] === 0 ? 'L' : (rank[f] === maxR ? 'R' : 'B'));
+    const needL = Object.keys(lat).some((f) => side(f) === 'L' && lat[f].ind.length), needR = Object.keys(lat).some((f) => side(f) === 'R' && lat[f].ind.length);
+    const leftW = needL ? IW + 70 : 0, rightW = needR ? IW + 70 : 0, colX = (c) => leftW + 30 + c * (NW + GX) + NW / 2, pos = {}; let ymax = 0;
+    cols.forEach((vs, c) => { let y = 30; vs.forEach((v) => { const n = lat[v] ? lat[v].ind.length : 0, sd = lat[v] ? side(v) : '', h = Math.max(NH + vgap, sd === 'B' ? NH + 120 : n * (IH + 14)); pos[v] = { x: colX(c), y: y + h / 2 - (sd === 'B' ? 40 : 0) }; y += h + 12; }); ymax = Math.max(ymax, y); });
+    Object.keys(lat).forEach((f) => { const list = lat[f].ind, n = list.length, P = pos[f], sd = side(f); list.forEach((e, i) => { pos[e.n] = sd === 'L' ? { x: P.x - NW / 2 - 70 - IW / 2, y: P.y + (i - (n - 1) / 2) * (IH + 14) } : sd === 'R' ? { x: P.x + NW / 2 + 70 + IW / 2, y: P.y + (i - (n - 1) / 2) * (IH + 14) } : { x: P.x + (i - (n - 1) / 2) * (IW + 14), y: P.y + 110 }; }); });
+    const skipE = (e) => !isInd[e.from] && !isInd[e.to] && Math.abs(rank[e.from] - rank[e.to]) > 1;
+    if (g.regs.some(skipE)) Object.keys(pos).forEach((v) => { pos[v].y += 80; });
+    let W = leftW + 30 + (maxR + 1) * NW + maxR * GX + 30 + rightW, H = ymax + 50; Object.keys(pos).forEach((v) => { W = Math.max(W, pos[v].x + 60); H = Math.max(H, pos[v].y + 50); });
+    const dim = (v) => (lat[v] ? { w: NW, h: NH + 6 } : (isInd[v] ? { w: IW, h: IH } : { w: NW, h: NH }));
+    const bound = (a, b, ra, rb) => { const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1, cut = (r) => Math.min(Math.min((r.w / 2) / Math.abs(dx || 1e-9), (r.h / 2) / Math.abs(dy || 1e-9)) * d, Math.hypot(r.w / 2, r.h / 2)), ca = cut(ra), cb = cut(rb); return { x1: a.x + dx / d * ca, y1: a.y + dy / d * ca, x2: b.x - dx / d * cb, y2: b.y - dy / d * cb }; };
+    const LAB = 'fill:var(--ink);font-size:11.5px;font-weight:700;paint-order:stroke;stroke:var(--paper,#fff);stroke-width:3px';
+    let s = `<svg viewBox="0 0 ${Math.round(W)} ${Math.round(H)}" role="img" aria-label="Diagram jalur model SEM" style="width:100%;max-width:${Math.min(Math.round(W), 960)}px;height:auto;display:block;margin:12px auto 0;font:12px var(--font-body),sans-serif"><defs><marker id="sxArr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:var(--ink-soft)"/></marker></defs>`, labels = '';
+    const edge = (a, b, v, p, skip) => {
+      if (!pos[a] || !pos[b]) return; const dash = p !== null && p !== undefined && !(p < 0.05) ? 'stroke-dasharray:5 4;' : '';
+      if (skip) { const up = -(NH + 52 + 14 * (Math.abs(rank[a] - rank[b]) - 2)), A0 = { x: pos[a].x, y: pos[a].y - NH / 2 }, B0 = { x: pos[b].x, y: pos[b].y - NH / 2 }, cy = Math.min(A0.y, B0.y) + up, cx = (A0.x + B0.x) / 2; s += `<path d="M${A0.x} ${A0.y} Q${cx} ${cy} ${B0.x} ${B0.y}" style="fill:none;stroke:var(--ink-soft);stroke-width:1.4;${dash}" marker-end="url(#sxArr)"/>`; labels += `<text x="${cx}" y="${0.25 * A0.y + 0.5 * cy + 0.25 * B0.y - 4}" text-anchor="middle" style="${LAB}">${nf(v)}</text>`; return; }
+      const e = bound(pos[a], pos[b], dim(a), dim(b)); s += `<line x1="${e.x1}" y1="${e.y1}" x2="${e.x2}" y2="${e.y2}" style="stroke:var(--ink-soft);stroke-width:1.4;${dash}" marker-end="url(#sxArr)"/>`; labels += `<text x="${(e.x1 + e.x2) / 2}" y="${(e.y1 + e.y2) / 2 - 4}" text-anchor="middle" style="${LAB}">${nf(v)}</text>`;
+    };
+    Object.keys(lat).forEach((f) => lat[f].ind.forEach((i) => (lat[f].formative ? edge(i.n, f, i.v, i.p) : edge(f, i.n, i.v, i.p))));
+    g.regs.forEach((e) => edge(e.from, e.to, e.v, e.p, skipE(e)));
+    (g.covs || []).forEach((e) => { if (!pos[e.a] || !pos[e.b] || isInd[e.a] || isInd[e.b]) return; const a = pos[e.a], b = pos[e.b], off = 46 + Math.abs(a.y - b.y) * 0.08, ax = a.x - dim(e.a).w / 2, bx = b.x - dim(e.b).w / 2, cx = Math.min(ax, bx) - off; s += `<path d="M${ax} ${a.y} Q${cx} ${(a.y + b.y) / 2} ${bx} ${b.y}" style="fill:none;stroke:var(--ink-faint);stroke-width:1.2" marker-start="url(#sxArr)" marker-end="url(#sxArr)"/>`; labels += `<text x="${cx + off * 0.45}" y="${(a.y + b.y) / 2 + 4}" text-anchor="end" style="fill:var(--ink-soft);font-size:11px;paint-order:stroke;stroke:var(--paper,#fff);stroke-width:3px">${nf(e.v)}</text>`; });
+    Object.keys(pos).forEach((v) => { const P = pos[v], d = dim(v); s += lat[v] ? `<ellipse cx="${P.x}" cy="${P.y}" rx="${d.w / 2}" ry="${d.h / 2}" style="fill:var(--paper-2);stroke:var(--accent-2);stroke-width:1.8"/>` : `<rect x="${P.x - d.w / 2}" y="${P.y - d.h / 2}" width="${d.w}" height="${d.h}" rx="4" style="fill:#fff;stroke:var(--ink-soft);stroke-width:1.4"/>`; s += `<text x="${P.x}" y="${P.y + 4}" text-anchor="middle" style="fill:var(--ink);font-weight:${lat[v] ? 800 : 600}">${esc(v.length > 13 ? v.slice(0, 12) + '…' : v)}</text>`; });
+    return `<h4 style="margin:18px 0 0">Diagram jalur</h4>${s}${labels}</svg><p class="bs-note">Elips = konstruk laten, persegi = variabel teramati. Angka pada panah = ${esc(g.note)}; garis putus-putus = tidak signifikan (p ≥ 0,05); garis lengkung = korelasi.</p>`;
+  }
+  const diagCB = (spec, r) => pathDiagram({
+    note: 'koefisien terstandar (loading dan β)',
+    latents: spec.latents.map((L) => ({ name: L.name, ind: r.params.filter((x) => x.kind === 'loading' && x.lhs === L.name).map((x) => ({ n: x.rhs, v: x.std, p: x.free ? x.p : null })) })),
+    regs: r.params.filter((x) => x.kind === 'reg').map((x) => ({ from: x.rhs, to: x.lhs, v: x.std, p: x.p })),
+    covs: r.params.filter((x) => x.kind === 'cov' && x.free).map((x) => ({ a: x.lhs, b: x.rhs, v: x.std })),
+  });
+  const diagPLS = (r) => pathDiagram({
+    note: 'outer loading / bobot formatif dan koefisien jalur (β)',
+    latents: r.constructs.map((c) => ({ name: c.name, single: c.single, formative: c.mode === 'B', ind: c.single ? [] : c.ind.map((n, k) => ({ n, v: c.mode === 'B' ? c.weights[k] : c.loadings[k], p: null })) })),
+    regs: r.paths.map((x) => ({ from: x.from, to: x.to, v: x.beta, p: null })), covs: [],
+  });
+
   /* =============================== CB-SEM =============================== */
   function renderCB(spec, r, dropped, exp) {
     const f = r.fit, nm = spec.latents.map((l) => l.name), loads = r.params.filter((x) => x.kind === 'loading'), regs = r.params.filter((x) => x.kind === 'reg');
@@ -144,6 +190,7 @@
       ip.push(`<strong>Mediasi ${esc(e.from)} → ${esc(e.to)}:</strong> efek tidak langsung = ${f3(e.indirect)} (p = ${fmtP(e.pInd)}), ${sI ? (sD === null ? 'signifikan; pengaruh bekerja sepenuhnya lewat perantara.' : sD ? 'signifikan dan efek langsung juga signifikan → <em>mediasi parsial</em>.' : 'signifikan sedangkan efek langsung tidak signifikan → <em>mediasi penuh</em>.') : 'tidak signifikan → tidak ada bukti mediasi.'} Efek total = ${f3(e.total)}.`); });
     ip.push(`<strong>Asumsi &amp; catatan:</strong> estimasi ML mengasumsikan data kontinu berdistribusi normal multivariat; data skala Likert dengan ≥ 5 kategori umumnya masih dapat diterima. Jumlah responden ${r.N} untuk ${r.q} parameter (${fmt(r.N / r.q, 1)} per parameter${r.N / r.q < 5 ? '; kurang dari 5, hasil bisa tidak stabil' : ''}). Modifikasi model hanya patut dilakukan bila ada dasar teori.`);
     r.warnings.forEach((w) => ip.push('<strong>Peringatan:</strong> ' + esc(w)));
+    sum += diagCB(spec, r);
     ui.show({ sum, steps: st, interp: `<div class="bs-var"><h4>Interpretasi CB-SEM</h4>${ip.map((x) => `<p>${x}</p>`).join('')}</div>` });
     ui.publish({ meta: [['Metode', 'CB-SEM (maximum likelihood)'], ['N', r.N], ['χ² (db)', f3(r.chi2) + ' (' + r.df + ')'], ['RMSEA', r.df > 0 ? f4(f.rmsea) : '-'], ['CFI', r.df > 0 ? f4(f.cfi) : '-'], ['SRMR', f4(f.srmr)]], data: exp });
   }
@@ -204,6 +251,7 @@
       ip.push(`<strong>Mediasi ${esc(e.from)} → ${esc(e.to)}:</strong> efek tidak langsung = ${f3(e.indirect)} (p ${tp(bi.p)}; CI 95% [${f3(bi.lo)}; ${f3(bi.hi)}]) ${sI ? (sD === null ? '→ signifikan.' : sD ? '→ signifikan dan efek langsung signifikan: <em>mediasi parsial</em>.' : '→ signifikan, efek langsung tidak signifikan: <em>mediasi penuh</em>.') : '→ tidak signifikan (selang memuat nol).'}`); });
     ip.push('<strong>Catatan:</strong> PLS-SEM tidak mengasumsikan normalitas dan cocok untuk sampel kecil atau tujuan prediktif, tetapi tidak menghasilkan indeks kecocokan χ²/RMSEA/CFI seperti CB-SEM. Untuk menguji kecocokan model secara keseluruhan gunakan metode CB-SEM.');
     r.warnings.forEach((w) => ip.push('<strong>Peringatan:</strong> ' + esc(w)));
+    sum += diagPLS(r);
     ui.show({ sum, steps: st, interp: `<div class="bs-var"><h4>Interpretasi PLS-SEM</h4>${ip.map((x) => `<p>${x}</p>`).join('')}</div>` });
     ui.publish({ meta: [['Metode', 'PLS-SEM (skema ' + r.scheme + ')'], ['n', r.n], ['Konstruk', r.m], ['Bootstrap', boot ? boot.B : 'tidak']], data: exp });
   }
