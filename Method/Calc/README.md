@@ -72,7 +72,7 @@ Berlaku untuk pita Dataset (`.sc-rbody`) dan pita halaman Stat / "Pengaturan gra
 
 ## Kategori metode (`Method/Shared/kategori-metode.js`)
 
-> Status: seluruh 11 kategori Minitab yang direncanakan sudah berisi metode (36 metode). Kategori kosong Reliability/Survival dan Equivalence Tests sengaja belum dibuat.
+> Status: seluruh 11 kategori Minitab yang direncanakan sudah berisi metode (37 metode). Kategori kosong Reliability/Survival dan Equivalence Tests sengaja belum dibuat.
 
 Satu sumber daftar kategori Stat (nama & urutan mengikuti menu Stat Minitab): Basic Statistics, Regression, ANOVA, DOE, Control Charts, Quality Tools, Multivariate, Time Series, Tables, Nonparametrics, Power and Sample Size. Dipakai oleh menu Stat (`index.html`: header per kategori + chip filter), pita **Statistik** di Dataset (grup per kategori), dan dropdown **Metode** di `analisis-vars.js` (`<optgroup>`).
 
@@ -132,6 +132,19 @@ Metode: Faktorial 2^k, Peta Kendali (X-bar/R, X-bar/S, I-MR, p, np, c, u), Kapab
 
 ### Menjalankan semua uji numerik
 ```
-for t in basic-core basic-core2 nonpar-core anova-core reg-core multi-core quality-core power-core; do node tests/$t.test.js | tail -1; done
+for t in basic-core basic-core2 nonpar-core anova-core reg-core multi-core quality-core power-core sem-core; do node tests/$t.test.js | tail -1; done
 ```
 (file acuan *.json dibuat ulang dengan `python3 tests/make_ref*.py`; butuh numpy, scipy, pandas, statsmodels, scikit-learn, factor_analyzer, pingouin)
+
+## SEM: CB-SEM & PLS-SEM (Tahap 11)
+
+Metode: **SEM** (kategori Multivariate), id `sem`, prefiks elemen `sx` (`sm` sudah dipakai Smoothing).
+
+- Model ditulis dengan sintaks mirip lavaan: `F =~ x1 + x2` (reflektif), `F <~ x1 + x2` (formatif, PLS), `Y ~ F + X` (jalur; konstruk atau variabel teramati), `x1 ~~ x2` (kovarians galat), `#` komentar. Nama indikator = judul kolom tabel.
+- `Method/Stat/sem-core.js` (tanpa DOM, bisa diuji di Node):
+  - `parseModel`: parser + validasi (indikator tidak ada, indikator ganda, nama laten bentrok dengan kolom, dll.).
+  - `fitCB`: CB-SEM maximum likelihood, model umum bentuk RAM, Gauss-Newton/Levenberg-Marquardt dengan turunan analitik, SE dari informasi Fisher, solusi terstandar + SE (delta method), efek langsung/tidak langsung/total, kecocokan model (chi-square, RMSEA + CI 90% + p-close, CFI, TLI, NFI, GFI, AGFI, SRMR, AIC, BIC), residual korelasi terbesar, peringatan (Heywood, korelasi > 1, tidak konvergen, tidak teridentifikasi). Konvensi lavaan: S dibagi N, chi2 = N x F_ML. Variabel teramati eksogen: varians/kovarians bebas (db sama dengan lavaan `fixed.x`). Konstruk berindikator tunggal: loading 1 dan galat 0.
+  - `fitPLS`: algoritma Lohmoller (skema jalur / centroid / faktorial; mode A dan B), loading, bobot, jalur, R2 (+ adjusted), f2, VIF, Cronbach alpha, rho_A, CR, AVE, Fornell-Larcker, HTMT, cross-loading, efek tidak langsung/total, bootstrap (seed tetap, SE, t, p dengan db n-1, CI persentil 95%, tanda skor diselaraskan).
+- `Method/Stat/sem.js`: halaman (`StatBasicUI.mountPage`); pilihan estimator, skala laten (CB), skema bobot dan jumlah bootstrap (PLS). Bisa dijalankan dari Dataset.
+- Belum ada: modification indices, model multigrup, mean structure, data kategorik/ordinal (WLSMV), kendala kesamaan parameter/label, Q2 blindfolding, PLSpredict, model orde dua.
+- Uji: `python3 tests/make_ref9.py && node tests/sem-core.test.js` (butuh numpy, pandas, semopy, plspm). CB-SEM dibandingkan dengan angka terbit lavaan pada data Political Democracy (chi2 38,125, db 35, RMSEA 0,035, CFI 0,995, SRMR 0,044, dll.) dan semopy (estimasi, terstandar, chi2 galat < 1e-4); PLS-SEM dengan plspm (loading, jalur, R2 galat ~1e-12 untuk ketiga skema; bobot plspm dikali sqrt(n/(n-1))). Catatan: plspm perlu data yang sudah dibakukan dan `scaled=False`; `scaled=True` memakai penskalaan nonmetrik.
