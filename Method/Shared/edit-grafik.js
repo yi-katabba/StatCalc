@@ -397,22 +397,10 @@
     GROUPS.push(G);
     return G;
   }
-  /* Bilah selebar grafiknya: wadah flex kolom "rata tengah" (mis. .chart-wrap) membuat anak menyusut mengikuti isi, sehingga bilah
-     dan grafik jadi kecil. Wadah di rantai induk dibuat meregang, lalu lebar bilah disamakan dengan lebar maksimum grafik. */
-  function fitBar(bar, unit) {
-    var mw = getComputedStyle(unit).maxWidth;
-    bar.style.width = '100%'; bar.style.boxSizing = 'border-box';
-    if (mw && mw !== 'none') { bar.style.maxWidth = mw; bar.style.marginLeft = 'auto'; bar.style.marginRight = 'auto'; }
-    for (var el = bar; el.parentElement && !el.parentElement.matches('.tab-panel, .card, .st-main, [id$="results-card"], body'); el = el.parentElement) {
-      var cs = getComputedStyle(el.parentElement);
-      if (cs.display.indexOf('flex') >= 0 && cs.flexDirection.indexOf('column') === 0 && cs.alignItems === 'center') el.style.alignSelf = 'stretch';
-    }
-  }
   function refreshGroup(G, states) {
     G.states = states;
     var anchor = states[0].unit; states[0].bar = G.bar;
     if (G.bar.nextElementSibling !== anchor || G.bar.parentElement !== anchor.parentElement) anchor.parentElement.insertBefore(G.bar, anchor);
-    fitBar(G.bar, anchor);
     var sig = states.map(function (S) { return S.id; }).join(',');
     if (sig !== G.sig) {
       G.sig = sig;
