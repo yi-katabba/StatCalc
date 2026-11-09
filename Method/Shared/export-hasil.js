@@ -17,8 +17,10 @@
        data: { head: [...], rows: [[...]], caption: '...' },                    // lampiran data input
      });
 
-   Panel grafik punya pita (Warna, Garis kisi) lewat StatRibbon.mount(host); gaya disimpan per metode
-   (STYLE) dan dipakai saat grafik dibangun ulang, juga untuk .docx. Pemilih "Terapkan ke" memilih Semua grafik atau satu grafik. Tombol Setel ulang (ikon panah putar) ada di tiap tab pita.
+   Tiap grafik punya bilah sendiri (seperti PCA / Analisis Faktor): tombol PNG/SVG/Salin + tombol "Edit grafik" yang membuka pita
+   Teks, Elemen, Sumbu, Warna, Garis kisi (StatRibbon.mount, dibuat saat pertama dibuka). Isi pita menyesuaikan jenis grafik itu.
+   Gaya disimpan per metode dan per grafik (STYLE[id].per[indeks]), dipakai saat grafik dibangun ulang, juga untuk .docx/.zip.
+   Tombol Setel ulang (ikon panah putar) ada di tiap tab pita dan hanya berlaku untuk grafik itu.
 
    Isi sections diambil dari DOM halaman (tabel, rumus, hipotesis, kesimpulan),
    sehingga dokumen selalu sama dengan yang tampil di layar.
@@ -453,11 +455,14 @@
     .ex-fig figcaption strong{ display:block; color:var(--ink); font-size:14px; margin-bottom:2px; }
     .ex-fig .control-row{ padding:6px 14px 14px; margin:0; }
     .ex-status{ margin:10px 0 0; font-size:13.5px; }
-    .ex-rib{ margin:14px 0 0; }
-    .ex-rib .rb-main{ box-shadow:none; margin:0; }
+    .ex-fig .ne-bar{ margin:0; border-width:0 0 1px; border-radius:0; }
+    .ex-fig .ne-edit .rb-main{ box-shadow:none; border:0; border-radius:0; margin:0; }
+    .ex-fig .ne-head .ib{ flex:0 0 auto !important; width:44px !important; min-width:44px; }
   `;
   document.head.appendChild(style);
 
+  const EX_CARET = '<svg class="ne-car" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+  const EX_PEN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>';
   const STORE = {};
   /* Grafik pendukung + pita + tombol PNG/SVG/Salin ada di tab "Grafik" kartu hasil (#ex-gp-<id>); panel "Ekspor" (#ex-panel-<id>) hanya berisi tombol .docx / .zip / Bagikan */
   const gp = (id) => document.getElementById('ex-gp-' + id);
@@ -546,42 +551,42 @@
     catch (e) { status(panel, 'Peramban ini tidak dapat membuat PNG. Gunakan Unduh SVG.', true); }
   }
 
-  /* ---- pita pengaturan grafik pendukung: Teks, Elemen, Sumbu, Warna, Garis kisi (isi menyesuaikan jenis grafik) ---- */
-  const sid = (id, k) => 'exs-' + id + '-' + k;
-  function curStyle(id) { const S = STYLE[id]; return S.target === 'all' ? S.all : (S.per[S.target] || S.all); }
-  const TGT = ['tt', 'te', 'ts', 'tw', 'tk'];
-  /* kolom baru (selain warna & kisi) dibaca/diisi secara generik: [kunci, jenis] */
+  /* ---- pita edit PER GRAFIK (seperti PCA / Analisis Faktor): tiap grafik punya bilah tombol PNG/SVG/Salin + tombol "Edit grafik"
+          yang membuka pita Teks, Elemen, Sumbu, Warna, Garis kisi. Isi pita menyesuaikan jenis grafik itu. ---- */
+  const sid = (id, i, k) => 'exs-' + id + '-' + i + '-' + k;
+  const gEl = (id, i, k) => document.getElementById(sid(id, i, k));
+  const figAt = (spec, i) => spec.resolved[+i] || null;
+  /* gaya disimpan menurut indeks grafik di spec.charts (r.idx), bukan urutan tampil */
+  const keyOf = (spec, i) => { const r = figAt(spec, i); return r ? r.idx : +i; };
+  function curStyle(id, i) { const S = STYLE[id], k = keyOf(STORE[id], i); return S.per[k] || S.all; }
+  /* kolom pita (selain warna & kisi) dibaca/diisi secara generik: [kunci, jenis] */
   const FIELDS = [['title', 't'], ['showT', 'c'], ['xl', 't'], ['yl', 't'], ['showAx', 'c'], ['showLg', 'c'], ['fs', 'r'], ['pt', 'r'], ['lw', 'r'], ['bw', 'r'],
     ['alpha', 's'], ['vals', 's'], ['hl', 'c'], ['fit', 'c'], ['curve', 'c'], ['mk', 'c'], ['ymin', 't'], ['ymax', 't'], ['xmin', 't'], ['xmax', 't'], ['H', 't']];
-  function mountRibbon(id, panel) {
-    const slot = $('[data-rib-slot]', panel);
-    if (!slot || !window.StatRibbon || !window.GraphCore) return;
-    if (STORE[id] && STORE[id].resolved.length && STORE[id].resolved.every((r) => r.kind === 'sem')) {   /* hanya diagram jalur SEM: diedit dari pita di atas diagram (tab Grafik), bukan di sini */
-      slot.innerHTML = '<p class="ex-status imp-ok">Diagram jalur diedit lewat pita <strong>Diagram jalur</strong> di atas diagram (tab Grafik) (teks, simpul, panah, warna, tata letak, dan seret langsung di gambar). Perubahan otomatis ikut ke gambar di bawah, ke PNG/SVG, dan ke dokumen Word.</p>';
-      return;
-    }
-    const gu = window.GraphCore.u, S = STYLE[id], spec = STORE[id];
-    if (S.target !== 'all' && !resolvedAt(spec, S.target)) S.target = 'all';
-    const st = Object.assign(DEF_STYLE(), curStyle(id));
-    const opts = [['all', 'Semua grafik']].concat(spec.charts.map((c, i) => [String(i), (i + 1) + '. ' + c.title]));
-    const tgt = (k) => ({ label: 'Terapkan ke', cols: 1, items: [{ type: 'select', id: sid(id, k), label: 'Grafik yang diubah', options: opts, selected: String(S.target) }] });
-    const T = (k, label, ph) => ({ type: 'text', id: sid(id, k), label, placeholder: ph || 'Bawaan grafik', def: st[k] });
-    const C = (k, label) => ({ type: 'check', id: sid(id, k), label, def: !!st[k] });
-    const R = (k, label, min, max, step) => ({ type: 'range', id: sid(id, k), label, min, max, step, def: st[k], unit: '%' });
-    const Sel = (k, label, options) => ({ type: 'select', id: sid(id, k), label, options, selected: String(st[k]) });
-    const N = (k, label) => ({ type: 'number', id: sid(id, k), label, placeholder: 'Otomatis', def: st[k] });
+  /* grafik yang pengaturannya dapat diubah dari pita: bukan diagram SEM dan bukan gambar jadi */
+  const editable = (r) => !!r && !!r.kind && r.kind !== 'sem';
+
+  function mountRibbon(id, i, host) {
+    if (!host || !window.StatRibbon || !window.GraphCore) return;
+    const gu = window.GraphCore.u, spec = STORE[id], r = figAt(spec, i);
+    if (!r) return;
+    host.innerHTML = '';
+    const st = Object.assign(DEF_STYLE(), curStyle(id, i));
+    const s = (k) => sid(id, i, k);
+    const T = (k, label, ph) => ({ type: 'text', id: s(k), label, placeholder: ph || 'Bawaan grafik', def: st[k] });
+    const C = (k, label) => ({ type: 'check', id: s(k), label, def: !!st[k] });
+    const R = (k, label, min, max, step) => ({ type: 'range', id: s(k), label, min, max, step, def: st[k], unit: '%' });
+    const Sel = (k, label, options) => ({ type: 'select', id: s(k), label, options, selected: String(st[k]) });
+    const N = (k, label) => ({ type: 'number', id: s(k), label, placeholder: 'Otomatis', def: st[k] });
     const reset = (act, label) => ({ label: 'Setel ulang', cols: 1, items: [{ type: 'button', act, icon: 'reset', label }] });
-    const tip = (k, html) => ({ tip: html, tipId: sid(id, 'tip-' + k) });
+    const tip = (k, html) => ({ tip: html, tipId: s('tip-' + k) });
     const tabs = [
       Object.assign({ id: 'teks', label: 'Teks', groups: [
-        tgt('tt'),
         { label: 'Judul & label', cols: 1, items: [T('title', 'Judul grafik'), T('xl', 'Label sumbu X'), T('yl', 'Label sumbu Y')] },
         { label: 'Tampilkan', cols: 1, items: [C('showT', 'Judul'), C('showAx', 'Label sumbu'), C('showLg', 'Legenda')] },
         { label: 'Huruf', cols: 1, items: [R('fs', 'Ukuran huruf', 70, 150, 5)] },
         reset('teks', 'Setel ulang teks'),
       ] }, tip('teks', '&nbsp;')),
       Object.assign({ id: 'elemen', label: 'Elemen', groups: [
-        tgt('te'),
         { label: 'Ukuran', cols: 1, items: [R('pt', 'Ukuran titik', 50, 250, 10), R('lw', 'Tebal garis', 50, 300, 10), R('bw', 'Lebar batang', 40, 130, 5)] },
         { label: 'Isi', cols: 1, items: [Sel('alpha', 'Kepekatan warna', [['auto', 'Bawaan grafik'], ['1', 'Pekat (100%)'], ['0.7', 'Sedang (70%)'], ['0.45', 'Transparan (45%)']]),
           Sel('vals', 'Label nilai di batang', [['auto', 'Otomatis'], ['on', 'Tampil'], ['off', 'Sembunyi']])] },
@@ -589,55 +594,46 @@
         reset('elemen', 'Setel ulang elemen'),
       ] }, tip('elemen', '&nbsp;')),
       Object.assign({ id: 'sumbu', label: 'Sumbu', groups: [
-        tgt('ts'),
         { label: 'Sumbu Y', cols: 1, items: [N('ymin', 'Y minimum'), N('ymax', 'Y maksimum')] },
         { label: 'Sumbu X', cols: 1, items: [N('xmin', 'X minimum'), N('xmax', 'X maksimum')] },
-        { label: 'Ukuran grafik', cols: 1, items: [{ type: 'number', id: sid(id, 'H'), label: 'Tinggi grafik (piksel)', placeholder: 'Bawaan', def: st.H }] },
+        { label: 'Ukuran grafik', cols: 1, items: [{ type: 'number', id: s('H'), label: 'Tinggi grafik (piksel)', placeholder: 'Bawaan', def: st.H }] },
         reset('sumbu', 'Setel ulang sumbu'),
       ] }, tip('sumbu', '&nbsp;')),
       Object.assign({ id: 'warna', label: 'Warna', groups: [
-        tgt('tw'),
         { label: 'Warna data', cols: 1, items: [
-          { type: 'color', id: sid(id, 'c1'), label: 'Warna utama (titik, batang, histogram)', def: st.c1 },
-          { type: 'color', id: sid(id, 'c2'), label: 'Warna garis sorotan (regresi, kurva, rata-rata)', def: st.c2 },
+          { type: 'color', id: s('c1'), label: 'Warna utama (titik, batang, histogram)', def: st.c1 },
+          { type: 'color', id: s('c2'), label: 'Warna garis sorotan (regresi, kurva, rata-rata)', def: st.c2 },
         ] },
-        { label: 'Palet warna', cols: 1, items: [{ type: 'select', id: sid(id, 'pal'), label: 'Palet (grafik banyak warna)', options: Object.keys(gu.PALETTES).map((k) => [k, gu.PALETTE_LABEL[k]]), selected: st.pal }] },
-        { label: 'Latar', cols: 1, items: [{ type: 'color', id: sid(id, 'bg'), label: 'Warna latar grafik', def: st.bg }] },
+        { label: 'Palet warna', cols: 1, items: [{ type: 'select', id: s('pal'), label: 'Palet (grafik banyak warna)', options: Object.keys(gu.PALETTES).map((k) => [k, gu.PALETTE_LABEL[k]]), selected: st.pal }] },
+        { label: 'Latar', cols: 1, items: [{ type: 'color', id: s('bg'), label: 'Warna latar grafik', def: st.bg }] },
         reset('warna', 'Setel ulang warna'),
       ] }, tip('warna', '&nbsp;')),
       Object.assign({ id: 'kisi', label: 'Garis kisi', groups: [
-        tgt('tk'),
         { label: 'Tampilkan', cols: 1, items: [
-          { type: 'select', id: sid(id, 'gh'), label: 'Garis horizontal', options: [['on', 'Tampil'], ['off', 'Sembunyi']], selected: st.h ? 'on' : 'off' },
-          { type: 'select', id: sid(id, 'gv'), label: 'Garis vertikal', options: [['auto', 'Otomatis (sesuai jenis grafik)'], ['on', 'Tampil'], ['off', 'Sembunyi']], selected: st.v },
+          { type: 'select', id: s('gh'), label: 'Garis horizontal', options: [['on', 'Tampil'], ['off', 'Sembunyi']], selected: st.h ? 'on' : 'off' },
+          { type: 'select', id: s('gv'), label: 'Garis vertikal', options: [['auto', 'Otomatis (sesuai jenis grafik)'], ['on', 'Tampil'], ['off', 'Sembunyi']], selected: st.v },
         ] },
-        { label: 'Gaya', cols: 1, items: [{ type: 'color', id: sid(id, 'gc'), label: 'Warna garis kisi', def: st.gc }] },
+        { label: 'Gaya', cols: 1, items: [{ type: 'color', id: s('gc'), label: 'Warna garis kisi', def: st.gc }] },
         reset('kisi', 'Setel ulang kisi'),
       ] }, tip('kisi', '&nbsp;')),
     ];
-    window.StatRibbon.mount({ view: '#ex-gp-' + id, key: 'ex-' + id, host: slot, tabs, onChange: (e) => onRibbon(id, e), onAction: (act) => resetPart(id, act) });
-    applyCaps(id);
-    const pending = spec.resolved.filter((r) => r.kind === 'custom' && r.build && !r.build.__caps);
-    if (pending.length) setTimeout(() => {                 /* uji di luar alur utama agar halaman tidak tersendat */
-      pending.forEach((r) => { try { r.build.__caps = probeCaps(r.build); } catch (e) { r.build.__caps = ['font']; } });
-      applyCaps(id);
+    window.StatRibbon.mount({ view: '#' + host.id, key: 'ex-' + id + '-' + i, host, tabs, onChange: () => onRibbon(id, i), onAction: (act) => resetPart(id, i, act) });
+    applyCaps(id, i);
+    if (r.kind === 'custom' && r.build && !r.build.__caps) setTimeout(() => {   /* uji di luar alur utama agar halaman tidak tersendat */
+      try { r.build.__caps = probeCaps(r.build); } catch (e) { r.build.__caps = ['font']; }
+      applyCaps(id, i);
     }, 30);
   }
-  /* Tampilkan hanya pengaturan yang berlaku untuk grafik terpilih (atau gabungan semua grafik bila "Semua grafik") */
-  function applyCaps(id) {
-    const panel = gp(id), S = STYLE[id], spec = STORE[id];
-    if (!panel || !spec) return;
-    const all = S.target === 'all';
-    const sel = all ? spec.resolved : [resolvedAt(spec, S.target)].filter(Boolean);
+  /* Tampilkan hanya pengaturan yang berlaku untuk jenis grafik ini; tab yang tidak punya pengaturan berlaku disembunyikan */
+  function applyCaps(id, i) {
+    const host = document.getElementById('ex-fe-' + id + '-' + i), spec = STORE[id], r = spec && figAt(spec, i);
+    if (!host || !r) return;
     const caps = new Set();
-    sel.forEach((r) => {
-      if (r.kind === 'custom') { (r.build && r.build.__caps ? r.build.__caps : ['font']).forEach((c) => caps.add(c)); }
-      else if (r.kind === 'sem') return;                  /* diagram jalur SEM diedit lewat pita Edit Diagram Jalur di halaman SEM */
-      else if (r.kind && CAPS[r.kind]) { CAP_ALWAYS.concat(CAPS[r.kind]).forEach((c) => caps.add(c)); }
-    });
+    if (r.kind === 'custom') (r.build && r.build.__caps ? r.build.__caps : ['font']).forEach((c) => caps.add(c));
+    else if (r.kind && CAPS[r.kind]) CAP_ALWAYS.concat(CAPS[r.kind]).forEach((c) => caps.add(c));
     if (caps.has('xl') || caps.has('yl')) caps.add('axlab');
-    const prefix = sid(id, '');
-    $$('.rb-grp', panel).forEach((g) => {
+    const prefix = sid(id, i, '');
+    $$('.rb-grp', host).forEach((g) => {
       let capped = 0, shown = 0, plain = 0;
       $$('.rb-gbody > *', g).forEach((child) => {
         const el = child.id ? child : child.querySelector('input,select');
@@ -645,88 +641,73 @@
         const kc = KEYCAP[key];
         if (!kc) { plain++; return; }
         capped++;
-        const ok = caps.has(kc[0]) && !(kc[1] && all);
-        child.style.display = ok ? '' : 'none';
-        if (ok) shown++;
+        child.style.display = caps.has(kc[0]) ? '' : 'none';
+        if (caps.has(kc[0])) shown++;
       });
       g.style.display = capped && !shown && !plain ? 'none' : '';
     });
-    const names = Array.from(new Set(sel.map((r) => KIND_LABEL[r.kind]).filter(Boolean)));
+    $$('.rb-tab', host).forEach((t) => {
+      const p = $('.rb-panel[data-rbpanel="' + t.dataset.rbtab + '"]', host);
+      const any = p && $$('.rb-grp', p).some((g) => g.style.display !== 'none' && !g.querySelector('[data-rb-act]'));
+      t.style.display = any ? '' : 'none';
+    });
+    const act = $('.rb-tab[aria-selected="true"]', host);
+    if (!act || act.style.display === 'none') { const f = $$('.rb-tab', host).filter((t) => t.style.display !== 'none')[0]; if (f) f.click(); }
     let msg;
-    if (sel.some((r) => r.kind === 'custom' && r.build && !r.build.__caps)) msg = 'Memeriksa pengaturan yang berlaku untuk grafik ini&hellip;';
-    else if (sel.length && sel.every((r) => r.kind === 'sem')) msg = 'Diagram jalur diedit lewat pita <strong>Diagram jalur</strong> di tab Grafik (di atas diagram); perubahan di sana otomatis ikut ke gambar ini.';
-    else if (!sel.length || !names.length) msg = 'Grafik ini sudah berbentuk gambar jadi, sehingga pengaturannya tidak dapat diubah dari pita.';
-    else if (all) msg = 'Menampilkan pengaturan yang dipakai oleh grafik-grafik di bawah (' + names.join(', ') + '). Judul, label, dan rentang sumbu hanya muncul bila satu grafik dipilih di &ldquo;Terapkan ke&rdquo;.';
-    else msg = 'Jenis grafik: <strong>' + names[0] + '</strong>. Pengaturan yang tidak berlaku untuk jenis ini disembunyikan. Kosongkan kolom teks/angka untuk kembali ke bawaan grafik.';
-    msg += ' Perubahan ikut ke PNG/SVG/ZIP dan berkas .docx.';
-    ['teks', 'elemen', 'sumbu', 'warna', 'kisi'].forEach((k) => { const t = document.getElementById(sid(id, 'tip-' + k)); if (t) t.innerHTML = msg; });
+    if (r.kind === 'custom' && !(r.build && r.build.__caps)) msg = 'Memeriksa pengaturan yang berlaku untuk grafik ini&hellip;';
+    else msg = 'Jenis grafik: <strong>' + (KIND_LABEL[r.kind] || 'Grafik') + '</strong>. Pengaturan yang tidak berlaku untuk jenis ini disembunyikan. Kosongkan kolom teks/angka untuk kembali ke bawaan grafik. Perubahan ikut ke PNG/SVG/ZIP dan berkas .docx.';
+    ['teks', 'elemen', 'sumbu', 'warna', 'kisi'].forEach((k) => { const t = document.getElementById(sid(id, i, 'tip-' + k)); if (t) t.innerHTML = msg; });
   }
   const rTimers = {};
-  const gEl = (id, k) => document.getElementById(sid(id, k));
-  function loadInputs(id) {
-    const st = Object.assign(DEF_STYLE(), curStyle(id)), set = (k, v) => { const el = gEl(id, k); if (el) el.value = v; };
-    set('c1', st.c1); set('c2', st.c2); set('pal', st.pal); set('bg', st.bg); set('gh', st.h ? 'on' : 'off'); set('gv', st.v); set('gc', st.gc);
+  function readInputs(id, i) {
+    const v = { dirty: true, c1: gEl(id, i, 'c1').value, c2: gEl(id, i, 'c2').value, pal: gEl(id, i, 'pal').value, bg: gEl(id, i, 'bg').value, h: gEl(id, i, 'gh').value === 'on', v: gEl(id, i, 'gv').value, gc: gEl(id, i, 'gc').value };
     FIELDS.forEach(([k, t]) => {
-      const el = gEl(id, k); if (!el) return;
-      if (t === 'c') el.checked = st[k] !== false; else el.value = st[k];
-      if (t === 'r') { const lab = document.getElementById(el.id + '-v'); if (lab) lab.textContent = el.value + (el.dataset.unit || ''); }
-    });
-  }
-  function readInputs(id) {
-    const v = { dirty: true, c1: gEl(id, 'c1').value, c2: gEl(id, 'c2').value, pal: gEl(id, 'pal').value, bg: gEl(id, 'bg').value, h: gEl(id, 'gh').value === 'on', v: gEl(id, 'gv').value, gc: gEl(id, 'gc').value };
-    FIELDS.forEach(([k, t]) => {
-      const el = gEl(id, k); if (!el) return;
+      const el = gEl(id, i, k); if (!el) return;
       v[k] = t === 'c' ? el.checked : t === 'r' ? +el.value : el.value;
     });
     return v;
   }
-  function onRibbon(id, e) {
-    const S = STYLE[id], tid = e && e.target && e.target.id;
-    if (TGT.some((k) => tid === sid(id, k))) {            /* ganti grafik yang diubah: muat nilainya, tanpa menggambar ulang */
-      S.target = e.target.value;
-      TGT.forEach((k) => { const el = gEl(id, k); if (el) el.value = S.target; });
-      loadInputs(id);
-      applyCaps(id);
-      return;
-    }
-    clearTimeout(rTimers[id]);
-    rTimers[id] = setTimeout(() => {
-      if (!gEl(id, 'c1')) return;
-      const v = readInputs(id);
-      if (S.target === 'all') {
-        /* teks & rentang sumbu khas satu grafik: jangan ditimpakan ke semua grafik.
-           Hanya kolom yang BERUBAH yang menimpa pengaturan khusus tiap grafik. */
-        const keep = ['title', 'xl', 'yl', 'ymin', 'ymax', 'xmin', 'xmax'], prev = Object.assign(DEF_STYLE(), S.all);
-        const changed = Object.keys(v).filter((k) => k !== 'dirty' && keep.indexOf(k) === -1 && v[k] !== prev[k]);
-        Object.keys(S.per).forEach((i) => { const p = S.per[i]; changed.forEach((k) => { p[k] = v[k]; }); p.dirty = true; });
-        const base = Object.assign({}, v); keep.forEach((k) => { base[k] = prev[k]; });
-        S.all = base;
-      } else S.per[S.target] = v;
+  function loadInputs(id, i) {
+    const st = Object.assign(DEF_STYLE(), curStyle(id, i)), set = (k, v) => { const el = gEl(id, i, k); if (el) el.value = v; };
+    set('c1', st.c1); set('c2', st.c2); set('pal', st.pal); set('bg', st.bg); set('gh', st.h ? 'on' : 'off'); set('gv', st.v); set('gc', st.gc);
+    FIELDS.forEach(([k, t]) => {
+      const el = gEl(id, i, k); if (!el) return;
+      if (t === 'c') el.checked = st[k] !== false; else el.value = st[k];
+      if (t === 'r') { const lab = document.getElementById(el.id + '-v'); if (lab) lab.textContent = el.value + (el.dataset.unit || ''); }
+    });
+  }
+  function onRibbon(id, i) {
+    const tk = id + '|' + i;
+    clearTimeout(rTimers[tk]);
+    rTimers[tk] = setTimeout(() => {
+      if (!gEl(id, i, 'c1') || !STORE[id]) return;
+      STYLE[id].per[keyOf(STORE[id], i)] = readInputs(id, i);
       redraw(id);
     }, 40);
   }
+  /* gambar ulang semua grafik di tab Grafik (hanya isi gambarnya; bilah dan pita tetap terbuka) */
   function redraw(id) {
-    const spec = STORE[id], panel = gp(id);
+    const spec = STORE[id], panel = document.getElementById('ex-gp-' + id);
     if (!spec || !panel) return;
     spec.resolved = resolveCharts(spec.charts, id);
     const holders = $$('.ex-fig .ex-chart', panel);
     if (holders.length !== spec.resolved.length) { publish(spec); return; }
     holders.forEach((h, i) => { h.innerHTML = spec.resolved[i].svg; });
   }
-  /* Setel ulang satu bagian pada grafik yang sedang dipilih di pemilih "Terapkan ke" */
+  /* Setel ulang satu bagian pada SATU grafik */
   const PART = {
     warna: ['c1', 'c2', 'pal', 'bg'], kisi: ['h', 'v', 'gc'],
     teks: ['title', 'showT', 'xl', 'yl', 'showAx', 'showLg', 'fs'],
     elemen: ['pt', 'lw', 'bw', 'alpha', 'vals', 'hl', 'fit', 'curve', 'mk'],
     sumbu: ['ymin', 'ymax', 'xmin', 'xmax', 'H'],
   };
-  function resetPart(id, part) {
-    const S = STYLE[id], d = DEF_STYLE(), keys = PART[part];
+  function resetPart(id, i, part) {
+    const S = STYLE[id], d = DEF_STYLE(), keys = PART[part], k = keyOf(STORE[id], i);
     if (!keys) return;
-    const apply = (st) => { keys.forEach((k) => { st[k] = d[k]; }); return st; };
-    if (S.target === 'all') { apply(S.all); Object.keys(S.per).forEach((i) => apply(S.per[i])); }
-    else S.per[S.target] = apply(Object.assign({}, DEF_STYLE(), S.per[S.target] || S.all, { dirty: true }));
-    loadInputs(id);
+    const st = Object.assign({}, DEF_STYLE(), S.per[k] || S.all, { dirty: true });
+    keys.forEach((f) => { st[f] = d[f]; });
+    S.per[k] = st;
+    loadInputs(id, i);
     redraw(id);
   }
 
@@ -778,20 +759,21 @@
       const host = GT && rc ? GT.gtab(rc, id) : null;
       if (host) {
         const figs = spec.resolved.map((c, i) => `
-          <figure class="ex-fig">
+          <figure class="ex-fig" data-i="${i}">
+            <div class="ne-bar ex-fbar">
+              <div class="ne-head">
+                <span class="ib-row">${window.StatIconBtn('png', 'Unduh PNG', `data-ex="png" data-i="${i}"`)}${window.StatIconBtn('svg', 'Unduh SVG', `data-ex="svg" data-i="${i}"`)}${window.StatIconBtn('copy', 'Salin gambar', `data-ex="copy" data-i="${i}"`)}</span>
+                ${editable(c) ? `<button type="button" class="ne-tog" data-ex="tog" data-i="${i}" aria-expanded="false" aria-controls="ex-fe-${id}-${i}">${EX_PEN}Edit grafik${EX_CARET}</button>` : ''}
+              </div>
+              ${editable(c) ? `<div class="ne-edit" id="ex-fe-${id}-${i}" hidden></div>` : ''}
+            </div>
             <div class="ex-chart${semOnly ? ' ex-chart-off' : ''}">${c.svg}</div>
             <figcaption><strong>${X(c.title)}</strong>${c.caption ? X(c.caption) : ''}</figcaption>
-            <div class="control-row ib-row">
-              ${window.StatIconBtn('png', 'Unduh PNG', `data-ex="png" data-i="${i}"`)}
-              ${window.StatIconBtn('svg', 'Unduh SVG', `data-ex="svg" data-i="${i}"`)}
-              ${window.StatIconBtn('copy', 'Salin gambar', `data-ex="copy" data-i="${i}"`)}
-            </div>
           </figure>`).join('');
         host.innerHTML = `
           <h3 class="ex-gt-h">${semOnly ? 'Unduh diagram jalur' : 'Grafik pendukung'}</h3>
-          <p class="ex-gt-note">${semOnly ? 'Diagram di atas dapat diunduh sebagai PNG/SVG atau disalin sebagai gambar.' : 'Grafik dibuat dari data yang baru dihitung. Unduh tiap grafik sebagai PNG/SVG, atau semuanya sekaligus lewat panel Ekspor.'}</p>
+          <p class="ex-gt-note">${semOnly ? 'Diagram di atas dapat diunduh sebagai PNG/SVG atau disalin sebagai gambar.' : 'Grafik dibuat dari data yang baru dihitung. Tiap grafik punya tombol unduh PNG/SVG/salin dan pita <strong>Edit grafik</strong> sendiri yang isinya menyesuaikan jenis grafik; semua grafik sekaligus lewat panel Ekspor.'}</p>
           <p class="ex-status" hidden></p>
-          ${semOnly ? '' : '<div class="ex-rib" data-rib-slot></div>'}
           <div class="ex-grid">${figs}</div>`;
         if (!host.__exBound) {
           host.__exBound = true;
@@ -800,9 +782,15 @@
             if (!b) return;
             const k = b.dataset.ex;
             if (k === 'png' || k === 'svg' || k === 'copy') doFig(id, +b.dataset.i, k);
+            else if (k === 'tog') {                       /* buka / tutup pita Edit grafik milik grafik ini; dibuat saat pertama dibuka */
+              const ed = document.getElementById('ex-fe-' + id + '-' + b.dataset.i);
+              if (!ed) return;
+              const open = ed.hidden;
+              ed.hidden = !open; b.setAttribute('aria-expanded', String(open));
+              if (open && !ed.__mounted) { ed.__mounted = true; mountRibbon(id, +b.dataset.i, ed); }
+            }
           });
         }
-        mountRibbon(id, host);
       } else console.warn('StatExport: tab Grafik tidak dapat dibuat untuk', id);
     }
 
