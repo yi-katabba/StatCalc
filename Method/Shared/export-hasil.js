@@ -131,7 +131,7 @@
     let out = '';
     node.childNodes.forEach((c) => {
       if (c.nodeType === 3) { const t = c.nodeValue.replace(/[ \t\r\n]+/g, ' '); if (t) out += run(t, st); return; }
-      if (c.nodeType !== 1 || SKIP[c.tagName.toUpperCase()] || c.hidden) return;
+      if (c.nodeType !== 1 || SKIP[c.tagName.toUpperCase()] || c.hidden || c.hasAttribute('data-nodoc')) return;
       const tag = c.tagName.toLowerCase();
       if (tag === 'br') { out += `<w:r><w:br/></w:r>`; return; }
       const ns = Object.assign({}, st);
@@ -238,7 +238,7 @@
       if (c.nodeType === 3) { const t = c.nodeValue.replace(/[ \t\r\n]+/g, ' '); if (t.trim() || buf) buf += run(t); return; }
       if (c.nodeType !== 1) return;
       const tag = c.tagName.toLowerCase();
-      if (SKIP[tag.toUpperCase()] || c.hidden) return;
+      if (SKIP[tag.toUpperCase()] || c.hidden || c.hasAttribute('data-nodoc')) return;
       if (!BLOCK.test(tag)) { buf += inline({ childNodes: [c] }, {}); return; }
       flush();
       const cl = c.classList;
@@ -400,7 +400,7 @@
     return caps;
   }
   /* Jenis grafik (dicatat pustaka StatCharts saat membangun) -> pengaturan yang berlaku untuk jenis itu */
-  const KIND_LABEL = { line: 'Grafik garis', scatter: 'Diagram pencar', qq: 'Q-Q plot', hist: 'Histogram', bars: 'Diagram batang', acf: 'Grafik ACF', gbars: 'Batang berkelompok', intervals: 'Interval plot', strip: 'Strip plot', box: 'Boxplot', custom: 'Grafik khusus' };
+  const KIND_LABEL = { sem: 'Diagram jalur SEM', line: 'Grafik garis', scatter: 'Diagram pencar', qq: 'Q-Q plot', hist: 'Histogram', bars: 'Diagram batang', acf: 'Grafik ACF', gbars: 'Batang berkelompok', intervals: 'Interval plot', strip: 'Strip plot', box: 'Boxplot', custom: 'Grafik khusus' };
   const CAP_ALWAYS = ['title', 'font', 'H', 'bg', 'grid'];
   const CAPS = {
     line: ['legend', 'lw', 'pt', 'mk', 'hl', 'yr', 'pal', 'c2', 'xl', 'yl'],
@@ -552,6 +552,10 @@
   function mountRibbon(id, panel) {
     const slot = $('[data-rib-slot]', panel);
     if (!slot || !window.StatRibbon || !window.GraphCore) return;
+    if (STORE[id] && STORE[id].resolved.length && STORE[id].resolved.every((r) => r.kind === 'sem')) {   /* hanya diagram jalur SEM: diedit dari pita di tab Ringkasan, bukan di sini */
+      slot.innerHTML = '<p class="ex-status imp-ok">Diagram jalur diedit lewat pita <strong>Diagram jalur</strong> di tab Ringkasan (teks, simpul, panah, warna, tata letak, dan seret langsung di gambar). Perubahan otomatis ikut ke gambar di bawah, ke PNG/SVG, dan ke dokumen Word.</p>';
+      return;
+    }
     const gu = window.GraphCore.u, S = STYLE[id], spec = STORE[id];
     if (S.target !== 'all' && !resolvedAt(spec, S.target)) S.target = 'all';
     const st = Object.assign(DEF_STYLE(), curStyle(id));
@@ -624,6 +628,7 @@
     const caps = new Set();
     sel.forEach((r) => {
       if (r.kind === 'custom') { (r.build && r.build.__caps ? r.build.__caps : ['font']).forEach((c) => caps.add(c)); }
+      else if (r.kind === 'sem') return;                  /* diagram jalur SEM diedit lewat pita Edit Diagram Jalur di halaman SEM */
       else if (r.kind && CAPS[r.kind]) { CAP_ALWAYS.concat(CAPS[r.kind]).forEach((c) => caps.add(c)); }
     });
     if (caps.has('xl') || caps.has('yl')) caps.add('axlab');
@@ -645,6 +650,7 @@
     const names = Array.from(new Set(sel.map((r) => KIND_LABEL[r.kind]).filter(Boolean)));
     let msg;
     if (sel.some((r) => r.kind === 'custom' && r.build && !r.build.__caps)) msg = 'Memeriksa pengaturan yang berlaku untuk grafik ini&hellip;';
+    else if (sel.length && sel.every((r) => r.kind === 'sem')) msg = 'Diagram jalur diedit lewat pita <strong>Diagram jalur</strong> di tab Ringkasan (di atas diagram); perubahan di sana otomatis ikut ke gambar ini.';
     else if (!sel.length || !names.length) msg = 'Grafik ini sudah berbentuk gambar jadi, sehingga pengaturannya tidak dapat diubah dari pita.';
     else if (all) msg = 'Menampilkan pengaturan yang dipakai oleh grafik-grafik di bawah (' + names.join(', ') + '). Judul, label, dan rentang sumbu hanya muncul bila satu grafik dipilih di &ldquo;Terapkan ke&rdquo;.';
     else msg = 'Jenis grafik: <strong>' + names[0] + '</strong>. Pengaturan yang tidak berlaku untuk jenis ini disembunyikan. Kosongkan kolom teks/angka untuk kembali ke bawaan grafik.';
@@ -790,5 +796,5 @@
   /* Bantu modul: bangun daftar grafik dengan penanganan galat per grafik */
   const fmtN = (v, d) => (v === null || v === undefined || !Number.isFinite(v) ? '-' : String(+Number(v).toPrecision(d || 5)));
 
-  window.StatExport = { publish, buildDocx, zip, svgToPng, fmtN, _blocks: blocks };
+  window.StatExport = { publish, refresh: (id) => { if (STORE[id]) redraw(id); }, buildDocx, zip, svgToPng, fmtN, _blocks: blocks };
 })();

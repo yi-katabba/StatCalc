@@ -19,6 +19,8 @@
     .bs-res td.ok{ color:var(--good); font-weight:700; } .bs-res td.warn{ color:#B45309; font-weight:700; } .bs-res td.bad{ color:#B3261E; font-weight:700; }
     .sem-add{ border:1px solid var(--accent-2); background:#fff; color:var(--accent-2); border-radius:6px; padding:2px 9px; font:600 12px var(--font-body),sans-serif; cursor:pointer; white-space:nowrap; }
     .sem-add::before{ content:'+ tambah'; } .sem-add:hover{ background:var(--paper-2); } .sem-add[disabled]{ cursor:default; opacity:.65; } .sem-add[disabled]::before{ content:'✓ ditambah'; }
+    .sem-ft{ display:inline-flex; align-items:center; }
+    .sem-note{ font-weight:400; }
     .sem-lab{ color:var(--ink-faint); font-size:11.5px; font-weight:400; }
     .sem-warn{ margin:10px 0 0; padding:9px 12px; border-left:3px solid #B45309; background:#FFF7E6; font-size:13px; border-radius:6px; }`;
   document.head.appendChild(style);
@@ -28,19 +30,28 @@
     id: 'sem', pre: 'sx', title: 'SEM (Structural Equation Modeling)', eyebrow: 'Metode Statistik &rsaquo; Multivariate', step1: 'Tulis model &amp; masukkan data',
     lede: 'Uji model hubungan antar konstruk laten dan variabel teramati sekaligus: model pengukuran (loading, reliabilitas, validitas) dan model struktural (jalur, efek langsung, tidak langsung, dan total). Tersedia dua pendekatan: CB-SEM (maximum likelihood, lengkap dengan indeks kecocokan model) dan PLS-SEM (algoritma PLS dengan bootstrap, blindfolding Q², dan PLSpredict).',
     settings: `
-      <label>Metode estimasi<select id="sxEst" class="select-input"><option value="cb">CB-SEM (maximum likelihood)</option><option value="pls">PLS-SEM (partial least squares)</option></select></label>
-      <label id="sxLblRob">Estimator CB-SEM<select id="sxRob" class="select-input"><option value="ml" selected>ML (asumsi normal multivariat)</option><option value="mlr">MLR (robust terhadap non-normalitas)</option></select></label>
-      <label id="sxLblScale">Skala konstruk laten<select id="sxScale" class="select-input"><option value="marker">Indikator pertama = 1 (marker)</option><option value="std">Varians laten = 1 (baku)</option></select></label>
-      <label id="sxLblScheme" style="display:none">Skema bobot internal<select id="sxScheme" class="select-input"><option value="path">Jalur (path weighting)</option><option value="centroid">Centroid</option><option value="factorial">Faktorial</option></select></label>
-      <label id="sxLblBoot" style="display:none">Bootstrap<select id="sxBoot" class="select-input"><option value="0">Tanpa bootstrap</option><option value="200">200 resampel</option><option value="500" selected>500 resampel</option><option value="1000">1.000 resampel</option><option value="5000">5.000 resampel</option></select></label>
-      <label id="sxLblQ2" style="display:none">Blindfolding (Q²)<select id="sxQ2" class="select-input"><option value="0">Tanpa blindfolding</option><option value="5">Jarak omisi D = 5</option><option value="7" selected>Jarak omisi D = 7 (disarankan)</option><option value="10">Jarak omisi D = 10</option><option value="12">Jarak omisi D = 12</option></select></label>
-      <label id="sxLblPred" style="display:none">PLSpredict (validasi silang)<select id="sxPred" class="select-input"><option value="0">Tanpa PLSpredict</option><option value="5x10" selected>5 lipatan × 10 ulangan</option><option value="10x10">10 lipatan × 10 ulangan (n ≥ 300)</option><option value="10x1">10 lipatan × 1 ulangan (cepat)</option></select></label>
-      <label id="sxLblPredTech" style="display:none">Teknik prediksi PLSpredict<select id="sxPredTech" class="select-input"><option value="direct" selected>Antecedent langsung (DA)</option><option value="earliest">Antecedent paling awal (EA)</option></select></label>
-      <label id="sxLblBootCB">Bootstrap (selang efek tak langsung)<select id="sxBootCB" class="select-input"><option value="0" selected>Tanpa bootstrap</option><option value="200">200 resampel</option><option value="500">500 resampel</option><option value="1000">1.000 resampel</option><option value="2000">2.000 resampel</option></select></label>
-      <label class="sem-wide">Model (satu persamaan per baris)<textarea id="sxModel" class="sem-model" spellcheck="false" autocomplete="off">${SAMPLE_MODEL}</textarea>
-        <span class="sem-syntax"><code>F =~ x1 + x2 + x3</code> konstruk reflektif · <code>F &lt;~ x1 + x2</code> konstruk formatif (PLS-SEM) · <code>Y ~ F + X</code> jalur struktural (konstruk atau variabel teramati) · <code>x1 ~~ x2</code> kovarians galat · <code># komentar</code>. Nama indikator harus sama dengan judul kolom data.<br><strong>Label &amp; pembatasan (hanya CB-SEM):</strong> <code>Y ~ a*X1 + b*X2</code> memberi label jalur; <em>label yang sama = parameter yang sama</em> (mis. <code>F =~ x1 + l*x2 + l*x3</code>, loading dibuat sama; skala laten &ldquo;varians = 1&rdquo; bila penanda ikut diberi label) · <code>0*</code>, <code>0.5*</code> nilai tetap (mis. <code>F1 ~~ 0*F2</code>, <code>x1 ~~ 0.2*x1</code>) · <code>NA*x1 + 1*x2</code> mengganti indikator penanda · <code>a == b</code> menyamakan dua label, <code>a == 0.5</code> mengunci label · <code>ab := a*b</code> parameter terdefinisi (efek tak langsung, selisih, total; operator <code>+ - * / ^ ( )</code>, fungsi <code>sqrt exp log abs</code>) dengan SE delta method dan CI bootstrap.</span></label>
-      <label id="sxLblCmp" class="sem-wide">Model pembanding (opsional) &mdash; uji selisih &chi;&sup2;<textarea id="sxModel2" class="sem-model" style="min-height:92px" spellcheck="false" autocomplete="off" placeholder="Kosongkan bila tidak dipakai. Contoh: salin model di atas lalu hapus satu jalur, tambahkan satu kovarians galat, atau samakan loading dengan label yang sama (mis. l*x2 + l*x3)."></textarea>
-        <span class="sem-syntax">Model pembanding harus memakai variabel teramati yang sama dan bersarang (<em>nested</em>) dengan model utama, mis. sama kecuali beberapa parameter dibebaskan atau dikunci. Model dengan derajat bebas lebih besar diperlakukan sebagai model terbatas.</span></label>`,
+      <label><span class="sem-ft" data-hlp-target="sxNoteEst">Metode estimasi</span><select id="sxEst" class="select-input"><option value="cb">CB-SEM (maximum likelihood)</option><option value="pls">PLS-SEM (partial least squares)</option></select>
+        <span class="sem-syntax sem-note" id="sxNoteEst"><strong>CB-SEM</strong> (<em>covariance-based</em>) memakai maximum likelihood dan menyediakan uji kecocokan model (χ², RMSEA, CFI, SRMR); cocok untuk menguji teori yang sudah mapan, idealnya ≥ 200 responden. <strong>PLS-SEM</strong> memakai algoritma PLS berbasis varians: tidak mensyaratkan normalitas, tahan pada sampel kecil, dapat memuat konstruk formatif (<code>&lt;~</code>), dan berorientasi prediksi (R², Q², PLSpredict), tetapi tidak menghasilkan indeks kecocokan χ²/RMSEA/CFI.</span></label>
+      <label id="sxLblRob"><span class="sem-ft" data-hlp-target="sxNoteRob">Estimator CB-SEM</span><select id="sxRob" class="select-input"><option value="ml" selected>ML (asumsi normal multivariat)</option><option value="mlr">MLR (robust terhadap non-normalitas)</option></select>
+        <span class="sem-syntax sem-note" id="sxNoteRob"><strong>ML</strong> mengasumsikan data kontinu berdistribusi normal multivariat. <strong>MLR</strong> mengoreksi galat baku (sandwich Huber–White) dan χ² (terskala) bila data menyimpang dari normal; pilih MLR bila uji Mardia di hasil menunjukkan penyimpangan. Nilai estimasi parameter sama pada keduanya; yang berubah adalah galat baku, χ², dan indeks kecocokan.</span></label>
+      <label id="sxLblScale"><span class="sem-ft" data-hlp-target="sxNoteScale">Skala konstruk laten</span><select id="sxScale" class="select-input"><option value="marker">Indikator pertama = 1 (marker)</option><option value="std">Varians laten = 1 (baku)</option></select>
+        <span class="sem-syntax sem-note" id="sxNoteScale">Konstruk laten tidak punya satuan sehingga harus diberi skala. <strong>Marker</strong>: loading indikator pertama dikunci 1 dan konstruk memakai satuan indikator itu (bawaan lavaan). <strong>Varians = 1</strong>: seluruh loading dibebaskan dan konstruk dibakukan. Kecocokan model tidak berubah; yang berbeda hanya nilai estimasi tak terstandar dan uji loading pertama.</span></label>
+      <label id="sxLblScheme" style="display:none"><span class="sem-ft" data-hlp-target="sxNoteScheme">Skema bobot internal</span><select id="sxScheme" class="select-input"><option value="path">Jalur (path weighting)</option><option value="centroid">Centroid</option><option value="factorial">Faktorial</option></select>
+        <span class="sem-syntax sem-note" id="sxNoteScheme">Cara menghitung proksi dalam tiap konstruk pada algoritma PLS. <strong>Jalur</strong> (bawaan, paling umum) memakai regresi dan korelasi antar konstruk; <strong>centroid</strong> memakai tanda korelasi; <strong>faktorial</strong> memakai nilai korelasi. Hasil ketiganya biasanya sangat mirip.</span></label>
+      <label id="sxLblBoot" style="display:none"><span class="sem-ft" data-hlp-target="sxNoteBoot">Bootstrap</span><select id="sxBoot" class="select-input"><option value="0">Tanpa bootstrap</option><option value="200">200 resampel</option><option value="500" selected>500 resampel</option><option value="1000">1.000 resampel</option><option value="5000">5.000 resampel</option></select>
+        <span class="sem-syntax sem-note" id="sxNoteBoot">PLS-SEM tidak punya uji parametrik biasa, jadi p-value, galat baku, dan selang kepercayaan (loading, bobot, jalur, efek tak langsung) diperoleh dari bootstrap: responden diambil ulang dengan pengembalian lalu model dihitung ulang. Makin banyak resampel makin stabil tetapi makin lama; untuk laporan akhir umumnya dipakai 5.000.</span></label>
+      <label id="sxLblQ2" style="display:none"><span class="sem-ft" data-hlp-target="sxNoteQ2">Blindfolding (Q²)</span><select id="sxQ2" class="select-input"><option value="0">Tanpa blindfolding</option><option value="5">Jarak omisi D = 5</option><option value="7" selected>Jarak omisi D = 7 (disarankan)</option><option value="10">Jarak omisi D = 10</option><option value="12">Jarak omisi D = 12</option></select>
+        <span class="sem-syntax sem-note" id="sxNoteQ2">Menghilangkan sel data secara bergilir (setiap sel ke-D) lalu memprediksinya kembali untuk menghitung Q² (Stone–Geisser). Q² &gt; 0 berarti model punya relevansi prediktif. Jarak omisi D umumnya 5–12; blindfolding bukan prediksi luar-sampel sejati (untuk itu gunakan PLSpredict).</span></label>
+      <label id="sxLblPred" style="display:none"><span class="sem-ft" data-hlp-target="sxNotePred">PLSpredict (validasi silang)</span><select id="sxPred" class="select-input"><option value="0">Tanpa PLSpredict</option><option value="5x10" selected>5 lipatan × 10 ulangan</option><option value="10x10">10 lipatan × 10 ulangan (n ≥ 300)</option><option value="10x1">10 lipatan × 1 ulangan (cepat)</option></select>
+        <span class="sem-syntax sem-note" id="sxNotePred">Validasi silang k-lipatan: model dipasang pada data latih lalu dipakai memprediksi responden yang tidak ikut dipakai (luar-sampel). Daya prediksi baik bila Q²predict &gt; 0 dan RMSE model PLS lebih kecil daripada benchmark regresi linear (LM). Pilihan 10 lipatan memerlukan sampel yang cukup besar.</span></label>
+      <label id="sxLblPredTech" style="display:none"><span class="sem-ft" data-hlp-target="sxNotePT">Teknik prediksi PLSpredict</span><select id="sxPredTech" class="select-input"><option value="direct" selected>Antecedent langsung (DA)</option><option value="earliest">Antecedent paling awal (EA)</option></select>
+        <span class="sem-syntax sem-note" id="sxNotePT"><strong>DA</strong>: konstruk endogen diprediksi dari skor indikator pendahulu langsungnya. <strong>EA</strong>: prediksi berantai yang hanya bertumpu pada konstruk eksogen (paling awal) sehingga lebih ketat.</span></label>
+      <label id="sxLblBootCB"><span class="sem-ft" data-hlp-target="sxNoteBCB">Bootstrap (selang efek tak langsung)</span><select id="sxBootCB" class="select-input"><option value="0" selected>Tanpa bootstrap</option><option value="200">200 resampel</option><option value="500">500 resampel</option><option value="1000">1.000 resampel</option><option value="2000">2.000 resampel</option></select>
+        <span class="sem-syntax sem-note" id="sxNoteBCB">Responden diambil ulang dengan pengembalian lalu model diestimasi ulang di tiap resampel. Dipakai untuk selang kepercayaan efek tak langsung (mediasi) dan parameter <code>:=</code> yang distribusinya menceng; lebih andal daripada uji z (delta method) pada sampel kecil. Makin banyak resampel makin stabil tetapi makin lama (≥ 1.000 disarankan untuk laporan).</span></label>
+      <label class="sem-wide"><span class="sem-ft" data-hlp-target="sxSynModel">Model (satu persamaan per baris)</span><textarea id="sxModel" class="sem-model" spellcheck="false" autocomplete="off">${SAMPLE_MODEL}</textarea>
+        <span class="sem-syntax sem-note" id="sxSynModel"><strong>Sintaks dasar</strong> (satu persamaan per baris; mirip lavaan):<br><code>F =~ x1 + x2 + x3</code> konstruk reflektif (indikator dipengaruhi konstruk) · <code>F &lt;~ x1 + x2</code> konstruk formatif (hanya PLS-SEM) · <code>Y ~ F + X</code> jalur struktural (antar konstruk atau variabel teramati) · <code>x1 ~~ x2</code> kovarians galat · <code># komentar</code>. Nama indikator harus sama persis dengan judul kolom data.<br><strong>Label &amp; pembatasan (hanya CB-SEM):</strong> <code>Y ~ a*X1 + b*X2</code> memberi label jalur; <em>label yang sama = parameter yang sama</em> (mis. <code>F =~ x1 + l*x2 + l*x3</code>, loading dibuat sama; skala laten &ldquo;varians = 1&rdquo; bila penanda ikut diberi label) · <code>0*</code>, <code>0.5*</code> nilai tetap (mis. <code>F1 ~~ 0*F2</code>, <code>x1 ~~ 0.2*x1</code>) · <code>NA*x1 + 1*x2</code> mengganti indikator penanda · <code>a == b</code> menyamakan dua label, <code>a == 0.5</code> mengunci label · <code>ab := a*b</code> parameter terdefinisi (efek tak langsung, selisih, total; operator <code>+ - * / ^ ( )</code>, fungsi <code>sqrt exp log abs</code>) dengan SE delta method dan CI bootstrap.</span></label>
+      <label id="sxLblCmp" class="sem-wide"><span class="sem-ft" data-hlp-target="sxSynCmp">Model pembanding (opsional) &mdash; uji selisih &chi;&sup2;</span><textarea id="sxModel2" class="sem-model" style="min-height:92px" spellcheck="false" autocomplete="off" placeholder="Kosongkan bila tidak dipakai. Contoh: salin model di atas lalu hapus satu jalur, tambahkan satu kovarians galat, atau samakan loading dengan label yang sama (mis. l*x2 + l*x3)."></textarea>
+        <span class="sem-syntax sem-note" id="sxSynCmp">Model pembanding harus memakai variabel teramati yang sama dan bersarang (<em>nested</em>) dengan model utama, mis. sama kecuali beberapa parameter dibebaskan atau dikunci. Model dengan derajat bebas lebih besar diperlakukan sebagai model terbatas. Hasilnya berupa Δχ², Δdb, p, ΔCFI, serta ΔAIC/ΔBIC.</span></label>`,
     hint: 'Baris = responden, kolom = indikator/variabel numerik (judul kolom dapat diubah; harus sama dengan nama di model). Minimal <strong><span id="sxMin">30</span> pengamatan</strong> lengkap pada variabel yang dipakai; baris dengan sel kosong dibuang. Pedoman umum: ≥ 200 responden untuk CB-SEM, atau ≥ 5–10 responden per parameter.',
     table: { names: ['kl1', 'kl2', 'kl3', 'kp1', 'kp2', 'kp3', 'ly1', 'ly2', 'ly3'], colLabel: 'x', minCols: 3, maxCols: 40, canAddCol: true }, calcLabel: 'Hitung SEM',
   });
@@ -146,52 +157,277 @@
     }).catch((e) => { endProg(); ui.err(e.message || String(e)); });
   }
 
-  /* ---------- diagram jalur (SVG), dipakai CB-SEM dan PLS-SEM ----------
-     g = { latents:[{name, ind:[{n, v, p}], formative, single}], regs:[{from,to,v,p}], covs:[{a,b,v}], note } ; v = angka pada panah, p = p-value (null = tidak diuji) */
-  function pathSvg(g, mid, legend) {   // legend = true: versi mandiri untuk ekspor (latar putih, legenda di dalam gambar, tanpa variabel CSS)
-    const nf = (v) => (Number.isFinite(v) ? fmt(v, 2) : ''), lat = {}, isInd = {}, single = {};
+  /* ---------- pengaturan tampilan diagram jalur (pita "Edit Diagram Jalur") ----------
+     DS menyimpan semua yang dapat diubah pengguna: judul, huruf, warna, tata letak, serta pengaturan per simpul (DS.nodes),
+     per panah (DS.edges), dan per kelompok (DS.grp untuk simpul, DS.egrp untuk panah). Pengaturan khusus mengalahkan pengaturan
+     kelompok, kelompok mengalahkan bawaan global. pathSvg() membaca DS saat menggambar, sehingga gambar di halaman dan
+     gambar di panel ekspor (PNG/SVG/Word) selalu sama. DS tetap ada selama halaman terbuka (tidak ikut hilang saat Hitung ulang). */
+  const FONTS = { sans: 'Inter, Arial, Helvetica, sans-serif', serif: 'Georgia, "Times New Roman", serif', mono: 'Consolas, Menlo, "Courier New", monospace' };
+  const DS0 = () => ({
+    title: '', font: 'sans', fs: 100, bold: true, dec: 2, vals: true, stars: false, legend: true,
+    bg: '#ffffff', bgSet: false, cLatF: '#E6EBF1', cLatS: '#1F5FA8', cObsF: '#ffffff', cObsS: '#4A5666', cTxt: '#1B2430', cEdge: '#4A5666', cCov: '#5F6B7A',
+    gapX: 100, gapY: 100, nodeW: 100, nodeH: 100, lw: 100, showInd: true, dashNS: true,
+    grp: { lat: {}, obs: {} }, egrp: { all: {}, load: {}, reg: {}, cov: {} }, nodes: {}, edges: {},
+  });
+  let DS = DS0(), curG = null, selN = '@lat', selE = '@all';
+  const kk = (v) => (v === undefined || v === null || v === '' || !Number.isFinite(+v) ? 1 : +v / 100);
+  const nOv = (v, type) => Object.assign({}, DS.grp[type], DS.nodes[v]);
+  const eOv = (key, type) => Object.assign({}, DS.egrp.all, DS.egrp[type], DS.edges[key]);
+
+  /* g = { latents:[{name, ind:[{n, v, p}], formative, single}], regs:[{from,to,v,p}], covs:[{a,b,v}], note } ; v = angka pada panah, p = p-value (null = tidak diuji) */
+  function pathSvg(g, mid, legend) {   // legend = true: versi mandiri untuk ekspor (latar, legenda di dalam gambar, tanpa variabel CSS, tanpa penanda seret)
+    const D = DS, edit = !legend, FS = kk(D.fs), halo = legend || D.bgSet ? D.bg : '#fff', fam = FONTS[D.font] || FONTS.sans;
+    const nf = (v, p) => { if (!Number.isFinite(v)) return ''; let t = fmt(v, D.dec); if (D.stars && p !== null && p !== undefined) t += p < 0.001 ? '***' : p < 0.01 ? '**' : p < 0.05 ? '*' : ''; return t; };
+    const lat = {}, isInd = {}, single = {}, hid = (n) => !!(DS.nodes[n] && DS.nodes[n].hide);
     g.latents.forEach((L) => { if (L.single) single[L.name] = 1; else lat[L.name] = L; L.ind.forEach((i) => { if (!L.single) isInd[i.n] = 1; }); });
+    const shown = {}; Object.keys(lat).forEach((f) => { shown[f] = D.showInd ? lat[f].ind.filter((i) => !hid(i.n)) : []; });
     const names = []; const addN = (v) => { if (names.indexOf(v) < 0) names.push(v); };
     g.latents.forEach((L) => addN(L.name)); g.regs.forEach((e) => { addN(e.from); addN(e.to); });
     const rank = {}; names.forEach((v) => { rank[v] = 0; });
     for (let it = 0; it < names.length; it++) g.regs.forEach((e) => { rank[e.to] = Math.max(rank[e.to], rank[e.from] + 1); });
-    const maxR = Math.max.apply(null, names.map((v) => rank[v]).concat([0])), NW = 96, NH = 40, IW = 66, IH = 32, GX = 170, vgap = 28;
+    const gx = kk(D.gapX), gy = kk(D.gapY), nW = kk(D.nodeW), nH = kk(D.nodeH);
+    const maxR = Math.max.apply(null, names.map((v) => rank[v]).concat([0])), NW = 96 * nW, NH = 40 * nH, IW = 66 * nW, IH = 32 * nH, GX = 170 * gx, vgap = 28 * gy, ROW = (IH + 14) * gy, IOFF = 70 * gx;
     const cols = Array.from({ length: maxR + 1 }, (_, c) => names.filter((v) => rank[v] === c));
     const side = (f) => (rank[f] === 0 ? 'L' : (rank[f] === maxR ? 'R' : 'B'));
-    const needL = Object.keys(lat).some((f) => side(f) === 'L' && lat[f].ind.length), needR = Object.keys(lat).some((f) => side(f) === 'R' && lat[f].ind.length);
-    const leftW = needL ? IW + 70 : 0, rightW = needR ? IW + 70 : 0, colX = (c) => leftW + 30 + c * (NW + GX) + NW / 2, pos = {}; let ymax = 0;
-    cols.forEach((vs, c) => { let y = 30; vs.forEach((v) => { const n = lat[v] ? lat[v].ind.length : 0, sd = lat[v] ? side(v) : '', h = Math.max(NH + vgap, sd === 'B' ? NH + 120 : n * (IH + 14)); pos[v] = { x: colX(c), y: y + h / 2 - (sd === 'B' ? 40 : 0) }; y += h + 12; }); ymax = Math.max(ymax, y); });
-    Object.keys(lat).forEach((f) => { const list = lat[f].ind, n = list.length, P = pos[f], sd = side(f); list.forEach((e, i) => { pos[e.n] = sd === 'L' ? { x: P.x - NW / 2 - 70 - IW / 2, y: P.y + (i - (n - 1) / 2) * (IH + 14) } : sd === 'R' ? { x: P.x + NW / 2 + 70 + IW / 2, y: P.y + (i - (n - 1) / 2) * (IH + 14) } : { x: P.x + (i - (n - 1) / 2) * (IW + 14), y: P.y + 110 }; }); });
+    const needL = Object.keys(lat).some((f) => side(f) === 'L' && shown[f].length), needR = Object.keys(lat).some((f) => side(f) === 'R' && shown[f].length);
+    const leftW = needL ? IW + IOFF : 0, rightW = needR ? IW + IOFF : 0, colX = (c) => leftW + 30 + c * (NW + GX) + NW / 2, pos = {}; let ymax = 0;
+    cols.forEach((vs, c) => { let y = 30; vs.forEach((v) => { const n = lat[v] ? shown[v].length : 0, sd = lat[v] ? side(v) : '', h = Math.max(NH + vgap, sd === 'B' ? NH + 120 * gy : n * ROW); pos[v] = { x: colX(c), y: y + h / 2 - (sd === 'B' ? 40 : 0) }; y += h + 12; }); ymax = Math.max(ymax, y); });
+    Object.keys(lat).forEach((f) => { const list = shown[f], n = list.length, P = pos[f], sd = side(f); list.forEach((e, i) => { pos[e.n] = sd === 'L' ? { x: P.x - NW / 2 - IOFF - IW / 2, y: P.y + (i - (n - 1) / 2) * ROW } : sd === 'R' ? { x: P.x + NW / 2 + IOFF + IW / 2, y: P.y + (i - (n - 1) / 2) * ROW } : { x: P.x + (i - (n - 1) / 2) * (IW + 14) * gx, y: P.y + 110 * gy }; }); });
     const skipE = (e) => !isInd[e.from] && !isInd[e.to] && Math.abs(rank[e.from] - rank[e.to]) > 1;
     if (g.regs.some(skipE)) Object.keys(pos).forEach((v) => { pos[v].y += 80; });
-    let W = leftW + 30 + (maxR + 1) * NW + maxR * GX + 30 + rightW, H = ymax + 50; Object.keys(pos).forEach((v) => { W = Math.max(W, pos[v].x + 60); H = Math.max(H, pos[v].y + 50); });
-    const dim = (v) => (lat[v] ? { w: NW, h: NH + 6 } : (isInd[v] ? { w: IW, h: IH } : { w: NW, h: NH }));
+    const typeOf = (v) => (lat[v] ? 'lat' : 'obs');
+    const dim = (v) => { const o = nOv(v, typeOf(v)), b = lat[v] ? { w: NW, h: NH + 6 } : (isInd[v] ? { w: IW, h: IH } : { w: NW, h: NH }); return { w: b.w * kk(o.sw), h: b.h * kk(o.sh) }; };
+    /* geser manual (seret / kolom Geser X-Y): bx, by = posisi bawaan tata letak; simpul tidak boleh keluar dari tepi kiri/atas gambar */
+    Object.keys(pos).forEach((v) => { const P = pos[v], o = DS.nodes[v]; P.bx = P.x; P.by = P.y; if (o && (+o.dx || +o.dy)) { const d = dim(v); P.x = Math.max(d.w / 2 + 6, P.x + (+o.dx || 0)); P.y = Math.max(d.h / 2 + 6, P.y + (+o.dy || 0)); } });
+    let W = leftW + 30 + (maxR + 1) * NW + maxR * GX + 30 + rightW, H = ymax + 50; Object.keys(pos).forEach((v) => { const d = dim(v); W = Math.max(W, pos[v].x + 60, pos[v].x + d.w / 2 + 14); H = Math.max(H, pos[v].y + 50, pos[v].y + d.h / 2 + 14); });
     const bound = (a, b, ra, rb) => { const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1, cut = (r) => Math.min(Math.min((r.w / 2) / Math.abs(dx || 1e-9), (r.h / 2) / Math.abs(dy || 1e-9)) * d, Math.hypot(r.w / 2, r.h / 2)), ca = cut(ra), cb = cut(rb); return { x1: a.x + dx / d * ca, y1: a.y + dy / d * ca, x2: b.x - dx / d * cb, y2: b.y - dy / d * cb }; };
-    const LAB = 'fill:#1B2430;font-size:11.5px;font-weight:700;paint-order:stroke;stroke:#fff;stroke-width:3px';
-    const Wr = Math.round(W), Hr = Math.round(H), leg = legend ? wrapText(legendText(g), Math.max(30, Math.floor((Wr - 24) / 5.6))) : [], Hf = Hr + (legend ? 10 + 15 * leg.length : 0);
-    let s = (legend
-      ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${Wr} ${Hf}" font-family="Inter, Arial, Helvetica, sans-serif" font-size="12"><rect width="${Wr}" height="${Hf}" fill="#fff"/>`
-      : `<svg viewBox="0 0 ${Wr} ${Hr}" role="img" aria-label="Diagram jalur model SEM" style="width:100%;max-width:${Math.min(Wr, 960)}px;height:auto;display:block;margin:12px auto 0;font:12px var(--font-body),sans-serif">`)
-      + `<defs><marker id="${mid}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:#4A5666"/></marker></defs>`, labels = '';
-    const edge = (a, b, v, p, skip) => {
-      if (!pos[a] || !pos[b]) return; const dash = p !== null && p !== undefined && !(p < 0.05) ? 'stroke-dasharray:5 4;' : '';
-      if (skip) { const up = -(NH + 52 + 14 * (Math.abs(rank[a] - rank[b]) - 2)), A0 = { x: pos[a].x, y: pos[a].y - NH / 2 }, B0 = { x: pos[b].x, y: pos[b].y - NH / 2 }, cy = Math.min(A0.y, B0.y) + up, cx = (A0.x + B0.x) / 2; s += `<path d="M${A0.x} ${A0.y} Q${cx} ${cy} ${B0.x} ${B0.y}" style="fill:none;stroke:#4A5666;stroke-width:1.4;${dash}" marker-end="url(#${mid})"/>`; labels += `<text x="${cx}" y="${0.25 * A0.y + 0.5 * cy + 0.25 * B0.y - 4}" text-anchor="middle" style="${LAB}">${nf(v)}</text>`; return; }
-      const e = bound(pos[a], pos[b], dim(a), dim(b)); s += `<line x1="${e.x1}" y1="${e.y1}" x2="${e.x2}" y2="${e.y2}" style="stroke:#4A5666;stroke-width:1.4;${dash}" marker-end="url(#${mid})"/>`; labels += `<text x="${(e.x1 + e.x2) / 2}" y="${(e.y1 + e.y2) / 2 - 4}" text-anchor="middle" style="${LAB}">${nf(v)}</text>`;
+    const T = (D.title || '').trim() ? Math.round(30 * Math.max(FS, 0.8)) : 0;
+    const Wr = Math.round(W), Hr = Math.round(H) + T, leg = legend && D.legend ? wrapText(legendText(g), Math.max(30, Math.floor((Wr - 24) / 5.6))) : [], Hf = Hr + (leg.length ? 10 + 15 * leg.length : 0);
+    const bgf = String(D.bg).toLowerCase() === '#ffffff' ? '#fff' : D.bg, bgRect = legend || D.bgSet ? `<rect width="${Wr}" height="${legend ? Hf : Hr}" fill="${bgf}"/>` : '';
+    let s = legend
+      ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${Wr} ${Hf}" font-family="${fam}" font-size="12">${bgRect}`
+      : `<svg viewBox="0 0 ${Wr} ${Hr}" role="img" aria-label="Diagram jalur model SEM" data-ty="${T}" style="width:100%;max-width:${Math.min(Wr, 960)}px;height:auto;display:block;margin:12px auto 0;font:12px ${D.font === 'sans' ? 'var(--font-body),sans-serif' : fam}">${bgRect}`;
+    /* penanda panah: satu per warna garis */
+    const mk = {}, mref = (col) => { const id = mid + '-' + String(col).replace(/[^0-9a-zA-Z]/g, ''); if (!mk[id]) mk[id] = `<marker id="${id}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:${col}"/></marker>`; return id; };
+    let under = '', body = '', nodes = '', labels = '';
+    const el = (sh, st, ex) => (sh.d ? `<path d="${sh.d}" style="fill:none;${st}"${ex || ''}/>` : `<line x1="${sh.x1}" y1="${sh.y1}" x2="${sh.x2}" y2="${sh.y2}" style="${st}"${ex || ''}/>`);
+    const elabel = (key, bx, by, txt, es, anchor, colr, base, wt) => {
+      if (!txt) return '';
+      return `<text x="${bx + (+es.lx || 0)}" y="${by + (+es.ly || 0)}" text-anchor="${anchor}"${edit ? ` data-elab="${esc(key)}" data-bx="${bx}" data-by="${by}"` : ''} style="fill:${colr};font-size:${(base * FS * kk(es.fs)).toFixed(1)}px;font-weight:${wt};paint-order:stroke;stroke:${halo};stroke-width:3px${edit ? ';cursor:move;touch-action:none' : ''}">${esc(txt)}</text>`;
     };
-    Object.keys(lat).forEach((f) => lat[f].ind.forEach((i) => (lat[f].formative ? edge(i.n, f, i.v, i.p) : edge(f, i.n, i.v, i.p))));
-    g.regs.forEach((e) => edge(e.from, e.to, e.v, e.p, skipE(e)));
-    (g.covs || []).forEach((e) => { if (!pos[e.a] || !pos[e.b] || isInd[e.a] || isInd[e.b]) return; const a = pos[e.a], b = pos[e.b], off = 46 + Math.abs(a.y - b.y) * 0.08, ax = a.x - dim(e.a).w / 2, bx = b.x - dim(e.b).w / 2, cx = Math.min(ax, bx) - off; s += `<path d="M${ax} ${a.y} Q${cx} ${(a.y + b.y) / 2} ${bx} ${b.y}" style="fill:none;stroke:#5F6B7A;stroke-width:1.2" marker-start="url(#${mid})" marker-end="url(#${mid})"/>`; labels += `<text x="${cx + off * 0.45}" y="${(a.y + b.y) / 2 + 4}" text-anchor="end" style="fill:#4A5666;font-size:11px;paint-order:stroke;stroke:#fff;stroke-width:3px">${nf(e.v)}</text>`; });
-    Object.keys(pos).forEach((v) => { const P = pos[v], d = dim(v); s += lat[v] ? `<ellipse cx="${P.x}" cy="${P.y}" rx="${d.w / 2}" ry="${d.h / 2}" style="fill:#E6EBF1;stroke:#1F5FA8;stroke-width:1.8"/>` : `<rect x="${P.x - d.w / 2}" y="${P.y - d.h / 2}" width="${d.w}" height="${d.h}" rx="4" style="fill:#fff;stroke:#4A5666;stroke-width:1.4"/>`; s += `<text x="${P.x}" y="${P.y + 4}" text-anchor="middle" style="fill:#1B2430;font-weight:${lat[v] ? 800 : 600}">${esc(v.length > 13 ? v.slice(0, 12) + '…' : v)}</text>`; });
-    const foot = leg.map((t, i) => `<text x="12" y="${Hr + 14 + 15 * i}" style="fill:#4A5666;font-size:11px">${esc(t)}</text>`).join('');
-    return s + labels + foot + '</svg>';
+    const drawEdge = (sh, key, st, w, ex) => {
+      if (edit && selE === key) under += el(sh, `stroke:#E08A00;stroke-width:${(w + 5).toFixed(1)};opacity:.35;`);
+      body += el(sh, st, ex);
+      if (edit) body += el(sh, 'stroke:transparent;stroke-width:12;pointer-events:stroke;cursor:pointer;', ` data-edge="${esc(key)}"`);
+    };
+    const edge = (a, b, v, p, skip, type) => {
+      if (!pos[a] || !pos[b] || hid(a) || hid(b)) return;
+      const key = a + '>' + b, es = eOv(key, type); if (es.hide) return;
+      const col = es.col || D.cEdge, w = 1.4 * kk(D.lw) * kk(es.w), em = es.end || 'end', m = mref(col), bnd = +es.bend || 0;
+      let dash = D.dashNS && p !== null && p !== undefined && !(p < 0.05) ? 'stroke-dasharray:5 4;' : '';
+      if (es.dash === 'solid') dash = ''; else if (es.dash === 'dash') dash = 'stroke-dasharray:5 4;'; else if (es.dash === 'dot') dash = 'stroke-dasharray:1.5 3.5;stroke-linecap:round;';
+      const mrk = em === 'none' ? '' : (em === 'both' ? ` marker-start="url(#${m})"` : '') + ` marker-end="url(#${m})"`, st = `stroke:${col};stroke-width:${w.toFixed(2)};${dash}`, txt = es.text ? es.text : (D.vals ? nf(v, p) : '');
+      if (skip) {
+        const up = -(NH + 52 + 14 * (Math.abs(rank[a] - rank[b]) - 2)) - bnd, A0 = { x: pos[a].x, y: pos[a].y - dim(a).h / 2 }, B0 = { x: pos[b].x, y: pos[b].y - dim(b).h / 2 }, cy = Math.min(A0.y, B0.y) + up, cx = (A0.x + B0.x) / 2;
+        drawEdge({ d: `M${A0.x} ${A0.y} Q${cx} ${cy} ${B0.x} ${B0.y}` }, key, st, w, mrk); labels += elabel(key, cx, 0.25 * A0.y + 0.5 * cy + 0.25 * B0.y - 4, txt, es, 'middle', D.cTxt, 11.5, 700); return;
+      }
+      const e = bound(pos[a], pos[b], dim(a), dim(b));
+      if (bnd) {
+        const dx = e.x2 - e.x1, dy = e.y2 - e.y1, L = Math.hypot(dx, dy) || 1, cx = (e.x1 + e.x2) / 2 - dy / L * bnd, cy = (e.y1 + e.y2) / 2 + dx / L * bnd;
+        drawEdge({ d: `M${e.x1} ${e.y1} Q${cx} ${cy} ${e.x2} ${e.y2}` }, key, st, w, mrk); labels += elabel(key, 0.25 * e.x1 + 0.5 * cx + 0.25 * e.x2, 0.25 * e.y1 + 0.5 * cy + 0.25 * e.y2 - 4, txt, es, 'middle', D.cTxt, 11.5, 700);
+      } else { drawEdge(e, key, st, w, mrk); labels += elabel(key, (e.x1 + e.x2) / 2, (e.y1 + e.y2) / 2 - 4, txt, es, 'middle', D.cTxt, 11.5, 700); }
+    };
+    Object.keys(lat).forEach((f) => shown[f].forEach((i) => (lat[f].formative ? edge(i.n, f, i.v, i.p, false, 'load') : edge(f, i.n, i.v, i.p, false, 'load'))));
+    g.regs.forEach((e) => edge(e.from, e.to, e.v, e.p, skipE(e), 'reg'));
+    (g.covs || []).forEach((e) => {
+      if (!pos[e.a] || !pos[e.b] || isInd[e.a] || isInd[e.b] || hid(e.a) || hid(e.b)) return;
+      const key = e.a + '~' + e.b, es = eOv(key, 'cov'); if (es.hide) return;
+      const a = pos[e.a], b = pos[e.b], off = 46 + Math.abs(a.y - b.y) * 0.08 + (+es.bend || 0), ax = a.x - dim(e.a).w / 2, bx = b.x - dim(e.b).w / 2, cx = Math.min(ax, bx) - off;
+      const col = es.col || D.cCov, w = 1.2 * kk(D.lw) * kk(es.w), em = es.end || 'both', m = mref(col), dash = es.dash === 'dash' ? 'stroke-dasharray:5 4;' : es.dash === 'dot' ? 'stroke-dasharray:1.5 3.5;stroke-linecap:round;' : '';
+      const mrk = em === 'none' ? '' : (em === 'both' ? ` marker-start="url(#${m})"` : '') + ` marker-end="url(#${m})"`;
+      drawEdge({ d: `M${ax} ${a.y} Q${cx} ${(a.y + b.y) / 2} ${bx} ${b.y}` }, key, `stroke:${col};stroke-width:${w.toFixed(2)};${dash}`, w, mrk);
+      labels += elabel(key, cx + off * 0.45, (a.y + b.y) / 2 + 4, es.text ? es.text : (D.vals ? nf(e.v) : ''), es, 'end', D.cEdge, 11, 400);
+    });
+    Object.keys(pos).forEach((v) => {
+      if (hid(v)) return;
+      const P = pos[v], d = dim(v), isL = !!lat[v], o = nOv(v, typeOf(v));
+      const fill = o.fill || (isL ? D.cLatF : D.cObsF), stroke = o.stroke || (isL ? D.cLatS : D.cObsS), tcol = o.tcol || D.cTxt, shp = o.shape || (isL ? 'ellipse' : 'rect'), sw = (isL ? 1.8 : 1.4) * kk(D.lw);
+      const sty = `fill:${fill};stroke:${stroke};stroke-width:${sw.toFixed(2)}`;
+      const shape = shp === 'ellipse' ? `<ellipse cx="${P.x}" cy="${P.y}" rx="${d.w / 2}" ry="${d.h / 2}" style="${sty}"/>`
+        : shp === 'diamond' ? `<polygon points="${P.x},${P.y - d.h / 2} ${P.x + d.w / 2},${P.y} ${P.x},${P.y + d.h / 2} ${P.x - d.w / 2},${P.y}" style="${sty}"/>`
+        : `<rect x="${P.x - d.w / 2}" y="${P.y - d.h / 2}" width="${d.w}" height="${d.h}" rx="${shp === 'round' ? Math.min(d.h / 2, 16) : 4}" style="${sty}"/>`;
+      const label = o.label ? String(o.label) : (v.length > 13 ? v.slice(0, 12) + '…' : v), lines = label.split('|'), fz = 12 * FS * kk(o.fs), lh = fz * 1.15, wt = isL ? (D.bold ? 800 : 600) : 600;
+      const tstyle = `fill:${tcol};font-weight:${wt};font-size:${fz.toFixed(1)}px`, ty = P.y + fz * 0.33 - (lines.length - 1) * lh / 2;
+      const text = lines.length === 1 ? `<text x="${P.x}" y="${ty.toFixed(1)}" text-anchor="middle" style="${tstyle}">${esc(label)}</text>`
+        : `<text x="${P.x}" y="${ty.toFixed(1)}" text-anchor="middle" style="${tstyle}">${lines.map((t, i) => `<tspan x="${P.x}" dy="${i ? lh.toFixed(1) : 0}">${esc(t)}</tspan>`).join('')}</text>`;
+      const sel = edit && selN === v ? `<rect x="${P.x - d.w / 2 - 5}" y="${P.y - d.h / 2 - 5}" width="${d.w + 10}" height="${d.h + 10}" rx="8" style="fill:none;stroke:#E08A00;stroke-width:1.6;stroke-dasharray:4 3"/>` : '';
+      nodes += `<g${edit ? ` data-node="${esc(v)}" data-bx="${P.bx}" data-by="${P.by}" data-w="${d.w}" data-h="${d.h}" style="cursor:grab;touch-action:none"` : ''}>${sel}${shape}${text}</g>`;
+    });
+    const foot = leg.map((t, i) => `<text x="12" y="${Hr + 14 + 15 * i}" style="fill:${D.cEdge};font-size:11px">${esc(t)}</text>`).join('');
+    const title = T ? `<text x="${Wr / 2}" y="${(T * 0.66).toFixed(1)}" text-anchor="middle" style="fill:${D.cTxt};font-size:${(15 * FS).toFixed(1)}px;font-weight:800">${esc(D.title.trim())}</text>` : '';
+    return s + `<defs>${Object.keys(mk).map((k) => mk[k]).join('')}</defs>` + title + `<g${T ? ` transform="translate(0 ${T})"` : ''}>` + under + body + nodes + labels + '</g>' + foot + '</svg>';
   }
-
   const wrapText = (t, n) => { const out = []; let cur = ''; t.split(' ').forEach((w) => { if (cur && (cur + ' ' + w).length > n) { out.push(cur); cur = w; } else cur = cur ? cur + ' ' + w : w; }); if (cur) out.push(cur); return out; };
   const legendText = (g) => 'Elips = konstruk laten, persegi = variabel teramati. Angka pada panah = ' + g.note + '.'
-    + (g.regs.concat([].concat.apply([], g.latents.map((L) => L.ind))).some((e) => e.p !== null && e.p !== undefined) ? ' Garis putus-putus = tidak signifikan (p ≥ 0,05).' : '')
+    + (DS.dashNS && g.regs.concat([].concat.apply([], g.latents.map((L) => L.ind))).some((e) => e.p !== null && e.p !== undefined) ? ' Garis putus-putus = tidak signifikan (p ≥ 0,05).' : '')
     + ((g.covs || []).length ? ' Garis lengkung = korelasi.' : '');
-  const pathDiagram = (g) => `<h4 style="margin:18px 0 0">Diagram jalur</h4>${pathSvg(g, 'sxArr', false)}<p class="bs-note">${esc(legendText(g))}</p>`;
-  const diagramChart = (g) => ({ title: 'Diagram jalur', caption: ' — ' + legendText(g), svg: pathSvg(g, 'sxArrX', true) });   // untuk panel ekspor (SVG/PNG/salin/Word)
+  const pathDiagram = (g) => { curG = g; return `<div id="sxDiag"><h4 style="margin:18px 0 0">Diagram jalur</h4><div id="sxDiagRib" class="sx-rib" data-nodoc="1"></div><div id="sxDiagSvg">${pathSvg(g, 'sxArr', false)}</div><p class="bs-note">${esc(legendText(g))} <span data-nodoc="1">Klik atau seret simpul dan angka pada panah untuk memindahkannya; gunakan pita di atas diagram untuk mengubah teks, warna, bentuk, dan tata letak.</span></p></div>`; };
+  const diagramChart = (g) => ({ title: 'Diagram jalur', caption: ' — ' + legendText(g), kind: 'sem', build: () => pathSvg(g, 'sxArrX', true) });   // build (bukan svg tetap): diagram di panel ekspor mengikuti hasil edit di pita; kind 'sem' = diedit lewat pita Edit Diagram Jalur
+
+  /* ---------- pita "Edit Diagram Jalur": ubah teks, simpul, panah, warna, dan tata letak; klik / seret langsung di gambar ---------- */
+  const DID = (k) => 'sxd-' + k, $d = (k) => document.getElementById(DID(k));
+  const listNodes = (g) => { const out = [], seen = {}, add = (n) => { if (!seen[n]) { seen[n] = 1; out.push(n); } }; g.latents.forEach((L) => { add(L.name); if (!L.single) L.ind.forEach((i) => add(i.n)); }); g.regs.forEach((e) => { add(e.from); add(e.to); }); return out; };
+  const listEdges = (g) => { const out = []; g.latents.forEach((L) => { if (!L.single) L.ind.forEach((i) => { const a = L.formative ? i.n : L.name, b = L.formative ? L.name : i.n; out.push({ key: a + '>' + b, type: 'load', a, b }); }); }); g.regs.forEach((e) => out.push({ key: e.from + '>' + e.to, type: 'reg', a: e.from, b: e.to })); (g.covs || []).forEach((e) => out.push({ key: e.a + '~' + e.b, type: 'cov', a: e.a, b: e.b })); return out; };
+  const nType = (t) => (t === '@lat' ? 'lat' : t === '@obs' ? 'obs' : (curG && curG.latents.some((L) => L.name === t && !L.single) ? 'lat' : 'obs'));
+  const eType = (t) => (t[0] === '@' ? t.slice(1) : ((listEdges(curG).find((e) => e.key === t) || {}).type || 'reg'));
+  const NODE_F = ['label', 'fs', 'shape', 'sw', 'sh', 'fill', 'stroke', 'tcol', 'dx', 'dy', 'hide'], EDGE_F = ['text', 'fs', 'w', 'dash', 'col', 'end', 'bend', 'lx', 'ly', 'hide'];
+  const NODE_ONE = ['label', 'dx', 'dy', 'hide'], EDGE_ONE = ['text', 'lx', 'ly', 'hide'];   // hanya bermakna untuk satu simpul / satu panah
+  const GLOBAL_RESET = {
+    teks: ['title', 'font', 'fs', 'bold', 'dec', 'vals', 'stars', 'legend'],
+    warna: ['bg', 'bgSet', 'cLatF', 'cLatS', 'cObsF', 'cObsS', 'cTxt', 'cEdge', 'cCov'],
+    tata: ['gapX', 'gapY', 'nodeW', 'nodeH', 'lw', 'showInd', 'dashNS'],
+  };
+  const parseN = (x) => { const n = parseFloat(String(x).replace(',', '.')); return Number.isFinite(n) ? n : 0; };
+  const putV = (k, v) => { const el = $d(k); if (!el) return; if (el.type === 'checkbox') el.checked = !!v; else el.value = v; if (el.type === 'range') { const lab = document.getElementById(el.id + '-v'); if (lab) lab.textContent = el.value + (el.dataset.unit || ''); } };
+  const showOnly = (keys, on) => keys.forEach((k) => { const el = $d(k), w = el && el.closest('.rb-fld,.rb-chk,.rb-color,.rb-btn'); if (w) w.style.display = on ? '' : 'none'; });
+  const nodeVals = (t) => { const ty = nType(t), o = t[0] === '@' ? Object.assign({}, DS.grp[ty]) : nOv(t, ty), L = ty === 'lat'; return { label: o.label || '', fs: o.fs || 100, shape: o.shape || '', sw: o.sw || 100, sh: o.sh || 100, fill: o.fill || (L ? DS.cLatF : DS.cObsF), stroke: o.stroke || (L ? DS.cLatS : DS.cObsS), tcol: o.tcol || DS.cTxt, dx: o.dx || '', dy: o.dy || '', hide: !!o.hide }; };
+  const edgeVals = (t) => { const ty = eType(t), o = t[0] === '@' ? Object.assign({}, DS.egrp.all, t === '@all' ? {} : DS.egrp[ty]) : eOv(t, ty); return { text: o.text || '', fs: o.fs || 100, w: o.w || 100, dash: o.dash || 'auto', col: o.col || (ty === 'cov' ? DS.cCov : DS.cEdge), end: o.end || (ty === 'cov' ? 'both' : 'end'), bend: o.bend || 0, lx: o.lx || '', ly: o.ly || '', hide: !!o.hide }; };
+  const loadNode = () => { const v = nodeVals(selN); NODE_F.forEach((k) => putV('n_' + k, v[k])); showOnly(NODE_ONE.map((k) => 'n_' + k), selN[0] !== '@'); };
+  const loadEdge = () => { const v = edgeVals(selE); EDGE_F.forEach((k) => putV('e_' + k, v[k])); showOnly(EDGE_ONE.map((k) => 'e_' + k), selE[0] !== '@'); };
+  const loadGlobals = () => { Object.keys(GLOBAL_RESET).forEach((p) => GLOBAL_RESET[p].forEach((k) => { if (k !== 'bgSet') putV('g_' + k, DS[k]); })); };
+
+  let refreshT = 0;
+  function redrawDiag() {
+    const box = document.getElementById('sxDiagSvg'); if (!box || !curG) return;
+    box.innerHTML = pathSvg(curG, 'sxArr', false);
+    clearTimeout(refreshT); refreshT = setTimeout(() => { if (window.StatExport && window.StatExport.refresh) window.StatExport.refresh('sem'); }, 90);   // gambar di panel ekspor ikut diperbarui
+  }
+  /* menyimpan satu nilai; target kelompok (@...) menimpa semua anggotanya */
+  function setNode(k, val) {
+    const blank = val === '' || val === undefined || val === false && (k === 'hide' || k === 'shape'), ty = nType(selN);
+    const put = (o) => { if (blank) delete o[k]; else o[k] = val; };
+    if (selN[0] === '@') { if (NODE_ONE.indexOf(k) >= 0) return; put(DS.grp[ty]); Object.keys(DS.nodes).forEach((n) => { if (nType(n) === ty) delete DS.nodes[n][k]; }); } else put(DS.nodes[selN] || (DS.nodes[selN] = {}));
+  }
+  function setEdge(k, val) {
+    const blank = val === '' || val === undefined || val === false && k === 'hide', put = (o) => { if (blank) delete o[k]; else o[k] = val; };
+    if (selE[0] === '@') {
+      if (EDGE_ONE.indexOf(k) >= 0) return;
+      const ty = selE.slice(1), all = ty === 'all'; put(DS.egrp[ty]);
+      if (all) ['load', 'reg', 'cov'].forEach((x) => delete DS.egrp[x][k]);
+      listEdges(curG).forEach((e) => { if ((all || e.type === ty) && DS.edges[e.key]) delete DS.edges[e.key][k]; });
+    } else put(DS.edges[selE] || (DS.edges[selE] = {}));
+  }
+  const NUMF = { n_fs: 1, n_sw: 1, n_sh: 1, e_fs: 1, e_w: 1, e_bend: 1, g_fs: 1, g_dec: 1, g_gapX: 1, g_gapY: 1, g_nodeW: 1, g_nodeH: 1, g_lw: 1 }, POSF = { n_dx: 1, n_dy: 1, e_lx: 1, e_ly: 1 };
+  function onRib(ev) {
+    const el = ev.target, id = el && el.id; if (!id || id.indexOf('sxd-') !== 0) return;
+    const key = id.slice(4), v = el.type === 'checkbox' ? el.checked : el.value;
+    if (key === 'nt') { selN = v; loadNode(); redrawDiag(); return; }
+    if (key === 'et') { selE = v; loadEdge(); redrawDiag(); return; }
+    const val = NUMF[key] ? +v : POSF[key] ? (String(v).trim() === '' ? '' : parseN(v)) : v;
+    if (key.indexOf('g_') === 0) { const p = key.slice(2); DS[p] = val; if (p === 'bg') DS.bgSet = true; }
+    else if (key.indexOf('n_') === 0) { setNode(key.slice(2), val); }
+    else if (key.indexOf('e_') === 0) { setEdge(key.slice(2), val); }
+    else return;
+    redrawDiag();
+  }
+  function onAct(act) {
+    if (act === 'rst-node') { const ty = nType(selN); if (selN[0] === '@') { DS.grp[ty] = {}; Object.keys(DS.nodes).forEach((n) => { if (nType(n) === ty) delete DS.nodes[n]; }); } else delete DS.nodes[selN]; loadNode(); }
+    else if (act === 'rst-edge') { if (selE[0] === '@') { const ty = selE.slice(1), all = ty === 'all'; (all ? ['all', 'load', 'reg', 'cov'] : [ty]).forEach((x) => { DS.egrp[x] = {}; }); listEdges(curG).forEach((e) => { if (all || e.type === ty) delete DS.edges[e.key]; }); } else delete DS.edges[selE]; loadEdge(); }
+    else if (act === 'rst-pos') { Object.keys(DS.nodes).forEach((n) => { delete DS.nodes[n].dx; delete DS.nodes[n].dy; }); Object.keys(DS.edges).forEach((k) => { delete DS.edges[k].lx; delete DS.edges[k].ly; }); loadNode(); loadEdge(); }
+    else if (act === 'rst-all') { DS = DS0(); selN = '@lat'; selE = '@all'; mountDiagEditor(); redrawDiag(); return; }
+    else if (act.indexOf('rst-g-') === 0) { const d0 = DS0(); GLOBAL_RESET[act.slice(6)].forEach((k) => { DS[k] = d0[k]; }); loadGlobals(); }
+    else return;
+    redrawDiag();
+  }
+
+  /* klik memilih, seret memindahkan (simpul dan angka pada panah); nilai disimpan sebagai selisih dari posisi bawaan tata letak */
+  function wireDrag(box) {
+    if (!box || box.dataset.sxWired) return; box.dataset.sxWired = '1';
+    const toContent = (ev) => { const svg = box.querySelector('svg'); if (!svg || !svg.getScreenCTM) return null; const pt = svg.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY; const p = pt.matrixTransform(svg.getScreenCTM().inverse()); return { x: p.x, y: p.y - (+svg.getAttribute('data-ty') || 0) }; };
+    const pick = (kind, name) => {
+      if (kind === 'node') { selN = name; if ($d('nt')) $d('nt').value = name; loadNode(); } else { selE = name; if ($d('et')) $d('et').value = name; loadEdge(); }
+      const tb = document.querySelector('#sxDiagRib .rb-tab[data-rbtab="' + (kind === 'node' ? 'simpul' : 'panah') + '"]'); if (tb) tb.click();
+    };
+    box.addEventListener('pointerdown', (ev) => {
+      if (ev.button > 0) return;
+      const nEl = ev.target.closest('[data-elab]') ? null : ev.target.closest('[data-node]'), lEl = ev.target.closest('[data-elab]'), eEl = ev.target.closest('[data-edge]'), hit = nEl || lEl || eEl; if (!hit) return;
+      const p0 = toContent(ev); if (!p0) return;
+      const kind = nEl ? 'node' : 'label', name = nEl ? nEl.dataset.node : lEl ? lEl.dataset.elab : eEl.dataset.edge;
+      if (!nEl && !lEl) { pick('edge', name); redrawDiag(); return; }   // klik pada garis panah: hanya memilih
+      pick(nEl ? 'node' : 'edge', name);
+      const rec = nEl ? (DS.nodes[name] || (DS.nodes[name] = {})) : (DS.edges[name] || (DS.edges[name] = {})), kx = nEl ? 'dx' : 'lx', ky = nEl ? 'dy' : 'ly';
+      const bx = +hit.dataset.bx, by = +hit.dataset.by, w = +hit.dataset.w || 0, h = +hit.dataset.h || 0;
+      const minX = nEl ? w / 2 + 6 - bx : -1e9, minY = nEl ? h / 2 + 6 - by : -1e9, x0 = Math.max(minX, +rec[kx] || 0), y0 = Math.max(minY, +rec[ky] || 0);
+      let moved = false, raf = 0, last = ev;
+      const move = (e2) => {
+        last = e2; if (!moved && Math.hypot(e2.clientX - ev.clientX, e2.clientY - ev.clientY) < 3) return; moved = true; e2.preventDefault();
+        if (raf) return;
+        raf = requestAnimationFrame(() => { raf = 0; const p = toContent(last); if (!p) return; rec[kx] = Math.round(Math.max(minX, x0 + p.x - p0.x)); rec[ky] = Math.round(Math.max(minY, y0 + p.y - p0.y)); putV(nEl ? 'n_dx' : 'e_lx', rec[kx]); putV(nEl ? 'n_dy' : 'e_ly', rec[ky]); redrawDiag(); });
+      };
+      const up = () => { document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', up); document.removeEventListener('pointercancel', up); if (!moved) redrawDiag(); };
+      document.addEventListener('pointermove', move, { passive: false }); document.addEventListener('pointerup', up); document.addEventListener('pointercancel', up);
+      redrawDiag();
+    });
+  }
+
+  function mountDiagEditor() {
+    const host = document.getElementById('sxDiagRib'); if (!host || !curG || !window.StatRibbon) return;
+    host.innerHTML = '';
+    const view = document.getElementById('sxDiag'), nn = listNodes(curG), ee = listEdges(curG), D = DS;
+    if (selN[0] !== '@' && nn.indexOf(selN) < 0) selN = '@lat';
+    if (selE[0] !== '@' && !ee.some((e) => e.key === selE)) selE = '@all';
+    const I = DID;
+    const T = (k, label, ph) => ({ type: 'text', id: I(k), label, placeholder: ph || '', def: '' });
+    const C = (k, label) => ({ type: 'check', id: I(k), label, def: false });
+    const R = (k, label, min, max, step, unit) => ({ type: 'range', id: I(k), label, min, max, step, def: 100, unit: unit === undefined ? '%' : unit });
+    const S = (k, label, options, sel) => ({ type: 'select', id: I(k), label, options, selected: sel });
+    const K = (k, label) => ({ type: 'color', id: I(k), label, def: '#000000' });
+    const N = (k, label) => ({ type: 'number', id: I(k), label, placeholder: '0', def: '' });
+    const B = (act, label) => ({ label: 'Setel ulang', cols: 1, items: [{ type: 'button', act, icon: 'reset', label }] });
+    const nodeOpts = [['@lat', 'Semua konstruk laten'], ['@obs', 'Semua indikator / variabel teramati']].concat(nn.map((n) => [n, n]));
+    const edgeOpts = [['@all', 'Semua panah'], ['@load', 'Semua panah loading'], ['@reg', 'Semua jalur struktural'], ['@cov', 'Semua korelasi (lengkung)']].concat(ee.map((e) => [e.key, e.a + (e.type === 'cov' ? ' ↔ ' : ' → ') + e.b]));
+    const tip = (t) => ({ tip: t });
+    const tabs = [
+      Object.assign({ id: 'simpul', label: 'Simpul', groups: [
+        { label: 'Terapkan ke', items: [S('nt', 'Simpul yang diubah', nodeOpts, selN)] },
+        { label: 'Teks', items: [T('n_label', 'Nama tampil (| = baris baru)', 'Sama dengan nama variabel'), R('n_fs', 'Ukuran huruf', 50, 220, 5)] },
+        { label: 'Bentuk', items: [S('n_shape', 'Bentuk', [['', 'Bawaan'], ['ellipse', 'Elips'], ['rect', 'Persegi'], ['round', 'Persegi membulat'], ['diamond', 'Belah ketupat']], ''), R('n_sw', 'Lebar', 40, 240, 5), R('n_sh', 'Tinggi', 40, 240, 5)] },
+        { label: 'Warna', items: [K('n_fill', 'Isi'), K('n_stroke', 'Garis tepi'), K('n_tcol', 'Teks')] },
+        { label: 'Posisi', items: [N('n_dx', 'Geser X (px)'), N('n_dy', 'Geser Y (px)'), C('n_hide', 'Sembunyikan simpul')] },
+        B('rst-node', 'Setel ulang simpul'),
+      ] }, tip('Klik sebuah simpul pada diagram untuk memilihnya, lalu <strong>seret</strong> untuk memindahkannya. Pilih &ldquo;Semua&hellip;&rdquo; untuk mengubah banyak simpul sekaligus; pengaturan satu simpul mengalahkan pengaturan kelompok.')),
+      Object.assign({ id: 'panah', label: 'Panah', groups: [
+        { label: 'Terapkan ke', items: [S('et', 'Panah yang diubah', edgeOpts, selE)] },
+        { label: 'Angka', items: [T('e_text', 'Teks pengganti angka', 'Otomatis (angka hasil)'), R('e_fs', 'Ukuran huruf', 50, 220, 5)] },
+        { label: 'Garis', items: [R('e_w', 'Tebal garis', 30, 400, 10), S('e_dash', 'Gaya garis', [['auto', 'Otomatis (putus bila tak signifikan)'], ['solid', 'Garis penuh'], ['dash', 'Putus-putus'], ['dot', 'Titik-titik']], 'auto'), K('e_col', 'Warna garis'), S('e_end', 'Kepala panah', [['end', 'Satu arah'], ['both', 'Dua arah'], ['none', 'Tanpa kepala']], 'end')] },
+        { label: 'Lengkung & label', items: [R('e_bend', 'Lengkung panah', -150, 150, 5, ' px'), N('e_lx', 'Geser angka X (px)'), N('e_ly', 'Geser angka Y (px)'), C('e_hide', 'Sembunyikan panah')] },
+        B('rst-edge', 'Setel ulang panah'),
+      ] }, tip('Klik sebuah panah (atau angkanya) untuk memilihnya. Angka pada panah dapat diseret. Lengkung panah berguna bila dua panah saling menimpa.')),
+      Object.assign({ id: 'teks', label: 'Teks', groups: [
+        { label: 'Judul', items: [T('g_title', 'Judul diagram', 'Tanpa judul')] },
+        { label: 'Huruf', items: [S('g_font', 'Jenis huruf', [['sans', 'Sans-serif'], ['serif', 'Serif'], ['mono', 'Monospasi']], D.font), R('g_fs', 'Ukuran teks', 60, 220, 5), C('g_bold', 'Nama konstruk tebal')] },
+        { label: 'Angka pada panah', items: [S('g_dec', 'Angka desimal', [['0', '0'], ['1', '1'], ['2', '2'], ['3', '3'], ['4', '4']], String(D.dec)), C('g_vals', 'Tampilkan angka'), C('g_stars', 'Bintang signifikansi (*, **, ***)')] },
+        { label: 'Unduhan', items: [C('g_legend', 'Legenda di gambar PNG/SVG/Word')] },
+        B('rst-g-teks', 'Setel ulang teks'),
+      ] }, tip('Judul, jenis huruf, dan angka berlaku untuk seluruh diagram. Hasil ikut ke gambar di panel unduhan (PNG, SVG, dan dokumen Word).')),
+      Object.assign({ id: 'warna', label: 'Warna', groups: [
+        { label: 'Latar', items: [K('g_bg', 'Warna latar')] },
+        { label: 'Konstruk laten', items: [K('g_cLatF', 'Isi'), K('g_cLatS', 'Garis tepi')] },
+        { label: 'Indikator', items: [K('g_cObsF', 'Isi'), K('g_cObsS', 'Garis tepi')] },
+        { label: 'Teks & panah', items: [K('g_cTxt', 'Warna teks'), K('g_cEdge', 'Warna panah'), K('g_cCov', 'Warna korelasi')] },
+        B('rst-g-warna', 'Setel ulang warna'),
+      ] }, tip('Warna bawaan seluruh diagram. Warna satu simpul atau satu panah diatur di tab Simpul dan Panah.')),
+      Object.assign({ id: 'tata', label: 'Tata letak', groups: [
+        { label: 'Jarak', items: [R('g_gapX', 'Jarak horizontal', 60, 220, 5), R('g_gapY', 'Jarak vertikal', 60, 220, 5)] },
+        { label: 'Ukuran simpul', items: [R('g_nodeW', 'Lebar simpul', 60, 220, 5), R('g_nodeH', 'Tinggi simpul', 60, 220, 5)] },
+        { label: 'Garis', items: [R('g_lw', 'Tebal garis', 50, 300, 10)] },
+        { label: 'Tampilan', items: [C('g_showInd', 'Tampilkan indikator'), C('g_dashNS', 'Putus-putus bila p ≥ 0,05')] },
+        { label: 'Setel ulang', cols: 1, items: [{ type: 'button', act: 'rst-pos', icon: 'reset', label: 'Posisi simpul' }, { type: 'button', act: 'rst-all', icon: 'reset', label: 'Semua pengaturan' }] },
+      ] }, tip('Semua perubahan langsung terlihat pada diagram dan ikut diunduh. Posisi hasil seretan dapat dikembalikan dengan &ldquo;Posisi simpul&rdquo;.')),
+    ];
+    window.StatRibbon.mount({ view: '#' + view.id, key: 'sxd', host, tabs, onChange: onRib, onAction: onAct });
+    loadGlobals(); loadNode(); loadEdge(); wireDrag(document.getElementById('sxDiagSvg'));
+  }
   const gCB = (spec, r) => ({
     note: 'koefisien terstandar (loading dan β)',
     latents: spec.latents.map((L) => ({ name: L.name, ind: r.params.filter((x) => x.kind === 'loading' && x.lhs === L.name).map((x) => ({ n: x.rhs, v: x.std, p: x.free ? x.p : null })) })),
@@ -346,7 +582,7 @@
     r.warnings.forEach((w) => ip.push('<strong>Peringatan:</strong> ' + esc(w)));
     sum += mardiaTable(r.mardia, r.estimator) + miTableCB(r) + cmpTableCB(r, cmp);
     sum += pathDiagram(gCB(spec, r));
-    ui.show({ sum, steps: st, interp: `<div class="bs-var"><h4>Interpretasi CB-SEM</h4>${ip.map((x) => `<p>${x}</p>`).join('')}</div>` });
+    ui.show({ sum, steps: st, interp: `<div class="bs-var"><h4>Interpretasi CB-SEM</h4>${ip.map((x) => `<p>${x}</p>`).join('')}</div>` }); mountDiagEditor();
     ui.publish({ meta: [['Metode', isR ? 'CB-SEM (MLR, robust)' : 'CB-SEM (maximum likelihood)'], ['N', r.N], [rb ? 'χ² terskala (db)' : 'χ² (db)', f3(rb ? rb.chi2Scaled : r.chi2) + ' (' + r.df + ')'], ['RMSEA', r.df > 0 ? f4(ff.rmsea) : '-'], ['CFI', r.df > 0 ? f4n(ff.cfi) : '-'], ['SRMR', f4(f.srmr)]].concat(r.boot ? [['Bootstrap', r.boot.ok + ' / ' + r.boot.B + ' resampel']] : []), data: exp, charts: [diagramChart(gCB(spec, r))] });
   }
 
@@ -436,7 +672,7 @@
     r.warnings.forEach((w) => ip.push('<strong>Peringatan:</strong> ' + esc(w)));
     sum += mardiaTable(r.mardia, 'pls');
     sum += pathDiagram(gPLS(r));
-    ui.show({ sum, steps: st, interp: `<div class="bs-var"><h4>Interpretasi PLS-SEM</h4>${ip.map((x) => `<p>${x}</p>`).join('')}</div>` });
+    ui.show({ sum, steps: st, interp: `<div class="bs-var"><h4>Interpretasi PLS-SEM</h4>${ip.map((x) => `<p>${x}</p>`).join('')}</div>` }); mountDiagEditor();
     ui.publish({ meta: [['Metode', 'PLS-SEM (skema ' + r.scheme + ')'], ['n', r.n], ['Konstruk', r.m], ['Bootstrap', boot ? boot.B : 'tidak']].concat(r.blind ? [['Blindfolding D', r.blind.D]] : []).concat(r.predict ? [['PLSpredict', r.predict.folds + ' lipatan × ' + r.predict.repsOK + ' (' + (r.predict.technique === 'direct' ? 'DA' : 'EA') + ')']] : []), data: exp, charts: [diagramChart(gPLS(r))] });
   }
 })();
