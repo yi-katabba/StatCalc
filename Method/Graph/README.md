@@ -147,3 +147,13 @@ menyesuaikan jumlah deret). `wide.draw(d, o)` menerima `d.labels` (label per bar
 Di tab Grafik Dataset, kolom label dipilih otomatis (kolom teks pertama, atau kolom angka berjudul Tahun/Periode/Bulan dst) dan bisa diganti di
 tab Edit Grafik (**Kolom periode**); disimpan di proyek sebagai `lcol`.
 `acfpacf.js` dan `dekomposisi.js` adalah grafik biasa (kolom `Nilai`, serta `Periode` untuk dekomposisi) dan memakai dialog pemilihan kolom.
+
+## Pita Edit + unduh untuk grafik bawaan modul (`Method/Shared/edit-grafik.js`)
+
+Grafik yang digambar langsung oleh modul Stat (Polinomial, PCA, Faktor, Klaster, TAR, Dekomposisi, Faktorial 2^k, Kapabilitas, Power,
+Pareto, Peta Kendali, RSM, Box-Cox / data Stasioneritas, ARIMA, Smoothing) otomatis dipasangi di bawahnya tombol **Unduh PNG / SVG / Salin gambar**
+dan pita **Edit grafik** (Teks, Warna, Garis kisi, Elemen). Modul memantau halaman Stat dengan `MutationObserver`; gambar asli disimpan, tiap perubahan
+pita menggambar ulang salinannya (warna data berdasarkan pemakaian, palet, latar, garis kisi, judul, label sumbu, ukuran huruf, tebal garis, ukuran titik).
+Gambar baru dari modul (mis. putar grafik 3D RSM) otomatis memakai pengaturan yang sama. Dilewati: grafik di tab Grafik yang sudah punya pita
+(`.ex-fig`) dan diagram jalur SEM. Untuk modul baru cukup menggambar SVG di dalam kartu hasil (viewBox >= 280 x 110); tidak ada kode tambahan.
+Grafik Regresi, Smoothing, dan Stasioneritas yang tadinya kanvas kini SVG sehingga ikut terpasang. Dimuat setelah `export-hasil.js`.

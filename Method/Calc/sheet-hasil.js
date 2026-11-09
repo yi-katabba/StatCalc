@@ -54,7 +54,7 @@
     pareto: { title: 'Diagram Pareto', rc: '#pt-results-card', extra: [], err: '#ptErr' },
     power: { title: 'Power & Ukuran Sampel', rc: '#pw-results-card', extra: [], err: '#pwErr' },
     'sampel-survei': { title: 'Ukuran Sampel Survei', rc: '#sv-results-card', extra: [], err: '#svErr' },
-    regresi: { title: 'Regresi Linear', rc: '#results-card', extra: [['#conclusion-card', 'ringkasan'], ['#assumptions-card', 'tabel']], err: '#dataError' },
+    regresi: { title: 'Regresi Linear', rc: '#results-card', extra: [['#conclusion-card', 'ringkasan']], err: '#dataError' },
     anova: { title: 'ANOVA Satu Arah', rc: '#an-results-card', extra: [['#an-conclusion-card', 'ringkasan']], err: '#anDataError' },
     rsm: { title: 'Response Surface (RSM)', rc: '#rs-results-card', extra: [['#rs-conclusion-card', 'ringkasan']], err: '#rsDataError' },
     smoothing: { title: 'Metode Smoothing', rc: '#sm-results-card', extra: [['#sm-eval-card', 'ringkasan']], err: '#smDataError' },

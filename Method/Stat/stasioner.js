@@ -1152,49 +1152,22 @@
   }
 
   function lineChart(vals, title, offset, showMean) {
-    const W = 620, H = 300, PAD = 48;
     const wrap = document.createElement('div');
     wrap.style.cssText = 'width:100%;margin-bottom:6px;';
     const cap = document.createElement('div');
     cap.style.cssText = 'font-weight:600;font-size:13px;margin:8px 0 4px;';
     cap.textContent = title;
     wrap.appendChild(cap);
-    const canvas = document.createElement('canvas');
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = W * dpr; canvas.height = H * dpr;
-    canvas.style.width = '100%'; canvas.style.maxWidth = W + 'px'; canvas.style.height = 'auto'; canvas.style.aspectRatio = W + '/' + H;
-    const ctx = canvas.getContext('2d');
-    ctx.scale(dpr, dpr);
-    const n = vals.length;
-    let lo = Math.min(...vals), hi = Math.max(...vals);
-    const pad = (hi - lo) * 0.12 || 1;
-    lo -= pad; hi += pad;
-    const sx = (i) => PAD + (n === 1 ? 0 : (i / (n - 1))) * (W - PAD - 18);
-    const sy = (v) => H - PAD + 6 - ((v - lo) / (hi - lo)) * (H - PAD - 20);
-    const inkSoft = '#52565F', rule = '#DAD2B8', accent = '#22384A', accent2 = '#BD7E1F';
-    ctx.clearRect(0, 0, W, H);
-    ctx.font = '11px IBM Plex Mono, monospace';
-    const ticks = 5;
-    for (let i = 0; i <= ticks; i++) {
-      const v = lo + (i / ticks) * (hi - lo), py = sy(v);
-      ctx.strokeStyle = '#EFEAD9'; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(PAD, py); ctx.lineTo(W - 18, py); ctx.stroke();
-      ctx.fillStyle = inkSoft; ctx.fillText(fmt(v, Math.abs(hi - lo) < 10 ? 2 : 1), 4, py + 4);
+    const S = window.StatSvg;
+    if (S) {
+      const holder = document.createElement('div');
+      holder.innerHTML = S.lines({
+        title, w: 620, h: 300, xlabel: 'Pengamatan ke-', ylabel: 'Nilai', x: vals.map((_, i) => i + 1 + offset),
+        hline: showMean ? vals.reduce((a, b) => a + b, 0) / vals.length : undefined,
+        series: [{ name: title, y: vals, dots: true, color: '#22384A' }],
+      });
+      wrap.appendChild(holder.firstElementChild || holder);
     }
-    const step = Math.max(1, Math.ceil(n / 8));
-    for (let i = 0; i < n; i += step) { ctx.fillStyle = inkSoft; ctx.fillText(String(i + 1 + offset), sx(i) - 6, H - PAD + 24); }
-    ctx.strokeStyle = rule;
-    ctx.beginPath(); ctx.moveTo(PAD, H - PAD + 6); ctx.lineTo(W - 18, H - PAD + 6); ctx.moveTo(PAD, H - PAD + 6); ctx.lineTo(PAD, 14); ctx.stroke();
-    if (showMean) {
-      const m = vals.reduce((a, b) => a + b, 0) / n;
-      ctx.strokeStyle = accent2; ctx.lineWidth = 1.8; ctx.setLineDash([6, 4]);
-      ctx.beginPath(); ctx.moveTo(PAD, sy(m)); ctx.lineTo(W - 18, sy(m)); ctx.stroke(); ctx.setLineDash([]);
-    }
-    ctx.strokeStyle = accent; ctx.lineWidth = 2;
-    ctx.beginPath(); vals.forEach((v, i) => { if (i === 0) ctx.moveTo(sx(i), sy(v)); else ctx.lineTo(sx(i), sy(v)); }); ctx.stroke();
-    ctx.fillStyle = accent;
-    vals.forEach((v, i) => { ctx.beginPath(); ctx.arc(sx(i), sy(v), 3, 0, Math.PI * 2); ctx.fill(); });
-    wrap.appendChild(canvas);
     return wrap;
   }
 

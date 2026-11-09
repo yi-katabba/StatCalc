@@ -419,54 +419,16 @@
   function renderChart(Y, sm) {
     el.chartWrap.innerHTML = '';
     const N = Y.length;
-    const periods = Array.from({ length: N + 1 }, (_, i) => i + 1);
     const fullForecast = sm.forecast.concat([sm.nextForecast]);
-    const W = 640, H = 380, PAD = 46;
-    const canvas = document.createElement('canvas');
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = W * dpr; canvas.height = H * dpr;
-    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
-    const ctx = canvas.getContext('2d');
-    ctx.scale(dpr, dpr);
-    const allVals = Y.concat(fullForecast.filter((v) => v !== null));
-    const minY = Math.min(...allVals), maxY = Math.max(...allVals);
-    const padY = (maxY - minY) * 0.15 || 1;
-    const yLo = minY - padY, yHi = maxY + padY;
-    const sx = (p) => PAD + ((p - 1) / (N)) * (W - PAD - 24);
-    const sy = (y) => H - PAD - ((y - yLo) / (yHi - yLo)) * (H - PAD - 30);
-    const inkSoft = '#52565F', accent = '#22384A', accent2 = '#BD7E1F';
-    ctx.clearRect(0, 0, W, H);
-    ctx.strokeStyle = '#DAD2B8'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(PAD, H - PAD); ctx.lineTo(W - 16, H - PAD); ctx.moveTo(PAD, H - PAD); ctx.lineTo(PAD, 16); ctx.stroke();
-    ctx.font = '11px IBM Plex Mono, monospace';
-    const ticks = 5;
-    for (let i = 0; i <= ticks; i++) {
-      const yv = yLo + (i / ticks) * (yHi - yLo), py = sy(yv);
-      ctx.strokeStyle = '#EFEAD9'; ctx.beginPath(); ctx.moveTo(PAD, py); ctx.lineTo(W - 16, py); ctx.stroke();
-      ctx.fillStyle = inkSoft; ctx.fillText(fmt(yv, 1), 4, py + 4);
+    const S = window.StatSvg;
+    if (S) {
+      const holder = document.createElement('div');
+      holder.innerHTML = S.lines({
+        title: 'Data aktual dan hasil smoothing', w: 640, h: 380, xlabel: 'Periode', ylabel: 'Nilai', x: Array.from({ length: N + 1 }, (_, i) => i + 1),
+        series: [{ name: 'Data aktual', y: Y, dots: true, color: '#22384A' }, { name: 'Smoothing / ramalan', y: fullForecast.map((v) => (v === null ? NaN : v)), dots: true, color: '#BD7E1F' }],
+      });
+      el.chartWrap.appendChild(holder.firstElementChild || holder);
     }
-    // garis data aktual
-    ctx.strokeStyle = accent; ctx.lineWidth = 2;
-    ctx.beginPath();
-    Y.forEach((y, i) => { const px = sx(i + 1), py = sy(y); if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py); });
-    ctx.stroke();
-    ctx.fillStyle = accent;
-    Y.forEach((y, i) => { ctx.beginPath(); ctx.arc(sx(i + 1), sy(y), 3.5, 0, Math.PI * 2); ctx.fill(); });
-    // garis hasil smoothing/ramalan
-    ctx.strokeStyle = accent2; ctx.lineWidth = 2;
-    ctx.beginPath();
-    let started = false;
-    fullForecast.forEach((f, i) => {
-      if (f === null) return;
-      const px = sx(i + 1), py = sy(f);
-      if (!started) { ctx.moveTo(px, py); started = true; } else ctx.lineTo(px, py);
-    });
-    ctx.stroke();
-    ctx.fillStyle = accent2;
-    fullForecast.forEach((f, i) => { if (f === null) return; ctx.beginPath(); ctx.arc(sx(i + 1), sy(f), 3.5, 0, Math.PI * 2); ctx.fill(); });
-    ctx.fillStyle = '#22252B'; ctx.font = '600 12px Inter, sans-serif';
-    ctx.fillText('Periode', W - 60, H - PAD - 8); ctx.fillText('Nilai', PAD + 4, 26);
-    el.chartWrap.appendChild(canvas);
     const note = document.createElement('p');
     note.className = 'chart-note';
     note.textContent = `Garis biru tua = data aktual. Garis kuning = hasil smoothing/ramalan (${methodLabel()}), termasuk titik ramalan periode ke-${N + 1} di ujung kanan.`;

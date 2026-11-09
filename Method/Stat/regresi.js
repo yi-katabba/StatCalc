@@ -19,6 +19,7 @@
           { type: 'toggle', key: 'tbl', label: 'Tabel Bantu', tab: 'tab-table' },
           { type: 'toggle', key: 'stp', label: 'Langkah Perhitungan', tab: 'tab-steps' },
           { type: 'toggle', key: 'eq', label: 'Persamaan & Uji', tab: 'tab-equation' },
+          { type: 'toggle', key: 'asm', label: 'Uji Asumsi', tab: 'tab-assumptions' },
         ] },
         { label: 'Blok uji asumsi', cols: 2, items: [
           { type: 'toggle', key: 'a1', label: '1. Normalitas', hide: ['[data-asm="1"]'] },
@@ -27,8 +28,7 @@
           { type: 'toggle', key: 'a4', label: '4. Autokorelasi', hide: ['[data-asm="4"]'] },
         ] },
         { label: 'Rincian', cols: 2, items: [
-          { type: 'toggle', key: 'asm', label: 'Langkah 4 Uji Asumsi', hide: ['#assumptions-card'] },
-          { type: 'toggle', key: 'concl', label: 'Langkah 5 Kesimpulan', hide: ['#conclusion-card'] },
+          { type: 'toggle', key: 'concl', label: 'Langkah 4 Kesimpulan', hide: ['#conclusion-card'] },
           { type: 'toggle', key: 'hyp', label: 'Hipotesis H0/H1', hide: ['.hyp-box'] },
           { type: 'toggle', key: 'note', label: 'Catatan & penjelasan', hide: ['.test-note', '.test-sub'] },
         ] },
@@ -62,7 +62,7 @@
     fillSampleBtn: $('#fillSampleBtn'), calcBtn: $('#calcBtn'), dataError: $('#dataError'),
     resultsCard: $('#results-card'), sumsTableWrap: $('#sumsTableWrap'),
     stepsWrap: $('#stepsWrap'), equationWrap: $('#equationWrap'), chartWrap: $('#chartWrap'),
-    assumptionsCard: $('#assumptions-card'), assumptionsWrap: $('#assumptionsWrap'),
+    assumptionsWrap: $('#assumptionsWrap'),
     conclusionCard: $('#conclusion-card'), conclusionWrap: $('#conclusionWrap'),
     normSel: $('#asmNormTest'), heteroSel: $('#asmHeteroTest'), multiSel: $('#asmMultiTest'), autoSel: $('#asmAutoTest'), testHint: $('#asmTestHint'),
   };
@@ -82,7 +82,6 @@
     buildDataTable(k, Math.max(state.minRows, 4));
     el.dataCard.hidden = false;
     el.resultsCard.hidden = true;
-    el.assumptionsCard.hidden = true;
     el.conclusionCard.hidden = true;
     el.dataCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
@@ -556,7 +555,6 @@
     el.resultsCard.hidden = false;
     state.last = { result, data };
     renderAssumptions(result, data);
-    el.assumptionsCard.hidden = false;
     renderConclusion(result, data);
     el.conclusionCard.hidden = false;
     exportRegresi(result, data);
@@ -564,7 +562,7 @@
     if (window.StatCalc && window.StatCalc.trackCalc) window.StatCalc.trackCalc();
   });
 
-  /* Ganti uji asumsi: hitung ulang Langkah 4, Langkah 5, dan ekspor tanpa mengulang regresi */
+  /* Ganti uji asumsi: hitung ulang tab Uji Asumsi, Langkah 4, dan ekspor tanpa mengulang regresi */
   function onTestChange() {
     state.normTest = el.normSel.value;
     state.heteroTest = el.heteroSel.value;
@@ -801,7 +799,7 @@
   }
 
   /* =========================================================================
-     UJI ASUMSI KLASIK (Langkah 4): Normalitas, Multikolinearitas,
+     UJI ASUMSI KLASIK (tab Uji Asumsi): Normalitas, Multikolinearitas,
      Heteroskedastisitas, Autokorelasi - lengkap dengan hipotesis H0/H1.
      ========================================================================= */
 
@@ -831,7 +829,7 @@
     return { kind: 'ks', name: NORM_NAMES.ks, D: r.D, mean: r.mean, sd: r.sd, p: r.p, n: r.n, normal: r.p >= statAlpha() };
   }
 
-  /* Uji normalitas sesuai pilihan di Langkah 4 */
+  /* Uji normalitas sesuai pilihan di pita Uji Asumsi */
   function computeNormalityTest(res) {
     if (state.normTest === 'sw') return computeShapiroWilkTest(res);
     if (state.normTest === 'ks') return computeKolmogorovTest(res);
@@ -904,7 +902,7 @@
     return { kind: 'white', name: HETERO_NAMES.white, LM, R2: aux.R2, df: aux.q, F: aux.F, df2: aux.df2, p, Fp, withCross, hasCross: cross.length > 0, anyProblem: p < statAlpha() };
   }
 
-  /* Uji heteroskedastisitas sesuai pilihan di Langkah 4 */
+  /* Uji heteroskedastisitas sesuai pilihan di pita Uji Asumsi */
   function computeHeteroscedasticity(res, data) {
     if (state.heteroTest === 'bp') return computeBreuschPagan(res, data);
     if (state.heteroTest === 'white') return computeWhite(res, data);
@@ -1303,7 +1301,7 @@
   }
 
   /* =========================================================================
-     KESIMPULAN MODEL (Langkah 5): menggabungkan hasil Uji F/Uji t (kekuatan &
+     KESIMPULAN MODEL (Langkah 4): menggabungkan hasil Uji F/Uji t (kekuatan &
      signifikansi hubungan) dengan hasil keempat uji asumsi klasik, untuk
      memutuskan apakah model regresi baik/layak digunakan.
      ========================================================================= */
@@ -1376,173 +1374,22 @@
       </table></div>
       <div class="test-verdict ${verdictClass}">${verdictLabel}</div>
       <p class="test-conclusion">${verdictText}</p>
-      <p class="test-note">Kesimpulan ini merangkum hasil Uji F/Uji t pada tab "Persamaan &amp; Uji" dan keempat uji asumsi klasik pada Langkah 4. Kriteria yang berlabel "Tidak berlaku" (mis. multikolinearitas pada regresi sederhana) tidak diikutsertakan dalam penentuan status akhir model.</p>
+      <p class="test-note">Kesimpulan ini merangkum hasil Uji F/Uji t pada tab "Persamaan &amp; Uji" dan keempat uji asumsi klasik pada tab \"Uji Asumsi\". Kriteria yang berlabel "Tidak berlaku" (mis. multikolinearitas pada regresi sederhana) tidak diikutsertakan dalam penentuan status akhir model.</p>
     </div>`;
 
     el.conclusionWrap.innerHTML = html;
   }
 
+  /* Grafik regresi (diagram pencar + garis, Y aktual vs prediksi, Y terhadap tiap X) kini ada di bawah catatan ini sebagai grafik
+     pendukung (StatExport.publish -> exportRegresi), lengkap dengan pita Edit dan tombol unduh PNG/SVG/Salin. */
   function renderChart(res, data) {
     el.chartWrap.innerHTML = '';
-    if (res.k !== 1) { renderActualVsPredictedChart(res, data); return; }
-    const X = data.X.map((r) => r[0]);
-    const Y = data.Y;
-    const b0 = res.beta[0], b1 = res.beta[1];
-    const W = 620, H = 400, PAD = 50;
-    const canvas = document.createElement('canvas');
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = W * dpr; canvas.height = H * dpr;
-    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
-    const ctx = canvas.getContext('2d');
-    ctx.scale(dpr, dpr);
-    const minX = Math.min(...X), maxX = Math.max(...X);
-    const minY = Math.min(...Y, b0 + b1 * minX), maxY = Math.max(...Y, b0 + b1 * maxX);
-    const padX = (maxX - minX) * 0.1 || 1, padY = (maxY - minY) * 0.15 || 1;
-    const xLo = minX - padX, xHi = maxX + padX, yLo = minY - padY, yHi = maxY + padY;
-    const sx = (x) => PAD + ((x - xLo) / (xHi - xLo)) * (W - PAD * 1.5);
-    const sy = (y) => H - PAD - ((y - yLo) / (yHi - yLo)) * (H - PAD * 1.6);
-    const inkSoft = '#52565F', rule = '#DAD2B8', accent = '#22384A', accent2 = '#BD7E1F';
-    ctx.clearRect(0, 0, W, H);
-    ctx.strokeStyle = rule; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(PAD, H - PAD); ctx.lineTo(W - 20, H - PAD); ctx.moveTo(PAD, H - PAD); ctx.lineTo(PAD, 20); ctx.stroke();
-    ctx.fillStyle = inkSoft; ctx.font = '11px IBM Plex Mono, monospace';
-    const ticks = 5;
-    for (let i = 0; i <= ticks; i++) {
-      const xv = xLo + (i / ticks) * (xHi - xLo), px = sx(xv);
-      ctx.strokeStyle = '#EFEAD9'; ctx.beginPath(); ctx.moveTo(px, H - PAD); ctx.lineTo(px, 20); ctx.stroke();
-      ctx.fillStyle = inkSoft; ctx.fillText(fmt(xv, 1), px - 10, H - PAD + 16);
-      const yv = yLo + (i / ticks) * (yHi - yLo), py = sy(yv);
-      ctx.strokeStyle = '#EFEAD9'; ctx.beginPath(); ctx.moveTo(PAD, py); ctx.lineTo(W - 20, py); ctx.stroke();
-      ctx.fillStyle = inkSoft; ctx.fillText(fmt(yv, 1), 6, py + 4);
-    }
-    ctx.strokeStyle = accent2; ctx.lineWidth = 2.2;
-    ctx.beginPath(); ctx.moveTo(sx(xLo), sy(b0 + b1 * xLo)); ctx.lineTo(sx(xHi), sy(b0 + b1 * xHi)); ctx.stroke();
-    ctx.fillStyle = accent;
-    X.forEach((x, i) => { ctx.beginPath(); ctx.arc(sx(x), sy(Y[i]), 4.5, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2; ctx.stroke(); });
-    ctx.fillStyle = '#22252B'; ctx.font = '600 12px Inter, sans-serif';
-    ctx.fillText('X', W - 24, H - PAD - 8); ctx.fillText('Y', PAD + 6, 26);
-    el.chartWrap.appendChild(canvas);
     const note = document.createElement('p');
     note.className = 'chart-note';
-    note.textContent = `Titik biru = data pengamatan. Garis kuning = garis regresi \u0176 = ${fmt(b0)} ${b1 >= 0 ? '+' : '\u2212'} ${fmt(Math.abs(b1))}X.`;
+    note.textContent = res.k === 1
+      ? `Titik = data pengamatan. Garis = garis regresi \u0176 = ${fmt(res.beta[0])} ${res.beta[1] >= 0 ? '+' : '\u2212'} ${fmt(Math.abs(res.beta[1]))}X.` + ' Gunakan pita Edit grafik di bawah setiap grafik untuk mengubah teks, warna, dan garis kisi, atau unduh sebagai PNG/SVG.'
+      : `Karena regresi ini memiliki ${res.k} variabel X, hubungan tidak dapat digambar langsung dalam bidang 2 dimensi. Grafik pertama menunjukkan Y aktual terhadap Y prediksi (titik yang dekat garis diagonal berarti prediksi akurat), diikuti hubungan Y terhadap tiap X secara terpisah (belum mengendalikan X lain). Gunakan pita Edit grafik di bawah setiap grafik untuk mengubah tampilannya atau mengunduhnya.`;
     el.chartWrap.appendChild(note);
-  }
-
-  /* Untuk regresi berganda (k > 1): scatter plot Y aktual vs Y prediksi (Yhat),
-     karena hubungan antar >1 variabel X tidak bisa digambar dalam bidang 2D biasa.
-     Titik yang berhimpit dengan garis diagonal 45° menandakan prediksi yang akurat. */
-  function renderActualVsPredictedChart(res, data) {
-    const Y = res.Yhat.map((yh, i) => yh + res.residuals[i]); // Y aktual
-    const Yhat = res.Yhat;
-    const W = 620, H = 400, PAD = 50;
-    const canvas = document.createElement('canvas');
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = W * dpr; canvas.height = H * dpr;
-    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
-    const ctx = canvas.getContext('2d');
-    ctx.scale(dpr, dpr);
-    const lo = Math.min(...Y, ...Yhat), hi = Math.max(...Y, ...Yhat);
-    const pad = (hi - lo) * 0.12 || 1;
-    const vLo = lo - pad, vHi = hi + pad;
-    const sx = (v) => PAD + ((v - vLo) / (vHi - vLo)) * (W - PAD * 1.5);
-    const sy = (v) => H - PAD - ((v - vLo) / (vHi - vLo)) * (H - PAD * 1.6);
-    const inkSoft = '#52565F', rule = '#DAD2B8', accent = '#22384A', accent2 = '#BD7E1F';
-    ctx.clearRect(0, 0, W, H);
-    ctx.strokeStyle = rule; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(PAD, H - PAD); ctx.lineTo(W - 20, H - PAD); ctx.moveTo(PAD, H - PAD); ctx.lineTo(PAD, 20); ctx.stroke();
-    ctx.font = '11px IBM Plex Mono, monospace';
-    const ticks = 5;
-    for (let i = 0; i <= ticks; i++) {
-      const v = vLo + (i / ticks) * (vHi - vLo);
-      const px = sx(v), py = sy(v);
-      ctx.strokeStyle = '#EFEAD9'; ctx.beginPath(); ctx.moveTo(px, H - PAD); ctx.lineTo(px, 20); ctx.stroke();
-      ctx.fillStyle = inkSoft; ctx.fillText(fmt(v, 1), px - 10, H - PAD + 16);
-      ctx.strokeStyle = '#EFEAD9'; ctx.beginPath(); ctx.moveTo(PAD, py); ctx.lineTo(W - 20, py); ctx.stroke();
-      ctx.fillStyle = inkSoft; ctx.fillText(fmt(v, 1), 6, py + 4);
-    }
-    // garis diagonal referensi Y = Ŷ (prediksi sempurna)
-    ctx.strokeStyle = accent2; ctx.lineWidth = 2.2; ctx.setLineDash([6, 4]);
-    ctx.beginPath(); ctx.moveTo(sx(vLo), sy(vLo)); ctx.lineTo(sx(vHi), sy(vHi)); ctx.stroke();
-    ctx.setLineDash([]);
-    // titik data
-    ctx.fillStyle = accent;
-    Yhat.forEach((yh, i) => { ctx.beginPath(); ctx.arc(sx(yh), sy(Y[i]), 4.5, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2; ctx.stroke(); });
-    ctx.fillStyle = '#22252B'; ctx.font = '600 12px Inter, sans-serif';
-    ctx.fillText('\u0176 (prediksi)', W - 90, H - PAD - 8); ctx.fillText('Y (aktual)', PAD + 6, 26);
-    el.chartWrap.appendChild(canvas);
-    const note = document.createElement('p');
-    note.className = 'chart-note';
-    note.textContent = `Karena regresi ini memiliki ${res.k} variabel X, hubungan antar variabel tidak dapat digambar langsung dalam bidang 2 dimensi. Grafik di atas menunjukkan nilai Y aktual (sumbu vertikal) dibandingkan nilai Y prediksi \u0176 (sumbu horizontal) untuk tiap data. Garis putus-putus kuning adalah garis Y = \u0176 (prediksi sempurna); semakin dekat titik biru ke garis ini, semakin akurat model regresi terhadap data.`;
-    el.chartWrap.appendChild(note);
-
-    renderPerVariableScatterGrid(res, data);
-  }
-
-  /* Scatter Xj vs Y untuk tiap variabel X secara terpisah (bivariat, belum dikontrol
-     variabel X lainnya) - berguna untuk eksplorasi pola tiap variabel terhadap Y,
-     namun garis/koefisien di sini BUKAN koefisien regresi berganda (b1..bk) yang
-     sudah ceteris paribus; ini murni korelasi sederhana Xj-Y saja. */
-  function renderPerVariableScatterGrid(res, data) {
-    const heading = document.createElement('p');
-    heading.className = 'chart-note';
-    heading.style.marginTop = '18px';
-    heading.innerHTML = `<strong>Hubungan tiap variabel X terhadap Y (satu per satu)</strong><br>Grafik di bawah menunjukkan pola X\u2C7C terhadap Y secara sendiri-sendiri, <em>belum</em> memperhitungkan pengaruh variabel X lain. Garis pada tiap grafik adalah garis regresi sederhana Xj-Y (bukan koefisien b\u2C7C dari model berganda), jadi hanya untuk melihat kecenderungan pola - bukan pengaruh ceteris paribus.`;
-    el.chartWrap.appendChild(heading);
-
-    const grid = document.createElement('div');
-    grid.style.display = 'grid';
-    grid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(260px, 1fr))';
-    grid.style.gap = '16px';
-    grid.style.marginTop = '10px';
-    grid.style.width = '100%';
-
-    const Y = res.Yhat.map((yh, i) => yh + res.residuals[i]);
-    const k = data.X[0].length;
-    for (let j = 0; j < k; j++) {
-      const Xj = data.X.map((r) => r[j]);
-      const box = document.createElement('div');
-      box.style.display = 'flex'; box.style.flexDirection = 'column'; box.style.alignItems = 'center'; box.style.gap = '6px';
-      const label = document.createElement('div');
-      label.style.fontWeight = '600'; label.style.fontSize = '13px';
-      label.textContent = `X${j + 1} vs Y`;
-      box.appendChild(label);
-      box.appendChild(drawMiniScatter(Xj, Y, `X${j + 1}`, 'Y'));
-      grid.appendChild(box);
-    }
-    el.chartWrap.appendChild(grid);
-  }
-
-  function drawMiniScatter(X, Y, xLabel, yLabel) {
-    const n = X.length;
-    const xbar = X.reduce((s, v) => s + v, 0) / n, ybar = Y.reduce((s, v) => s + v, 0) / n;
-    let sxy = 0, sxx = 0;
-    for (let i = 0; i < n; i++) { sxy += (X[i] - xbar) * (Y[i] - ybar); sxx += (X[i] - xbar) ** 2; }
-    const b1 = sxx === 0 ? 0 : sxy / sxx;
-    const b0 = ybar - b1 * xbar;
-    const W = 280, H = 220, PAD = 38;
-    const canvas = document.createElement('canvas');
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = W * dpr; canvas.height = H * dpr;
-    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
-    const ctx = canvas.getContext('2d');
-    ctx.scale(dpr, dpr);
-    const minX = Math.min(...X), maxX = Math.max(...X);
-    const minY = Math.min(...Y, b0 + b1 * minX), maxY = Math.max(...Y, b0 + b1 * maxX);
-    const padX = (maxX - minX) * 0.12 || 1, padY = (maxY - minY) * 0.15 || 1;
-    const xLo = minX - padX, xHi = maxX + padX, yLo = minY - padY, yHi = maxY + padY;
-    const sx = (x) => PAD + ((x - xLo) / (xHi - xLo)) * (W - PAD * 1.4);
-    const sy = (y) => H - PAD - ((y - yLo) / (yHi - yLo)) * (H - PAD * 1.7);
-    const inkSoft = '#52565F', rule = '#DAD2B8', accent = '#22384A', accent2 = '#BD7E1F';
-    ctx.clearRect(0, 0, W, H);
-    ctx.strokeStyle = rule; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(PAD, H - PAD); ctx.lineTo(W - 12, H - PAD); ctx.moveTo(PAD, H - PAD); ctx.lineTo(PAD, 14); ctx.stroke();
-    ctx.strokeStyle = accent2; ctx.lineWidth = 1.8;
-    ctx.beginPath(); ctx.moveTo(sx(xLo), sy(b0 + b1 * xLo)); ctx.lineTo(sx(xHi), sy(b0 + b1 * xHi)); ctx.stroke();
-    ctx.fillStyle = accent;
-    X.forEach((x, i) => { ctx.beginPath(); ctx.arc(sx(x), sy(Y[i]), 3.2, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke(); });
-    ctx.fillStyle = '#22252B'; ctx.font = '600 10px Inter, sans-serif';
-    ctx.fillText(xLabel, W - 20, H - PAD - 6); ctx.fillText(yLabel, PAD + 4, 20);
-    return canvas;
   }
 
   $$('.tab-btn', $('#view-regresi')).forEach((btn) => {

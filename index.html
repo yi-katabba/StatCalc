@@ -1695,23 +1695,21 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
         <button type="button" class="tab-btn active" data-tab="tab-table">Tabel Bantu</button>
         <button type="button" class="tab-btn" data-tab="tab-steps">Langkah Perhitungan</button>
         <button type="button" class="tab-btn" data-tab="tab-equation">Persamaan &amp; Uji</button>
+        <button type="button" class="tab-btn" data-tab="tab-assumptions">Uji Asumsi</button>
         <button type="button" class="tab-btn" data-tab="tab-chart">Grafik</button>
       </nav>
       <div class="tab-panel active" id="tab-table"><div id="sumsTableWrap" class="table-scroll"></div></div>
       <div class="tab-panel" id="tab-steps"><div id="stepsWrap" class="steps-wrap"></div></div>
       <div class="tab-panel" id="tab-equation"><div id="equationWrap" class="equation-wrap"></div></div>
+      <div class="tab-panel" id="tab-assumptions">
+        <p class="hint">Nilai uji asumsi klasik untuk model regresi yang telah dihitung, lengkap dengan hipotesis (H0 &amp; H1), statistik uji, dan kesimpulannya. Pilihan uji diatur dari pita <strong>Uji Asumsi</strong> di bagian atas halaman.</p>
+        <div id="assumptionsWrap" class="equation-wrap"></div>
+      </div>
       <div class="tab-panel" id="tab-chart"><div id="chartWrap" class="chart-wrap"></div></div>
     </section>
 
-    <section class="card step-card" id="assumptions-card" hidden>
-      <div class="step-tag">Langkah 4</div>
-      <h2>Uji Asumsi Regresi</h2>
-      <p class="hint">Nilai uji asumsi klasik untuk model regresi yang telah dihitung, lengkap dengan hipotesis (H0 &amp; H1), statistik uji, dan kesimpulannya. Pilihan uji diatur dari pita <strong>Uji Asumsi</strong> di bagian atas halaman.</p>
-      <div id="assumptionsWrap" class="equation-wrap"></div>
-    </section>
-
     <section class="card step-card" id="conclusion-card" hidden>
-      <div class="step-tag">Langkah 5</div>
+      <div class="step-tag">Langkah 4</div>
       <h2>Kesimpulan Model</h2>
       <p class="hint">Ringkasan kondisi model regresi secara keseluruhan - menggabungkan kekuatan hubungan (R&sup2;), signifikansi (Uji F &amp; Uji t), dan hasil seluruh uji asumsi klasik - untuk memutuskan apakah model layak digunakan.</p>
       <div id="conclusionWrap" class="equation-wrap"></div>
@@ -3217,6 +3215,7 @@ body{ font-family:var(--font-body); background:var(--paper); min-height:100vh; m
 <!-- ===================== EKSPOR HASIL STAT: grafik pendukung + unduh .docx (muat SETELAH semua file Method/Graph/) ===================== -->
 <script src="Method/Shared/stat-charts.js"></script>
 <script src="Method/Shared/export-hasil.js?v=7"></script>
+<script src="Method/Shared/edit-grafik.js?v=2"></script>
 
 <!-- ===================== KALKULATOR MATRIKS (logika di matriks.js) ===================== -->
 <script src="matriks.js"></script>
