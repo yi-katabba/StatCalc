@@ -28,7 +28,7 @@
   var css = document.createElement('style');
   css.textContent =
     '.ne-unit{display:block;}' +
-    '.ne-bar{margin:14px 0 6px;border:1px solid var(--rule);border-radius:var(--radius,10px);background:var(--accent-soft);overflow:hidden;}' +
+    '.ne-bar{margin:14px 0 8px;border:1px solid var(--rule);border-radius:var(--radius,10px);background:var(--accent-soft);overflow:hidden;}' +
     '.ne-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:8px 12px;}' +
     '.ne-tog{margin-left:auto;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border:1px solid var(--rule-strong);border-radius:10px;background:#fff;color:var(--accent);font:700 13.5px var(--font-body,system-ui,sans-serif);cursor:pointer;}' +
     '.ne-tog:hover{background:var(--paper-2);}' +
@@ -37,12 +37,12 @@
     '.ne-edit{border-top:1px solid var(--rule);background:#fff;}' +
     '.ne-edit[hidden]{display:none;}' +
     '.ne-edit .rb-main{box-shadow:none;border:0;border-radius:0;margin:0;}' +
-    '.ne-dl{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:4px 0 16px;}' +
-    '.ne-dl .ib{flex:0 0 auto !important;width:44px !important;min-width:44px;}' +
+    '.ne-head .ib-row{flex:0 0 auto;}' +
+    '.ne-head .ib{flex:0 0 auto !important;width:44px !important;min-width:44px;}' +
     '.ne-ttl{font-weight:700;font-size:14px;color:var(--ink);}' +
     '.ne-tgt{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--ink-soft);}.ne-tgt[hidden]{display:none;}' +
     '.ne-tgt select{height:40px;max-width:260px;font-size:13.5px;padding:0 8px;}' +
-    '.ne-msg{margin:0;font-size:13px;}' +
+    '.ne-msg{margin:0;padding:0 14px 8px;font-size:13px;}' +
     '.ne-msg[hidden]{display:none;}';
   document.head.appendChild(css);
 
@@ -254,7 +254,7 @@
   }
   function slug(s) { return String(s || 'grafik').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'grafik'; }
   function msg(S, text, bad) {
-    var p = S.dl.querySelector('.ne-msg'); if (!p) return;
+    var p = S.bar.querySelector('.ne-msg'); if (!p) return;
     p.textContent = text; p.hidden = !text; p.className = 'ne-msg ' + (bad ? 'error-msg' : 'imp-ok');
     clearTimeout(S.mt); if (text) S.mt = setTimeout(function () { p.hidden = true; }, 5000);
   }
@@ -297,7 +297,7 @@
       { id: 'teks', label: 'Teks', groups: [
         { label: 'Judul & label', cols: 1, items: [T('title', 'Judul grafik'), T('xl', 'Label sumbu X'), T('yl', 'Label sumbu Y')] },
         { label: 'Huruf', cols: 1, items: [R('fs', 'Ukuran huruf', 70, 160, 5)] }, reset('teks')],
-        tip: 'Judul dan label sumbu hanya muncul bila satu grafik dipilih di &ldquo;Terapkan ke&rdquo;. Kosongkan kolom teks untuk kembali ke bawaan grafik.' },
+        tip: 'Kosongkan kolom teks untuk kembali ke bawaan grafik. Label sumbu hanya berubah bila grafik memilikinya.' },
       { id: 'warna', label: 'Warna', groups: [
         { label: 'Warna data', cols: 1, items: [{ type: 'color', id: sid(G, 'c1'), label: 'Warna utama', def: st.c1 }, { type: 'color', id: sid(G, 'c2'), label: 'Warna kedua', def: st.c2 }] },
         { label: 'Palet warna', cols: 1, items: [gu ? Sel('pal', 'Palet (urut menurut pemakaian)', Object.keys(gu.PALETTES).map(function (k) { return [k, gu.PALETTE_LABEL[k]]; })) : { type: 'check', id: sid(G, 'nopal'), label: 'Palet', def: false }] },
@@ -306,17 +306,17 @@
       { id: 'kisi', label: 'Garis kisi', groups: [
         { label: 'Tampilkan', cols: 1, items: [Sel('gh', 'Garis horizontal', [['on', 'Tampil'], ['off', 'Sembunyi']]), Sel('gv', 'Garis vertikal', [['on', 'Tampil'], ['off', 'Sembunyi']])] },
         { label: 'Gaya', cols: 1, items: [{ type: 'color', id: sid(G, 'gc'), label: 'Warna garis kisi', def: st.gc }] }, reset('kisi')],
-        tip: 'Hanya garis kisi yang ada pada grafik yang dipilih yang dapat diatur.' },
+        tip: 'Hanya garis kisi yang ada pada grafik ini yang dapat diatur.' },
       { id: 'elemen', label: 'Elemen', groups: [
         { label: 'Ukuran', cols: 1, items: [R('lw', 'Tebal garis', 50, 300, 10), R('pt', 'Ukuran titik', 50, 250, 10)] }, reset('elemen')],
-        tip: 'Pengaturan yang tidak berlaku untuk grafik yang dipilih tidak ditampilkan.' }];
+        tip: 'Pengaturan yang tidak berlaku untuk grafik ini tidak ditampilkan.' }];
     window.StatRibbon.mount({ view: '#' + sid(G, 'edit'), key: 'ne' + G.id, host: host, tabs: tabs,
       onChange: function (e) { onRibbon(G, e); }, onAction: function (act) { resetPart(G, act); } });
     loadInputs(G); applyCaps(G);
   }
   function applyCaps(G) {
     var I = aggInfo(G), host = $g(G, 'edit'), hide = function (k, yes) { var el = $g(G, k); if (!el) return; (el.closest('.rb-fld, .rb-color, .rb-chk') || el).style.display = yes ? 'none' : ''; };
-    var one = G.target !== 'all';
+    var one = G.target !== 'all' || G.states.length < 2;
     hide('c1', I.many || !I.colors.length); hide('c2', I.many || I.colors.length < 2); hide('pal', I.many || !I.colors.length);
     hide('gh', !I.h); hide('gv', !I.v); hide('gc', !I.h && !I.v);
     hide('title', !one); hide('xl', !one || !I.x); hide('yl', !one || !I.y);
@@ -346,7 +346,7 @@
   function onRibbon(G, e) {
     clearTimeout(G.rt);
     G.rt = setTimeout(function () {
-      var v = readVals(G), prev = G.vals || {}, L = curStates(G), all = G.target === 'all';
+      var v = readVals(G), prev = G.vals || {}, L = curStates(G), all = G.target === 'all' && G.states.length > 1;
       L.forEach(function (S) {
         FIELDS.forEach(function (f) {
           var k = f[0]; if (!(k in v) || (all && CHART_ONLY.indexOf(k) >= 0)) return;
@@ -374,39 +374,37 @@
   }
 
   /* ------------------------------ kelompok & pemasangan ------------------------------ */
-  function groupOf(panel) {
-    var G = GROUPS.filter(function (g) { return g.panel === panel; })[0];
+  function groupOf(unit) {
+    var G = GROUPS.filter(function (g) { return g.unit === unit; })[0];
     if (G && document.contains(G.bar)) return G;
     if (G) GROUPS.splice(GROUPS.indexOf(G), 1);
-    G = { id: ++gUid, panel: panel, states: [], target: 'all', sig: '', mounted: false, vals: null };
+    G = { id: ++gUid, unit: unit, states: [], target: 'all', sig: '', mounted: false, vals: null };
     var bar = document.createElement('div'); bar.className = 'ne-bar'; bar.id = 'ne-bar-' + G.id;
     bar.innerHTML =
-      '<div class="ne-head"><span class="ne-ttl">Edit grafik</span><label class="ne-tgt" hidden>Terapkan ke <select class="select-input" id="' + sid(G, 'tgt') + '"></select></label>' +
-      '<button type="button" class="ne-tog" data-ne="tog" aria-expanded="false" aria-controls="' + sid(G, 'edit') + '">' + PEN + 'Pita edit' + CARET + '</button></div>' +
+      '<div class="ne-head"><span class="ib-row">' + window.StatIconBtn('png', 'Unduh PNG', 'data-ne="png"') + window.StatIconBtn('svg', 'Unduh SVG', 'data-ne="svg"') + window.StatIconBtn('copy', 'Salin gambar', 'data-ne="copy"') + '</span>' +
+      '<button type="button" class="ne-tog" data-ne="tog" aria-expanded="false" aria-controls="' + sid(G, 'edit') + '">' + PEN + 'Edit grafik' + CARET + '</button></div>' +
+      '<p class="ne-msg" hidden></p>' +
       '<div class="ne-edit" id="' + sid(G, 'edit') + '" hidden></div>';
     G.bar = bar;
     bar.addEventListener('click', function (e) {
+      var d = e.target.closest('[data-ne="png"],[data-ne="svg"],[data-ne="copy"]');
+      if (d) { if (G.states[0]) download(G.states[0], d.dataset.ne); return; }
       var b = e.target.closest('[data-ne="tog"]'); if (!b) return;
       var ed = $g(G, 'edit'), open = ed.hidden;
       ed.hidden = !open; b.setAttribute('aria-expanded', String(open));
       if (open && !G.mounted) { G.mounted = true; mountRibbon(G); }
     });
-    bar.addEventListener('change', function (e) { if (e.target.id === sid(G, 'tgt')) { G.target = e.target.value; if (G.mounted) { loadInputs(G); applyCaps(G); } } });
     GROUPS.push(G);
     return G;
   }
   function refreshGroup(G, states) {
     G.states = states;
-    var anchor = states[0].unit;
-    while (anchor.parentElement && anchor.parentElement !== G.panel && !anchor.parentElement.matches('.tab-panel, .st-main, .card')) anchor = anchor.parentElement;
+    var anchor = states[0].unit; states[0].bar = G.bar;
     if (G.bar.nextElementSibling !== anchor || G.bar.parentElement !== anchor.parentElement) anchor.parentElement.insertBefore(G.bar, anchor);
     var sig = states.map(function (S) { return S.id; }).join(',');
     if (sig !== G.sig) {
       G.sig = sig;
       if (G.target !== 'all' && !G.states[+G.target]) G.target = 'all';
-      var sel = $g(G, 'tgt'), lab = sel.parentElement;
-      sel.innerHTML = '<option value="all">Semua grafik</option>' + states.map(function (S, i) { return '<option value="' + i + '">' + (i + 1) + '. ' + esc(S.name) + '</option>'; }).join('');
-      sel.value = G.target; lab.hidden = states.length < 2;
       if (G.mounted) { mountRibbon(G); var ed = $g(G, 'edit'); if (ed.hidden) { /* tetap tertutup */ } }
     }
   }
@@ -427,19 +425,15 @@
     else {
       if (parent && parent.children.length === 1 && !parent.classList.contains('tab-panel') && !parent.matches('.st-main, .card, section')) unit = parent;
       else { unit = document.createElement('div'); unit.className = 'ne-unit'; svg.replaceWith(unit); unit.appendChild(svg); }
-      S = { id: ++uid, unit: unit, view: viewOf(svg), name: nameOf(svg), st: null, info: null, pristine: '', dl: null };
+      S = { id: ++uid, unit: unit, view: viewOf(svg), name: nameOf(svg), st: null, info: null, pristine: '', bar: null };
       unit.__ne = S;
     }
     var key = S.view + '|' + (svg.getAttribute('aria-label') || '') + '|' + idxKey;
     S.pristine = svg.outerHTML; S.info = scan(svg); S.name = nameOf(svg);
-    if (!S.dl) {
+    if (!S.st) {
       S.st = CACHE[key] || defStyle();
       if (!CACHE[key]) { if (S.info.colors[0]) S.st.c1 = S.info.colors[0]; if (S.info.colors[1]) S.st.c2 = S.info.colors[1]; }
       CACHE[key] = S.st;
-      var dl = document.createElement('div'); dl.className = 'ne-dl';
-      dl.innerHTML = '<span class="ib-row">' + window.StatIconBtn('png', 'Unduh PNG', 'data-ne="png"') + window.StatIconBtn('svg', 'Unduh SVG', 'data-ne="svg"') + window.StatIconBtn('copy', 'Salin gambar', 'data-ne="copy"') + '</span><p class="ne-msg" hidden></p>';
-      unit.insertAdjacentElement('afterend', dl); S.dl = dl;
-      dl.addEventListener('click', function (e) { var b = e.target.closest('[data-ne]'); if (b) download(S, b.dataset.ne); });
     }
     svg.setAttribute('data-ne', '1');
     if (Object.keys(S.st.touched).length) redraw(S);          /* gambar baru dari modul: pakai lagi pengaturan yang sudah dipilih */
@@ -458,12 +452,11 @@
         idx[a] = (idx[a] || 0) + 1;
         var S = already ? svg.parentElement.__ne : null;
         try { if (!S) S = adopt(svg, pk + '#' + idx[a]); } catch (e) { console.warn('Edit grafik:', e); return; }
-        if (!byPanel.has(panel)) byPanel.set(panel, []);
-        byPanel.get(panel).push(S);
+        byPanel.set(S.unit, [S]);
       });
     });
-    byPanel.forEach(function (list, panel) { try { refreshGroup(groupOf(panel), list); } catch (e) { console.warn('Edit grafik:', e); } });
-    GROUPS = GROUPS.filter(function (G) { if (document.contains(G.panel) && byPanel.has(G.panel)) return true; G.bar.remove(); return false; });
+    byPanel.forEach(function (list, unit) { try { refreshGroup(groupOf(unit), list); } catch (e) { console.warn('Edit grafik:', e); } });
+    GROUPS = GROUPS.filter(function (G) { if (document.contains(G.unit) && byPanel.has(G.unit)) return true; G.bar.remove(); return false; });
   }
   function schedule() { if (pending) return; pending = true; (window.requestAnimationFrame || setTimeout)(run); }
   new MutationObserver(function (muts) {
