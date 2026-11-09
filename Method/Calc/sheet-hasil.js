@@ -47,6 +47,7 @@
     butir: { title: 'Analisis Butir', rc: '#bt-results-card', extra: [], err: '#btErr' },
     sem: { title: 'SEM (Structural Equation Modeling)', rc: '#sx-results-card', extra: [], err: '#sxErr' },
     'dekomposisi-waktu': { title: 'Dekomposisi Deret Waktu', rc: '#dk-results-card', extra: [], err: '#dkErr' },
+    tar: { title: 'TAR (Threshold Autoregressive)', rc: '#tr-results-card', extra: [], err: '#trErr' },
     faktorial: { title: 'Faktorial 2^k', rc: '#fc-results-card', extra: [], err: '#fcErr' },
     'peta-kendali': { title: 'Peta Kendali', rc: '#cc-results-card', extra: [], err: '#ccErr' },
     kapabilitas: { title: 'Kapabilitas Proses', rc: '#kp-results-card', extra: [], err: '#kpErr' },
@@ -91,7 +92,7 @@
 
   var state = { id: null, tab: 'ringkasan', parts: null, status: 'idle', uid: null };
   /* daftar hasil proyek: tiap analisis yang selesai dicatat (maks. 12), dipakai Panel Proyek */
-  var results = [], listeners = [], MAXR = 12, SHORT = { deskriptif: 'Deskriptif', 'uji-t': 'Uji t', korelasi: 'Korelasi', 'uji-z': 'Uji z', proporsi: 'Proporsi', ragam: 'Ragam', normalitas: 'Normalitas', 'chi-square': 'Chi-Square', fisher: 'Fisher', 'mann-whitney': 'Mann-Whitney', wilcoxon: 'Wilcoxon', kruskal: 'Kruskal-Wallis', friedman: 'Friedman', 'uji-lanjut': 'Uji Lanjut', 'ral-rak': 'RAL/RAK', 'anova-berulang': 'ANOVA Berulang', polinomial: 'Polinomial', stepwise: 'Stepwise', logistik: 'Logistik', pca: 'PCA', faktor: 'Faktor', klaster: 'Klaster', butir: 'Butir', sem: 'SEM', 'dekomposisi-waktu': 'Dekomposisi', faktorial: 'Faktorial', 'peta-kendali': 'Peta Kendali', kapabilitas: 'Kapabilitas', pareto: 'Pareto', power: 'Power', 'sampel-survei': 'Sampel Survei', regresi: 'Regresi', anova: 'ANOVA', rsm: 'RSM', smoothing: 'Smoothing', stasioner: 'Stasioner', arima: 'ARIMA' };
+  var results = [], listeners = [], MAXR = 12, SHORT = { deskriptif: 'Deskriptif', 'uji-t': 'Uji t', korelasi: 'Korelasi', 'uji-z': 'Uji z', proporsi: 'Proporsi', ragam: 'Ragam', normalitas: 'Normalitas', 'chi-square': 'Chi-Square', fisher: 'Fisher', 'mann-whitney': 'Mann-Whitney', wilcoxon: 'Wilcoxon', kruskal: 'Kruskal-Wallis', friedman: 'Friedman', 'uji-lanjut': 'Uji Lanjut', 'ral-rak': 'RAL/RAK', 'anova-berulang': 'ANOVA Berulang', polinomial: 'Polinomial', stepwise: 'Stepwise', logistik: 'Logistik', pca: 'PCA', faktor: 'Faktor', klaster: 'Klaster', butir: 'Butir', sem: 'SEM', 'dekomposisi-waktu': 'Dekomposisi', tar: 'TAR', faktorial: 'Faktorial', 'peta-kendali': 'Peta Kendali', kapabilitas: 'Kapabilitas', pareto: 'Pareto', power: 'Power', 'sampel-survei': 'Sampel Survei', regresi: 'Regresi', anova: 'ANOVA', rsm: 'RSM', smoothing: 'Smoothing', stasioner: 'Stasioner', arima: 'ARIMA' };
   function notify() { listeners.forEach(function (f) { try { f(); } catch (e) { /* abaikan */ } }); }
   function newUid() { return 'h' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
   /* HTML hasil yang dipulihkan dari berkas dibersihkan: tanpa skrip, penangan on*, atau tautan javascript: */

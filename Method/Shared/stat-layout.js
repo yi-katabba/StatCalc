@@ -13,7 +13,7 @@
    Dimuat SETELAH semua file Method/Stat/. ========================================================================= */
 (function () {
   'use strict';
-  var IDS = ['regresi', 'smoothing', 'anova', 'rsm', 'stasioner', 'arima', 'deskriptif', 'uji-t', 'korelasi', 'uji-z', 'proporsi', 'ragam', 'normalitas', 'chi-square', 'fisher', 'mann-whitney', 'wilcoxon', 'kruskal', 'friedman', 'uji-lanjut', 'ral-rak', 'anova-berulang', 'polinomial', 'stepwise', 'logistik', 'pca', 'faktor', 'klaster', 'butir', 'sem', 'dekomposisi-waktu', 'faktorial', 'peta-kendali', 'kapabilitas', 'pareto', 'power', 'sampel-survei'];
+  var IDS = ['regresi', 'smoothing', 'anova', 'rsm', 'stasioner', 'arima', 'deskriptif', 'uji-t', 'korelasi', 'uji-z', 'proporsi', 'ragam', 'normalitas', 'chi-square', 'fisher', 'mann-whitney', 'wilcoxon', 'kruskal', 'friedman', 'uji-lanjut', 'ral-rak', 'anova-berulang', 'polinomial', 'stepwise', 'logistik', 'pca', 'faktor', 'klaster', 'butir', 'sem', 'dekomposisi-waktu', 'tar', 'faktorial', 'peta-kendali', 'kapabilitas', 'pareto', 'power', 'sampel-survei'];
   var SIDE = /-(setup|data)-card$|^(setup|data)-card$/;
 
   var SIDE_KEY = 'statcalc.stat.side', collapsed = false, painters = [];

@@ -72,7 +72,7 @@ Berlaku untuk pita Dataset (`.sc-rbody`) dan pita halaman Stat / "Pengaturan gra
 
 ## Kategori metode (`Method/Shared/kategori-metode.js`)
 
-> Status: seluruh 11 kategori Minitab yang direncanakan sudah berisi metode (37 metode). Kategori kosong Reliability/Survival dan Equivalence Tests sengaja belum dibuat.
+> Status: seluruh 11 kategori Minitab yang direncanakan sudah berisi metode (38 metode). Kategori kosong Reliability/Survival dan Equivalence Tests sengaja belum dibuat.
 
 Satu sumber daftar kategori Stat (nama & urutan mengikuti menu Stat Minitab): Basic Statistics, Regression, ANOVA, DOE, Control Charts, Quality Tools, Multivariate, Time Series, Tables, Nonparametrics, Power and Sample Size. Dipakai oleh menu Stat (`index.html`: header per kategori + chip filter), pita **Statistik** di Dataset (grup per kategori), dan dropdown **Metode** di `analisis-vars.js` (`<optgroup>`).
 
@@ -132,7 +132,7 @@ Metode: Faktorial 2^k, Peta Kendali (X-bar/R, X-bar/S, I-MR, p, np, c, u), Kapab
 
 ### Menjalankan semua uji numerik
 ```
-for t in basic-core basic-core2 nonpar-core anova-core reg-core multi-core quality-core power-core sem-core; do node tests/$t.test.js | tail -1; done
+for t in basic-core basic-core2 nonpar-core anova-core reg-core multi-core quality-core power-core sem-core tar-core; do node tests/$t.test.js | tail -1; done
 ```
 (file acuan *.json dibuat ulang dengan `python3 tests/make_ref*.py`; butuh numpy, scipy, pandas, statsmodels, scikit-learn, factor_analyzer, pingouin)
 
@@ -164,3 +164,21 @@ Panel **Grafik Pendukung & Unduh Hasil** punya pita lima tab: **Teks** (judul, l
 - Gaya diteruskan lewat `GraphCore.u.ST` (bidang baru: `title, xl, yl, legend, fs, pt, lw, bw, alpha, vals, hl, fit, curve, mk, H, xmin, xmax, ymin, ymax`; nilai bawaan tidak mengubah grafik halaman Graph). Judul/label/tinggi diterapkan terpusat di `u.layout/head/gridY/axisX/axisCat`.
 - Menambah jenis grafik baru di `stat-charts.js`: bungkus dengan `wrap('nama', fn, indeksArgumenOpsi)`, baca pengaturan lewat `PS()/LW()/BW()/AL()/ov()`, lalu daftarkan kemampuannya di `CAPS` dan namanya di `KIND_LABEL`.
 - Catatan: `svg-helpers.js` (`StatSvg`: scree PCA, dendrogram, peta kendali, dll.) memakai variabel CSS tema dan tidak lewat pita ini; grafik itu tampil di dalam hasil, bukan di panel Grafik Pendukung.
+
+## TAR: TAR Konvensional, SETAR & STAR (Tahap 12)
+
+Metode: **TAR** (kategori Time Series), id `tar`, prefiks elemen `tr`. Satu halaman, tiga model (pilihan *Model*):
+
+| Model | Variabel ambang / peralihan | Rezim |
+|---|---|---|
+| TAR konvensional (Tong, 1978) | kolom **Z** eksternal, Z(t-d) (kolom ke-2 tabel) | 2 atau 3, orde AR boleh beda per rezim |
+| SETAR (self-exciting) | lag Y sendiri, Y(t-d) | 2 atau 3, orde AR boleh beda per rezim |
+| STAR | lag Y sendiri, dibakukan dengan simpangan baku sampel | peralihan mulus: LSTAR (logistik) atau ESTAR (eksponensial), otomatis lewat aturan Terasvirta |
+
+- `Method/Stat/tar-core.js` (tanpa DOM, bisa diuji di Node, mengekspor `window.StatTAR`):
+  - `fitTAR`: kuadrat terkecil bersyarat. Grid menyeluruh atas nilai ambang teramati (tiap rezim >= trimming x T dan >= k + 2 pengamatan; kandidat dikurangi merata bila > 500 untuk 2 rezim atau > 45 untuk 3 rezim, dengan catatan di hasil). Delay `d` dipilih dengan SSE terkecil bila 0 (sampel efektif sama untuk semua d). Koefisien, SE, t, p per rezim; AIC/BIC (ambang dihitung sebagai parameter); pembanding AR(p maks) linier pada sampel yang sama; profil SSE dan **selang kepercayaan ambang Hansen (1997)** (2 rezim, nilai kritis 7,352); uji **Tsay (1989)** (arranged autoregression, residu prediksi rekursif); uji **sup-F Hansen** dengan bootstrap regresor tetap (AR(p maks) vs TAR 2 rezim, sup atas d bila otomatis, seed tetap); Ljung-Box (residu dan residu kuadrat) dan Jarque-Bera; ramalan skeleton + simulasi bootstrap residu per rezim (rata-rata, selang 95%). Untuk TAR konvensional ramalan dibatasi sampai d langkah karena Z masa depan tidak diketahui.
+  - `fitSTAR`: uji linearitas **Terasvirta (1994)** (versi F, hampiran Taylor orde 3, deret H04/H03/H02) untuk tiap delay; delay otomatis = p-value umum terkecil; LSTAR vs ESTAR lewat aturan H03. NLS dengan parameter linier dikonsentrasikan (grid gamma x c, Nelder-Mead dari 3 titik awal, c dibatasi di kuantil 5%-95%); SE dari Jacobian analitik (J'J)^-1 s^2, termasuk SE untuk phi + theta; ramalan skeleton + simulasi.
+  - Penetapan `gamma` memakai skala terstandar: G = 1/(1+exp(-gamma (s-c)/sd_s)) (LSTAR), G = 1-exp(-gamma (s-c)^2/sd_s^2) (ESTAR). `c` dilaporkan dalam satuan asli.
+- `Method/Stat/tar.js`: halaman (`StatBasicUI.mountPage`) dengan grafik SVG (data/fit/ramalan, deret menurut rezim, profil SSE, fungsi peralihan G, residu), tabel, langkah perhitungan, dan interpretasi. Bisa dijalankan dari Dataset (kolom 1 = Y, kolom 2 = Z untuk TAR konvensional).
+- Belum ada: pemilihan orde p otomatis, uji 2 vs 3 rezim, STAR dengan variabel peralihan eksternal atau lebih dari dua rezim (MSTAR), TAR dengan ambang yang melibatkan kombinasi lag, ramalan TAR konvensional dengan Z yang diramalkan.
+- Uji: `python3 tests/make_ref12.py && node tests/tar-core.test.js` (acuan independen: brute force `np.linalg.lstsq` atas semua ambang, uji Tsay dengan refit eksplisit, STAR dengan `scipy.optimize.least_squares` multi-start berbatas + Jacobian numerik). Galat SETAR/TAR ~1e-15, STAR ~1e-6 (toleransi optimizer). Selain itu diperiksa secara simulasi: ukuran uji sup-F bootstrap 4,2% pada nominal 5% (120 deret AR(1), n = 150, B = 199) dengan daya 100% pada data SETAR.

@@ -211,7 +211,7 @@ html body #view-metode-calc .sc-msg.ok{ background:#E3F0E8; }
 .mt-try-tbl td.more{ text-align:center; color:var(--ink-faint); font-family:var(--font-body); border-bottom:0; }
 .mt-try-go{ width:100%; height:44px; border:0; border-radius:8px; background:var(--accent-2); color:#fff; font-size:14px; font-weight:600; cursor:pointer; }
 @media (min-width:1360px){
-  html body #view-materi-detail .mt-wrap{ max-width:1400px; grid-template-columns:264px minmax(0,720px) 320px; justify-content:center; }
+  html body #view-materi-detail .mt-wrap:has(> .mt-try){ max-width:1400px; grid-template-columns:264px minmax(0,720px) 320px; justify-content:center; }
   html body #view-materi-detail .mt-wrap > .mt-try{ grid-column:3; grid-row:1 / span 60; align-self:start; position:sticky; top:64px; margin:16px 0 0; }
 }
 
@@ -604,7 +604,7 @@ body.pf-on .top-avatar{ box-shadow:0 0 0 2px #7FA8D6; }
   html body #view-materi-detail .mt-wrap{ max-width:none; }
 }
 @media (min-width:1360px){
-  html body #view-materi-detail .mt-wrap{ max-width:none; grid-template-columns:264px minmax(0,1fr) 320px; justify-content:stretch; }
+  html body #view-materi-detail .mt-wrap:has(> .mt-try){ max-width:none; grid-template-columns:264px minmax(0,1fr) 320px; justify-content:stretch; }
 }
 @media (min-width:1440px){
   .chapter-inner:has(.gr-chart){ max-width:none; }

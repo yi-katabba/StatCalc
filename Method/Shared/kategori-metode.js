@@ -35,11 +35,11 @@
     regresi: 'regresi',
     anova: 'anova',
     rsm: 'doe',
-    smoothing: 'waktu', stasioner: 'waktu', arima: 'waktu',
+    smoothing: 'waktu', stasioner: 'waktu', arima: 'waktu', tar: 'waktu',
     'chi-square': 'tabel', fisher: 'tabel', 'mann-whitney': 'nonparam', wilcoxon: 'nonparam', kruskal: 'nonparam', friedman: 'nonparam', 'uji-lanjut': 'anova', 'ral-rak': 'anova', 'anova-berulang': 'anova', polinomial: 'regresi', stepwise: 'regresi', logistik: 'regresi', pca: 'multivar', faktor: 'multivar', klaster: 'multivar', butir: 'multivar', sem: 'multivar', 'dekomposisi-waktu': 'waktu', faktorial: 'doe', 'peta-kendali': 'control', kapabilitas: 'quality', pareto: 'quality', power: 'power', 'sampel-survei': 'power'
   };
   /* urutan tampil dalam satu kategori (id yang tidak tercantum di sini ditaruh di akhir) */
-  var SEQ = ['deskriptif', 'normalitas', 'korelasi', 'uji-z', 'uji-t', 'proporsi', 'ragam', 'rsm', 'faktorial', 'peta-kendali', 'kapabilitas', 'pareto', 'power', 'sampel-survei', 'regresi', 'polinomial', 'stepwise', 'logistik', 'anova', 'uji-lanjut', 'ral-rak', 'anova-berulang', 'rsm', 'smoothing', 'stasioner', 'arima', 'dekomposisi-waktu', 'pca', 'faktor', 'klaster', 'butir', 'sem', 'chi-square', 'fisher', 'mann-whitney', 'wilcoxon', 'kruskal', 'friedman'];
+  var SEQ = ['deskriptif', 'normalitas', 'korelasi', 'uji-z', 'uji-t', 'proporsi', 'ragam', 'rsm', 'faktorial', 'peta-kendali', 'kapabilitas', 'pareto', 'power', 'sampel-survei', 'regresi', 'polinomial', 'stepwise', 'logistik', 'anova', 'uji-lanjut', 'ral-rak', 'anova-berulang', 'rsm', 'smoothing', 'stasioner', 'arima', 'tar', 'dekomposisi-waktu', 'pca', 'faktor', 'klaster', 'butir', 'sem', 'chi-square', 'fisher', 'mann-whitney', 'wilcoxon', 'kruskal', 'friedman'];
   function seq(id) { var i = SEQ.indexOf(id); return i < 0 ? 999 : i; }
   function catOf(id) { return OF[id] || null; }
   function label(catId) {
