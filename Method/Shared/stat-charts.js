@@ -17,12 +17,25 @@
      #22384A = warna utama, #BD7E1F = warna sorotan, #2F7F79 = warna ke-3 palet. Warna lain (status/abu-abu) tetap. */
   const tone = (c) => (c === '#22384A' ? ST.c1 : c === '#BD7E1F' ? ST.c2 : c === '#2F7F79' ? ST.pal[2 % ST.pal.length] : c);
 
+  /* Pengaturan pita (aktif hanya saat ST.on): skala titik/garis/batang, opasitas, rentang sumbu. */
+  const PS = () => (ST.on ? ST.pt : 1), LW = () => (ST.on ? ST.lw : 1), BW = () => (ST.on ? ST.bw : 1);
+  const AL = (d) => (ST.on && ST.alpha !== null ? ST.alpha : d);
+  const r2 = (v) => +v.toFixed(2);
+  const hasOv = () => ST.on && (ST.xmin !== null || ST.xmax !== null || ST.ymin !== null || ST.ymax !== null);
+  function ov(r, ax) {
+    if (!ST.on) return r;
+    const a = ST[ax + 'min'], b = ST[ax + 'max'];
+    let lo = a !== null ? a : r.lo, hi = b !== null ? b : r.hi;
+    if (!(hi > lo)) { lo = r.lo; hi = r.hi; }                     /* rentang terbalik/kosong: abaikan */
+    return Object.assign({}, r, { lo, hi });
+  }
+  const clipOpen = (L) => { if (!hasOv()) return ['', '']; const id = 'ovc' + Math.random().toString(36).slice(2, 8); return [`<clipPath id="${id}"><rect x="${L.m.l}" y="${L.m.t}" width="${L.pw}" height="${L.ph}"/></clipPath><g clip-path="url(#${id})">`, '</g>']; };
   const f1 = (v) => (+v).toFixed(1);
   const finite = (v) => v !== null && v !== undefined && Number.isFinite(v);
 
   /* ------------------------------ Util ------------------------------ */
   function legendSvg(L, items, y) {
-    if (!items || !items.length) return '';
+    if (!items || !items.length || (ST.on && ST.legend === false)) return '';
     let x = L.m.l, s = '';
     items.forEach((it) => {
       const nm = String(it.name), w = Math.round(nm.length * 6.3) + 34;
@@ -37,11 +50,12 @@
     });
     return s;
   }
-  function withLegend(L, hasLegend) { if (hasLegend) { L.m.t += 18; L.ph -= 18; } return L; }
+  function withLegend(L, hasLegend) { if (hasLegend && !(ST.on && ST.legend === false)) { L.m.t += 18; L.ph -= 18; } return L; }
   function hline(L, sc, y, color, dash, label) {
+    if (ST.on && ST.hl === false) return '';
     const py = u.sy(L, sc)(y);
     if (py < L.m.t - 1 || py > L.m.t + L.ph + 1) return '';
-    return `<line x1="${L.m.l}" x2="${L.W - L.m.r}" y1="${py.toFixed(1)}" y2="${py.toFixed(1)}" stroke="${color}" stroke-width="1.5"${dash ? ' stroke-dasharray="6 4"' : ''}/>` +
+    return `<line x1="${L.m.l}" x2="${L.W - L.m.r}" y1="${py.toFixed(1)}" y2="${py.toFixed(1)}" stroke="${color}" stroke-width="${r2(1.5 * LW())}"${dash ? ' stroke-dasharray="6 4"' : ''}/>` +
       (label ? `<text x="${L.W - L.m.r - 4}" y="${(py - 4).toFixed(1)}" text-anchor="end" font-size="10.5" fill="${color}">${esc(label)}</text>` : '');
   }
   function range(vals, pad) {
@@ -67,9 +81,10 @@
     if (o.yMin !== undefined) r.lo = Math.min(r.lo, o.yMin);
     if (o.yMax !== undefined) r.hi = Math.max(r.hi, o.yMax);
     /* rentang sumbu Y tetap (boleh menyempit); data di luar rentang dipotong */
-    const fixY = o.yFixMin !== undefined || o.yFixMax !== undefined;
+    let fixY = o.yFixMin !== undefined || o.yFixMax !== undefined;
     if (o.yFixMin !== undefined) r.lo = o.yFixMin;
     if (o.yFixMax !== undefined) r.hi = o.yFixMax;
+    if (ST.on && (ST.ymin !== null || ST.ymax !== null)) { r = ov(r, 'y'); fixY = true; }
     if (!(r.hi > r.lo)) r.hi = r.lo + 1;
     const sys = u.niceTicks(r.lo, r.hi);
     const showL = !o.noLegend && (o.series.length > 1 || (o.series[0] && o.series[0].name && o.legend));
@@ -92,7 +107,8 @@
         ? `<text transform="translate(${x.toFixed(1)} ${yb + 14}) rotate(-40)" text-anchor="end" font-size="11" fill="${SOFT}">${esc(String(lb))}</text>`
         : `<text x="${x.toFixed(1)}" y="${yb + 17}" text-anchor="middle" font-size="11" fill="${SOFT}">${esc(String(lb))}</text>`;
     });
-    if (o.xLabel) s += `<text x="${(L.m.l + L.pw / 2).toFixed(1)}" y="${L.H - 10}" text-anchor="middle" font-size="12" fill="${INK}">${esc(o.xLabel)}</text>`;
+    const xlab = ST.on && ST.xl !== null ? ST.xl : o.xLabel;
+    if (xlab) s += `<text x="${(L.m.l + L.pw / 2).toFixed(1)}" y="${L.H - 10}" text-anchor="middle" font-size="12" fill="${INK}">${esc(xlab)}</text>`;
     (o.hlines || []).forEach((h) => { s += hline(L, sys, h.y, tone(h.color) || ST.c2, h.dash !== false, h.label); });
     const items = [];
     const clipId = 'lnclip' + Math.random().toString(36).slice(2, 8);
@@ -105,8 +121,8 @@
         d += (pen ? 'L' : 'M') + px(i).toFixed(1) + ' ' + py(v).toFixed(1) + ' ';
         pen = true;
       });
-      if (se.line !== false) s += `<path d="${d}" fill="none" stroke="${col}" stroke-width="${se.width || 2}"${se.dash ? ' stroke-dasharray="6 4"' : ''} stroke-linejoin="round"/>`;
-      if (se.marker !== false && n <= 60) se.values.forEach((v, i) => { if (finite(v)) s += `<circle cx="${px(i).toFixed(1)}" cy="${py(v).toFixed(1)}" r="${n > 30 ? 2.4 : 3.6}" fill="${col}" stroke="#fff" stroke-width="1"/>`; });
+      if (se.line !== false) s += `<path d="${d}" fill="none" stroke="${col}" stroke-width="${r2((se.width || 2) * LW())}"${se.dash ? ' stroke-dasharray="6 4"' : ''} stroke-linejoin="round"/>`;
+      if (se.marker !== false && !(ST.on && ST.mk === false) && n <= 60) se.values.forEach((v, i) => { if (finite(v)) s += `<circle cx="${px(i).toFixed(1)}" cy="${py(v).toFixed(1)}" r="${r2((n > 30 ? 2.4 : 3.6) * PS())}" fill="${col}" stroke="#fff" stroke-width="1"/>`; });
       items.push({ name: se.name || 'Seri ' + (k + 1), color: col, dash: se.dash, marker: se.marker });
     });
     if (fixY) s += '</g>';
@@ -122,20 +138,25 @@
     let xr = range(o.x, 0.06), yr = range(o.y.concat(o.hzero ? [0] : []), 0.08);
     if (o.diag || o.sameScale) { const lo = Math.min(xr.lo, yr.lo), hi = Math.max(xr.hi, yr.hi); xr = { lo, hi }; yr = { lo, hi }; }
     if (o.fit) { const a = o.fit.a, b = o.fit.b; yr = { lo: Math.min(yr.lo, a + b * xr.lo, a + b * xr.hi), hi: Math.max(yr.hi, a + b * xr.lo, a + b * xr.hi) }; }
+    xr = ov(xr, 'x'); yr = ov(yr, 'y');
     const sxs = u.niceTicks(xr.lo, xr.hi), sys = u.niceTicks(yr.lo, yr.hi);
-    const hasLeg = !!(o.fit && o.fit.name) || !!o.diag;
+    const showFit = !(ST.on && ST.fit === false), showDiag = !(ST.on && ST.hl === false);
+    const hasLeg = (showFit && !!(o.fit && o.fit.name)) || (showDiag && !!o.diag);
     const L = withLegend(u.layout({ title: o.title, ml: u.mlFor(sys.ticks, !!o.yLabel), xl: !!o.xLabel, H: o.H || 400 }), hasLeg);
     const px = u.sx(L, sxs), py = u.sy(L, sys);
     let s = u.head(L, o.title) + u.gridY(L, sys, o.yLabel) + u.axisX(L, sxs, o.xLabel, true);
     const items = [];
     if (o.hzero) s += hline(L, sys, 0, '#948C77', true);
-    if (o.diag) { s += `<line x1="${px(sxs.lo).toFixed(1)}" y1="${py(sxs.lo).toFixed(1)}" x2="${px(sxs.hi).toFixed(1)}" y2="${py(sxs.hi).toFixed(1)}" stroke="${ST.c2}" stroke-width="2" stroke-dasharray="6 4"/>`; items.push({ name: 'Garis y = x (prediksi sempurna)', color: ST.c2, dash: true, marker: false }); }
-    if (o.fit) {
-      s += `<line x1="${px(xr.lo).toFixed(1)}" y1="${py(o.fit.a + o.fit.b * xr.lo).toFixed(1)}" x2="${px(xr.hi).toFixed(1)}" y2="${py(o.fit.a + o.fit.b * xr.hi).toFixed(1)}" stroke="${ST.c2}" stroke-width="2.4"/>`;
+    const [co, cc] = clipOpen(L);
+    s += co;
+    if (o.diag && showDiag) { s += `<line x1="${px(sxs.lo).toFixed(1)}" y1="${py(sxs.lo).toFixed(1)}" x2="${px(sxs.hi).toFixed(1)}" y2="${py(sxs.hi).toFixed(1)}" stroke="${ST.c2}" stroke-width="${r2(2 * LW())}" stroke-dasharray="6 4"/>`; items.push({ name: 'Garis y = x (prediksi sempurna)', color: ST.c2, dash: true, marker: false }); }
+    if (o.fit && showFit) {
+      s += `<line x1="${px(xr.lo).toFixed(1)}" y1="${py(o.fit.a + o.fit.b * xr.lo).toFixed(1)}" x2="${px(xr.hi).toFixed(1)}" y2="${py(o.fit.a + o.fit.b * xr.hi).toFixed(1)}" stroke="${ST.c2}" stroke-width="${r2(2.4 * LW())}"/>`;
       if (o.fit.name) items.push({ name: o.fit.name, color: ST.c2, marker: false });
     }
     const col = tone(o.color) || ST.c1;
-    o.x.forEach((x, i) => { s += `<circle cx="${px(x).toFixed(1)}" cy="${py(o.y[i]).toFixed(1)}" r="4.3" fill="${col}" fill-opacity=".8" stroke="#fff" stroke-width="1"/>`; });
+    o.x.forEach((x, i) => { s += `<circle cx="${px(x).toFixed(1)}" cy="${py(o.y[i]).toFixed(1)}" r="${r2(4.3 * PS())}" fill="${col}" fill-opacity="${AL('.8')}" stroke="#fff" stroke-width="1"/>`; });
+    s += cc;
     if (items.length) s += legendSvg(L, items, 46);
     return s + '</svg>';
   }
@@ -172,10 +193,11 @@
     const hi = lo + k * w, counts = new Array(k).fill(0);
     vals.forEach((x) => { counts[Math.min(k - 1, Math.max(0, Math.floor((x - lo) / w + 1e-12)))]++; });
     const m = u.mean(vals), sd = u.sd(vals);
-    const curve = o.normal !== false && sd > 0;
+    const curve = o.normal !== false && sd > 0 && !(ST.on && ST.curve === false);
     const pdf = (x) => n * w * Math.exp(-0.5 * ((x - m) / sd) ** 2) / (sd * Math.sqrt(2 * Math.PI));
     const maxY = Math.max(u.max(counts), curve ? pdf(m) : 0);
-    const sys = u.niceTicks(0, maxY * 1.1, 6, true);
+    const yr = ov({ lo: 0, hi: maxY * 1.1 }, 'y');
+    const sys = u.niceTicks(yr.lo, yr.hi, 6, true);
     const sxs = { lo, hi, ticks: Array.from({ length: k + 1 }, (_, i) => +(lo + i * w).toPrecision(12)) };
     const tickShow = k <= 12 ? sxs.ticks : sxs.ticks.filter((_, i) => i % Math.ceil(k / 10) === 0);
     const L = withLegend(u.layout({ title: o.title || 'Histogram', ml: u.mlFor(sys.ticks, true), xl: true, H: o.H || 380 }), curve);
@@ -183,12 +205,12 @@
     let s = u.head(L, o.title || 'Histogram') + u.gridY(L, sys, 'Frekuensi') + u.axisX(L, sxs, o.xLabel || 'Nilai', false, tickShow);
     counts.forEach((c, i) => {
       const x0 = px(lo + i * w), x1 = px(lo + (i + 1) * w);
-      s += `<rect x="${(x0 + 0.5).toFixed(1)}" y="${py(c).toFixed(1)}" width="${Math.max(1, x1 - x0 - 1).toFixed(1)}" height="${(py(0) - py(c)).toFixed(1)}" fill="${tone(o.color) || ST.c1}" fill-opacity=".72"/>`;
+      s += `<rect x="${(x0 + 0.5).toFixed(1)}" y="${py(c).toFixed(1)}" width="${Math.max(1, x1 - x0 - 1).toFixed(1)}" height="${(py(0) - py(c)).toFixed(1)}" fill="${tone(o.color) || ST.c1}" fill-opacity="${AL('.72')}"/>`;
     });
     if (curve) {
       let d = '';
       for (let i = 0; i <= 60; i++) { const x = lo + (hi - lo) * i / 60; d += (i ? 'L' : 'M') + px(x).toFixed(1) + ' ' + py(pdf(x)).toFixed(1) + ' '; }
-      s += `<path d="${d}" fill="none" stroke="${ST.c2}" stroke-width="2.2"/>` + legendSvg(L, [{ name: 'Kurva normal (rata-rata & s.baku sampel)', color: ST.c2, marker: false }], 46);
+      s += `<path d="${d}" fill="none" stroke="${ST.c2}" stroke-width="${r2(2.2 * LW())}"/>` + legendSvg(L, [{ name: 'Kurva normal (rata-rata & s.baku sampel)', color: ST.c2, marker: false }], 46);
     }
     return s + '</svg>';
   }
@@ -199,7 +221,7 @@
     const n = o.labels.length;
     if (!n) return noData('Tidak ada data untuk digambar.');
     const vv = o.values.filter(finite).concat([0]).concat((o.hlines || []).map((h) => h.y));
-    const r = range(vv, 0.08);
+    const r = ov(range(vv, 0.08), 'y');
     const sys = u.niceTicks(r.lo, r.hi);
     const labs = o.labels.map(String);
     const step = Math.max(1, Math.ceil(n / 24));
@@ -207,13 +229,16 @@
     const py = u.sy(L, sys);
     const ax = u.axisCat(L, labs.map((l, i) => (i % step ? '' : l)), o.xLabel);
     let s = u.head(L, o.title) + u.gridY(L, sys, o.yLabel) + ax.svg;
-    const bw = o.thin ? Math.min(5, ax.bw * 0.4) : Math.min(56, ax.bw * 0.64), y0 = py(0);
+    const bw = (o.thin ? Math.min(5, ax.bw * 0.4) : Math.min(56, ax.bw * 0.64)) * BW(), y0 = py(0);
+    const vl = ST.on && ST.vals !== null ? ST.vals : o.valueLabels, [co, cc] = clipOpen(L);
+    s += co;
     o.values.forEach((v, i) => {
       if (!finite(v)) return;
       const cx = ax.cx(i), yv = py(v), col = tone((o.colors && o.colors[i]) || o.color) || ST.c1;
-      s += `<rect x="${(cx - bw / 2).toFixed(1)}" y="${Math.min(y0, yv).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(1, Math.abs(yv - y0)).toFixed(1)}" fill="${col}" fill-opacity=".85"/>`;
-      if (o.valueLabels && n <= 14) s += `<text x="${cx.toFixed(1)}" y="${(v >= 0 ? yv - 5 : yv + 13).toFixed(1)}" text-anchor="middle" font-size="10.5" fill="${INK}">${esc(fmt(v))}</text>`;
+      s += `<rect x="${(cx - bw / 2).toFixed(1)}" y="${Math.min(y0, yv).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(1, Math.abs(yv - y0)).toFixed(1)}" fill="${col}" fill-opacity="${AL('.85')}"/>`;
+      if (vl && n <= (ST.on && ST.vals ? 40 : 14)) s += `<text x="${cx.toFixed(1)}" y="${(v >= 0 ? yv - 5 : yv + 13).toFixed(1)}" text-anchor="middle" font-size="10.5" fill="${INK}">${esc(fmt(v))}</text>`;
     });
+    s += cc;
     s += `<line x1="${L.m.l}" x2="${L.W - L.m.r}" y1="${y0.toFixed(1)}" y2="${y0.toFixed(1)}" stroke="${AXIS}"/>`;
     (o.hlines || []).forEach((h) => { s += hline(L, sys, h.y, tone(h.color) || ST.c2, h.dash !== false, h.label); });
     return s + '</svg>';
@@ -223,20 +248,22 @@
   function gbars(o) {
     const n = o.labels.length, m = o.series.length;
     const vals = [0]; o.series.forEach((se) => se.values.forEach((v) => { if (finite(v)) vals.push(v); }));
-    const sys = u.niceTicks(range(vals, 0.1).lo, range(vals, 0.1).hi);
+    const gr = ov(range(vals, 0.1), 'y'), sys = u.niceTicks(gr.lo, gr.hi);
     const labs = o.labels.map(String);
     const L = withLegend(u.layout({ title: o.title, ml: u.mlFor(sys.ticks, !!o.yLabel), mb: u.catBottom(labs, !!o.xLabel), H: o.H || 380 }), m > 1);
     const py = u.sy(L, sys), ax = u.axisCat(L, labs, o.xLabel);
     let s = u.head(L, o.title) + u.gridY(L, sys, o.yLabel) + ax.svg;
-    const bw = Math.min(40, (ax.bw * 0.78) / m), y0 = py(0);
+    const bw = Math.min(40, (ax.bw * 0.78) / m) * Math.min(1.3, BW()), y0 = py(0), [co, cc] = clipOpen(L);
+    s += co;
     o.series.forEach((se, k) => {
       const col = tone(se.color) || palAt(k);
       se.values.forEach((v, i) => {
         if (!finite(v)) return;
         const cx = ax.cx(i) - (m * bw) / 2 + bw * (k + 0.5), yv = py(v);
-        s += `<rect x="${(cx - bw / 2 + 0.5).toFixed(1)}" y="${Math.min(y0, yv).toFixed(1)}" width="${(bw - 1).toFixed(1)}" height="${Math.max(1, Math.abs(yv - y0)).toFixed(1)}" fill="${col}" fill-opacity=".85"/>`;
+        s += `<rect x="${(cx - bw / 2 + 0.5).toFixed(1)}" y="${Math.min(y0, yv).toFixed(1)}" width="${(bw - 1).toFixed(1)}" height="${Math.max(1, Math.abs(yv - y0)).toFixed(1)}" fill="${col}" fill-opacity="${AL('.85')}"/>`;
       });
     });
+    s += cc;
     s += `<line x1="${L.m.l}" x2="${L.W - L.m.r}" y1="${y0.toFixed(1)}" y2="${y0.toFixed(1)}" stroke="${AXIS}"/>`;
     if (m > 1) s += legendSvg(L, o.series.map((se, k) => ({ name: se.name, color: tone(se.color) || palAt(k), kind: 'box' })), 46);
     return s + '</svg>';
@@ -247,7 +274,7 @@
   function intervals(o) {
     const n = o.labels.length;
     const vv = o.lo.concat(o.hi).concat(o.means).concat(finite(o.grand) ? [o.grand] : []);
-    const r = range(vv, 0.1), sys = u.niceTicks(r.lo, r.hi);
+    const r = ov(range(vv, 0.1), 'y'), sys = u.niceTicks(r.lo, r.hi);
     const labs = o.labels.map(String);
     const L = withLegend(u.layout({ title: o.title, ml: u.mlFor(sys.ticks, !!o.yLabel), mb: u.catBottom(labs, !!o.xLabel), H: o.H || 380 }), true);
     const py = u.sy(L, sys), ax = u.axisCat(L, labs, o.xLabel);
@@ -256,11 +283,11 @@
     o.means.forEach((m, i) => {
       const cx = ax.cx(i), col = palAt(i), cap = Math.min(10, ax.bw * 0.18);
       if (finite(o.lo[i]) && finite(o.hi[i])) {
-        s += `<line x1="${cx.toFixed(1)}" x2="${cx.toFixed(1)}" y1="${py(o.lo[i]).toFixed(1)}" y2="${py(o.hi[i]).toFixed(1)}" stroke="${col}" stroke-width="2"/>` +
-          `<line x1="${(cx - cap).toFixed(1)}" x2="${(cx + cap).toFixed(1)}" y1="${py(o.lo[i]).toFixed(1)}" y2="${py(o.lo[i]).toFixed(1)}" stroke="${col}" stroke-width="2"/>` +
-          `<line x1="${(cx - cap).toFixed(1)}" x2="${(cx + cap).toFixed(1)}" y1="${py(o.hi[i]).toFixed(1)}" y2="${py(o.hi[i]).toFixed(1)}" stroke="${col}" stroke-width="2"/>`;
+        s += `<line x1="${cx.toFixed(1)}" x2="${cx.toFixed(1)}" y1="${py(o.lo[i]).toFixed(1)}" y2="${py(o.hi[i]).toFixed(1)}" stroke="${col}" stroke-width="${r2(2 * LW())}"/>` +
+          `<line x1="${(cx - cap).toFixed(1)}" x2="${(cx + cap).toFixed(1)}" y1="${py(o.lo[i]).toFixed(1)}" y2="${py(o.lo[i]).toFixed(1)}" stroke="${col}" stroke-width="${r2(2 * LW())}"/>` +
+          `<line x1="${(cx - cap).toFixed(1)}" x2="${(cx + cap).toFixed(1)}" y1="${py(o.hi[i]).toFixed(1)}" y2="${py(o.hi[i]).toFixed(1)}" stroke="${col}" stroke-width="${r2(2 * LW())}"/>`;
       }
-      s += `<circle cx="${cx.toFixed(1)}" cy="${py(m).toFixed(1)}" r="5" fill="${col}" stroke="#fff" stroke-width="1.2"/>`;
+      s += `<circle cx="${cx.toFixed(1)}" cy="${py(m).toFixed(1)}" r="${r2(5 * PS())}" fill="${col}" stroke="#fff" stroke-width="1.2"/>`;
     });
     const items = [{ name: o.note || 'Rata-rata \u00B1 selang kepercayaan 95%', color: INK, kind: 'dot' }];
     if (finite(o.grand)) items.push({ name: 'Rata-rata keseluruhan', color: ST.c2, dash: true, marker: false });
@@ -272,7 +299,7 @@
   function strip(groups, o) {
     o = o || {};
     const all = [].concat.apply([], groups.map((g) => g.vals));
-    const r = range(all, 0.08), sys = u.niceTicks(r.lo, r.hi);
+    const r = ov(range(all, 0.08), 'y'), sys = u.niceTicks(r.lo, r.hi);
     const names = groups.map((g) => g.name);
     const L = withLegend(u.layout({ title: o.title, ml: u.mlFor(sys.ticks, !!o.yLabel), mb: u.catBottom(names, !!o.xLabel), H: o.H || 380 }), true);
     const py = u.sy(L, sys), ax = u.axisCat(L, names, o.xLabel);
@@ -283,10 +310,10 @@
       sorted.forEach((v, k) => {
         const key = py(v).toFixed(0); cnt[key] = (cnt[key] || 0) + 1;
         const off = (cnt[key] % 2 ? 1 : -1) * Math.ceil((cnt[key] - 1) / 2) * 7;
-        s += `<circle cx="${(cx + Math.max(-half, Math.min(half, off))).toFixed(1)}" cy="${py(v).toFixed(1)}" r="4" fill="${col}" fill-opacity=".72" stroke="#fff" stroke-width="1"/>`;
+        s += `<circle cx="${(cx + Math.max(-half, Math.min(half, off))).toFixed(1)}" cy="${py(v).toFixed(1)}" r="${r2(4 * PS())}" fill="${col}" fill-opacity="${AL('.72')}" stroke="#fff" stroke-width="1"/>`;
       });
       const m = u.mean(g.vals);
-      s += `<line x1="${(cx - half - 4).toFixed(1)}" x2="${(cx + half + 4).toFixed(1)}" y1="${py(m).toFixed(1)}" y2="${py(m).toFixed(1)}" stroke="${INK}" stroke-width="2.4"/>`;
+      s += `<line x1="${(cx - half - 4).toFixed(1)}" x2="${(cx + half + 4).toFixed(1)}" y1="${py(m).toFixed(1)}" y2="${py(m).toFixed(1)}" stroke="${INK}" stroke-width="${r2(2.4 * LW())}"/>`;
     });
     s += legendSvg(L, [{ name: 'Nilai individual', color: SOFT, kind: 'dot' }, { name: 'Garis hitam = rata-rata kelompok', color: INK, marker: false }], 46);
     return s + '</svg>';
@@ -327,5 +354,31 @@
       (3 * z7 + 19 * z5 + 17 * z3 - 15 * z) / (384 * df * df * df);
   }
 
-  window.StatCharts = { tQuantile, line, scatter, qq, hist, bars, gbars, intervals, strip, acf, acfValues, box: (groups, o) => u.boxSvg(groups, o).svg, noData };
+  /* ---- pembungkus: menerapkan pengaturan pita (judul, label, tinggi, huruf) dan mencatat jenis grafik ---- */
+  const KIND = { last: null };
+  function scaleFont(svg) {
+    if (!ST.on || ST.fs === 1) return svg;
+    return svg.replace(/font-size="([\d.]+)"/g, (_, n) => `font-size="${(+n * ST.fs).toFixed(1)}"`);
+  }
+  function applyOv(o) {
+    o = Object.assign({}, o || {});
+    if (!ST.on) return o;
+    if (ST.title) o.title = ST.title;
+    if (ST.xl) o.xLabel = ST.xl;
+    if (ST.yl) o.yLabel = ST.yl;
+    if (ST.H) o.H = ST.H;
+    return o;
+  }
+  const wrap = (kind, fn, oi) => function () {
+    const a = Array.prototype.slice.call(arguments);
+    KIND.last = kind;
+    a[oi] = applyOv(a[oi]);
+    return scaleFont(fn.apply(null, a));
+  };
+  window.StatCharts = {
+    tQuantile, acfValues, noData, kind: KIND,
+    line: wrap('line', line, 0), scatter: wrap('scatter', scatter, 0), qq: wrap('qq', qq, 1), hist: wrap('hist', hist, 1),
+    bars: wrap('bars', bars, 0), gbars: wrap('gbars', gbars, 0), intervals: wrap('intervals', intervals, 0), strip: wrap('strip', strip, 1),
+    acf: wrap('acf', acf, 1), box: wrap('box', (groups, o) => u.boxSvg(groups, o).svg, 1),
+  };
 })();

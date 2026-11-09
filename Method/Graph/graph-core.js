@@ -31,7 +31,13 @@
   };
   const PALETTE_LABEL = { bawaan: 'Bawaan', cerah: 'Cerah', pastel: 'Pastel', laut: 'Laut (biru-hijau)', hangat: 'Hangat', mono: 'Monokrom' };
   /* ST.v === null = kisi vertikal "otomatis" (ikut bawaan tiap grafik; dipakai pita grafik pendukung Stat). */
-  const ST0 = { on: false, h: true, v: false, gc: GRID, c1: PAL[0], c2: '#BD7E1F', pal: PAL, bg: '#ffffff' };
+  /* Bidang tambahan (title...ymax) hanya dipakai pita grafik pendukung Stat; nilai null/1/true = bawaan grafik, jadi grafik lain tidak berubah.
+     title/xl/yl: null = bawaan, '' = sembunyikan, teks = ganti. legend: null/false. fs/pt/lw/bw = skala huruf/titik/garis/batang.
+     alpha: null = bawaan. vals: null = bawaan, true/false = paksa. hl = garis acuan, fit = garis regresi/acuan, curve = kurva normal, mk = penanda garis.
+     H = tinggi (px) atau null. xmin..ymax = rentang sumbu tetap atau null. */
+  const ST0 = { on: false, h: true, v: false, gc: GRID, c1: PAL[0], c2: '#BD7E1F', pal: PAL, bg: '#ffffff',
+    title: null, xl: null, yl: null, legend: null, fs: 1, pt: 1, lw: 1, bw: 1, alpha: null, vals: null,
+    hl: true, fit: true, curve: true, mk: true, H: null, xmin: null, xmax: null, ymin: null, ymax: null };
   const ST = Object.assign({}, ST0);
   const resetST = () => Object.assign(ST, ST0);
   /* Pengaturan pita per grafik: grid = garis kisi bawaan (null = tanpa kisi); c1/c2 = label pemilih warna; pal = pakai palet */
@@ -134,18 +140,22 @@
     return Math.max(46, Math.round(len * 6.6 + 16 + (hasLabel ? 18 : 0)));
   }
   function layout(o) {
-    const W = 640, H = o.H || 400;
-    const m = { l: o.ml || 56, r: o.mr || 22, t: o.title ? 46 : 22, b: o.mb || (o.xl ? 58 : 36) };
+    const W = 640, H = (ST.on && ST.H) ? ST.H : (o.H || 400);
+    const ti = ST.on && ST.title !== null && ST.title !== undefined ? ST.title : o.title;
+    const m = { l: o.ml || 56, r: o.mr || 22, t: ti ? 46 : 22, b: o.mb || (o.xl ? 58 : 36) };
     return { W, H, m, pw: W - m.l - m.r, ph: H - m.t - m.b };
   }
   const sx = (L, sc) => (v) => L.m.l + (v - sc.lo) / (sc.hi - sc.lo) * L.pw;
   const sy = (L, sc) => (v) => L.m.t + L.ph - (v - sc.lo) / (sc.hi - sc.lo) * L.ph;
 
   function head(L, title) {
+    const ti2 = ST.on && ST.title !== null && ST.title !== undefined ? ST.title : title;
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${L.W} ${L.H}" font-family="Inter, Arial, Helvetica, sans-serif"><rect width="${L.W}" height="${L.H}" fill="${ST.bg}"/>` +
-      (title ? `<text x="${L.W / 2}" y="27" text-anchor="middle" font-size="16" font-weight="700" fill="${INK}">${esc(title)}</text>` : '');
+      (ti2 ? `<text x="${L.W / 2}" y="27" text-anchor="middle" font-size="16" font-weight="700" fill="${INK}">${esc(ti2)}</text>` : '');
   }
+  const lab = (k, d) => (ST.on && ST[k] !== null && ST[k] !== undefined ? ST[k] : d);
   function gridY(L, sc, label) {
+    label = lab('yl', label);
     const py = sy(L, sc);
     let s = '';
     sc.ticks.forEach((t) => {
@@ -158,6 +168,7 @@
     return s;
   }
   function axisX(L, sc, label, vgrid, ticks) {
+    label = lab('xl', label);
     const px = sx(L, sc), yb = L.m.t + L.ph;
     let s = '';
     (ticks || sc.ticks).forEach((t) => {
@@ -182,6 +193,7 @@
   }
   /* Sumbu kategori (pita) di bawah. Mengembalikan {svg, cx(i), bw}. */
   function axisCat(L, labels, label) {
+    label = lab('xl', label);
     const n = labels.length, bw = L.pw / n, yb = L.m.t + L.ph, rot = needRot(labels);
     const maxc = rot ? 16 : Math.max(3, Math.floor(bw / 6.2));
     let s = `<line x1="${L.m.l}" y1="${yb}" x2="${L.W - L.m.r}" y2="${yb}" stroke="${AXIS}"/>`;
