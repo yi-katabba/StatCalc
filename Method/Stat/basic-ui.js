@@ -167,7 +167,8 @@
         { id: 'hasil', label: 'Hasil', groups: [{ label: 'Tab hasil', cols: 2, items: [
           { type: 'toggle', key: 'sum', label: 'Ringkasan', tab: p + '-tab-sum' },
           { type: 'toggle', key: 'stp', label: 'Langkah Perhitungan', tab: p + '-tab-steps' },
-          { type: 'toggle', key: 'int', label: 'Interpretasi', tab: p + '-tab-interp' } ] }],
+          { type: 'toggle', key: 'int', label: 'Interpretasi', tab: p + '-tab-interp' },
+          { type: 'toggle', key: 'gr', label: 'Grafik', tab: cfg.id + '-tab-gp' } ] }],
           tip: cfg.tip || 'Pengaturan pita hanya menyembunyikan atau menampilkan bagian hasil; perhitungan tidak berubah.' },
         { id: 'ekspor', label: 'Ekspor', groups: [{ label: 'Unduhan', items: [{ type: 'toggle', key: 'dl', label: 'Panel unduhan (.docx/.zip)', hide: ['.ex-panel', '.ex-bar'] }] }] },
       ],
@@ -180,6 +181,8 @@
     api.show = (r) => {
       q(p + 'SumWrap').innerHTML = r.sum; q(p + 'StepsWrap').innerHTML = stepsHTML(r.steps); q(p + 'InterpWrap').innerHTML = r.interp;
       const card = q(p + '-results-card'); card.hidden = false;
+      /* grafik yang tadinya ikut di Ringkasan dipindah ke tab Grafik */
+      if (window.StatGraphTab) window.StatGraphTab.moveFrom(q(p + 'SumWrap'), card, cfg.id);
       $$('#' + p + 'Tabs .tab-btn', section).forEach((b) => b.classList.toggle('active', b.dataset.tab === p + '-tab-sum'));
       $$('.tab-panel', card).forEach((x) => x.classList.toggle('active', x.id === p + '-tab-sum'));
       card.scrollIntoView({ behavior: 'smooth', block: 'start' });

@@ -37,7 +37,7 @@
       { id: 'grafik', label: 'Grafik & Ekspor', groups: [
         { label: 'Grafik', items: [
           { type: 'toggle', key: 'chart', label: 'Tab Grafik', tab: 'st-tab-chart' },
-          { type: 'toggle', key: 'figs', label: 'Grafik pendukung', hide: ['.ex-grid', '.ex-bar a'] },
+          { type: 'toggle', key: 'figs', label: 'Grafik pendukung', hide: ['.ex-gtab', '.ex-bar a'] },
         ] },
         { label: 'Unduhan', items: [
           { type: 'toggle', key: 'dl', label: 'Panel unduhan (.docx/.zip)', hide: ['.ex-panel', '.ex-bar'] },

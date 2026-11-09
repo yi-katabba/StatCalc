@@ -172,11 +172,12 @@
           { type: 'toggle', key: 'sum', label: 'Ringkasan', tab: 'ds-tab-sum' },
           { type: 'toggle', key: 'stp', label: 'Langkah Perhitungan', tab: 'ds-tab-steps' },
           { type: 'toggle', key: 'int', label: 'Interpretasi', tab: 'ds-tab-interp' },
+          { type: 'toggle', key: 'gr', label: 'Grafik', tab: 'deskriptif-tab-gp' },
         ] },
       ], tip: 'Pengaturan pita hanya menyembunyikan atau menampilkan bagian hasil; perhitungan tidak berubah.' },
       { id: 'grafik', label: 'Grafik & Ekspor', groups: [
         { label: 'Grafik', items: [
-          { type: 'toggle', key: 'figs', label: 'Grafik pendukung', hide: ['.ex-grid', '.ex-bar a'] },
+          { type: 'toggle', key: 'figs', label: 'Grafik pendukung', hide: ['.ex-gtab', '.ex-bar a'] },
         ] },
         { label: 'Unduhan', items: [
           { type: 'toggle', key: 'dl', label: 'Panel unduhan (.docx/.zip)', hide: ['.ex-panel', '.ex-bar'] },

@@ -9,7 +9,7 @@
      StatExport.publish({
        id: 'anova',                         // unik per metode
        title: 'ANOVA Satu Arah',            // judul dokumen
-       anchor: '#an-conclusion-card',       // panel ekspor disisipkan SETELAH elemen ini
+       anchor: '#an-conclusion-card',       // panel Ekspor (tombol .docx/.zip/Bagikan) disisipkan SETELAH elemen ini; grafik pendukung + pita masuk ke tab "Grafik" di resultsCard
        resultsCard: '#an-results-card',     // (opsional) tombol ringkas ditambahkan di sini
        meta: [['Jenis analisis', '...'], ...],        // tabel "Pengaturan analisis"
        sections: [{ heading: 'Statistik Kelompok', sel: '#anDescWrap' }, ...],  // hasil di halaman
@@ -459,8 +459,12 @@
   document.head.appendChild(style);
 
   const STORE = {};
+  /* Grafik pendukung + pita + tombol PNG/SVG/Salin ada di tab "Grafik" kartu hasil (#ex-gp-<id>); panel "Ekspor" (#ex-panel-<id>) hanya berisi tombol .docx / .zip / Bagikan */
+  const gp = (id) => document.getElementById('ex-gp-' + id);
   function status(panel, msg, bad) {
-    const p = $('.ex-status', panel);
+    if (!panel) return;
+    let p = $('.ex-status', panel);
+    if (!p) { p = document.createElement('p'); p.hidden = true; panel.insertBefore(p, panel.firstChild); }
     p.textContent = msg; p.hidden = !msg;
     p.className = 'ex-status ' + (bad ? 'error-msg' : 'imp-ok');
   }
@@ -529,7 +533,7 @@
     }
   }
   async function doFig(id, i, kind) {
-    const spec = STORE[id], ch = spec.resolved[i], panel = $('#ex-panel-' + id);
+    const spec = STORE[id], ch = spec.resolved[i], panel = gp(id);
     const nm = 'StatCalc-' + id + '-' + String(i + 1).padStart(2, '0');
     if (kind === 'svg') { saveBlob(new Blob([svgSized(ch.svg)], { type: 'image/svg+xml;charset=utf-8' }), nm + '.svg'); return; }
     if (kind === 'copy') {
@@ -552,8 +556,8 @@
   function mountRibbon(id, panel) {
     const slot = $('[data-rib-slot]', panel);
     if (!slot || !window.StatRibbon || !window.GraphCore) return;
-    if (STORE[id] && STORE[id].resolved.length && STORE[id].resolved.every((r) => r.kind === 'sem')) {   /* hanya diagram jalur SEM: diedit dari pita di tab Ringkasan, bukan di sini */
-      slot.innerHTML = '<p class="ex-status imp-ok">Diagram jalur diedit lewat pita <strong>Diagram jalur</strong> di tab Ringkasan (teks, simpul, panah, warna, tata letak, dan seret langsung di gambar). Perubahan otomatis ikut ke gambar di bawah, ke PNG/SVG, dan ke dokumen Word.</p>';
+    if (STORE[id] && STORE[id].resolved.length && STORE[id].resolved.every((r) => r.kind === 'sem')) {   /* hanya diagram jalur SEM: diedit dari pita di atas diagram (tab Grafik), bukan di sini */
+      slot.innerHTML = '<p class="ex-status imp-ok">Diagram jalur diedit lewat pita <strong>Diagram jalur</strong> di atas diagram (tab Grafik) (teks, simpul, panah, warna, tata letak, dan seret langsung di gambar). Perubahan otomatis ikut ke gambar di bawah, ke PNG/SVG, dan ke dokumen Word.</p>';
       return;
     }
     const gu = window.GraphCore.u, S = STYLE[id], spec = STORE[id];
@@ -611,7 +615,7 @@
         reset('kisi', 'Setel ulang kisi'),
       ] }, tip('kisi', '&nbsp;')),
     ];
-    window.StatRibbon.mount({ view: '#ex-panel-' + id, key: 'ex-' + id, host: slot, tabs, onChange: (e) => onRibbon(id, e), onAction: (act) => resetPart(id, act) });
+    window.StatRibbon.mount({ view: '#ex-gp-' + id, key: 'ex-' + id, host: slot, tabs, onChange: (e) => onRibbon(id, e), onAction: (act) => resetPart(id, act) });
     applyCaps(id);
     const pending = spec.resolved.filter((r) => r.kind === 'custom' && r.build && !r.build.__caps);
     if (pending.length) setTimeout(() => {                 /* uji di luar alur utama agar halaman tidak tersendat */
@@ -621,7 +625,7 @@
   }
   /* Tampilkan hanya pengaturan yang berlaku untuk grafik terpilih (atau gabungan semua grafik bila "Semua grafik") */
   function applyCaps(id) {
-    const panel = $('#ex-panel-' + id), S = STYLE[id], spec = STORE[id];
+    const panel = gp(id), S = STYLE[id], spec = STORE[id];
     if (!panel || !spec) return;
     const all = S.target === 'all';
     const sel = all ? spec.resolved : [resolvedAt(spec, S.target)].filter(Boolean);
@@ -650,7 +654,7 @@
     const names = Array.from(new Set(sel.map((r) => KIND_LABEL[r.kind]).filter(Boolean)));
     let msg;
     if (sel.some((r) => r.kind === 'custom' && r.build && !r.build.__caps)) msg = 'Memeriksa pengaturan yang berlaku untuk grafik ini&hellip;';
-    else if (sel.length && sel.every((r) => r.kind === 'sem')) msg = 'Diagram jalur diedit lewat pita <strong>Diagram jalur</strong> di tab Ringkasan (di atas diagram); perubahan di sana otomatis ikut ke gambar ini.';
+    else if (sel.length && sel.every((r) => r.kind === 'sem')) msg = 'Diagram jalur diedit lewat pita <strong>Diagram jalur</strong> di tab Grafik (di atas diagram); perubahan di sana otomatis ikut ke gambar ini.';
     else if (!sel.length || !names.length) msg = 'Grafik ini sudah berbentuk gambar jadi, sehingga pengaturannya tidak dapat diubah dari pita.';
     else if (all) msg = 'Menampilkan pengaturan yang dipakai oleh grafik-grafik di bawah (' + names.join(', ') + '). Judul, label, dan rentang sumbu hanya muncul bila satu grafik dipilih di &ldquo;Terapkan ke&rdquo;.';
     else msg = 'Jenis grafik: <strong>' + names[0] + '</strong>. Pengaturan yang tidak berlaku untuk jenis ini disembunyikan. Kosongkan kolom teks/angka untuk kembali ke bawaan grafik.';
@@ -702,7 +706,7 @@
     }, 40);
   }
   function redraw(id) {
-    const spec = STORE[id], panel = $('#ex-panel-' + id);
+    const spec = STORE[id], panel = gp(id);
     if (!spec || !panel) return;
     spec.resolved = resolveCharts(spec.charts, id);
     const holders = $$('.ex-fig .ex-chart', panel);
@@ -751,46 +755,80 @@
       anchor.parentNode.insertBefore(panel, anchor.nextSibling);
     }
     const dyn = $('.ex-dyn', panel);
-    const figs = spec.resolved.map((c, i) => `
-      <figure class="ex-fig">
-        <div class="ex-chart">${c.svg}</div>
-        <figcaption><strong>${X(c.title)}</strong>${c.caption ? X(c.caption) : ''}</figcaption>
-        <div class="control-row ib-row">
-          ${window.StatIconBtn('png', 'Unduh PNG', `data-ex="png" data-i="${i}"`)}
-          ${window.StatIconBtn('svg', 'Unduh SVG', `data-ex="svg" data-i="${i}"`)}
-          ${window.StatIconBtn('copy', 'Salin gambar', `data-ex="copy" data-i="${i}"`)}
-        </div>
-      </figure>`).join('');
+    const rc = spec.resultsCard ? $(spec.resultsCard) : null;
+    const semOnly = spec.resolved.length && spec.resolved.every((r) => r.kind === 'sem');
+    /* Panel "Ekspor": hanya tombol unduh hasil (.docx), arsip grafik (.zip), dan Bagikan */
     panel.hidden = false;
     dyn.innerHTML = `
       <div class="step-tag">Ekspor</div>
-      <h2>Grafik Pendukung &amp; Unduh Hasil</h2>
-      <p class="hint">Grafik dibuat dari data yang baru dihitung. Unduh tiap grafik sebagai PNG/SVG, atau unduh <strong>seluruh hasil</strong> (pengaturan, tabel, uji, kesimpulan, grafik, dan data input) dalam satu dokumen Word.</p>
+      <h2>Unduh Hasil</h2>
+      <p class="hint">Unduh <strong>seluruh hasil</strong> (pengaturan, tabel, uji, kesimpulan, grafik, dan data input) dalam satu dokumen Word${spec.resolved.length ? ', atau semua grafik pendukung dalam satu arsip ZIP. Grafik dan pengaturannya ada di tab <strong>Grafik</strong> pada hasil perhitungan.' : '.'}</p>
       <div class="control-row ib-row ex-main-btns">
         ${window.StatIconBtn('docx', 'Unduh Hasil (.docx)', `data-ex="docx" data-ex-id="${id}"`, 'btn-primary')}
         ${spec.resolved.length ? window.StatIconBtn('zip', 'Unduh semua grafik (.zip)', 'data-ex="zip"') : ''}
         ${window.StatIconBtn('share', 'Bagikan', 'data-ex="share"')}
       </div>
-      <p class="ex-status" hidden></p>
-      ${spec.resolved.length ? '<div class="ex-rib" data-rib-slot></div>' : ''}
-      ${spec.resolved.length ? `<div class="ex-grid">${figs}</div>` : ''}`;
-    mountRibbon(id, panel);
+      <p class="ex-status" hidden></p>`;
+
+    /* Grafik pendukung + pita + unduhan per grafik: di tab "Grafik" kartu hasil (dibuat bila belum ada) */
+    const old = gp(id);
+    if (!spec.resolved.length) { if (old) old.remove(); }
+    else {
+      const GT = window.StatGraphTab;
+      const host = GT && rc ? GT.gtab(rc, id) : null;
+      if (host) {
+        const figs = spec.resolved.map((c, i) => `
+          <figure class="ex-fig">
+            <div class="ex-chart${semOnly ? ' ex-chart-off' : ''}">${c.svg}</div>
+            <figcaption><strong>${X(c.title)}</strong>${c.caption ? X(c.caption) : ''}</figcaption>
+            <div class="control-row ib-row">
+              ${window.StatIconBtn('png', 'Unduh PNG', `data-ex="png" data-i="${i}"`)}
+              ${window.StatIconBtn('svg', 'Unduh SVG', `data-ex="svg" data-i="${i}"`)}
+              ${window.StatIconBtn('copy', 'Salin gambar', `data-ex="copy" data-i="${i}"`)}
+            </div>
+          </figure>`).join('');
+        host.innerHTML = `
+          <h3 class="ex-gt-h">${semOnly ? 'Unduh diagram jalur' : 'Grafik pendukung'}</h3>
+          <p class="ex-gt-note">${semOnly ? 'Diagram di atas dapat diunduh sebagai PNG/SVG atau disalin sebagai gambar.' : 'Grafik dibuat dari data yang baru dihitung. Unduh tiap grafik sebagai PNG/SVG, atau semuanya sekaligus lewat panel Ekspor.'}</p>
+          <p class="ex-status" hidden></p>
+          ${semOnly ? '' : '<div class="ex-rib" data-rib-slot></div>'}
+          <div class="ex-grid">${figs}</div>`;
+        if (!host.__exBound) {
+          host.__exBound = true;
+          host.addEventListener('click', (e) => {
+            const b = e.target.closest('[data-ex]');
+            if (!b) return;
+            const k = b.dataset.ex;
+            if (k === 'png' || k === 'svg' || k === 'copy') doFig(id, +b.dataset.i, k);
+          });
+        }
+        mountRibbon(id, host);
+      } else console.warn('StatExport: tab Grafik tidak dapat dibuat untuk', id);
+    }
 
     /* tombol ringkas di kartu hasil */
-    const rc = spec.resultsCard ? $(spec.resultsCard) : null;
     if (rc && !rc.querySelector('.ex-bar')) {
       const bar = document.createElement('div');
       bar.className = 'ex-bar';
-      bar.innerHTML = `<span class="ib-row ex-bar-btns">${window.StatIconBtn('docx', 'Unduh hasil (.docx)', 'data-ex-bar="docx"')}${window.StatIconBtn('share', 'Bagikan', 'data-ex-bar="share"')}</span><a href="#ex-panel-${id}" data-ex-go="1">Lihat grafik pendukung &darr;</a>`;
+      bar.innerHTML = `<span class="ib-row ex-bar-btns">${window.StatIconBtn('docx', 'Unduh hasil (.docx)', 'data-ex-bar="docx"')}${window.StatIconBtn('share', 'Bagikan', 'data-ex-bar="share"')}</span><a href="#ex-gp-${id}" data-ex-go="1">Lihat grafik pendukung &rarr;</a>`;
       const h2 = rc.querySelector('h2');
       (h2 && h2.nextSibling ? h2.parentNode : rc).insertBefore(bar, h2 ? h2.nextSibling : rc.firstChild);
       bar.addEventListener('click', (e) => {
         if (e.target.closest('[data-ex-bar="docx"]')) doDocx(id);
         if (e.target.closest('[data-ex-bar="share"]')) doShare(id);
         const g = e.target.closest('[data-ex-go]');
-        if (g) { e.preventDefault(); const p = $('#ex-panel-' + id); if (p && p.scrollIntoView) p.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+        if (g) {                                           /* buka tab Grafik, lalu gulir ke grafik pendukung */
+          e.preventDefault();
+          const t = window.StatGraphTab && window.StatGraphTab.ensure(rc, id);
+          if (t) t.btn.click();
+          const target = gp(id) || (t && t.pane) || rc;
+          if (target.scrollIntoView) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
       });
     }
+    /* tanpa grafik pendukung, tautan ke tab Grafik tidak berguna */
+    const goLink = rc && rc.querySelector('.ex-bar a[data-ex-go]');
+    if (goLink) goLink.hidden = !spec.resolved.length;
   }
 
   /* Bantu modul: bangun daftar grafik dengan penanganan galat per grafik */

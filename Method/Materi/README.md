@@ -5,6 +5,7 @@ Menu utama **Materi** (penjelasan konsep + rumus LaTeX untuk metode di menu Stat
 ## Struktur
 - `materi.js` - mesin halaman (daftar, pencarian, halaman baca, tautan "Lihat materi untuk pemahaman").
 - `materi-nav.js` - daftar semua topik + sub-bagian di kiri halaman baca (desktop) dan indikator "Bagian k dari N · m menit baca" (judul, bilah status, bilah atas ponsel). Menit baca dihitung dari teks yang tampil (180 kata/menit).
+- `materi-sisi.js` - panel samping halaman baca bisa **diciutkan** (tombol ‹ / › di bilah panel; kiri = Daftar materi ≥ 1024 px, kanan = Coba di Dataset ≥ 1360 px). Pilihan disimpan di `localStorage` (`statcalc.materi.side`). Lebar panel bisa **digeser** lewat garis pemisah (`kolom-geser.js`, entri `#view-materi-detail .mt-wrap`: kiri `.mt-tree`, kanan `.mt-try`); klik dua kali pada pemisah = lebar default.
 - `data/*.js` - isi materi, satu file per topik.
 - `katex/` - KaTeX 0.16.11 lokal (tanpa internet), lisensi MIT.
 

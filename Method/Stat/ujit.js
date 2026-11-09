@@ -105,6 +105,7 @@
           { type: 'toggle', key: 'sum', label: 'Ringkasan', tab: 'ut-tab-sum' },
           { type: 'toggle', key: 'stp', label: 'Langkah Perhitungan', tab: 'ut-tab-steps' },
           { type: 'toggle', key: 'int', label: 'Interpretasi', tab: 'ut-tab-interp' },
+          { type: 'toggle', key: 'gr', label: 'Grafik', tab: 'uji-t-tab-gp' },
         ] },
       ], tip: 'Pengaturan pita hanya menyembunyikan atau menampilkan bagian hasil; perhitungan tidak berubah.' },
       { id: 'ekspor', label: 'Ekspor', groups: [

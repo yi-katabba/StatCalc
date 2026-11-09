@@ -27,12 +27,13 @@ let fails = 0; const chk = (n, ok, i) => { if (!ok) fails++; console.log((ok ? '
   chk('PLS: progress menampilkan fase bootstrap', seen.has('Bootstrap'), lastTxt);
   chk('PLS: tombol Hitung dinonaktifkan selama berjalan', calcDisabled === true);
   chk('PLS: halaman tetap responsif (jeda event-loop terpanjang < 300 ms)', maxGap < 300, Math.round(maxGap) + ' ms dari ' + gaps.length + ' tik');
-  await pg.waitForSelector('#sxSumWrap svg[role=img]', { timeout: 30000 });
-  chk('PLS: diagram jalur tampil di hasil', true);
+  await pg.waitForSelector('#sx-tab-gp svg[role=img], #sxDiagSvg svg[role=img]', { state: 'attached', timeout: 30000 });
+  chk('PLS: diagram jalur tampil di tab Grafik', await pg.evaluate(() => !!document.querySelector('#sx-results-card .tab-panel #sxDiagSvg svg') && !document.querySelector('#sxSumWrap #sxDiagSvg')));
+  await pg.click('#sx-results-card .tab-btn:has-text("Grafik")');
   chk('PLS: tombol Hitung aktif lagi', await pg.evaluate(() => !document.getElementById('sxCalc').disabled));
   const dl = async (sel) => { const [d] = await Promise.all([pg.waitForEvent('download', { timeout: 15000 }), pg.click(sel)]); const f = OUT + '/' + d.suggestedFilename(); await d.saveAs(f); return f; };
-  await pg.waitForSelector('#ex-panel-sem .ex-fig', { timeout: 10000 });
-  const svgF = await dl('#ex-panel-sem [data-ex="svg"]'), pngF = await dl('#ex-panel-sem [data-ex="png"]');
+  await pg.waitForSelector('#ex-gp-sem .ex-fig', { timeout: 10000 });
+  const svgF = await dl('#ex-gp-sem [data-ex="svg"]'), pngF = await dl('#ex-gp-sem [data-ex="png"]');
   const svg = fs.readFileSync(svgF, 'utf8');
   chk('SVG: mandiri (xmlns, tanpa var(--), ada legenda)', /xmlns="http:\/\/www.w3.org\/2000\/svg"/.test(svg) && !/var\(--/.test(svg) && /Elips = konstruk laten/.test(svg), svgF.split('/').pop() + ' ' + svg.length + ' B');
   chk('SVG: ada latar putih & panah', /<rect width="\d+" height="\d+" fill="#fff"\/>/.test(svg) && /marker-end/.test(svg));
@@ -51,7 +52,7 @@ let fails = 0; const chk = (n, ok, i) => { if (!ok) fails++; console.log((ok ? '
   await run('cb', { sxBootCB: '200' }); await pg.click('#sxCalc');
   await pg.waitForFunction(() => !document.getElementById('sxCalc').disabled && /Bootstrap: koefisien jalur/.test(document.getElementById('sxSumWrap').textContent), null, { timeout: 60000 });
   chk('CB: bootstrap selesai & tabel bootstrap tampil', true);
-  const svgC = fs.readFileSync(await dl('#ex-panel-sem [data-ex="svg"]'), 'utf8'); chk('CB: SVG diagram terunduh, loading & β terstandar', /koefisien terstandar/.test(svgC) && (svgC.match(/<line /g) || []).length >= 9, (svgC.match(/<line /g) || []).length + ' garis');
+  const svgC = fs.readFileSync(await dl('#ex-gp-sem [data-ex="svg"]'), 'utf8'); chk('CB: SVG diagram terunduh, loading & β terstandar', /koefisien terstandar/.test(svgC) && (svgC.match(/<line /g) || []).length >= 9, (svgC.match(/<line /g) || []).length + ' garis');
   fs.writeFileSync(OUT + '/diagram-cb.svg', svgC);
   await run('cb', { sxBootCB: '2000' }); await pg.click('#sxCalc'); await pg.waitForSelector('.sem-cancel', { state: 'visible' }); await pg.waitForTimeout(400); await pg.click('.sem-cancel');
   await pg.waitForFunction(() => !document.getElementById('sxCalc').disabled, null, { timeout: 15000 });

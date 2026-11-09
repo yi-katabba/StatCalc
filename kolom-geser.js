@@ -25,7 +25,7 @@
     { sel: '#view-metode-calc > .chapter-inner', left: '.sc-vars', right: '.sc-res, .sg-below' },
     { sel: '.chapter-inner:has(.gr-chart)', left: '[id$="data-card"]', right: '.rb-main', maxPct: 0.5 },
     { sel: '.chapter-inner:has(> .st-side)', left: '.st-side', maxPct: 0.5 },
-    { sel: '#view-materi-detail .mt-wrap', left: '.mt-toc', right: '.mt-try' },
+    { sel: '#view-materi-detail .mt-wrap', left: '.mt-tree', right: '.mt-try' },
     { sel: '#view-home .hm', right: '.hm-side' },
     { sel: '#view-profil > .chapter-inner', left: '.pf-menu' }
   ];
@@ -133,6 +133,7 @@
     var height = c.clientHeight - top - pb;
     function place(side, k) {
       var g = st.grips[side] || (st.grips[side] = mkGrip(st, side));
+      if (g.parentNode !== c) c.appendChild(g); /* halaman yang menulis ulang isinya (Materi) membuang pegangan */
       if (k < 0 || height < 60) { g.style.display = 'none'; return; }
       var x = pl, j; for (j = 0; j <= k; j++) x += arr[j]; x += k * gap + gap / 2;
       g.style.display = ''; g.style.left = x + 'px'; g.style.top = top + 'px'; g.style.height = height + 'px';

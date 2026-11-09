@@ -21,9 +21,9 @@ let fails = 0; const chk = (n, ok, i) => { if (!ok) fails++; console.log((ok ? '
   await pg.screenshot({ path: OUT + '/help.png', clip: { x: 0, y: 150, width: 1280, height: 850 } });
   /* ---- B. hitung CB-SEM lalu edit diagram ---- */
   await pg.click('#sxSample'); await pg.selectOption('#sxEst', 'cb'); await pg.evaluate(() => document.getElementById('sxEst').dispatchEvent(new Event('change')));
-  await pg.click('#sxCalc'); await pg.waitForSelector('#sxDiagSvg svg', { timeout: 20000 }); await pg.waitForSelector('#sxDiagRib .rb-main'); await pg.waitForSelector('#ex-panel-sem .ex-fig');
+  await pg.click('#sxCalc'); await pg.waitForSelector('#sxDiagSvg svg', { state: 'attached', timeout: 20000 }); await pg.click('#sx-results-card .tab-btn:has-text("Grafik")');  /* diagram jalur kini di tab Grafik */ await pg.waitForSelector('#sxDiagSvg svg', { timeout: 5000 }); await pg.waitForSelector('#sxDiagRib .rb-main'); await pg.waitForSelector('#ex-gp-sem .ex-fig');
   chk('Pita diagram tampil dengan 5 tab', (await pg.$$('#sxDiagRib .rb-tab')).length === 5, (await pg.$$eval('#sxDiagRib .rb-tab', (e) => e.map((x) => x.textContent))).join(','));
-  const lines0 = await pg.$$eval('#sxDiagSvg line:not([data-edge])', (e) => e.length), exp = () => pg.$eval('#ex-panel-sem .ex-fig .ex-chart', (e) => e.innerHTML);
+  const lines0 = await pg.$$eval('#sxDiagSvg line:not([data-edge])', (e) => e.length), exp = () => pg.$eval('#ex-gp-sem .ex-fig .ex-chart', (e) => e.innerHTML);
   const set = async (id, v) => { await pg.fill('#sxd-' + id, v); await pg.waitForTimeout(150); };
   /* tab Teks: judul + angka desimal */
   await pg.click('#sxDiagRib .rb-tab[data-rbtab="teks"]'); await set('g_title', 'Model Kepuasan Pelanggan');
@@ -63,15 +63,15 @@ let fails = 0; const chk = (n, ok, i) => { if (!ok) fails++; console.log((ok ? '
   chk('Panel unduhan: diagram ikut berubah (judul, warna, nama baru)', /Model Kepuasan Pelanggan/.test(ex) && /#ffd54f/.test(ex) && /#2e7d32/.test(ex) && />Layanan</.test(ex));
   chk('Panel unduhan: tanpa penanda seret', !/data-node|data-edge|data-elab/.test(ex));
   const dl = async (sel) => { const [d] = await Promise.all([pg.waitForEvent('download', { timeout: 15000 }), pg.click(sel)]); const f = OUT + '/' + d.suggestedFilename(); await d.saveAs(f); return f; };
-  const svgF = await dl('#ex-panel-sem [data-ex="svg"]'), svg = fs.readFileSync(svgF, 'utf8');
+  const svgF = await dl('#ex-gp-sem [data-ex="svg"]'), svg = fs.readFileSync(svgF, 'utf8');
   chk('SVG unduhan memuat hasil edit & legenda', /Model Kepuasan Pelanggan/.test(svg) && /Elips = konstruk laten/.test(svg) && !/var\(--/.test(svg));
-  const pngF = await dl('#ex-panel-sem [data-ex="png"]'); chk('PNG unduhan valid', fs.readFileSync(pngF).slice(0, 4).toString('hex') === '89504e47');
+  const pngF = await dl('#ex-gp-sem [data-ex="png"]'); chk('PNG unduhan valid', fs.readFileSync(pngF).slice(0, 4).toString('hex') === '89504e47');
   const docF = await dl('#ex-panel-sem [data-ex="docx"]'); const docx = fs.readFileSync(docF).toString('latin1');
   chk('.docx tidak memuat teks pita (Sembunyikan simpul / Setel ulang)', !/Sembunyikan simpul|Setel ulang|Terapkan ke/.test(docx));
   chk('.docx terbentuk', fs.statSync(docF).size > 5000, fs.statSync(docF).size + ' B');
   await pg.evaluate(() => document.getElementById('sxDiag').scrollIntoView()); await pg.waitForTimeout(200); await pg.screenshot({ path: OUT + '/edit.png' });
   /* hitung ulang: pengaturan bertahan, pita dibuat ulang tanpa ganda */
-  await pg.click('#sxCalc'); await pg.waitForSelector('#sxDiagRib .rb-main', { timeout: 20000 }); await pg.waitForTimeout(400);
+  await pg.click('#sxCalc'); await pg.waitForSelector('#sxDiagRib .rb-main', { state: 'attached', timeout: 20000 }); await pg.click('#sx-results-card .tab-btn:has-text("Grafik")'); await pg.waitForTimeout(400);
   chk('Hitung ulang: satu pita saja & judul bertahan', (await pg.$$('#sxDiagRib .rb-main')).length === 1 && /Model Kepuasan Pelanggan/.test(await pg.$eval('#sxDiagSvg', (e) => e.innerHTML)));
   /* setel ulang semua */
   await pg.click('#sxDiagRib .rb-tab[data-rbtab="tata"]'); await pg.click('#sxDiagRib [data-rb-act="rst-all"]'); await pg.waitForTimeout(300);

@@ -175,6 +175,8 @@
   /* Hapus id biasa (hindari id ganda); id di dalam SVG diberi akhiran agar rujukan url(#id) tetap benar */
   function htmlOf(node) {
     var c = node.cloneNode(true), ids = [];
+    /* bagian interaktif grafik pendukung (pita pengaturan, tombol PNG/SVG/Salin, status) tidak berfungsi di salinan: dibuang, gambarnya tetap */
+    $$('.ex-rib, .ex-fig .control-row, .ex-status, .ex-gt-note', c).forEach(function (n) { n.remove(); });
     /* kanvas tidak ikut tersalin: ganti dengan gambar dari isi kanvas asal */
     var src = $$('canvas', node), dst = $$('canvas', c);
     dst.forEach(function (cv, i) {

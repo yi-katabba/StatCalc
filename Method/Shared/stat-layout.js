@@ -73,7 +73,7 @@
     sbtn.addEventListener('click', function (e) { e.stopPropagation(); setCollapsed(!collapsed); });
     /* rel yang diciutkan bisa diklik di mana saja untuk membuka */
     sideBox.addEventListener('click', function (e) { if (wide() && collapsed && !e.target.closest('.stx-btn')) setCollapsed(false); });
-    /* semua elemen setelah kartu hasil pertama (mis. panel Grafik Pendukung) ikut ke bagian utama */
+    /* semua elemen setelah kartu hasil pertama (mis. panel Ekspor) ikut ke bagian utama */
     var n = main[0];
     while (n) { var nx = n.nextElementSibling; if (n !== mainBox && !n.classList.contains('st-side')) mainBox.appendChild(n); n = nx; }
 

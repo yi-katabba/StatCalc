@@ -90,6 +90,7 @@
           { type: 'toggle', key: 'sum', label: 'Ringkasan', tab: 'kr-tab-sum' },
           { type: 'toggle', key: 'stp', label: 'Langkah Perhitungan', tab: 'kr-tab-steps' },
           { type: 'toggle', key: 'int', label: 'Interpretasi', tab: 'kr-tab-interp' },
+          { type: 'toggle', key: 'gr', label: 'Grafik', tab: 'korelasi-tab-gp' },
         ] },
       ], tip: 'Pengaturan pita hanya menyembunyikan atau menampilkan bagian hasil; perhitungan tidak berubah. Untuk melihat bentuk hubungan, buka Scatter Plot, Matrix Plot, atau Heatmap Korelasi di menu Graph.' },
       { id: 'ekspor', label: 'Ekspor', groups: [
