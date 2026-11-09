@@ -190,7 +190,7 @@
         const SE = window.StatExport; if (!SE) return;
         SE.publish({ id: cfg.id, title: cfg.title, anchor: '#' + p + '-results-card', resultsCard: '#' + p + '-results-card', meta: o.meta,
           sections: [{ heading: 'Ringkasan', sel: '#' + p + 'SumWrap' }, { heading: 'Langkah Perhitungan', sel: '#' + p + 'StepsWrap' }, { heading: 'Interpretasi', sel: '#' + p + 'InterpWrap' }],
-          data: o.data || undefined, charts: [] });
+          data: o.data || undefined, charts: o.charts || [] });
       } catch (e) { /* ekspor opsional */ }
     };
     q(p + 'Tabs').addEventListener('click', (e) => {
