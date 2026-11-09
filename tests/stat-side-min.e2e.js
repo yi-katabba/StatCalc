@@ -1,0 +1,30 @@
+/* Uji sidebar kiri halaman Stat bisa diciutkan. Jalankan: node tests/stat-side-min.e2e.js (butuh playwright) */
+const { chromium } = require('playwright'); const fs = require('fs'); const P = require('path').resolve(__dirname, '..'), OUT = require('os').tmpdir() + '/stat-side';
+fs.mkdirSync(OUT, { recursive: true }); let fails = 0; const chk = (n, ok, i) => { if (!ok) fails++; console.log((ok ? 'OK    ' : 'GAGAL ') + n + (i !== undefined ? '   ' + i : '')); };
+(async () => {
+  const b = await chromium.launch(), pg = await (await b.newContext({ viewport: { width: 1400, height: 900 } })).newPage(); const errs = []; pg.on('pageerror', (e) => errs.push(e.message));
+  await pg.goto('file://' + P + '/index.html'); await pg.waitForTimeout(500);
+  const show = (id) => pg.evaluate((i) => { document.body.classList.remove('pre-auth'); document.querySelectorAll('.view').forEach((v) => v.classList.remove('active')); document.getElementById('view-' + i).classList.add('active'); window.dispatchEvent(new Event('resize')); }, id);
+  const W = (sel) => pg.$eval(sel, (e) => Math.round(e.getBoundingClientRect().width));
+  await show('sem'); await pg.waitForTimeout(300);
+  const w0 = await W('#view-sem .st-side'), m0 = await W('#view-sem .st-main');
+  chk('Tombol ciutkan ada di sidebar', await pg.$('#view-sem .st-side > .stx-bar .stx-btn') !== null, 'lebar sidebar ' + w0);
+  await pg.click('#view-sem .stx-btn'); await pg.waitForTimeout(300);
+  const w1 = await W('#view-sem .st-side'), m1 = await W('#view-sem .st-main');
+  chk('Sidebar menjadi rel sempit (44 px)', w1 >= 40 && w1 <= 48, w1 + ' px');
+  chk('Bagian hasil melebar mengisi ruang', m1 > m0 + 250, m0 + ' → ' + m1);
+  chk('Isi sidebar tersembunyi, hanya bilah tampil', await pg.$eval('#view-sem .st-side > .card', (e) => e.offsetParent === null) && await pg.$eval('#view-sem .stx-bar', (e) => e.offsetParent !== null));
+  await pg.screenshot({ path: OUT + '/min.png' });
+  await show('regresi'); await pg.waitForTimeout(300);
+  chk('Pilihan berlaku di halaman Stat lain (Regresi ikut ciut)', (await W('#view-regresi .st-side')) <= 48);
+  await pg.click('#view-regresi .st-side'); await pg.waitForTimeout(300);
+  chk('Klik rel membuka lagi dengan lebar semula', Math.abs((await W('#view-regresi .st-side')) - w0) < 30, (await W('#view-regresi .st-side')) + ' px');
+  await show('sem'); await pg.waitForTimeout(200);
+  chk('Halaman SEM ikut terbuka', (await W('#view-sem .st-side')) > 300);
+  await pg.reload(); await pg.waitForTimeout(500); await show('sem'); await pg.click('#view-sem .stx-btn'); await pg.reload(); await pg.waitForTimeout(500); await show('sem'); await pg.waitForTimeout(300);
+  chk('Pilihan ciut tersimpan setelah muat ulang', (await W('#view-sem .st-side')) <= 48);
+  await pg.click('#view-sem .stx-btn'); await pg.waitForTimeout(200);
+  await pg.setViewportSize({ width: 900, height: 900 }); await pg.waitForTimeout(300);
+  chk('Layar < 1100 px: bilah ciutkan tidak tampil', await pg.$eval('#view-sem .stx-bar', (e) => e.offsetParent === null));
+  chk('Tidak ada galat JS', errs.length === 0, errs.join('|').slice(0, 200)); await b.close(); console.log(fails ? fails + ' gagal' : 'Semua uji lulus'); process.exit(fails ? 1 : 0);
+})().catch((e) => { console.error(e); process.exit(2); });
