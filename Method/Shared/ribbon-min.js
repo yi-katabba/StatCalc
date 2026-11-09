@@ -1,5 +1,5 @@
 /* =========================================================================
-   RIBBON-MIN.JS - Tombol panah (v) di pojok kanan bawah pita untuk memperkecil / memperbesar
+   RIBBON-MIN.JS - Tombol panah di pojok kanan bawah pita: ^ saat pita terbuka (perkecil), v saat diciutkan (perbesar)
    -------------------------------------------------------------------------
    Berlaku untuk pita Dataset (.sc-ribbon) dan pita halaman Stat (.rb-main).
    Saat diperkecil hanya baris tab yang tersisa. Klik tab saat diperkecil
@@ -17,8 +17,8 @@
     '.rb-minable{position:relative;}' +
     '.rb-min-btn{position:absolute;right:8px;bottom:6px;z-index:5;width:28px;height:28px;min-height:0;padding:0;display:flex;align-items:center;justify-content:center;border:1px solid var(--rule-strong,#C5CDD6);border-radius:8px;background:#fff;cursor:pointer;}' +
     '.rb-min-btn:hover{background:var(--accent-soft,#E3ECF7);}' +
-    '.rb-min-btn::before{content:"";display:block;width:8px;height:8px;margin-top:-3px;border-right:2px solid var(--accent,#1F3A57);border-bottom:2px solid var(--accent,#1F3A57);transform:rotate(45deg);transition:transform .15s ease;}' +
-    '.rb-minable.rb-min .rb-min-btn::before{margin-top:3px;transform:rotate(-135deg);}' +
+    '.rb-min-btn::before{content:"";display:block;width:8px;height:8px;margin-top:3px;border-right:2px solid var(--accent,#1F3A57);border-bottom:2px solid var(--accent,#1F3A57);transform:rotate(-135deg);transition:transform .15s ease;}' +
+    '.rb-minable.rb-min .rb-min-btn::before{margin-top:-3px;transform:rotate(45deg);}' +
     '.rb-minable.rb-min .sc-rpanel,.rb-minable.rb-min .rb-panel{display:none !important;}' +
     '.rb-minable.rb-min .sc-tabs,.rb-minable.rb-min .rb-tabs{border-bottom:0;}' +
     '.rb-minable .sc-tabs,.rb-minable .rb-tabs{padding-right:44px;}' +
