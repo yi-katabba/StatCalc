@@ -23,15 +23,13 @@
   var esc = function (s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
   var SKIP_IN = '.rb-main, .ex-fig, .ex-rib, #sxDiag, .ne-bar, button, label, .ib, .tabs, table, .stx-bar, .hlp-btn, .sr-body, .sc-res, nav, .gr-view, .rs-rot';
   var ROOTS = '.st-main, [id$="results-card"]';
-  var uid = 0, CACHE = {}, STATES = [];
+  var uid = 0, CACHE = {};
 
   var css = document.createElement('style');
   css.textContent =
     '.ne-unit{display:block;}' +
     '.ne-bar{margin:14px 0 6px;border:1px solid var(--rule);border-radius:var(--radius,10px);background:var(--accent-soft);overflow:hidden;}' +
     '.ne-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:8px 12px;}' +
-    '.ne-head .ib-row{flex:0 0 auto;}' +
-    '.ne-head .ib{flex:0 0 auto !important;width:44px !important;min-width:44px;}' +
     '.ne-tog{margin-left:auto;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border:1px solid var(--rule-strong);border-radius:10px;background:#fff;color:var(--accent);font:700 13.5px var(--font-body,system-ui,sans-serif);cursor:pointer;}' +
     '.ne-tog:hover{background:var(--paper-2);}' +
     '.ne-tog svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}' +
@@ -39,7 +37,12 @@
     '.ne-edit{border-top:1px solid var(--rule);background:#fff;}' +
     '.ne-edit[hidden]{display:none;}' +
     '.ne-edit .rb-main{box-shadow:none;border:0;border-radius:0;margin:0;}' +
-    '.ne-msg{margin:0;padding:0 14px 8px;font-size:13px;}' +
+    '.ne-dl{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:4px 0 16px;}' +
+    '.ne-dl .ib{flex:0 0 auto !important;width:44px !important;min-width:44px;}' +
+    '.ne-ttl{font-weight:700;font-size:14px;color:var(--ink);}' +
+    '.ne-tgt{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--ink-soft);}.ne-tgt[hidden]{display:none;}' +
+    '.ne-tgt select{height:40px;max-width:260px;font-size:13.5px;padding:0 8px;}' +
+    '.ne-msg{margin:0;font-size:13px;}' +
     '.ne-msg[hidden]{display:none;}';
   document.head.appendChild(css);
 
@@ -251,7 +254,7 @@
   }
   function slug(s) { return String(s || 'grafik').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'grafik'; }
   function msg(S, text, bad) {
-    var p = S.bar.querySelector('.ne-msg'); if (!p) return;
+    var p = S.dl.querySelector('.ne-msg'); if (!p) return;
     p.textContent = text; p.hidden = !text; p.className = 'ne-msg ' + (bad ? 'error-msg' : 'imp-ok');
     clearTimeout(S.mt); if (text) S.mt = setTimeout(function () { p.hidden = true; }, 5000);
   }
@@ -270,91 +273,143 @@
   /* ------------------------------ pita ------------------------------ */
   var CARET = '<svg class="ne-car" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
   var PEN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>';
-  var sid = function (S, k) { return 'ne' + S.id + '-' + k; };
-  function mountRibbon(S) {
-    var gu = window.GraphCore && window.GraphCore.u, I = S.info, st = S.st;
-    var T = function (k, label, ph) { return { type: 'text', id: sid(S, k), label: label, placeholder: ph || 'Bawaan grafik', def: st[k] }; };
-    var R = function (k, label, min, max, step) { return { type: 'range', id: sid(S, k), label: label, min: min, max: max, step: step, def: st[k], unit: '%' }; };
-    var Sel = function (k, label, options) { return { type: 'select', id: sid(S, k), label: label, options: options, selected: String(st[k]) }; };
-    var reset = function (act) { return { label: 'Setel ulang', cols: 1, items: [{ type: 'button', act: act, icon: 'reset', label: 'Setel ulang' }] }; };
-    var tabs = [];
-    tabs.push({ id: 'teks', label: 'Teks', groups: [
-      { label: 'Judul & label', cols: 1, items: [T('title', 'Judul grafik'), T('xl', 'Label sumbu X'), T('yl', 'Label sumbu Y')] },
-      { label: 'Huruf', cols: 1, items: [R('fs', 'Ukuran huruf', 70, 160, 5)] },
-      reset('teks')], tip: 'Kosongkan kolom teks untuk kembali ke bawaan grafik. Label sumbu hanya berubah bila grafik memilikinya.' });
-    var warna = [
-      { label: 'Warna data', cols: 1, items: [{ type: 'color', id: sid(S, 'c1'), label: 'Warna utama', def: st.c1 }, { type: 'color', id: sid(S, 'c2'), label: 'Warna kedua', def: st.c2 }] },
-      { label: 'Palet warna', cols: 1, items: [gu ? Sel('pal', 'Palet (urut menurut pemakaian)', Object.keys(gu.PALETTES).map(function (k) { return [k, gu.PALETTE_LABEL[k]]; })) : { type: 'check', id: sid(S, 'nopal'), label: 'Palet', def: false }] },
-      { label: 'Latar', cols: 1, items: [{ type: 'color', id: sid(S, 'bg'), label: 'Warna latar grafik', def: st.bg }] },
-      reset('warna')];
-    tabs.push({ id: 'warna', label: 'Warna', groups: warna, tip: 'Warna utama dan kedua mengganti dua warna data yang paling banyak dipakai pada grafik. Warna status (merah/hijau) dan peta warna kontur tidak diganti.' });
-    tabs.push({ id: 'kisi', label: 'Garis kisi', groups: [
-      { label: 'Tampilkan', cols: 1, items: [Sel('gh', 'Garis horizontal', [['on', 'Tampil'], ['off', 'Sembunyi']]), Sel('gv', 'Garis vertikal', [['on', 'Tampil'], ['off', 'Sembunyi']])] },
-      { label: 'Gaya', cols: 1, items: [{ type: 'color', id: sid(S, 'gc'), label: 'Warna garis kisi', def: st.gc }] },
-      reset('kisi')], tip: 'Hanya garis kisi yang ada pada grafik ini yang dapat diatur.' });
-    tabs.push({ id: 'elemen', label: 'Elemen', groups: [
-      { label: 'Ukuran', cols: 1, items: [R('lw', 'Tebal garis', 50, 300, 10), R('pt', 'Ukuran titik', 50, 250, 10)] },
-      reset('elemen')], tip: 'Pengaturan yang tidak berlaku untuk grafik ini tidak berpengaruh.' });
-    window.StatRibbon.mount({
-      view: '#' + sid(S, 'edit'), key: 'ne' + S.id, host: $('#' + sid(S, 'edit')), tabs: tabs,
-      onChange: function (e) { onRibbon(S, e); },
-      onAction: function (act) { resetPart(S, act); },
-    });
-    applyCaps(S);
+  var sid = function (G, k) { return 'ne' + G.id + '-' + k; };
+  var $g = function (G, k) { return document.getElementById(sid(G, k)); };
+  var GROUPS = [], gUid = 0;
+  var FIELDS = [['c1', 'v'], ['c2', 'v'], ['pal', 'v'], ['bg', 'v'], ['gh', 'v'], ['gv', 'v'], ['gc', 'v'], ['title', 'v'], ['xl', 'v'], ['yl', 'v'], ['fs', 'n'], ['lw', 'n'], ['pt', 'n']];
+  var CHART_ONLY = ['title', 'xl', 'yl'];                     /* teks khas satu grafik: tidak ditimpakan ke semua grafik */
+
+  /* satu pita untuk satu kelompok grafik (satu tab hasil); pemilih "Terapkan ke" memilih semua grafik atau satu grafik */
+  function curStates(G) { return G.target === 'all' ? G.states : [G.states[+G.target]].filter(Boolean); }
+  function aggInfo(G) {
+    var L = curStates(G), I = { colors: [], many: true, h: 0, v: 0, circles: 0, strokes: 0, x: false, y: false };
+    L.forEach(function (S) { var i = S.info; if (i.colors.length > I.colors.length) I.colors = i.colors; if (!i.many) I.many = false; I.h += i.h; I.v += i.v; I.circles += i.circles; I.strokes += i.strokes; if (i.lab.x) I.x = true; if (i.lab.y) I.y = true; });
+    return I;
   }
-  function applyCaps(S) {
-    var I = S.info, hide = function (k, yes) { var el = document.getElementById(sid(S, k)); if (!el) return; var box = el.closest('.rb-fld, .rb-color, .rb-chk') || el; box.style.display = yes ? 'none' : ''; };
-    ['c1', 'c2', 'pal'].forEach(function (k) { hide(k, I.many || !I.colors.length); });
-    if (I.colors.length < 2) hide('c2', true);
+  function mountRibbon(G) {
+    var gu = window.GraphCore && window.GraphCore.u, host = $g(G, 'edit'), st = (curStates(G)[0] || G.states[0]).st;
+    host.innerHTML = '';
+    var T = function (k, label, ph) { return { type: 'text', id: sid(G, k), label: label, placeholder: ph || 'Bawaan grafik', def: st[k] }; };
+    var R = function (k, label, min, max, step) { return { type: 'range', id: sid(G, k), label: label, min: min, max: max, step: step, def: st[k], unit: '%' }; };
+    var Sel = function (k, label, options) { return { type: 'select', id: sid(G, k), label: label, options: options, selected: String(st[k]) }; };
+    var reset = function (act) { return { label: 'Setel ulang', cols: 1, items: [{ type: 'button', act: act, icon: 'reset', label: 'Setel ulang' }] }; };
+    var tabs = [
+      { id: 'teks', label: 'Teks', groups: [
+        { label: 'Judul & label', cols: 1, items: [T('title', 'Judul grafik'), T('xl', 'Label sumbu X'), T('yl', 'Label sumbu Y')] },
+        { label: 'Huruf', cols: 1, items: [R('fs', 'Ukuran huruf', 70, 160, 5)] }, reset('teks')],
+        tip: 'Judul dan label sumbu hanya muncul bila satu grafik dipilih di &ldquo;Terapkan ke&rdquo;. Kosongkan kolom teks untuk kembali ke bawaan grafik.' },
+      { id: 'warna', label: 'Warna', groups: [
+        { label: 'Warna data', cols: 1, items: [{ type: 'color', id: sid(G, 'c1'), label: 'Warna utama', def: st.c1 }, { type: 'color', id: sid(G, 'c2'), label: 'Warna kedua', def: st.c2 }] },
+        { label: 'Palet warna', cols: 1, items: [gu ? Sel('pal', 'Palet (urut menurut pemakaian)', Object.keys(gu.PALETTES).map(function (k) { return [k, gu.PALETTE_LABEL[k]]; })) : { type: 'check', id: sid(G, 'nopal'), label: 'Palet', def: false }] },
+        { label: 'Latar', cols: 1, items: [{ type: 'color', id: sid(G, 'bg'), label: 'Warna latar grafik', def: st.bg }] }, reset('warna')],
+        tip: 'Warna utama dan kedua mengganti dua warna data yang paling banyak dipakai. Warna status (merah/hijau) dan peta warna kontur tidak diganti.' },
+      { id: 'kisi', label: 'Garis kisi', groups: [
+        { label: 'Tampilkan', cols: 1, items: [Sel('gh', 'Garis horizontal', [['on', 'Tampil'], ['off', 'Sembunyi']]), Sel('gv', 'Garis vertikal', [['on', 'Tampil'], ['off', 'Sembunyi']])] },
+        { label: 'Gaya', cols: 1, items: [{ type: 'color', id: sid(G, 'gc'), label: 'Warna garis kisi', def: st.gc }] }, reset('kisi')],
+        tip: 'Hanya garis kisi yang ada pada grafik yang dipilih yang dapat diatur.' },
+      { id: 'elemen', label: 'Elemen', groups: [
+        { label: 'Ukuran', cols: 1, items: [R('lw', 'Tebal garis', 50, 300, 10), R('pt', 'Ukuran titik', 50, 250, 10)] }, reset('elemen')],
+        tip: 'Pengaturan yang tidak berlaku untuk grafik yang dipilih tidak ditampilkan.' }];
+    window.StatRibbon.mount({ view: '#' + sid(G, 'edit'), key: 'ne' + G.id, host: host, tabs: tabs,
+      onChange: function (e) { onRibbon(G, e); }, onAction: function (act) { resetPart(G, act); } });
+    loadInputs(G); applyCaps(G);
+  }
+  function applyCaps(G) {
+    var I = aggInfo(G), host = $g(G, 'edit'), hide = function (k, yes) { var el = $g(G, k); if (!el) return; (el.closest('.rb-fld, .rb-color, .rb-chk') || el).style.display = yes ? 'none' : ''; };
+    var one = G.target !== 'all';
+    hide('c1', I.many || !I.colors.length); hide('c2', I.many || I.colors.length < 2); hide('pal', I.many || !I.colors.length);
     hide('gh', !I.h); hide('gv', !I.v); hide('gc', !I.h && !I.v);
-    hide('xl', !I.lab.x); hide('yl', !I.lab.y);
+    hide('title', !one); hide('xl', !one || !I.x); hide('yl', !one || !I.y);
     hide('pt', !I.circles); hide('lw', !I.strokes);
-    $$('.rb-grp', $('#' + sid(S, 'edit'))).forEach(function (g) {
-      var kids = $$('.rb-gbody > *', g), vis = kids.filter(function (c) { return c.style.display !== 'none'; });
-      if (kids.length && !vis.length) g.style.display = 'none';
-    });
-    $$('.rb-tab', $('#' + sid(S, 'edit'))).forEach(function (t) {
-      var p = $('.rb-panel[data-rbpanel="' + t.dataset.rbtab + '"]', $('#' + sid(S, 'edit')));
-      var any = p && $$('.rb-grp', p).some(function (g) { return g.style.display !== 'none' && !(g.querySelector('[data-rb-act]') && $$('.rb-gbody > *', g).length === 1); });
+    $$('.rb-grp', host).forEach(function (g) { g.style.display = ''; var kids = $$('.rb-gbody > *', g); if (kids.length && kids.every(function (c) { return c.style.display === 'none'; })) g.style.display = 'none'; });
+    $$('.rb-tab', host).forEach(function (t) {
+      var p = $('.rb-panel[data-rbpanel="' + t.dataset.rbtab + '"]', host);
+      var any = p && $$('.rb-grp', p).some(function (g) { return g.style.display !== 'none' && !g.querySelector('[data-rb-act]'); });
       t.style.display = any ? '' : 'none';
     });
-    var first = $$('.rb-tab', $('#' + sid(S, 'edit'))).filter(function (t) { return t.style.display !== 'none'; })[0];
-    var act = $('.rb-tab[aria-selected="true"]', $('#' + sid(S, 'edit')));
-    if (first && (!act || act.style.display === 'none')) first.click();
+    var act = $('.rb-tab[aria-selected="true"]', host);
+    if (!act || act.style.display === 'none') { var f = $$('.rb-tab', host).filter(function (t) { return t.style.display !== 'none'; })[0]; if (f) f.click(); }
   }
-  var FIELDS = [['c1', 'v'], ['c2', 'v'], ['pal', 'v'], ['bg', 'v'], ['gh', 'v'], ['gv', 'v'], ['gc', 'v'], ['title', 'v'], ['xl', 'v'], ['yl', 'v'], ['fs', 'n'], ['lw', 'n'], ['pt', 'n']];
-  function onRibbon(S, e) {
-    clearTimeout(S.rt);
-    S.rt = setTimeout(function () {
-      FIELDS.forEach(function (f) {
-        var el = document.getElementById(sid(S, f[0])); if (!el) return;
-        var v = f[1] === 'n' ? +el.value : el.value;
-        if (f[0] === 'c1' || f[0] === 'c2' || f[0] === 'bg' || f[0] === 'gc') v = String(v).toLowerCase();
-        if (v !== S.st[f[0]]) { S.st[f[0]] = v; S.st.touched[f[0]] = true; }
+  function loadInputs(G) {
+    var S = curStates(G)[0] || G.states[0]; if (!S) return;
+    FIELDS.forEach(function (f) {
+      var el = $g(G, f[0]); if (!el) return; el.value = S.st[f[0]];
+      var lab = document.getElementById(el.id + '-v'); if (lab) lab.textContent = el.value + (el.dataset.unit || '');
+    });
+    G.vals = readVals(G);
+  }
+  function readVals(G) {
+    var v = {};
+    FIELDS.forEach(function (f) { var el = $g(G, f[0]); if (!el) return; var x = f[1] === 'n' ? +el.value : el.value; if (/^(c1|c2|bg|gc)$/.test(f[0])) x = String(x).toLowerCase(); v[f[0]] = x; });
+    return v;
+  }
+  function onRibbon(G, e) {
+    clearTimeout(G.rt);
+    G.rt = setTimeout(function () {
+      var v = readVals(G), prev = G.vals || {}, L = curStates(G), all = G.target === 'all';
+      L.forEach(function (S) {
+        FIELDS.forEach(function (f) {
+          var k = f[0]; if (!(k in v) || (all && CHART_ONLY.indexOf(k) >= 0)) return;
+          var changed = all ? v[k] !== prev[k] : v[k] !== S.st[k];
+          if (changed) { S.st[k] = v[k]; S.st.touched[k] = true; }
+        });
+        redraw(S);
       });
-      redraw(S);
+      G.vals = v;
     }, 40);
   }
-  function resetPart(S, part) {
+  function resetPart(G, part) {
     var D = defStyle(), keys = { teks: ['title', 'xl', 'yl', 'fs'], warna: ['c1', 'c2', 'pal', 'bg'], kisi: ['gh', 'gv', 'gc'], elemen: ['lw', 'pt'] }[part] || [];
-    keys.forEach(function (k) {
-      S.st[k] = D[k]; delete S.st.touched[k];
-      var el = document.getElementById(sid(S, k)); if (el) { el.value = D[k]; var lab = document.getElementById(el.id + '-v'); if (lab) lab.textContent = el.value + (el.dataset.unit || ''); }
+    curStates(G).forEach(function (S) {
+      keys.forEach(function (k) { S.st[k] = D[k]; delete S.st.touched[k]; });
+      if (part === 'warna') { if (S.info.colors[0]) S.st.c1 = S.info.colors[0]; if (S.info.colors[1]) S.st.c2 = S.info.colors[1]; }
+      redraw(S);
     });
-    if (part === 'warna') { /* nilai pemilih warna kembali ke warna asli grafik */
-      [['c1', S.info.colors[0]], ['c2', S.info.colors[1]]].forEach(function (p) { if (!p[1]) return; S.st[p[0]] = p[1]; var el = document.getElementById(sid(S, p[0])); if (el) el.value = p[1]; });
-    }
-    redraw(S);
+    loadInputs(G);
   }
   function redraw(S) {
     var cur = S.unit.querySelector('svg'); if (!cur) return;
-    S.busy = true;
     var html = transform(S.pristine, S.st, S.info), tpl = document.createElement('div'); tpl.innerHTML = html;
     var ns = tpl.querySelector('svg'); if (ns) cur.replaceWith(ns);
-    setTimeout(function () { S.busy = false; }, 0);
   }
 
-  /* ------------------------------ pemasangan ------------------------------ */
+  /* ------------------------------ kelompok & pemasangan ------------------------------ */
+  function groupOf(panel) {
+    var G = GROUPS.filter(function (g) { return g.panel === panel; })[0];
+    if (G && document.contains(G.bar)) return G;
+    if (G) GROUPS.splice(GROUPS.indexOf(G), 1);
+    G = { id: ++gUid, panel: panel, states: [], target: 'all', sig: '', mounted: false, vals: null };
+    var bar = document.createElement('div'); bar.className = 'ne-bar'; bar.id = 'ne-bar-' + G.id;
+    bar.innerHTML =
+      '<div class="ne-head"><span class="ne-ttl">Edit grafik</span><label class="ne-tgt" hidden>Terapkan ke <select class="select-input" id="' + sid(G, 'tgt') + '"></select></label>' +
+      '<button type="button" class="ne-tog" data-ne="tog" aria-expanded="false" aria-controls="' + sid(G, 'edit') + '">' + PEN + 'Pita edit' + CARET + '</button></div>' +
+      '<div class="ne-edit" id="' + sid(G, 'edit') + '" hidden></div>';
+    G.bar = bar;
+    bar.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-ne="tog"]'); if (!b) return;
+      var ed = $g(G, 'edit'), open = ed.hidden;
+      ed.hidden = !open; b.setAttribute('aria-expanded', String(open));
+      if (open && !G.mounted) { G.mounted = true; mountRibbon(G); }
+    });
+    bar.addEventListener('change', function (e) { if (e.target.id === sid(G, 'tgt')) { G.target = e.target.value; if (G.mounted) { loadInputs(G); applyCaps(G); } } });
+    GROUPS.push(G);
+    return G;
+  }
+  function refreshGroup(G, states) {
+    G.states = states;
+    var anchor = states[0].unit;
+    while (anchor.parentElement && anchor.parentElement !== G.panel && !anchor.parentElement.matches('.tab-panel, .st-main, .card')) anchor = anchor.parentElement;
+    if (G.bar.nextElementSibling !== anchor || G.bar.parentElement !== anchor.parentElement) anchor.parentElement.insertBefore(G.bar, anchor);
+    var sig = states.map(function (S) { return S.id; }).join(',');
+    if (sig !== G.sig) {
+      G.sig = sig;
+      if (G.target !== 'all' && !G.states[+G.target]) G.target = 'all';
+      var sel = $g(G, 'tgt'), lab = sel.parentElement;
+      sel.innerHTML = '<option value="all">Semua grafik</option>' + states.map(function (S, i) { return '<option value="' + i + '">' + (i + 1) + '. ' + esc(S.name) + '</option>'; }).join('');
+      sel.value = G.target; lab.hidden = states.length < 2;
+      if (G.mounted) { mountRibbon(G); var ed = $g(G, 'edit'); if (ed.hidden) { /* tetap tertutup */ } }
+    }
+  }
   function eligible(svg) {
     if (svg.getAttribute('data-ne') || svg.closest(SKIP_IN)) return false;
     var vb = vbox(svg); if (!vb || vb.w < 280 || vb.h < 110) return false;
@@ -364,63 +419,51 @@
   function nameOf(svg) {
     var n = svg.getAttribute('aria-label'); if (n) return n;
     var p = svg.closest('.rs-fig, .ne-unit, div'); var cap = p && p.previousElementSibling && p.previousElementSibling.textContent;
-    return (cap && cap.trim().slice(0, 50)) || 'grafik';
+    return (cap && cap.trim().slice(0, 50)) || 'Grafik';
   }
   function adopt(svg, idxKey) {
     var parent = svg.parentElement, unit, S;
-    if (parent && parent.__ne) {                              /* modul menggambar ulang di wadah yang sama (mis. putar 3D) */
-      S = parent.__ne; unit = parent;
-    } else {
+    if (parent && parent.__ne) { S = parent.__ne; unit = parent; }      /* modul menggambar ulang di wadah yang sama (mis. putar 3D) */
+    else {
       if (parent && parent.children.length === 1 && !parent.classList.contains('tab-panel') && !parent.matches('.st-main, .card, section')) unit = parent;
       else { unit = document.createElement('div'); unit.className = 'ne-unit'; svg.replaceWith(unit); unit.appendChild(svg); }
-      S = { id: ++uid, unit: unit, view: viewOf(svg), name: nameOf(svg), st: null, info: null, pristine: '', bar: null, busy: false };
-      unit.__ne = S; STATES.push(S);
+      S = { id: ++uid, unit: unit, view: viewOf(svg), name: nameOf(svg), st: null, info: null, pristine: '', dl: null };
+      unit.__ne = S;
     }
     var key = S.view + '|' + (svg.getAttribute('aria-label') || '') + '|' + idxKey;
-    S.key = key;
-    S.pristine = svg.outerHTML;
-    S.info = scan(svg);
-    S.name = nameOf(svg);
-    var first = !S.bar;
-    if (first) {
+    S.pristine = svg.outerHTML; S.info = scan(svg); S.name = nameOf(svg);
+    if (!S.dl) {
       S.st = CACHE[key] || defStyle();
       if (!CACHE[key]) { if (S.info.colors[0]) S.st.c1 = S.info.colors[0]; if (S.info.colors[1]) S.st.c2 = S.info.colors[1]; }
       CACHE[key] = S.st;
-      var bar = document.createElement('div'); bar.className = 'ne-bar'; bar.id = 'ne-bar-' + S.id;
-      bar.innerHTML =
-        '<div class="ne-head"><span class="ib-row">' + window.StatIconBtn('png', 'Unduh PNG', 'data-ne="png"') + window.StatIconBtn('svg', 'Unduh SVG', 'data-ne="svg"') + window.StatIconBtn('copy', 'Salin gambar', 'data-ne="copy"') + '</span>' +
-        '<button type="button" class="ne-tog" data-ne="tog" aria-expanded="false" aria-controls="' + sid(S, 'edit') + '">' + PEN + 'Edit grafik' + CARET + '</button></div>' +
-        '<p class="ne-msg" hidden></p><div class="ne-edit" id="' + sid(S, 'edit') + '" hidden></div>';
-      unit.insertAdjacentElement('beforebegin', bar);
-      S.bar = bar;
-      bar.addEventListener('click', function (e) {
-        var b = e.target.closest('[data-ne]'); if (!b) return;
-        var k = b.dataset.ne;
-        if (k === 'tog') {
-          var ed = $('#' + sid(S, 'edit'), bar), open = ed.hidden;
-          if (open && !ed.__mounted) { ed.__mounted = true; ed.hidden = false; mountRibbon(S); }
-          ed.hidden = !open; b.setAttribute('aria-expanded', String(open));
-        } else download(S, k);
-      });
+      var dl = document.createElement('div'); dl.className = 'ne-dl';
+      dl.innerHTML = '<span class="ib-row">' + window.StatIconBtn('png', 'Unduh PNG', 'data-ne="png"') + window.StatIconBtn('svg', 'Unduh SVG', 'data-ne="svg"') + window.StatIconBtn('copy', 'Salin gambar', 'data-ne="copy"') + '</span><p class="ne-msg" hidden></p>';
+      unit.insertAdjacentElement('afterend', dl); S.dl = dl;
+      dl.addEventListener('click', function (e) { var b = e.target.closest('[data-ne]'); if (b) download(S, b.dataset.ne); });
     }
     svg.setAttribute('data-ne', '1');
     if (Object.keys(S.st.touched).length) redraw(S);          /* gambar baru dari modul: pakai lagi pengaturan yang sudah dipilih */
-    S.svg = unit.querySelector('svg');
+    return S;
   }
   var pending = false;
   function run() {
     pending = false;
-    var seen = new Set(), idx = {};
+    var seen = new Set(), idx = {}, byPanel = new Map();
     $$(ROOTS).forEach(function (root) {
       $$('svg', root).forEach(function (svg) {
         if (seen.has(svg)) return; seen.add(svg);
-        if (!eligible(svg)) return;
-        var panel = svg.closest('.tab-panel'), pk = (panel && panel.id) || '', a = viewOf(svg) + '|' + pk;
+        var already = svg.getAttribute('data-ne') && svg.closest('.ne-unit, [id]') && svg.parentElement && svg.parentElement.__ne;
+        if (!already && !eligible(svg)) return;
+        var panel = svg.closest('.tab-panel') || svg.closest('.st-main') || root, pk = panel.id || '', a = viewOf(svg) + '|' + pk;
         idx[a] = (idx[a] || 0) + 1;
-        try { adopt(svg, pk + '#' + idx[a]); } catch (e) { console.warn('Edit grafik:', e); }
+        var S = already ? svg.parentElement.__ne : null;
+        try { if (!S) S = adopt(svg, pk + '#' + idx[a]); } catch (e) { console.warn('Edit grafik:', e); return; }
+        if (!byPanel.has(panel)) byPanel.set(panel, []);
+        byPanel.get(panel).push(S);
       });
     });
-    STATES = STATES.filter(function (S) { return document.contains(S.unit); });
+    byPanel.forEach(function (list, panel) { try { refreshGroup(groupOf(panel), list); } catch (e) { console.warn('Edit grafik:', e); } });
+    GROUPS = GROUPS.filter(function (G) { if (document.contains(G.panel) && byPanel.has(G.panel)) return true; G.bar.remove(); return false; });
   }
   function schedule() { if (pending) return; pending = true; (window.requestAnimationFrame || setTimeout)(run); }
   new MutationObserver(function (muts) {
@@ -430,6 +473,6 @@
       for (var j = 0; j < m.addedNodes.length; j++) { var n = m.addedNodes[j]; if (n.nodeType === 1 && (n.tagName === 'svg' || n.tagName === 'SVG' || n.querySelector('svg'))) { schedule(); return; } }
     }
   }).observe(document.body, { childList: true, subtree: true });
-  window.StatNativeEdit = { scan: run, count: function () { return STATES.length; } };
+  window.StatNativeEdit = { scan: run, count: function () { return GROUPS.reduce(function (n, g) { return n + g.states.length; }, 0); } };
   schedule();
 })();
