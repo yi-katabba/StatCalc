@@ -138,6 +138,7 @@
     let xr = range(o.x, 0.06), yr = range(o.y.concat(o.hzero ? [0] : []), 0.08);
     if (o.diag || o.sameScale) { const lo = Math.min(xr.lo, yr.lo), hi = Math.max(xr.hi, yr.hi); xr = { lo, hi }; yr = { lo, hi }; }
     if (o.fit) { const a = o.fit.a, b = o.fit.b; yr = { lo: Math.min(yr.lo, a + b * xr.lo, a + b * xr.hi), hi: Math.max(yr.hi, a + b * xr.lo, a + b * xr.hi) }; }
+    if (o.xr) xr = o.xr; if (o.yr) yr = o.yr;
     xr = ov(xr, 'x'); yr = ov(yr, 'y');
     const sxs = u.niceTicks(xr.lo, xr.hi), sys = u.niceTicks(yr.lo, yr.hi);
     const showFit = !(ST.on && ST.fit === false), showDiag = !(ST.on && ST.hl === false);
@@ -149,12 +150,16 @@
     if (o.hzero) s += hline(L, sys, 0, '#948C77', true);
     const [co, cc] = clipOpen(L);
     s += co;
-    if (o.diag && showDiag) { s += `<line x1="${px(sxs.lo).toFixed(1)}" y1="${py(sxs.lo).toFixed(1)}" x2="${px(sxs.hi).toFixed(1)}" y2="${py(sxs.hi).toFixed(1)}" stroke="${ST.c2}" stroke-width="${r2(2 * LW())}" stroke-dasharray="6 4"/>`; items.push({ name: 'Garis y = x (prediksi sempurna)', color: ST.c2, dash: true, marker: false }); }
+    if (o.diag && showDiag) { s += `<line x1="${px(sxs.lo).toFixed(1)}" y1="${py(sxs.lo).toFixed(1)}" x2="${px(sxs.hi).toFixed(1)}" y2="${py(sxs.hi).toFixed(1)}" stroke="${ST.c2}" stroke-width="${r2(2 * LW())}" stroke-dasharray="6 4"/>`; items.push({ name: o.diagName || 'Garis y = x (prediksi sempurna)', color: ST.c2, dash: true, marker: false }); }
     if (o.fit && showFit) {
       s += `<line x1="${px(xr.lo).toFixed(1)}" y1="${py(o.fit.a + o.fit.b * xr.lo).toFixed(1)}" x2="${px(xr.hi).toFixed(1)}" y2="${py(o.fit.a + o.fit.b * xr.hi).toFixed(1)}" stroke="${ST.c2}" stroke-width="${r2(2.4 * LW())}"/>`;
       if (o.fit.name) items.push({ name: o.fit.name, color: ST.c2, marker: false });
     }
     const col = tone(o.color) || ST.c1;
+    if (o.connect && n > 1) {   /* garis menghubungkan titik sesuai urutan data (mis. kurva ROC) */
+      s += `<polyline fill="none" stroke="${col}" stroke-width="${r2(2.4 * LW())}" stroke-linejoin="round" points="${o.x.map((x, i) => px(x).toFixed(1) + ',' + py(o.y[i]).toFixed(1)).join(' ')}"/>`;
+      if (o.noDots) { s += cc; if (items.length) s += legendSvg(L, items, 46); return s + '</svg>'; }
+    }
     o.x.forEach((x, i) => { s += `<circle cx="${px(x).toFixed(1)}" cy="${py(o.y[i]).toFixed(1)}" r="${r2(4.3 * PS())}" fill="${col}" fill-opacity="${AL('.8')}" stroke="#fff" stroke-width="1"/>`; });
     s += cc;
     if (items.length) s += legendSvg(L, items, 46);
@@ -290,7 +295,7 @@
       s += `<circle cx="${cx.toFixed(1)}" cy="${py(m).toFixed(1)}" r="${r2(5 * PS())}" fill="${col}" stroke="#fff" stroke-width="1.2"/>`;
     });
     const items = [{ name: o.note || 'Rata-rata \u00B1 selang kepercayaan 95%', color: INK, kind: 'dot' }];
-    if (finite(o.grand)) items.push({ name: 'Rata-rata keseluruhan', color: ST.c2, dash: true, marker: false });
+    if (finite(o.grand)) items.push({ name: o.grandName || 'Rata-rata keseluruhan', color: ST.c2, dash: true, marker: false });
     s += legendSvg(L, items, 46);
     return s + '</svg>';
   }
@@ -299,11 +304,12 @@
   function strip(groups, o) {
     o = o || {};
     const all = [].concat.apply([], groups.map((g) => g.vals));
-    const r = ov(range(all, 0.08), 'y'), sys = u.niceTicks(r.lo, r.hi);
+    const r = ov(o.yr || range(all, 0.08), 'y'), sys = u.niceTicks(r.lo, r.hi);
     const names = groups.map((g) => g.name);
     const L = withLegend(u.layout({ title: o.title, ml: u.mlFor(sys.ticks, !!o.yLabel), mb: u.catBottom(names, !!o.xLabel), H: o.H || 380 }), true);
     const py = u.sy(L, sys), ax = u.axisCat(L, names, o.xLabel);
     let s = u.head(L, o.title) + u.gridY(L, sys, o.yLabel) + ax.svg;
+    (o.hlines || []).forEach((h) => { s += hline(L, sys, h.y, h.color || ST.c2, h.dash !== false, h.label); });
     groups.forEach((g, i) => {
       const cx = ax.cx(i), col = palAt(i), half = Math.min(30, ax.bw * 0.3);
       const sorted = u.sortedAsc(g.vals), cnt = {};

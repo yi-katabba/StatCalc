@@ -150,7 +150,7 @@ $$JKG = \sum_{i}\sum_{j}\sum_{k}(x_{ijk} - \bar{x}_{ij})^2,\qquad JKT = \sum (x_
       {
         id: 'lanjutan', title: 'Setelah ANOVA: uji lanjut',
         html: String.raw`
-<p>Jika $H_0$ ditolak, kita tahu ada perbedaan, tetapi belum tahu <strong>kelompok mana</strong> yang berbeda. Langkah berikutnya adalah <strong>uji lanjut (post hoc)</strong>, yang membandingkan pasangan kelompok dengan menjaga galat tipe I keseluruhan tetap $\alpha$. Fitur ini belum ada di aplikasi, tetapi berikut dasarnya.</p>
+<p>Jika $H_0$ ditolak, kita tahu ada perbedaan, tetapi belum tahu <strong>kelompok mana</strong> yang berbeda. Langkah berikutnya adalah <strong>uji lanjut (post hoc)</strong>, yang membandingkan pasangan kelompok dengan menjaga galat tipe I keseluruhan tetap $\alpha$. Fitur ini tersedia di menu <strong>Uji Lanjut ANOVA</strong> (materinya ada di topik Uji Lanjut ANOVA); berikut dasarnya.</p>
 <h3>Uji Tukey HSD</h3>
 <p>Dua rata-rata dianggap berbeda bila selisih absolutnya melebihi:</p>
 $$HSD = q_{\alpha;\,k,\,N-k}\sqrt{\frac{KTD}{n}}$$

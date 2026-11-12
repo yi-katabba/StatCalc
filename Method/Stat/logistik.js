@@ -64,6 +64,21 @@
     if (epv < 10) ip.push('<strong>Peringatan:</strong> EPV &lt; 10 — prediktor terlalu banyak untuk jumlah kejadian; kurangi prediktor atau tambah data.');
     ip.push('<strong>Asumsi:</strong> pengamatan saling bebas, hubungan logit–prediktor linear, tidak ada multikolinearitas berat, dan tidak ada pemisahan sempurna. Uji kecocokan (mis. Hosmer-Lemeshow) belum disertakan.');
     ui.show({ sum, steps: st, interp: `<div class="bs-var"><h4>Regresi logistik biner</h4>${ip.map((x) => `<p>${x}</p>`).join('')}</div>` });
-    ui.publish({ meta: [['Metode', 'Regresi logistik biner'], ['n', n], ['Y = 1 / Y = 0', n1 + ' / ' + n0], ['α', fmt(alpha, 2)]], data: ui.dataExport(nm, nm.map((_, j) => rows.map((r) => r[j]))) });
+    const SC = window.StatCharts, charts = [];
+    if (SC) {
+      const pr = m.fitted;
+      /* kurva ROC: geser ambang dari tinggi ke rendah; titik dikelompokkan menurut nilai peluang yang sama */
+      const ord = pr.map((v, i) => i).sort((a, b) => pr[b] - pr[a]), fx = [0], fy = [0];
+      let tp = 0, fp = 0;
+      ord.forEach((ix, t) => { if (y[ix] === 1) tp++; else fp++; if (t === n - 1 || pr[ord[t + 1]] !== pr[ix]) { fx.push(fp / n0); fy.push(tp / n1); } });
+      charts.push({ title: 'Kurva ROC', caption: 'Makin melengkung ke pojok kiri atas, makin baik model membedakan Y = 1 dari Y = 0. AUC = ' + fmt(auc, 3) + ' (' + aucL + '); garis putus-putus = tebakan acak (AUC = 0,5).',
+        build: () => SC.scatter({ title: 'Kurva ROC (AUC = ' + fmt(auc, 3) + ')', xLabel: '1 − Spesifisitas (laju positif palsu)', yLabel: 'Sensitivitas (laju positif benar)', x: fx, y: fy, connect: true, noDots: true, diag: true, diagName: 'Tebakan acak (AUC = 0,5)', xr: { lo: 0, hi: 1 }, yr: { lo: 0, hi: 1 }, H: 420 }) });
+      const p1 = pr.filter((_, i) => y[i] === 1), p0 = pr.filter((_, i) => y[i] === 0);
+      charts.push({ title: 'Peluang prediksi menurut kelas aktual', caption: 'Model yang baik memberi peluang tinggi pada kelompok Y = 1 dan rendah pada Y = 0. Garis putus-putus = cut-off ' + fmt(cut, 2) + '; titik yang melewati garis diprediksi sebagai Y = 1.',
+        build: () => SC.strip([{ name: 'Y = 0 (n = ' + n0 + ')', vals: p0 }, { name: 'Y = 1 (n = ' + n1 + ')', vals: p1 }], { title: 'Peluang Prediksi P(Y = 1) menurut Kelas Aktual', xLabel: 'Kelas aktual', yLabel: 'Peluang prediksi', yr: { lo: 0, hi: 1 }, hlines: [{ y: cut, label: 'cut-off ' + fmt(cut, 2), color: '#BD7E1F', dash: true }] }) });
+      charts.push({ title: 'Ketepatan klasifikasi', caption: 'Akurasi, sensitivitas, spesifisitas, dan nilai prediktif pada cut-off ' + fmt(cut, 2) + '.',
+        build: () => SC.bars({ title: 'Ukuran Ketepatan Klasifikasi (cut-off ' + fmt(cut, 2) + ')', yLabel: 'Persen (%)', labels: ['Akurasi', 'Sensitivitas', 'Spesifisitas', 'Nilai prediktif +', 'Nilai prediktif −'], values: [c.acc, c.sens, c.spec, c.ppv, c.npv].map((v) => (Number.isFinite(v) ? +(v * 100).toFixed(2) : 0)), valueLabels: true, colors: ['#22384A', '#2F7F79', '#BD7E1F', '#948C77', '#948C77'] }) });
+    }
+    ui.publish({ meta: [['Metode', 'Regresi logistik biner'], ['n', n], ['Y = 1 / Y = 0', n1 + ' / ' + n0], ['α', fmt(alpha, 2)]], data: ui.dataExport(nm, nm.map((_, j) => rows.map((r) => r[j]))), charts });
   };
 })();

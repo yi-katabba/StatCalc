@@ -66,6 +66,15 @@
       return `<div class="bs-var"><h4>${esc(names[i])}</h4>${parts.map((p) => `<p>${p}</p>`).join('')}</div>`;
     }).join('') + '<div class="bs-var"><h4>Catatan penting</h4><p>Uji normalitas sebaiknya dilengkapi plot peluang normal (Probability Plot) dan histogram di menu Graph. Untuk uji t atau ANOVA, yang perlu normal adalah <strong>galat/residu</strong> atau data tiap kelompok, dan dengan sampel besar (n ≥ 30) uji tersebut cukup tahan terhadap penyimpangan ringan dari normal.</p></div>';
     ui.show({ sum, steps: st, interp: ip });
-    ui.publish({ meta: [['Metode', 'Uji normalitas (Shapiro-Wilk, Anderson-Darling, Jarque-Bera)'], ['α', fmt(alpha, 2)], ['Variabel', names.join(', ')]], data: ui.dataExport(names, data) });
+    const SC = window.StatCharts, charts = [];
+    if (SC) data.slice(0, 6).forEach((x, i) => {
+      const nmI = names[i], v = verdict(R[i]);
+      charts.push({ title: 'Probability plot ' + nmI,
+        caption: 'Titik yang mengikuti garis lurus berarti data mendekati normal; lengkungan atau ujung yang melenceng menandakan penyimpangan. Shapiro-Wilk p = ' + fmtP(R[i].sw.p) + ' (' + (v.normal ? 'tidak ada uji yang menolak normalitas' : 'normalitas ditolak oleh ' + v.rej.join(', ')) + ').',
+        build: () => SC.qq(x, { title: 'Probability Plot ' + nmI }) });
+      charts.push({ title: 'Histogram ' + nmI, caption: 'Kurva = kurva normal dengan rata-rata dan simpangan baku data.',
+        build: () => SC.hist(x, { title: 'Histogram ' + nmI, xLabel: nmI }) });
+    });
+    ui.publish({ meta: [['Metode', 'Uji normalitas (Shapiro-Wilk, Anderson-Darling, Jarque-Bera)'], ['α', fmt(alpha, 2)], ['Variabel', names.join(', ')]].concat(data.length > 6 ? [['Grafik', 'Ditampilkan untuk 6 variabel pertama']] : []), data: ui.dataExport(names, data), charts });
   };
 })();

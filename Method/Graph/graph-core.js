@@ -188,14 +188,14 @@
   }
   function catBottom(labels, hasLabel) {
     if (!needRot(labels)) return hasLabel ? 58 : 36;
-    const ml = Math.min(16, labels.reduce((m, l) => Math.max(m, String(l).length), 1));
-    return Math.min(104, Math.round(30 + ml * 4.3 + (hasLabel ? 22 : 0)));
+    const ml = Math.min(26, labels.reduce((m, l) => Math.max(m, String(l).length), 1));
+    return Math.min(140, Math.round(30 + ml * 4.3 + (hasLabel ? 22 : 0)));
   }
   /* Sumbu kategori (pita) di bawah. Mengembalikan {svg, cx(i), bw}. */
   function axisCat(L, labels, label) {
     label = lab('xl', label);
     const n = labels.length, bw = L.pw / n, yb = L.m.t + L.ph, rot = needRot(labels);
-    const maxc = rot ? 16 : Math.max(3, Math.floor(bw / 6.2));
+    const maxc = rot ? 26 : Math.max(3, Math.floor(bw / 6.2));
     let s = `<line x1="${L.m.l}" y1="${yb}" x2="${L.W - L.m.r}" y2="${yb}" stroke="${AXIS}"/>`;
     if (ST.on && ST.v) for (let i = 0; i <= n; i++) { const gx = (L.m.l + bw * i).toFixed(1); s += `<line x1="${gx}" x2="${gx}" y1="${L.m.t}" y2="${yb}" stroke="${ST.gc}"/>`; }
     labels.forEach((lb, i) => {

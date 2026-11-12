@@ -346,12 +346,38 @@
       const SE = window.StatExport; if (!SE) return;
       const { m, names, used, res } = c;
       const cols = m === 'one' ? [used.x] : [used.x, used.y], n = Math.max.apply(null, cols.map((a) => a.length));
+      const SC = window.StatCharts, charts = [];
+      if (SC) {
+        const cl = pct(c.conf), tq = (df) => SC.tQuantile(1 - (1 - c.conf) / 2, df);
+        const ci1 = (mean, se, df) => [mean - tq(df) * se, mean + tq(df) * se];
+        if (m === 'two') {
+          const gl = [{ name: names[0], vals: used.x }, { name: names[1], vals: used.y }];
+          const c1 = ci1(res.m1, res.s1 / Math.sqrt(res.n1), res.n1 - 1), c2 = ci1(res.m2, res.s2 / Math.sqrt(res.n2), res.n2 - 1);
+          charts.push({ title: 'Boxplot kedua kelompok', caption: 'Kotak = Q1 sampai Q3, garis tengah = median, belah ketupat = rata-rata, titik di luar kumis = pencilan.',
+            build: () => SC.box(gl, { title: 'Boxplot ' + names[0] + ' dan ' + names[1], xLabel: 'Kelompok', yLabel: 'Nilai', mean: true }) });
+          charts.push({ title: 'Rata-rata dan selang kepercayaan', caption: 'Titik = rata-rata tiap kelompok, garis vertikal = selang kepercayaan ' + cl + ' masing-masing. Selang yang saling terpisah mengisyaratkan perbedaan rata-rata.',
+            build: () => SC.intervals({ title: 'Rata-rata per Kelompok (CI ' + cl + ')', xLabel: 'Kelompok', yLabel: 'Rata-rata', labels: [names[0], names[1]], means: [res.m1, res.m2], lo: [c1[0], c2[0]], hi: [c1[1], c2[1]], note: 'Rata-rata ± selang kepercayaan ' + cl }) });
+          charts.push({ title: 'Nilai individual', caption: 'Setiap titik satu pengamatan; garis hitam = rata-rata kelompok.',
+            build: () => SC.strip(gl, { title: 'Nilai Individual per Kelompok', xLabel: 'Kelompok', yLabel: 'Nilai' }) });
+        } else {
+          const one = m === 'one', vals = one ? used.x : used.x.map((v, i) => v - used.y[i]);
+          const lab = one ? names[0] : names[0] + ' − ' + names[1], ci = ci1(res.mean, res.se, res.df);
+          charts.push({ title: one ? 'Histogram ' + names[0] : 'Histogram selisih', caption: 'Kurva = kurva normal dengan rata-rata dan simpangan baku data; uji t mengandaikan ' + (one ? 'data' : 'selisih') + ' mendekati normal.',
+            build: () => SC.hist(vals, { title: 'Histogram ' + lab, xLabel: lab }) });
+          charts.push({ title: one ? 'Boxplot ' + names[0] : 'Boxplot selisih', caption: 'Kotak = Q1 sampai Q3, garis tengah = median, belah ketupat = rata-rata, titik di luar kumis = pencilan.',
+            build: () => SC.box([{ name: lab, vals }], { title: 'Boxplot ' + lab, yLabel: 'Nilai', mean: true }) });
+          charts.push({ title: 'Rata-rata terhadap nilai acuan', caption: 'Titik = rata-rata ' + (one ? '' : 'selisih ') + 'dengan selang kepercayaan ' + cl + '. Bila garis putus-putus (' + (one ? 'μ₀' : 'selisih yang diuji') + ') berada di luar selang, hasilnya cenderung signifikan.',
+            build: () => SC.intervals({ title: 'Rata-rata ' + (one ? '' : 'Selisih ') + 'dan CI ' + cl, xLabel: '', yLabel: 'Rata-rata', labels: [lab], means: [res.mean], lo: [ci[0]], hi: [ci[1]], grand: c.mu, grandName: one ? 'Nilai acuan μ₀' : 'Selisih yang diuji', note: 'Rata-rata ± selang kepercayaan ' + cl }) });
+          if (!one) charts.push({ title: 'Sebaran pasangan data', caption: 'Titik di atas garis y = x berarti nilai ' + names[1] + ' lebih besar daripada ' + names[0] + ' pada pasangan itu.',
+            build: () => SC.scatter({ title: names[0] + ' vs ' + names[1], xLabel: names[0], yLabel: names[1], x: used.x, y: used.y, diag: true, diagName: 'Garis y = x (tanpa selisih)' }) });
+        }
+      }
       SE.publish({
         id: 'uji-t', title: 'Uji t', anchor: '#ut-results-card', resultsCard: '#ut-results-card',
         meta: [['Metode', testName(c)], ['Hipotesis alternatif', hypo(c)[1]], ['α', fmt(c.alpha, 2)], ['Kolom', names.slice(0, cols.length).join(', ')]],
         sections: [{ heading: 'Ringkasan', sel: '#utSumWrap' }, { heading: 'Langkah Perhitungan', sel: '#utStepsWrap' }, { heading: 'Interpretasi', sel: '#utInterpWrap' }],
         data: { head: ['#'].concat(names.slice(0, cols.length)), rows: Array.from({ length: n }, (_, i) => [i + 1].concat(cols.map((a) => (i < a.length ? a[i] : '')))), caption: 'Data yang dipakai pada perhitungan.' },
-        charts: [],
+        charts,
       });
     } catch (e) { /* ekspor opsional */ }
   }

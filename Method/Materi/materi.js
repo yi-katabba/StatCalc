@@ -440,6 +440,19 @@
     { view: 'stasioner',  topic: 'stasioner',  label: 'Uji Stasioneritas' },
     { view: 'arima',      topic: 'arima',      label: 'ARIMA & SARIMA' },
     { view: 'deskriptif', topic: 'deskriptif', label: 'Statistika Deskriptif' },
+    { view: 'uji-t',      topic: 'uji-t',      label: 'Uji t' },
+    { view: 'uji-z',      topic: 'uji-z',      label: 'Uji z' },
+    { view: 'proporsi',   topic: 'proporsi',   label: 'Uji Proporsi' },
+    { view: 'korelasi',   topic: 'korelasi',   label: 'Korelasi' },
+    { view: 'mann-whitney', topic: 'mann-whitney', label: 'Uji Mann-Whitney' },
+    { view: 'wilcoxon', topic: 'wilcoxon', label: 'Uji Wilcoxon' },
+    { view: 'kruskal', topic: 'kruskal', label: 'Uji Kruskal-Wallis' },
+    { view: 'friedman', topic: 'friedman', label: 'Uji Friedman' },
+    { view: 'chi-square', topic: 'chi-square', label: 'Uji Chi-Square' },
+    { view: 'fisher', topic: 'fisher', label: 'Uji Eksak Fisher' },
+    { view: 'ragam', topic: 'ragam', label: 'Uji Kesamaan Ragam' },
+    { view: 'normalitas', topic: 'normalitas', label: 'Uji Normalitas' },
+    { view: 'uji-lanjut', topic: 'uji-lanjut', label: 'Uji Lanjut ANOVA' },
   ];
   // Judul hasil uji (<h4>) -> bagian materi
   const H4_LINKS = {

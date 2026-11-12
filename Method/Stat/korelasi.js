@@ -299,16 +299,66 @@
     q('krInterpWrap').innerHTML = h;
   }
 
+  /* Heatmap matriks korelasi (SVG sendiri; warna mengikuti pengaturan pita Warna: biru = positif, emas = negatif) */
+  function heatSvg(c) {
+    const gu = window.GraphCore && window.GraphCore.u, S = (gu && gu.ST) || {}, on = !!S.on;
+    const col1 = (on && S.c1) || '#22384A', col2 = (on && S.c2) || '#BD7E1F', bg = (on && S.bg) || '#ffffff';
+    const x = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const cut = (t, n) => (String(t).length > n ? String(t).slice(0, n - 1) + '…' : String(t));
+    const k = c.k, names = c.names.map((t) => cut(t, 18)), W = 640;
+    const maxLen = Math.max.apply(null, names.map((t) => t.length));
+    const left = Math.round(maxLen * 6.4) + 16, right = 78, top = 44 + Math.round(maxLen * 4.2) + 8;
+    const cell = Math.max(30, Math.min(70, Math.floor((W - left - right) / k)));
+    const gw = cell * k, H = top + gw + 40;
+    const title = (on && S.title) || 'Matriks Korelasi (' + METHOD_NAME[c.method] + ')';
+    let g = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" font-family="Inter, Arial, sans-serif" role="img" aria-label="${x(title)}">` +
+      `<rect width="${W}" height="${H}" fill="${bg}"/>` +
+      `<defs><linearGradient id="krhm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${col1}"/><stop offset=".5" stop-color="${bg}"/><stop offset="1" stop-color="${col2}"/></linearGradient></defs>` +
+      `<text x="${W / 2}" y="26" text-anchor="middle" font-size="16" font-weight="700" fill="#1B2430">${x(title)}</text>`;
+    const fsz = Math.max(9, Math.min(13, Math.round(cell / 3.4)));
+    for (let i = 0; i < k; i++) {
+      g += `<text x="${left - 8}" y="${top + i * cell + cell / 2 + 4}" text-anchor="end" font-size="11" fill="#4A5563">${x(names[i])}</text>`;
+      const cx = left + i * cell + cell / 2;
+      g += `<text transform="translate(${cx + 4},${top - 8}) rotate(-40)" text-anchor="start" font-size="11" fill="#4A5563">${x(names[i])}</text>`;
+      for (let j = 0; j < k; j++) {
+        const r = i === j ? 1 : c.M.R[i][j], ok = Number.isFinite(r), px = left + j * cell, py = top + i * cell;
+        const op = ok ? Math.min(1, Math.abs(r)) : 0, fill = ok && r < 0 ? col2 : col1;
+        g += `<rect x="${px}" y="${py}" width="${cell}" height="${cell}" fill="${bg}" stroke="#E3E6EA"/>`;
+        if (ok) g += `<rect x="${px}" y="${py}" width="${cell}" height="${cell}" fill="${fill}" fill-opacity="${op.toFixed(2)}" stroke="#fff"/>`;
+        const sig = ok && i !== j && c.M.P[i][j] < c.alpha ? '*' : '';
+        g += `<text x="${px + cell / 2}" y="${py + cell / 2 + fsz / 3}" text-anchor="middle" font-size="${fsz}" font-weight="600" fill="${ok && op > 0.55 ? '#ffffff' : '#1B2430'}">${ok ? fmt(r, 2) + sig : '-'}</text>`;
+      }
+    }
+    const lx = left + gw + 22, ly = top, lh = Math.min(gw, 160);
+    g += `<rect x="${lx}" y="${ly}" width="14" height="${lh}" fill="url(#krhm)" stroke="#E3E6EA"/>` +
+      `<text x="${lx + 20}" y="${ly + 9}" font-size="10" fill="#4A5563">+1</text><text x="${lx + 20}" y="${ly + lh / 2 + 4}" font-size="10" fill="#4A5563">0</text><text x="${lx + 20}" y="${ly + lh}" font-size="10" fill="#4A5563">−1</text>`;
+    g += `<text x="${left}" y="${top + gw + 24}" font-size="10.5" fill="#4A5563">* signifikan pada α = ${x(fmt(c.alpha, 2))} (uji dua sisi). Makin pekat warna, makin kuat korelasinya.</text>`;
+    return g + '</svg>';
+  }
+
   function publish(c) {
     try {
       const SE = window.StatExport; if (!SE) return;
       const { names, cols, method, alpha } = c, n = Math.max.apply(null, cols.map((a) => a.length));
+      const SC = window.StatCharts, charts = [];
+      if (SC) {
+        if (c.k >= 3) charts.push({ title: 'Heatmap korelasi', caption: 'Setiap kotak = koefisien korelasi sepasang variabel (' + METHOD_NAME[method] + '). Biru = hubungan positif, emas = negatif; tanda * = signifikan pada α = ' + fmt(alpha, 2) + '.', build: () => heatSvg(c) });
+        const P = pairs(c).filter((p) => Number.isFinite(p.r)).sort((a, b) => Math.abs(b.r) - Math.abs(a.r)), shown = P.slice(0, 6);
+        shown.forEach((p) => {
+          const d = pairData(cols, p.i, p.j);
+          let fit;
+          if (method === 'pearson' && d.x.length > 1) { const mx = d.x.reduce((s, v) => s + v, 0) / d.x.length, my = d.y.reduce((s, v) => s + v, 0) / d.y.length; let sxx = 0, sxy = 0; d.x.forEach((v, i) => { sxx += (v - mx) ** 2; sxy += (v - mx) * (d.y[i] - my); }); if (sxx > 0) fit = { a: my - sxy / sxx * mx, b: sxy / sxx, name: 'Garis regresi linear' }; }
+          charts.push({ title: 'Scatter plot ' + names[p.i] + ' dan ' + names[p.j],
+            caption: SYM[method] + ' = ' + fmt(p.r, 3) + ', p = ' + fmtP(p.p) + ', n = ' + p.n + '.' + (method === 'pearson' ? ' Periksa apakah pola titik benar-benar linear dan tidak dikendalikan oleh pencilan.' : ''),
+            build: () => SC.scatter({ title: names[p.i] + ' vs ' + names[p.j], xLabel: names[p.i], yLabel: names[p.j], x: d.x, y: d.y, fit }) });
+        });
+      }
       SE.publish({
         id: 'korelasi', title: 'Korelasi', anchor: '#kr-results-card', resultsCard: '#kr-results-card',
-        meta: [['Metode', 'Korelasi ' + METHOD_NAME[method]], ['α', fmt(alpha, 2)], ['Jumlah variabel', names.length], ['Variabel', names.join(', ')]],
+        meta: [['Metode', 'Korelasi ' + METHOD_NAME[method]], ['α', fmt(alpha, 2)], ['Jumlah variabel', names.length], ['Variabel', names.join(', ')]].concat(c.k > 4 ? [['Grafik', 'Scatter plot untuk 6 pasangan dengan korelasi terkuat']] : []),
         sections: [{ heading: 'Ringkasan', sel: '#krSumWrap' }, { heading: 'Langkah Perhitungan', sel: '#krStepsWrap' }, { heading: 'Interpretasi', sel: '#krInterpWrap' }],
         data: { head: ['#'].concat(names), rows: Array.from({ length: n }, (_, i) => [i + 1].concat(cols.map((a) => (a[i] === null || a[i] === undefined ? '' : a[i])))), caption: 'Data yang dipakai pada perhitungan.' },
-        charts: [],
+        charts,
       });
     } catch (e) { /* ekspor opsional */ }
   }

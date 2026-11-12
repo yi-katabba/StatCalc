@@ -356,12 +356,22 @@
     try {
       const SE = window.StatExport; if (!SE) return;
       const n = Math.max.apply(null, used.map((u) => u.x.length));
+      const SC = window.StatCharts, charts = [];
+      if (SC) {
+        const gl = used.map((u) => ({ name: u.name, vals: u.x }));
+        charts.push({ title: used.length > 1 ? 'Boxplot semua variabel' : 'Boxplot ' + used[0].name,
+          caption: 'Kotak = Q1 sampai Q3, garis tengah = median, belah ketupat = rata-rata, titik di luar kumis = pencilan (aturan 1,5×IQR).' + (used.length > 1 ? ' Variabel dengan satuan berbeda lebih mudah dibaca pada histogramnya masing-masing.' : ''),
+          build: () => SC.box(gl, { title: used.length > 1 ? 'Boxplot per Variabel' : 'Boxplot ' + used[0].name, xLabel: 'Variabel', yLabel: 'Nilai', mean: true }) });
+        used.slice(0, 6).forEach((u) => charts.push({ title: 'Histogram ' + u.name,
+          caption: 'Kurva = kurva normal dengan rata-rata dan simpangan baku data, untuk menilai bentuk sebaran.',
+          build: () => SC.hist(u.x, { title: 'Histogram ' + u.name, xLabel: u.name }) }));
+      }
       SE.publish({
         id: 'deskriptif', title: 'Statistika Deskriptif', anchor: '#ds-results-card', resultsCard: '#ds-results-card',
         meta: [['Metode', 'Statistika Deskriptif'], ['Jumlah variabel', used.length], ['Variabel', used.map((u) => u.name).join(', ')]],
         sections: [{ heading: 'Ringkasan Statistik', sel: '#dsSumWrap' }, { heading: 'Langkah Perhitungan', sel: '#dsStepsWrap' }, { heading: 'Interpretasi', sel: '#dsInterpWrap' }],
         data: { head: ['#'].concat(used.map((u) => u.name)), rows: Array.from({ length: n }, (_, i) => [i + 1].concat(used.map((u) => (i < u.x.length ? u.x[i] : '')))), caption: 'Data yang dipakai pada perhitungan.' },
-        charts: [],
+        charts,
       });
     } catch (e) { /* ekspor opsional */ }
   }

@@ -56,6 +56,19 @@
     if (isD) ip.push(`Kelompok dibandingkan dengan kontrol <strong>${esc(nm[ctrl])}</strong> (rata-rata ${fmt(A.means[ctrl], 3)}); selisih positif berarti kelompok lebih besar daripada kontrol.`);
     ip.push('<strong>Asumsi:</strong> galat berdistribusi normal, ragam antar kelompok sama (periksa dengan Uji Kesamaan Ragam), dan pengamatan saling bebas.');
     ui.show({ sum, steps: st, interp: `<div class="bs-var"><h4>${MN[method]}</h4>${ip.map((p) => `<p>${p}</p>`).join('')}</div>` });
-    ui.publish({ meta: [['Metode', 'Uji lanjut ANOVA: ' + MN[method]], ['Jumlah kelompok', k], ['α', fmt(alpha, 2)]], data: ui.dataExport(nm, groups) });
+    const SC = window.StatCharts, charts = [];
+    if (SC) {
+      const gl = groups.map((g, i) => ({ name: nm[i], vals: g }));
+      const rows = r.rows.slice().sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff)).slice(0, 30);
+      charts.push({ title: 'Selang kepercayaan selisih rata-rata',
+        caption: 'Tiap titik = selisih rata-rata sepasang kelompok dengan selang kepercayaan ' + pct(1 - alpha) + ' (' + MN[method] + '). Selang yang tidak memotong garis nol berarti kedua kelompok berbeda nyata.' + (r.rows.length > rows.length ? ' Hanya ' + rows.length + ' selisih terbesar yang ditampilkan.' : ''),
+        build: () => SC.intervals({ title: 'Selisih Rata-rata dan Selang Kepercayaan ' + pct(1 - alpha), xLabel: 'Perbandingan', yLabel: 'Selisih rata-rata', labels: rows.map((x) => nm[x.i] + ' − ' + nm[x.j]), means: rows.map((x) => x.diff), lo: rows.map((x) => x.lo), hi: rows.map((x) => x.hi), grand: 0, grandName: 'Tidak ada selisih (0)', note: 'Selisih ± selang kepercayaan ' + pct(1 - alpha) }) });
+      charts.push({ title: 'Rata-rata per kelompok',
+        caption: 'Rata-rata tiap kelompok dengan selang kepercayaan ' + pct(1 - alpha) + ' dari KT galat gabungan. Kelompok dengan selang yang saling terpisah cenderung berbeda nyata.',
+        build: () => SC.intervals({ title: 'Rata-rata per Kelompok (CI ' + pct(1 - alpha) + ')', xLabel: 'Kelompok', yLabel: 'Rata-rata', labels: nm, means: A.means, lo: A.means.map((m, i) => m - SC.tQuantile(1 - alpha / 2, A.dfw) * Math.sqrt(A.msw / groups[i].length)), hi: A.means.map((m, i) => m + SC.tQuantile(1 - alpha / 2, A.dfw) * Math.sqrt(A.msw / groups[i].length)), note: 'Rata-rata ± selang kepercayaan ' + pct(1 - alpha) }) });
+      charts.push({ title: 'Boxplot per kelompok', caption: 'Kotak = Q1 sampai Q3, garis tengah = median, belah ketupat = rata-rata.',
+        build: () => SC.box(gl, { title: 'Boxplot per Kelompok', xLabel: 'Kelompok', yLabel: 'Nilai', mean: true }) });
+    }
+    ui.publish({ meta: [['Metode', 'Uji lanjut ANOVA: ' + MN[method]], ['Jumlah kelompok', k], ['α', fmt(alpha, 2)]], data: ui.dataExport(nm, groups), charts });
   };
 })();
