@@ -131,8 +131,11 @@
     if (rules.length) { const st = document.createElement('style'); st.textContent = rules.join('\n'); document.head.appendChild(st); }
 
     /* Halaman metode Stat: pita 1 baris, isi tab jadi popover (tidak untuk panel samping / host khusus) */
-    const pop = !cfg.host && !/^gr-/.test(k);
-    if (pop) sec.classList.add('rb-pop');
+    /* halaman Graph: popover hanya di layar sempit; di layar lebar tetap panel samping */
+    const isGr = /^gr-/.test(k), mq = window.matchMedia ? window.matchMedia('(max-width:1023.98px)') : { matches: false };
+    const isPop = () => !cfg.host && (!isGr || mq.matches);
+    const pop = !cfg.host;
+    const syncPop = () => { const on = isPop(); sec.classList.toggle('rb-pop', on); if (!on) setOpen(false); };
     const setOpen = (on) => {
       sec.classList.toggle('rb-open', on);
       $$('.rb-tab', sec).forEach((x) => x.setAttribute('aria-expanded', String(on && x.getAttribute('aria-selected') === 'true')));
@@ -141,12 +144,14 @@
       const same = b.getAttribute('aria-selected') === 'true';
       $$('.rb-tab', sec).forEach((x) => x.setAttribute('aria-selected', String(x === b)));
       $$('.rb-panel', sec).forEach((p) => p.classList.toggle('on', p.dataset.rbpanel === b.dataset.rbtab));
-      if (pop) setOpen(!(same && sec.classList.contains('rb-open')));
+      if (isPop()) setOpen(!(same && sec.classList.contains('rb-open')));
     }));
     if (pop) {
       $$('.rb-tab', sec).forEach((x) => x.setAttribute('aria-expanded', 'false'));
       document.addEventListener('click', (e) => { if (sec.classList.contains('rb-open') && !sec.contains(e.target)) setOpen(false); });
       sec.addEventListener('keydown', (e) => { if (e.key === 'Escape' && sec.classList.contains('rb-open')) { setOpen(false); const t = sec.querySelector('.rb-tab[aria-selected="true"]'); if (t) t.focus(); } });
+      syncPop();
+      if (isGr) { if (mq.addEventListener) mq.addEventListener('change', syncPop); else if (mq.addListener) mq.addListener(syncPop); }
     }
 
     /* Bila tab hasil yang aktif disembunyikan, pindah ke tab terlihat pertama. */
