@@ -719,3 +719,14 @@ body.pf-on .top-avatar{ box-shadow:0 0 0 2px #7FA8D6; }
   .kat-chips::-webkit-scrollbar{ display:none; }
   .kat-chips .gf-chip{ flex:none; white-space:nowrap; }
 }
+
+/* ===== Mode mobile: toggle Data/Hasil, tab pita, dan banner materi diperkecil supaya hemat ruang ===== */
+@media (max-width:1023.98px){
+  .st-seg-bar{ padding:4px 0; margin:0 0 6px; }
+  .st-seg-bar .hs-seg{ padding:3px; gap:3px; border-radius:10px; }
+  .st-seg-bar .hs-seg button{ min-height:34px; font-size:13px; border-radius:8px; }
+  .rb-main.rb-pop .rb-tab{ min-height:34px; font-size:12.5px; padding:0 12px; }
+  .materi-link-top{ margin:0 0 6px !important; padding:6px 12px !important; }
+  .materi-link-top svg{ width:18px !important; height:18px !important; }
+  .materi-link-top .t strong{ font-size:13px !important; }
+}
