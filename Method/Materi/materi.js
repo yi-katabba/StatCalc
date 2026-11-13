@@ -111,6 +111,12 @@
     .materi-link-top .t strong{ display:block; font-size:14px; font-weight:800; }
     .materi-link-top .t small{ display:block; font-size:12px; color:var(--ink-soft); margin-top:1px; line-height:1.35; }
     .materi-link-top .go{ font-size:22px; line-height:1; }
+    .materi-link-top{ padding:8px 14px; }
+    .materi-link-top svg{ width:20px; height:20px; }
+    .materi-link-top .t{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+    .materi-link-top .t strong{ display:inline; font-size:13.5px; }
+    .materi-link-top .t small{ display:inline; margin:0; }
+    @media (max-width:720px){ .materi-link-top .t small{ display:none; } }
     .materi-link{ display:inline-flex; align-items:center; gap:6px; margin:2px 0 10px; padding:6px 12px; min-height:32px; border:1px solid #C7D9E2; background:var(--accent-soft); color:var(--accent); border-radius:999px; font-size:12.5px; font-weight:700; cursor:pointer; font-family:var(--font-body); }
     .materi-link:active{ background:#D5E4EB; }
     .materi-link::before{ content:'\\1F4D6'; font-size:13px; }

@@ -63,6 +63,16 @@
 .rb-btn:hover{ background:#fff; border-color:var(--rule-strong); color:var(--accent); }
 .rb-btn svg{ width:22px; height:22px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
 .rb-tip{ margin:0; padding:6px 16px 12px; font-size:12.5px; color:var(--ink-soft); border-bottom:1px solid var(--rule); }
+/* Mode toolbar 1 baris: isi tab muncul sebagai popover di bawah baris tab (halaman metode Stat) */
+.rb-main.rb-pop{ position:relative; overflow:visible; }
+.rb-main.rb-pop .rb-tabs{ overflow:visible; padding:0 8px; border-bottom:0; border-radius:10px; align-items:stretch; }
+.rb-main.rb-pop .rb-tab{ display:inline-flex; align-items:center; gap:8px; justify-content:center; }
+.rb-pop .rb-tab::after{ content:''; width:7px; height:7px; border-right:2px solid currentColor; border-bottom:2px solid currentColor; transform:translateY(-2px) rotate(45deg); transition:transform .15s ease; opacity:.7; }
+.rb-pop .rb-tab[aria-expanded="true"]::after{ transform:translateY(1px) rotate(-135deg); }
+.rb-pop .rb-panel{ display:none !important; }
+.rb-pop.rb-open .rb-panel.on{ display:block !important; position:absolute; left:8px; top:calc(100% + 6px); z-index:40; width:max-content; min-width:300px; max-width:calc(100% - 16px); max-height:min(70vh,560px); overflow:auto; border:1px solid var(--rule-strong); border-radius:12px; box-shadow:0 10px 28px rgba(20,40,70,.18); }
+.rb-pop .rb-body{ flex-wrap:wrap; overflow:visible; row-gap:8px; }
+.rb-pop .rb-tip{ border-bottom:0; border-top:1px solid var(--rule); }
 `;
   function injectCSS() {
     if (document.getElementById('rb-style')) return;
@@ -120,10 +130,24 @@
     else if (head && head.parentNode) head.parentNode.insertBefore(sec, head.nextSibling); else view.prepend(sec);
     if (rules.length) { const st = document.createElement('style'); st.textContent = rules.join('\n'); document.head.appendChild(st); }
 
+    /* Halaman metode Stat: pita 1 baris, isi tab jadi popover (tidak untuk panel samping / host khusus) */
+    const pop = !cfg.host && !/^gr-/.test(k);
+    if (pop) sec.classList.add('rb-pop');
+    const setOpen = (on) => {
+      sec.classList.toggle('rb-open', on);
+      $$('.rb-tab', sec).forEach((x) => x.setAttribute('aria-expanded', String(on && x.getAttribute('aria-selected') === 'true')));
+    };
     $$('.rb-tab', sec).forEach((b) => b.addEventListener('click', () => {
+      const same = b.getAttribute('aria-selected') === 'true';
       $$('.rb-tab', sec).forEach((x) => x.setAttribute('aria-selected', String(x === b)));
       $$('.rb-panel', sec).forEach((p) => p.classList.toggle('on', p.dataset.rbpanel === b.dataset.rbtab));
+      if (pop) setOpen(!(same && sec.classList.contains('rb-open')));
     }));
+    if (pop) {
+      $$('.rb-tab', sec).forEach((x) => x.setAttribute('aria-expanded', 'false'));
+      document.addEventListener('click', (e) => { if (sec.classList.contains('rb-open') && !sec.contains(e.target)) setOpen(false); });
+      sec.addEventListener('keydown', (e) => { if (e.key === 'Escape' && sec.classList.contains('rb-open')) { setOpen(false); const t = sec.querySelector('.rb-tab[aria-selected="true"]'); if (t) t.focus(); } });
+    }
 
     /* Bila tab hasil yang aktif disembunyikan, pindah ke tab terlihat pertama. */
     function fixActive() {

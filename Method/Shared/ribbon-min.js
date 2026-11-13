@@ -58,7 +58,7 @@
     Array.prototype.forEach.call(document.querySelectorAll('.rb-main'), function (m) {
       var side = false;
       try { side = m.matches('.chapter-inner:has(.gr-chart) > .rb-main'); } catch (e) { /* browser lama */ }
-      if (side || m.closest('.gr-view')) return;
+      if (side || m.closest('.gr-view') || m.classList.contains('rb-pop')) return;
       setup(m, 'stat');
     });
   }
