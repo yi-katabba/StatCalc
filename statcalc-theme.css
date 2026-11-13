@@ -735,3 +735,9 @@ body.pf-on .top-avatar{ box-shadow:0 0 0 2px #7FA8D6; }
 @media (max-width:1023.98px){
   html body #view-metode-calc .sc-tab{ min-height:34px; font-size:12.5px; }
 }
+
+/* Dataset mobile: toggle Proyek | Dataset | Hasil diperkecil */
+@media (max-width:1023.98px){
+  html body #view-metode-calc .chapter-inner > .sc-seg{ margin:0 0 8px; padding:3px; gap:3px; border-radius:10px; }
+  html body #view-metode-calc .sc-seg button{ height:34px; font-size:13px; }
+}
